@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import {
   useCallback,
   useEffect,
@@ -674,6 +675,32 @@ function Sigil({ card }: { card: CatalogCard }) {
   );
 }
 
+function CardArtwork({
+  card,
+  className = "",
+}: {
+  card: Pick<CatalogCard, "id" | "name">;
+  className?: string;
+}) {
+  return (
+    <Image
+      className={`card-artwork ${className}`.trim()}
+      src={`/cards/${card.id}.webp`}
+      alt=""
+      width={768}
+      height={960}
+      sizes="(max-width: 720px) 50vw, 220px"
+      aria-hidden="true"
+      loading="lazy"
+      decoding="async"
+      draggable={false}
+      onError={(event) => {
+        event.currentTarget.hidden = true;
+      }}
+    />
+  );
+}
+
 function CardTile({
   card,
   owned,
@@ -693,6 +720,7 @@ function CardTile({
     <>
       <div className="game-card__visual">
         <Sigil card={card} />
+        <CardArtwork card={card} className="game-card__artwork" />
         <span className="game-card__cost" aria-label={`${card.cost} 点能量`}>
           {card.cost}
         </span>
@@ -1596,9 +1624,12 @@ function OverviewSection({
                   const card = CARD_BY_ID.get(entry.cardId);
                   return (
                     <div className={`mini-reveal mini-reveal--${card?.rarity ?? "common"}`} key={`${entry.cardId}-${index}`}>
-                      <span>{card?.cost ?? 0}</span>
-                      <strong>{card?.name ?? entry.cardId}</strong>
-                      <small>×{entry.count}</small>
+                      {card && <CardArtwork card={card} className="mini-reveal__artwork" />}
+                      <span className="mini-reveal__cost">{card?.cost ?? 0}</span>
+                      <span className="mini-reveal__copy">
+                        <strong>{card?.name ?? entry.cardId}</strong>
+                        <small>×{entry.count}</small>
+                      </span>
                     </div>
                   );
                 })}
@@ -1898,6 +1929,9 @@ function DeckSection({
             </div>
             {uniqueDeckCards.length > 0 ? uniqueDeckCards.map(({ card, count }) => (
               <div className="deck-entry" key={card.id}>
+                <span className="deck-entry__artwork">
+                  <CardArtwork card={card} />
+                </span>
                 <span className="deck-entry__cost">{card.cost}</span>
                 <span className={`deck-entry__rarity deck-entry__rarity--${card.rarity}`} />
                 <span className="deck-entry__name"><strong>{card.name}</strong><small>{card.faction} · {TYPE_LABEL[card.type]}</small></span>
@@ -2004,6 +2038,20 @@ function BoardUnit({
   onTarget?: () => void;
 }) {
   const card = CARD_BY_ID.get(unit.cardId);
+  const visualCard: CatalogCard =
+    card ?? {
+      id: unit.cardId,
+      name: unit.name,
+      cost: 0,
+      type: "unit",
+      faction: "中立",
+      rarity: "common",
+      description: "",
+      attack: unit.attack,
+      health: unit.maxHealth,
+      target: "none",
+      keywords: [],
+    };
   return (
     <button
       className={`board-unit ${selected ? "board-unit--selected" : ""} ${targetable ? "board-unit--targetable" : ""} ${!unit.canAttack && onSelect ? "board-unit--exhausted" : ""}`}
@@ -2014,23 +2062,8 @@ function BoardUnit({
       aria-label={`${unit.name}，攻击 ${unit.attack}，生命 ${unit.health}${targetable ? "，设为攻击目标" : unit.canAttack ? "，选择攻击" : "，本回合无法攻击"}`}
     >
       <div className="board-unit__art">
-        <Sigil
-          card={
-            card ?? {
-              id: unit.cardId,
-              name: unit.name,
-              cost: 0,
-              type: "unit",
-              faction: "中立",
-              rarity: "common",
-              description: "",
-              attack: unit.attack,
-              health: unit.maxHealth,
-              target: "none",
-              keywords: [],
-            }
-          }
-        />
+        <Sigil card={visualCard} />
+        <CardArtwork card={visualCard} className="board-unit__artwork" />
       </div>
       <strong>{unit.name}</strong>
       <div className="board-unit__stats"><span>⚔ {unit.attack}</span><span>◆ {unit.health}</span></div>

@@ -1015,23 +1015,82 @@ button.resource-chip:hover {
 
 .pack-reveal__cards {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
   gap: 8px;
   margin: 14px 0 20px;
 }
 
 .mini-reveal {
-  display: grid;
-  width: 52px;
-  height: 76px;
-  place-items: center;
+  position: relative;
+  width: 72px;
+  height: 104px;
+  overflow: hidden;
   border: 1px solid var(--line-strong);
-  border-radius: 7px;
+  border-radius: 9px;
   color: var(--paper-soft);
   background: #14231f;
   font-size: 8px;
   text-align: center;
   animation: card-rise 260ms ease both;
+}
+
+.mini-reveal::after {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  pointer-events: none;
+  content: "";
+  background: linear-gradient(to bottom, transparent 42%, rgba(3, 9, 8, 0.94));
+}
+
+.mini-reveal__artwork {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mini-reveal__cost {
+  position: absolute;
+  z-index: 2;
+  top: 5px;
+  left: 5px;
+  display: grid;
+  width: 20px;
+  height: 20px;
+  place-items: center;
+  border: 1px solid rgba(151, 224, 214, 0.45);
+  border-radius: 50%;
+  color: #e4faf6;
+  background: rgba(12, 69, 64, 0.9);
+  font-weight: 800;
+}
+
+.mini-reveal__copy {
+  position: absolute;
+  z-index: 2;
+  right: 5px;
+  bottom: 6px;
+  left: 5px;
+}
+
+.mini-reveal__copy strong,
+.mini-reveal__copy small {
+  display: block;
+}
+
+.mini-reveal__copy strong {
+  overflow: hidden;
+  color: var(--paper);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mini-reveal__copy small {
+  margin-top: 2px;
+  color: #a7b8b1;
 }
 
 .mini-reveal--rare {
@@ -1231,10 +1290,14 @@ button.game-card:not(:disabled):hover,
   min-height: 250px;
 }
 
+.game-card--compact .game-card__visual {
+  min-height: 132px;
+}
+
 .game-card__visual {
   position: relative;
   display: grid;
-  min-height: 142px;
+  min-height: 170px;
   place-items: center;
   overflow: hidden;
   border-bottom: 1px solid var(--line);
@@ -1245,18 +1308,39 @@ button.game-card:not(:disabled):hover,
 
 .game-card__visual::after {
   position: absolute;
+  z-index: 1;
   inset: 0;
   pointer-events: none;
   content: "";
-  background-image: radial-gradient(circle, rgba(239, 228, 199, 0.14) 1px, transparent 1px);
-  background-size: 17px 17px;
-  mask-image: radial-gradient(circle, black, transparent 72%);
+  background:
+    linear-gradient(to bottom, rgba(4, 11, 10, 0.02) 45%, rgba(4, 11, 10, 0.46)),
+    radial-gradient(circle at 50% 26%, transparent 28%, rgba(3, 8, 7, 0.26) 100%);
+}
+
+.card-artwork {
+  display: block;
+}
+
+.game-card__artwork {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 38%;
+  transition: transform 260ms ease;
+}
+
+button.game-card:not(:disabled):hover .game-card__artwork,
+.game-card:hover .game-card__artwork {
+  transform: scale(1.045);
 }
 
 .game-card__cost,
 .game-card__owned {
   position: absolute;
-  z-index: 2;
+  z-index: 3;
 }
 
 .game-card__cost {
@@ -1288,7 +1372,7 @@ button.game-card:not(:disabled):hover,
   position: absolute;
   top: 13px;
   right: 13px;
-  z-index: 2;
+  z-index: 3;
   width: 7px;
   height: 7px;
   border-radius: 50%;
@@ -1316,7 +1400,7 @@ button.game-card:not(:disabled):hover,
 
 .card-sigil {
   position: relative;
-  z-index: 1;
+  z-index: 0;
   display: grid;
   width: 82px;
   height: 82px;
@@ -1570,11 +1654,26 @@ button.game-card:not(:disabled):hover,
 
 .deck-entry {
   display: grid;
-  grid-template-columns: 27px 7px minmax(0, 1fr) 25px;
+  grid-template-columns: 34px 27px 7px minmax(0, 1fr) 25px 27px;
   align-items: center;
   gap: 8px;
   padding: 8px 0;
   border-bottom: 1px solid var(--line);
+}
+
+.deck-entry__artwork {
+  width: 34px;
+  height: 39px;
+  overflow: hidden;
+  border: 1px solid var(--line-strong);
+  border-radius: 5px;
+  background: #10211c;
+}
+
+.deck-entry__artwork .card-artwork {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .deck-entry__cost {
@@ -2036,15 +2135,36 @@ button.hero-core {
 }
 
 .board-unit__art {
+  position: relative;
   display: grid;
   height: 73px;
   place-items: center;
+  overflow: hidden;
   background: radial-gradient(circle, rgba(85, 185, 173, 0.11), transparent);
+}
+
+.board-unit__art::after {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  pointer-events: none;
+  content: "";
+  background: linear-gradient(to bottom, transparent 50%, rgba(3, 10, 8, 0.5));
 }
 
 .board-unit__art .card-sigil {
   width: 52px;
   height: 52px;
+}
+
+.board-unit__artwork {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 36%;
 }
 
 .board-unit > strong {

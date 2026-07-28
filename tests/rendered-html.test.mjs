@@ -25,13 +25,20 @@ test("build emits a deployable worker, D1 metadata, and migration", async () => 
 });
 
 test("ships the complete product surface and removes starter assets", async () => {
-  const [page, game, layout, packageJson, og] = await Promise.all([
+  const [page, game, layout, packageJson, catalog, og] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/GameApp.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
+    readFile(new URL("../lib/game/catalog.ts", import.meta.url), "utf8"),
     stat(new URL("../public/og.png", import.meta.url)),
   ]);
+  const cardIds = [...catalog.matchAll(/\bid:\s*"([^"]+)"/g)].map((match) => match[1]);
+  const cardArt = await Promise.all(
+    cardIds.map((cardId) =>
+      stat(new URL(`../public/cards/${cardId}.webp`, import.meta.url)),
+    ),
+  );
 
   assert.match(page, /<GameApp/);
   assert.match(layout, /generateMetadata/);
@@ -43,9 +50,12 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(game, /战术对战/);
   assert.match(game, /运营台/);
   assert.match(game, /\/api\/game/);
+  assert.match(game, /\/cards\/\$\{card\.id\}\.webp/);
   assert.doesNotMatch(game, /<svg/i);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
   assert.ok(og.size > 100_000);
+  assert.equal(cardIds.length, 24);
+  assert.ok(cardArt.every((asset) => asset.size > 100_000));
 
   await assert.rejects(
     access(new URL("../app/_sites-preview", projectRoot)),
