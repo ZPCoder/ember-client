@@ -55,8 +55,10 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(game, /<Image[\s\S]*?\bunoptimized\b[\s\S]*?\/>/);
   assert.match(game, /AudioContext/);
   assert.match(game, /battleEventsToEffects/);
+  assert.match(game, /BATTLE_EFFECT_STEP_MS = 900/);
   assert.match(game, /aria-pressed=\{soundEnabled\}/);
   assert.match(styles, /\.battlefield__fx-layer/);
+  assert.match(styles, /battle-banner-enter 840ms/);
   assert.match(styles, /@keyframes battle-lunge-player/);
   assert.match(styles, /@media \(prefers-reduced-motion: reduce\)/);
   assert.doesNotMatch(game, /<svg/i);

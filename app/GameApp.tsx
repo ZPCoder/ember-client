@@ -830,6 +830,32 @@ function SectionHeading({
 }
 
 type BattleSoundCue = BattleEffectKind | "select" | "error";
+const BATTLE_EFFECT_STEP_MS = 900;
+
+function battleEffectPriority(kind: BattleEffectKind) {
+  switch (kind) {
+    case "win":
+    case "loss":
+    case "start":
+      return 100;
+    case "damage":
+    case "heal":
+    case "shield":
+    case "destroy":
+      return 90;
+    case "attack":
+      return 85;
+    case "summon":
+    case "buff":
+      return 75;
+    case "turn":
+      return 70;
+    case "card":
+      return 60;
+    case "draw":
+      return 50;
+  }
+}
 
 type BattleTone = {
   frequency: number;
@@ -1149,7 +1175,10 @@ export function GameApp({
 
       setBattleEffect(next);
       playSound(next.kind);
-      battleEffectTimerRef.current = window.setTimeout(playNext, 480);
+      battleEffectTimerRef.current = window.setTimeout(
+        playNext,
+        BATTLE_EFFECT_STEP_MS,
+      );
     };
 
     playNext();
@@ -1167,10 +1196,20 @@ export function GameApp({
       const playlist =
         effects.length <= maxEffects
           ? [...effects]
-          : [
-              ...effects.slice(0, Math.max(1, maxEffects - 2)),
-              ...effects.slice(-2),
-            ];
+          : effects
+              .map((effect, index) => ({
+                effect,
+                index,
+                priority: battleEffectPriority(effect.kind),
+              }))
+              .sort((first, second) =>
+                second.priority === first.priority
+                  ? first.index - second.index
+                  : second.priority - first.priority,
+              )
+              .slice(0, maxEffects)
+              .sort((first, second) => first.index - second.index)
+              .map(({ effect }) => effect);
       const capacity = Math.max(0, 12 - battleEffectQueueRef.current.length);
       const incoming = playlist.slice(0, capacity);
       const terminalEffect = playlist.at(-1);
@@ -1614,7 +1653,7 @@ export function GameApp({
         if (sectionRef.current === "battle") {
           showBattleEffects(
             battleEventsToEffects(next.events.slice(beforeAiEvents)),
-            { lock: true, maxEffects: 5 },
+            { lock: true, maxEffects: 4 },
           );
         }
         setBattleMessage(
