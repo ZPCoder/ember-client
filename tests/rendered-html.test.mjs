@@ -51,6 +51,7 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(game, /运营台/);
   assert.match(game, /\/api\/game/);
   assert.match(game, /\/cards\/\$\{card\.id\}\.webp/);
+  assert.match(game, /<Image[\s\S]*?\bunoptimized\b[\s\S]*?\/>/);
   assert.doesNotMatch(game, /<svg/i);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
   assert.ok(og.size > 100_000);

@@ -689,6 +689,7 @@ function CardArtwork({
       alt=""
       width={768}
       height={960}
+      unoptimized
       sizes="(max-width: 720px) 50vw, 220px"
       aria-hidden="true"
       loading="lazy"
