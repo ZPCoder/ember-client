@@ -25,9 +25,10 @@ test("build emits a deployable worker, D1 metadata, and migration", async () => 
 });
 
 test("ships the complete product surface and removes starter assets", async () => {
-  const [page, game, layout, packageJson, catalog, og] = await Promise.all([
+  const [page, game, styles, layout, packageJson, catalog, og] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/GameApp.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
     readFile(new URL("../lib/game/catalog.ts", import.meta.url), "utf8"),
@@ -52,6 +53,12 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(game, /\/api\/game/);
   assert.match(game, /\/cards\/\$\{card\.id\}\.webp/);
   assert.match(game, /<Image[\s\S]*?\bunoptimized\b[\s\S]*?\/>/);
+  assert.match(game, /AudioContext/);
+  assert.match(game, /battleEventsToEffects/);
+  assert.match(game, /aria-pressed=\{soundEnabled\}/);
+  assert.match(styles, /\.battlefield__fx-layer/);
+  assert.match(styles, /@keyframes battle-lunge-player/);
+  assert.match(styles, /@media \(prefers-reduced-motion: reduce\)/);
   assert.doesNotMatch(game, /<svg/i);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
   assert.ok(og.size > 100_000);

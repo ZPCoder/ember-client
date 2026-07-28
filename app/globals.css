@@ -1857,6 +1857,46 @@ button.game-card:not(:disabled):hover .game-card__artwork,
   margin-top: 22px;
 }
 
+.sound-toggle {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 13px;
+  border: 1px solid rgba(85, 185, 173, 0.22);
+  border-radius: 10px;
+  color: #8ba099;
+  background: rgba(8, 22, 18, 0.74);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  transition: 160ms ease;
+}
+
+.sound-toggle:hover,
+.sound-toggle[aria-pressed="true"] {
+  color: #b8e3dc;
+  border-color: rgba(85, 185, 173, 0.42);
+  box-shadow: inset 0 0 18px rgba(85, 185, 173, 0.08);
+}
+
+.sound-toggle > span {
+  display: grid;
+  width: 19px;
+  height: 19px;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--cyan);
+  background: rgba(85, 185, 173, 0.12);
+  font-size: 12px;
+}
+
+.sound-toggle[aria-pressed="false"] > span {
+  color: #8d6458;
+  background: rgba(228, 109, 63, 0.1);
+}
+
 .battle-room__top {
   display: flex;
   align-items: center;
@@ -1868,6 +1908,24 @@ button.game-card:not(:disabled):hover .game-card__artwork,
 .battle-room__top h1 {
   margin: 3px 0 0;
   font-size: 23px;
+}
+
+.battle-room__status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sound-toggle--compact {
+  min-height: 34px;
+  padding: 0 10px;
+  border-radius: 999px;
+}
+
+.sound-toggle--compact > span {
+  width: 16px;
+  height: 16px;
+  font-size: 10px;
 }
 
 .turn-indicator {
@@ -1893,11 +1951,28 @@ button.game-card:not(:disabled):hover .game-card__artwork,
 .turn-indicator--player {
   color: #9fd6cf;
   border-color: rgba(85, 185, 173, 0.25);
+  animation: battle-turn-chip 420ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .turn-indicator--player::before {
   background: var(--cyan);
   box-shadow: 0 0 10px var(--cyan);
+}
+
+.turn-indicator--ai {
+  color: #e8a48a;
+  border-color: rgba(228, 109, 63, 0.3);
+  animation: battle-turn-chip 420ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.turn-indicator--ai::before {
+  background: var(--ember-bright);
+  box-shadow: 0 0 10px var(--ember-bright);
+}
+
+.turn-indicator--finished {
+  color: #d7c8ad;
+  border-color: rgba(218, 198, 159, 0.24);
 }
 
 .battle-layout {
@@ -1917,6 +1992,292 @@ button.game-card:not(:disabled):hover .game-card__artwork,
   background:
     radial-gradient(circle at 50% 50%, rgba(228, 109, 63, 0.08), transparent 23rem),
     linear-gradient(#0d1d19, #0a1513);
+  isolation: isolate;
+  --battle-lunge: 24px;
+}
+
+.battlefield::after {
+  position: absolute;
+  z-index: 7;
+  inset: 0;
+  pointer-events: none;
+  content: "";
+  opacity: 0;
+}
+
+.battlefield--fx-damage::after,
+.battlefield--fx-shield::after,
+.battlefield--fx-destroy::after {
+  background: radial-gradient(circle, transparent 22%, rgba(225, 92, 69, 0.26));
+  animation: battle-screen-flash 420ms ease-out both;
+}
+
+.battlefield--fx-heal::after,
+.battlefield--fx-buff::after {
+  background: radial-gradient(circle, rgba(126, 211, 177, 0.16), transparent 66%);
+  animation: battle-screen-flash 440ms ease-out both;
+}
+
+.battlefield--fx-win::after {
+  background:
+    radial-gradient(circle at 50% 46%, rgba(255, 218, 137, 0.24), transparent 42%),
+    linear-gradient(rgba(85, 185, 173, 0.08), transparent);
+  animation: battle-victory-wash 460ms ease-out both;
+}
+
+.battlefield--fx-loss::after {
+  background: radial-gradient(circle, transparent 28%, rgba(95, 20, 23, 0.52));
+  animation: battle-defeat-wash 460ms ease-out both;
+}
+
+.battlefield__fx-layer {
+  --fx-color: #ff9468;
+  --fx-soft: rgba(228, 109, 63, 0.26);
+  position: absolute;
+  z-index: 8;
+  inset: 0;
+  display: grid;
+  overflow: hidden;
+  place-items: center;
+  pointer-events: none;
+  contain: paint;
+}
+
+.battle-fx--player,
+.battle-fx--heal,
+.battle-fx--buff,
+.battle-fx--win {
+  --fx-color: #78d8cc;
+  --fx-soft: rgba(85, 185, 173, 0.25);
+}
+
+.battle-fx--ai,
+.battle-fx--damage,
+.battle-fx--attack,
+.battle-fx--loss,
+.battle-fx--destroy {
+  --fx-color: #ff8d68;
+  --fx-soft: rgba(228, 109, 63, 0.28);
+}
+
+.battle-fx__vignette,
+.battle-fx__scan,
+.battle-fx__ring,
+.battle-fx__slash,
+.battle-fx__impact,
+.battle-fx__particles,
+.battle-fx__banner,
+.battle-fx__number {
+  position: absolute;
+  pointer-events: none;
+}
+
+.battle-fx__vignette {
+  inset: 0;
+  opacity: 0;
+  background: radial-gradient(circle, var(--fx-soft), transparent 62%);
+}
+
+.battle-fx__scan {
+  left: -15%;
+  width: 130%;
+  height: 3px;
+  opacity: 0;
+  background: linear-gradient(90deg, transparent, var(--fx-color), #fff5d8, var(--fx-color), transparent);
+  box-shadow: 0 0 22px var(--fx-color);
+}
+
+.battle-fx__ring {
+  width: 180px;
+  height: 180px;
+  opacity: 0;
+  border: 1px solid var(--fx-color);
+  border-radius: 50%;
+  box-shadow:
+    inset 0 0 34px var(--fx-soft),
+    0 0 28px var(--fx-soft);
+}
+
+.battle-fx__slash {
+  width: min(56%, 340px);
+  height: 6px;
+  opacity: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, #fff8dd 24%, var(--fx-color) 58%, transparent);
+  filter: drop-shadow(0 0 8px var(--fx-color));
+  transform: rotate(-20deg);
+}
+
+.battle-fx__impact {
+  width: 92px;
+  height: 92px;
+  opacity: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff9e6 0 7%, var(--fx-color) 13%, var(--fx-soft) 34%, transparent 69%);
+}
+
+.battle-fx__particles {
+  inset: 50% auto auto 50%;
+  width: 1px;
+  height: 1px;
+}
+
+.battle-fx__particles i {
+  --particle-angle: 0deg;
+  position: absolute;
+  width: 5px;
+  height: 13px;
+  opacity: 0;
+  border-radius: 999px;
+  background: var(--fx-color);
+  box-shadow: 0 0 8px var(--fx-color);
+  transform: rotate(var(--particle-angle)) translateY(-18px);
+}
+
+.battle-fx__particles i:nth-child(2) { --particle-angle: 45deg; }
+.battle-fx__particles i:nth-child(3) { --particle-angle: 90deg; }
+.battle-fx__particles i:nth-child(4) { --particle-angle: 135deg; }
+.battle-fx__particles i:nth-child(5) { --particle-angle: 180deg; }
+.battle-fx__particles i:nth-child(6) { --particle-angle: 225deg; }
+.battle-fx__particles i:nth-child(7) { --particle-angle: 270deg; }
+.battle-fx__particles i:nth-child(8) { --particle-angle: 315deg; }
+
+.battle-fx__banner {
+  top: 50%;
+  left: 50%;
+  display: grid;
+  min-width: 210px;
+  justify-items: center;
+  padding: 11px 24px;
+  opacity: 0;
+  border-block: 1px solid color-mix(in srgb, var(--fx-color) 62%, transparent);
+  color: #fff5df;
+  background: linear-gradient(90deg, transparent, rgba(5, 17, 14, 0.9), transparent);
+  text-align: center;
+  text-shadow: 0 0 16px var(--fx-color);
+  transform: translate(-50%, -50%);
+}
+
+.battle-fx--ai .battle-fx__banner {
+  top: 31%;
+}
+
+.battle-fx--player .battle-fx__banner {
+  top: 69%;
+}
+
+.battle-fx--start .battle-fx__banner,
+.battle-fx--turn .battle-fx__banner,
+.battle-fx--win .battle-fx__banner,
+.battle-fx--loss .battle-fx__banner {
+  top: 50%;
+}
+
+.battle-fx__banner small,
+.battle-fx__banner strong {
+  display: block;
+}
+
+.battle-fx__banner small {
+  color: color-mix(in srgb, var(--fx-color) 76%, #fff);
+  font-size: 7px;
+  letter-spacing: 0.18em;
+}
+
+.battle-fx__banner strong {
+  margin-top: 2px;
+  font-family: "Songti SC", serif;
+  font-size: clamp(18px, 3vw, 30px);
+  letter-spacing: 0.08em;
+}
+
+.battle-fx__number {
+  top: 31%;
+  left: 50%;
+  min-width: 50px;
+  color: #ff9078;
+  font-size: clamp(23px, 4vw, 38px);
+  font-weight: 900;
+  text-align: center;
+  text-shadow:
+    0 2px 4px #000,
+    0 0 16px currentColor;
+  transform: translate(-50%, -50%);
+}
+
+.battle-fx--player .battle-fx__number {
+  top: 69%;
+}
+
+.battle-fx--heal .battle-fx__number {
+  color: #9fe6bd;
+}
+
+.battle-fx--start .battle-fx__scan,
+.battle-fx--turn .battle-fx__scan,
+.battle-fx--draw .battle-fx__scan,
+.battle-fx--card .battle-fx__scan {
+  animation: battle-scan-line 440ms ease-out both;
+}
+
+.battle-fx--start .battle-fx__ring,
+.battle-fx--turn .battle-fx__ring,
+.battle-fx--summon .battle-fx__ring,
+.battle-fx--heal .battle-fx__ring,
+.battle-fx--buff .battle-fx__ring,
+.battle-fx--win .battle-fx__ring {
+  animation: battle-ring-expand 460ms ease-out both;
+}
+
+.battle-fx--attack .battle-fx__slash,
+.battle-fx--shield .battle-fx__slash,
+.battle-fx--destroy .battle-fx__slash {
+  animation: battle-slash 360ms ease-out both;
+}
+
+.battle-fx--attack .battle-fx__impact,
+.battle-fx--damage .battle-fx__impact,
+.battle-fx--shield .battle-fx__impact,
+.battle-fx--destroy .battle-fx__impact {
+  animation: battle-impact-ring 460ms ease-out both;
+}
+
+.battle-fx--summon .battle-fx__particles i,
+.battle-fx--attack .battle-fx__particles i,
+.battle-fx--damage .battle-fx__particles i,
+.battle-fx--heal .battle-fx__particles i,
+.battle-fx--buff .battle-fx__particles i,
+.battle-fx--shield .battle-fx__particles i,
+.battle-fx--destroy .battle-fx__particles i,
+.battle-fx--win .battle-fx__particles i {
+  animation: battle-particle-burst 460ms ease-out both;
+}
+
+.battle-fx--start .battle-fx__banner,
+.battle-fx--turn .battle-fx__banner,
+.battle-fx--card .battle-fx__banner,
+.battle-fx--summon .battle-fx__banner,
+.battle-fx--attack .battle-fx__banner,
+.battle-fx--shield .battle-fx__banner,
+.battle-fx--destroy .battle-fx__banner,
+.battle-fx--win .battle-fx__banner,
+.battle-fx--loss .battle-fx__banner {
+  animation: battle-banner-enter 460ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.battle-fx--damage .battle-fx__number,
+.battle-fx--heal .battle-fx__number {
+  animation: battle-number-rise 460ms ease-out both;
+}
+
+.battle-fx--start .battle-fx__vignette,
+.battle-fx--card .battle-fx__vignette,
+.battle-fx--summon .battle-fx__vignette,
+.battle-fx--heal .battle-fx__vignette,
+.battle-fx--buff .battle-fx__vignette,
+.battle-fx--win .battle-fx__vignette,
+.battle-fx--loss .battle-fx__vignette {
+  animation: battle-vignette-pulse 460ms ease-out both;
 }
 
 .battlefield__enemy-zone,
@@ -1973,6 +2334,53 @@ button.hero-core {
 .hero-core--active {
   border-color: rgba(85, 185, 173, 0.4);
   box-shadow: 0 0 20px rgba(85, 185, 173, 0.1);
+}
+
+.hero-core--damage,
+.hero-core--heal,
+.hero-core--shield {
+  z-index: 3;
+}
+
+.hero-core--damage {
+  animation: battle-hit-shake 380ms ease-out;
+}
+
+.hero-core--heal {
+  animation: battle-heal-pulse 460ms ease-out;
+}
+
+.hero-core--shield {
+  animation: battle-shield-break 460ms ease-out;
+}
+
+.hero-core--damage::before,
+.hero-core--heal::before,
+.hero-core--shield::before {
+  position: absolute;
+  z-index: 5;
+  inset: 0;
+  pointer-events: none;
+  content: "";
+  border-radius: inherit;
+}
+
+.hero-core--damage::before {
+  background: radial-gradient(circle, rgba(255, 247, 220, 0.86), rgba(225, 92, 69, 0.32) 38%, transparent 72%);
+  animation: battle-impact-cover 360ms ease-out both;
+}
+
+.hero-core--heal::before {
+  border: 2px solid rgba(126, 211, 177, 0.75);
+  box-shadow: inset 0 0 24px rgba(126, 211, 177, 0.32);
+  animation: battle-impact-cover 440ms ease-out both;
+}
+
+.hero-core--shield::before {
+  background:
+    linear-gradient(35deg, transparent 42%, rgba(176, 235, 255, 0.85) 44% 47%, transparent 49%),
+    linear-gradient(-45deg, transparent 48%, rgba(176, 235, 255, 0.7) 50% 53%, transparent 55%);
+  animation: battle-impact-cover 430ms ease-out both;
 }
 
 .hero-core__portrait {
@@ -2134,6 +2542,64 @@ button.hero-core {
   opacity: 0.6;
 }
 
+.board-unit--summon {
+  z-index: 4;
+  animation: battle-unit-summon 460ms cubic-bezier(0.18, 0.88, 0.24, 1.2) both;
+}
+
+.board-row--player .board-unit--attack {
+  z-index: 4;
+  animation: battle-lunge-player 390ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.board-row--enemy .board-unit--attack {
+  z-index: 4;
+  animation: battle-lunge-enemy 390ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.board-unit--damage,
+.board-unit--shield {
+  z-index: 4;
+  animation: battle-hit-shake 380ms ease-out;
+}
+
+.board-unit--heal,
+.board-unit--buff {
+  z-index: 4;
+  animation: battle-heal-pulse 460ms ease-out;
+}
+
+.board-unit--damage::before,
+.board-unit--heal::before,
+.board-unit--buff::before,
+.board-unit--shield::before {
+  position: absolute;
+  z-index: 5;
+  inset: 0;
+  pointer-events: none;
+  content: "";
+  border-radius: inherit;
+}
+
+.board-unit--damage::before {
+  background: radial-gradient(circle, rgba(255, 247, 220, 0.86), rgba(225, 92, 69, 0.32) 38%, transparent 72%);
+  animation: battle-impact-cover 360ms ease-out both;
+}
+
+.board-unit--heal::before,
+.board-unit--buff::before {
+  border: 2px solid rgba(126, 211, 177, 0.75);
+  box-shadow: inset 0 0 24px rgba(126, 211, 177, 0.32);
+  animation: battle-impact-cover 440ms ease-out both;
+}
+
+.board-unit--shield::before {
+  background:
+    linear-gradient(35deg, transparent 42%, rgba(176, 235, 255, 0.85) 44% 47%, transparent 49%),
+    linear-gradient(-45deg, transparent 48%, rgba(176, 235, 255, 0.7) 50% 53%, transparent 55%);
+  animation: battle-impact-cover 430ms ease-out both;
+}
+
 .board-unit__art {
   position: relative;
   display: grid;
@@ -2227,6 +2693,7 @@ button.hero-core {
 
 .hand-card {
   width: min(118px, 12vw);
+  animation: battle-hand-arrive 360ms ease-out backwards;
   transform-origin: bottom center;
   transition: 160ms ease;
 }
@@ -2239,6 +2706,19 @@ button.hero-core {
 .hand-card--disabled {
   filter: grayscale(0.8);
   opacity: 0.45;
+}
+
+.hand-card--selected {
+  z-index: 5;
+  transform: translateY(-15px) scale(1.045);
+}
+
+.hand-card--selected .game-card {
+  border-color: rgba(255, 148, 104, 0.72);
+  box-shadow:
+    0 0 0 2px rgba(228, 109, 63, 0.16),
+    0 0 28px rgba(228, 109, 63, 0.26);
+  animation: battle-card-charge 1.15s ease-in-out infinite;
 }
 
 .hand-card .game-card {
@@ -2352,9 +2832,19 @@ button.hero-core {
 
 .button--end-turn {
   min-height: 58px;
+  overflow: hidden;
   border-radius: 0;
   color: #fff1e2;
   background: linear-gradient(145deg, #a8462a, #d9653b);
+}
+
+.button--end-turn:not(:disabled) {
+  animation: battle-end-turn-glow 2.2s ease-in-out infinite;
+}
+
+.button--end-turn:not(:disabled):hover {
+  filter: brightness(1.12);
+  box-shadow: 0 -8px 30px rgba(228, 109, 63, 0.2);
 }
 
 .battle-result {
@@ -2363,6 +2853,7 @@ button.hero-core {
   border: 1px solid var(--line-strong);
   border-radius: 13px;
   text-align: center;
+  animation: battle-result-enter 440ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 .battle-result--win {
@@ -2384,6 +2875,14 @@ button.hero-core {
   border: 1px solid var(--line-strong);
   border-radius: 50%;
   color: var(--ember-bright);
+}
+
+.battle-result--win .battle-result__sigil {
+  animation: battle-victory-sigil 1.05s ease-out both;
+}
+
+.battle-result--loss .battle-result__sigil {
+  animation: battle-defeat-sigil 620ms ease-out both;
 }
 
 .battle-result small {
@@ -2813,6 +3312,300 @@ button.hero-core {
   }
 }
 
+@keyframes battle-screen-flash {
+  0% {
+    opacity: 0;
+  }
+  18% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes battle-victory-wash {
+  0% {
+    opacity: 0;
+  }
+  35% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.18;
+  }
+}
+
+@keyframes battle-defeat-wash {
+  0% {
+    opacity: 0;
+  }
+  40% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.34;
+  }
+}
+
+@keyframes battle-scan-line {
+  0% {
+    top: 8%;
+    opacity: 0;
+  }
+  18% {
+    opacity: 1;
+  }
+  100% {
+    top: 92%;
+    opacity: 0;
+  }
+}
+
+@keyframes battle-ring-expand {
+  0% {
+    opacity: 0;
+    transform: scale(0.32);
+  }
+  28% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2.5);
+  }
+}
+
+@keyframes battle-slash {
+  0% {
+    opacity: 0;
+    transform: rotate(-20deg) scaleX(0);
+  }
+  34% {
+    opacity: 1;
+    transform: rotate(-20deg) scaleX(1);
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(-20deg) scaleX(1.08);
+  }
+}
+
+@keyframes battle-impact-ring {
+  0% {
+    opacity: 0;
+    transform: scale(0.18);
+  }
+  24% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.85);
+  }
+}
+
+@keyframes battle-particle-burst {
+  0% {
+    opacity: 0;
+    transform: rotate(var(--particle-angle)) translateY(-12px) scale(0.4);
+  }
+  26% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--particle-angle)) translateY(-108px) scale(0.8);
+  }
+}
+
+@keyframes battle-banner-enter {
+  0% {
+    opacity: 0;
+    filter: blur(8px);
+    transform: translate(-50%, -50%) scaleX(0.66);
+  }
+  22% {
+    opacity: 1;
+    filter: blur(0);
+  }
+  72% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scaleX(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -58%) scaleX(1.03);
+  }
+}
+
+@keyframes battle-number-rise {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -20%) scale(0.65);
+  }
+  24% {
+    opacity: 1;
+    transform: translate(-50%, -72%) scale(1.22);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -155%) scale(0.92);
+  }
+}
+
+@keyframes battle-vignette-pulse {
+  0% {
+    opacity: 0;
+    transform: scale(0.82);
+  }
+  32% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.12);
+  }
+}
+
+@keyframes battle-turn-chip {
+  0% {
+    opacity: 0;
+    transform: translateY(-7px) scale(0.9);
+  }
+  65% {
+    transform: translateY(1px) scale(1.04);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes battle-hit-shake {
+  20% {
+    transform: translateX(-4px) rotate(-0.7deg);
+  }
+  42% {
+    transform: translateX(4px) rotate(0.7deg);
+  }
+  64% {
+    transform: translateX(-2px);
+  }
+}
+
+@keyframes battle-heal-pulse {
+  40% {
+    filter: brightness(1.22);
+    transform: translateY(-3px) scale(1.055);
+    box-shadow: 0 0 30px rgba(126, 211, 177, 0.38);
+  }
+}
+
+@keyframes battle-shield-break {
+  30% {
+    filter: brightness(1.55);
+    transform: scale(1.045);
+  }
+  58% {
+    transform: translateX(3px) rotate(0.6deg);
+  }
+}
+
+@keyframes battle-impact-cover {
+  0% {
+    opacity: 0;
+    transform: scale(0.65);
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.25);
+  }
+}
+
+@keyframes battle-unit-summon {
+  0% {
+    opacity: 0;
+    filter: brightness(2);
+    transform: translateY(28px) scale(0.62);
+  }
+  68% {
+    opacity: 1;
+    transform: translateY(-5px) scale(1.07);
+  }
+  100% {
+    filter: none;
+    transform: none;
+  }
+}
+
+@keyframes battle-lunge-player {
+  42% {
+    filter: brightness(1.2);
+    transform: translateY(calc(-1 * var(--battle-lunge))) scale(1.06);
+  }
+}
+
+@keyframes battle-lunge-enemy {
+  42% {
+    filter: brightness(1.2);
+    transform: translateY(var(--battle-lunge)) scale(1.06);
+  }
+}
+
+@keyframes battle-hand-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(18px) rotate(-2deg);
+  }
+}
+
+@keyframes battle-card-charge {
+  50% {
+    box-shadow:
+      0 0 0 2px rgba(228, 109, 63, 0.2),
+      0 0 36px rgba(228, 109, 63, 0.38);
+  }
+}
+
+@keyframes battle-end-turn-glow {
+  50% {
+    box-shadow:
+      inset 0 0 18px rgba(255, 226, 180, 0.12),
+      0 -5px 24px rgba(228, 109, 63, 0.14);
+  }
+}
+
+@keyframes battle-result-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.95);
+  }
+}
+
+@keyframes battle-victory-sigil {
+  45% {
+    color: #c8f2ce;
+    transform: scale(1.18);
+    box-shadow: 0 0 42px rgba(126, 211, 177, 0.5);
+  }
+}
+
+@keyframes battle-defeat-sigil {
+  35% {
+    transform: translateX(-4px) rotate(-4deg);
+  }
+  65% {
+    transform: translateX(3px) rotate(3deg);
+  }
+  100% {
+    opacity: 0.65;
+  }
+}
+
 @media (max-width: 1180px) {
   :root {
     --sidebar: 220px;
@@ -3040,6 +3833,34 @@ button.hero-core {
 
   .battlefield {
     min-height: 590px;
+    --battle-lunge: 12px;
+  }
+
+  .battle-room__top {
+    align-items: flex-start;
+  }
+
+  .battle-room__status {
+    gap: 5px;
+  }
+
+  .sound-toggle--compact {
+    width: 34px;
+    padding: 0;
+    font-size: 0;
+  }
+
+  .sound-toggle--compact > span {
+    font-size: 10px;
+  }
+
+  .battle-fx__banner {
+    min-width: 180px;
+    padding-inline: 16px;
+  }
+
+  .battle-fx__number {
+    font-size: 24px;
   }
 
   .battlefield__enemy-zone,
@@ -3105,5 +3926,64 @@ button.hero-core {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
+  }
+
+  .battle-fx__scan,
+  .battle-fx__slash,
+  .battle-fx__particles,
+  .battle-fx__ring,
+  .battle-fx__impact {
+    display: none;
+  }
+
+  .battle-fx__banner,
+  .battle-fx__number {
+    opacity: 1;
+    animation: none !important;
+  }
+
+  .battle-fx__vignette {
+    opacity: 0.12;
+    animation: none !important;
+  }
+
+  .board-unit--summon,
+  .board-unit--attack,
+  .board-unit--damage,
+  .board-unit--heal,
+  .board-unit--buff,
+  .board-unit--shield,
+  .hero-core--damage,
+  .hero-core--heal,
+  .hero-core--shield,
+  .battle-result,
+  .battle-result__sigil {
+    filter: none !important;
+    animation: none !important;
+    transform: none !important;
+  }
+
+  .board-unit--damage,
+  .hero-core--damage {
+    outline: 2px solid var(--danger);
+  }
+
+  .board-unit--heal,
+  .board-unit--buff,
+  .hero-core--heal {
+    outline: 2px solid var(--green);
+  }
+}
+
+@media (forced-colors: active) {
+  .battlefield__fx-layer {
+    display: none;
+  }
+
+  .board-unit--selected,
+  .board-unit--targetable,
+  .board-unit--damage,
+  .hero-core--damage {
+    outline: 2px solid Highlight;
   }
 }

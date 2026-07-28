@@ -15,17 +15,28 @@ import {
   DEFAULT_OPPONENT_DECK,
   DEFAULT_STARTER_DECK,
   applyCommand,
+  battleEventsToEffects,
   createMatch,
   runAiTurn,
   validateDeck,
+  type BattleEffectKind,
   type BattleCommand,
   type CardDefinition,
   type CardTargetRule,
   type MatchState,
+  type BattleVisualEffect,
 } from "@/lib/game";
 
 type SectionKey = "overview" | "collection" | "deck" | "battle" | "operations";
 type BattleTarget = { kind: "unit" | "hero"; id?: string };
+type BattleHeroEffect = "damage" | "heal" | "shield";
+type BattleUnitEffect =
+  | "summon"
+  | "attack"
+  | "damage"
+  | "heal"
+  | "buff"
+  | "shield";
 
 type CatalogCard = {
   id: string;
@@ -709,6 +720,7 @@ function CardTile({
   compact = false,
   action,
   actionLabel,
+  disabled = false,
 }: {
   card: CatalogCard;
   owned?: number;
@@ -716,6 +728,7 @@ function CardTile({
   compact?: boolean;
   action?: () => void;
   actionLabel?: string;
+  disabled?: boolean;
 }) {
   const content = (
     <>
@@ -760,6 +773,7 @@ function CardTile({
         className={`game-card ${compact ? "game-card--compact" : ""}`}
         type="button"
         onClick={action}
+        disabled={disabled}
         aria-label={actionLabel ?? card.name}
       >
         {content}
@@ -815,6 +829,254 @@ function SectionHeading({
   );
 }
 
+type BattleSoundCue = BattleEffectKind | "select" | "error";
+
+type BattleTone = {
+  frequency: number;
+  endFrequency?: number;
+  duration: number;
+  delay?: number;
+  gain: number;
+  wave?: OscillatorType;
+};
+
+const BATTLE_TONES: Record<BattleSoundCue, readonly BattleTone[]> = {
+  start: [
+    { frequency: 120, endFrequency: 180, duration: 0.28, gain: 0.045, wave: "sine" },
+    { frequency: 360, endFrequency: 720, duration: 0.24, delay: 0.06, gain: 0.025 },
+  ],
+  draw: [
+    { frequency: 520, endFrequency: 780, duration: 0.12, gain: 0.026, wave: "triangle" },
+  ],
+  card: [
+    { frequency: 280, endFrequency: 540, duration: 0.18, gain: 0.035, wave: "triangle" },
+    { frequency: 760, endFrequency: 920, duration: 0.1, delay: 0.08, gain: 0.018 },
+  ],
+  summon: [
+    { frequency: 92, endFrequency: 150, duration: 0.34, gain: 0.052, wave: "sine" },
+    { frequency: 310, endFrequency: 620, duration: 0.24, delay: 0.05, gain: 0.028, wave: "triangle" },
+  ],
+  attack: [
+    { frequency: 540, endFrequency: 130, duration: 0.17, gain: 0.043, wave: "sawtooth" },
+    { frequency: 88, endFrequency: 54, duration: 0.24, delay: 0.09, gain: 0.054, wave: "sine" },
+  ],
+  damage: [
+    { frequency: 115, endFrequency: 48, duration: 0.18, gain: 0.06, wave: "square" },
+    { frequency: 72, duration: 0.25, gain: 0.045, wave: "sine" },
+  ],
+  heal: [
+    { frequency: 392, endFrequency: 587, duration: 0.28, gain: 0.028, wave: "sine" },
+    { frequency: 659, endFrequency: 880, duration: 0.22, delay: 0.08, gain: 0.02 },
+  ],
+  buff: [
+    { frequency: 330, endFrequency: 660, duration: 0.22, gain: 0.03, wave: "triangle" },
+    { frequency: 495, endFrequency: 990, duration: 0.2, delay: 0.06, gain: 0.018 },
+  ],
+  shield: [
+    { frequency: 920, endFrequency: 210, duration: 0.2, gain: 0.032, wave: "square" },
+    { frequency: 1380, endFrequency: 420, duration: 0.12, delay: 0.025, gain: 0.014 },
+  ],
+  destroy: [
+    { frequency: 170, endFrequency: 45, duration: 0.36, gain: 0.052, wave: "sawtooth" },
+    { frequency: 68, endFrequency: 38, duration: 0.44, delay: 0.06, gain: 0.04 },
+  ],
+  turn: [
+    { frequency: 392, endFrequency: 523, duration: 0.16, gain: 0.026, wave: "triangle" },
+    { frequency: 587, endFrequency: 784, duration: 0.18, delay: 0.1, gain: 0.024 },
+  ],
+  win: [
+    { frequency: 261.63, endFrequency: 523.25, duration: 0.46, gain: 0.035 },
+    { frequency: 329.63, endFrequency: 659.25, duration: 0.42, delay: 0.08, gain: 0.03 },
+    { frequency: 392, endFrequency: 783.99, duration: 0.48, delay: 0.16, gain: 0.028 },
+  ],
+  loss: [
+    { frequency: 220, endFrequency: 110, duration: 0.48, gain: 0.035, wave: "triangle" },
+    { frequency: 164.81, endFrequency: 82.41, duration: 0.52, delay: 0.08, gain: 0.032 },
+  ],
+  select: [
+    { frequency: 520, endFrequency: 680, duration: 0.07, gain: 0.018, wave: "sine" },
+  ],
+  error: [
+    { frequency: 150, endFrequency: 118, duration: 0.13, gain: 0.035, wave: "square" },
+  ],
+};
+
+function scheduleBattleCue(
+  context: AudioContext,
+  master: GainNode,
+  cue: BattleSoundCue,
+) {
+  const now = context.currentTime + 0.012;
+  for (const tone of BATTLE_TONES[cue]) {
+    const oscillator = context.createOscillator();
+    const envelope = context.createGain();
+    const start = now + (tone.delay ?? 0);
+    const end = start + tone.duration;
+
+    oscillator.type = tone.wave ?? "sine";
+    oscillator.frequency.setValueAtTime(tone.frequency, start);
+    if (tone.endFrequency) {
+      oscillator.frequency.exponentialRampToValueAtTime(tone.endFrequency, end);
+    }
+    envelope.gain.setValueAtTime(0.0001, start);
+    envelope.gain.exponentialRampToValueAtTime(tone.gain, start + 0.012);
+    envelope.gain.exponentialRampToValueAtTime(0.0001, end);
+    oscillator.connect(envelope);
+    envelope.connect(master);
+    oscillator.start(start);
+    oscillator.stop(end + 0.02);
+    oscillator.addEventListener(
+      "ended",
+      () => {
+        oscillator.disconnect();
+        envelope.disconnect();
+      },
+      { once: true },
+    );
+  }
+}
+
+function useBattleAudio() {
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const soundEnabledRef = useRef(true);
+  const contextRef = useRef<AudioContext | null>(null);
+  const masterGainRef = useRef<GainNode | null>(null);
+  const resumePromiseRef = useRef<Promise<void> | null>(null);
+  const pendingCueRef = useRef<BattleSoundCue | null>(null);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      try {
+        const stored = window.localStorage.getItem("astra-battle-sound");
+        if (stored === "off") {
+          soundEnabledRef.current = false;
+          setSoundEnabled(false);
+        }
+      } catch {
+        // Sound preferences are optional; private browsing may disable storage.
+      }
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  const resumeAudio = useCallback((context: AudioContext) => {
+    if (context.state === "running") return Promise.resolve();
+    if (resumePromiseRef.current) return resumePromiseRef.current;
+
+    const promise = context.resume().catch(() => {
+      // Browsers may keep audio suspended until another trusted gesture.
+    });
+    resumePromiseRef.current = promise;
+    void promise.finally(() => {
+      if (resumePromiseRef.current === promise) {
+        resumePromiseRef.current = null;
+      }
+    });
+    return promise;
+  }, []);
+
+  const unlockAudio = useCallback(() => {
+    if (typeof window === "undefined" || !soundEnabledRef.current) return null;
+    const AudioContextConstructor =
+      window.AudioContext ??
+      (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AudioContextConstructor) return null;
+
+    try {
+      let context = contextRef.current;
+      if (!context || context.state === "closed") {
+        context = new AudioContextConstructor();
+        const master = context.createGain();
+        master.gain.value = 0.42;
+        master.connect(context.destination);
+        contextRef.current = context;
+        masterGainRef.current = master;
+      }
+      if (context.state === "suspended") {
+        void resumeAudio(context);
+      }
+      return context;
+    } catch {
+      return null;
+    }
+  }, [resumeAudio]);
+
+  const playSound = useCallback(
+    (cue: BattleSoundCue) => {
+      if (!soundEnabledRef.current) return;
+      const context = unlockAudio();
+      const master = masterGainRef.current;
+      if (!context || !master) return;
+      if (context.state === "running") {
+        try {
+          scheduleBattleCue(context, master, cue);
+        } catch {
+          // Audio feedback must never block a battle command.
+        }
+        return;
+      }
+      pendingCueRef.current = cue;
+      void resumeAudio(context)
+        .then(() => {
+          const pendingCue = pendingCueRef.current;
+          pendingCueRef.current = null;
+          if (
+            pendingCue &&
+            soundEnabledRef.current &&
+            contextRef.current === context &&
+            masterGainRef.current === master &&
+            context.state === "running"
+          ) {
+            scheduleBattleCue(context, master, pendingCue);
+          }
+        })
+        .catch(() => {
+          pendingCueRef.current = null;
+        });
+    },
+    [resumeAudio, unlockAudio],
+  );
+
+  const toggleSound = useCallback(() => {
+    const next = !soundEnabledRef.current;
+    soundEnabledRef.current = next;
+    setSoundEnabled(next);
+    try {
+      window.localStorage.setItem("astra-battle-sound", next ? "on" : "off");
+    } catch {
+      // Preference persistence is a convenience, not a battle dependency.
+    }
+
+    const context = next ? unlockAudio() : contextRef.current;
+    const master = masterGainRef.current;
+    if (context && master) {
+      master.gain.cancelScheduledValues(context.currentTime);
+      master.gain.setTargetAtTime(next ? 0.42 : 0.0001, context.currentTime, 0.012);
+    }
+    if (next) {
+      playSound("select");
+    }
+  }, [playSound, unlockAudio]);
+
+  useEffect(
+    () => () => {
+      const context = contextRef.current;
+      contextRef.current = null;
+      masterGainRef.current = null;
+      pendingCueRef.current = null;
+      resumePromiseRef.current = null;
+      if (context && context.state !== "closed") {
+        void context.close().catch(() => {
+          // Audio cleanup must never affect the game surface.
+        });
+      }
+    },
+    [],
+  );
+
+  return { soundEnabled, unlockAudio, playSound, toggleSound };
+}
+
 export function GameApp({
   identity,
 }: {
@@ -844,7 +1106,104 @@ export function GameApp({
   const [selectedAttacker, setSelectedAttacker] = useState<string | null>(null);
   const [pendingCard, setPendingCard] = useState<BattleSide["hand"][number] | null>(null);
   const [battleMessage, setBattleMessage] = useState("准备部署你的战术卡组。");
+  const [battleEffect, setBattleEffect] = useState<BattleVisualEffect | null>(null);
+  const [battleEffectsLocked, setBattleEffectsLocked] = useState(false);
   const recordedBattleRef = useRef<string | null>(null);
+  const sectionRef = useRef<SectionKey>("overview");
+  const battleEffectQueueRef = useRef<BattleVisualEffect[]>([]);
+  const battleEffectTimerRef = useRef<number | null>(null);
+  const battleEffectDrainingRef = useRef(false);
+  const battleEffectLockRef = useRef(false);
+  const battleEffectSequenceRef = useRef(0);
+  const aiTurnTimerRef = useRef<number | null>(null);
+  const { soundEnabled, unlockAudio, playSound, toggleSound } = useBattleAudio();
+
+  const stopBattleEffects = useCallback(() => {
+    if (battleEffectTimerRef.current !== null) {
+      window.clearTimeout(battleEffectTimerRef.current);
+      battleEffectTimerRef.current = null;
+    }
+    battleEffectQueueRef.current = [];
+    battleEffectDrainingRef.current = false;
+    battleEffectLockRef.current = false;
+    setBattleEffect(null);
+    setBattleEffectsLocked(false);
+  }, []);
+
+  const drainBattleEffects = useCallback(() => {
+    if (battleEffectDrainingRef.current) return;
+    battleEffectDrainingRef.current = true;
+
+    const playNext = () => {
+      const next = battleEffectQueueRef.current.shift();
+      if (!next) {
+        battleEffectDrainingRef.current = false;
+        battleEffectTimerRef.current = null;
+        if (battleEffectLockRef.current) {
+          battleEffectLockRef.current = false;
+          setBattleEffectsLocked(false);
+        }
+        setBattleEffect(null);
+        return;
+      }
+
+      setBattleEffect(next);
+      playSound(next.kind);
+      battleEffectTimerRef.current = window.setTimeout(playNext, 480);
+    };
+
+    playNext();
+  }, [playSound]);
+
+  const showBattleEffects = useCallback(
+    (
+      effects: readonly BattleVisualEffect[],
+      options: { lock?: boolean; maxEffects?: number; reset?: boolean } = {},
+    ) => {
+      if (options.reset) {
+        stopBattleEffects();
+      }
+      const maxEffects = options.maxEffects ?? 8;
+      const playlist =
+        effects.length <= maxEffects
+          ? [...effects]
+          : [
+              ...effects.slice(0, Math.max(1, maxEffects - 2)),
+              ...effects.slice(-2),
+            ];
+      const capacity = Math.max(0, 12 - battleEffectQueueRef.current.length);
+      const incoming = playlist.slice(0, capacity);
+      const terminalEffect = playlist.at(-1);
+      if (
+        capacity > 0 &&
+        terminalEffect &&
+        (terminalEffect.kind === "win" || terminalEffect.kind === "loss") &&
+        !incoming.some((effect) => effect.id === terminalEffect.id)
+      ) {
+        incoming[incoming.length - 1] = terminalEffect;
+      }
+      battleEffectQueueRef.current.push(...incoming);
+
+      if (options.lock) {
+        battleEffectLockRef.current = true;
+        setBattleEffectsLocked(true);
+      }
+      drainBattleEffects();
+    },
+    [drainBattleEffects, stopBattleEffects],
+  );
+
+  useEffect(
+    () => () => {
+      if (battleEffectTimerRef.current !== null) {
+        window.clearTimeout(battleEffectTimerRef.current);
+      }
+      if (aiTurnTimerRef.current !== null) {
+        window.clearTimeout(aiTurnTimerRef.current);
+      }
+    },
+    [],
+  );
 
   const activeDeck = useMemo(
     () =>
@@ -991,6 +1350,10 @@ export function GameApp({
   const battleView = useMemo(() => battleFromRaw(battle), [battle]);
 
   const switchSection = (next: SectionKey) => {
+    sectionRef.current = next;
+    if (next !== "battle") {
+      stopBattleEffects();
+    }
     setSection(next);
     setSidebarOpen(false);
   };
@@ -1079,21 +1442,46 @@ export function GameApp({
 
   const startBattle = () => {
     if (!deckValidation.valid) {
-      setSection("deck");
+      switchSection("deck");
       setNotice({ tone: "warning", text: `无法部署：${deckValidation.errors[0]}` });
       return;
     }
     try {
+      if (aiTurnTimerRef.current !== null) {
+        window.clearTimeout(aiTurnTimerRef.current);
+        aiTurnTimerRef.current = null;
+      }
+      unlockAudio();
       const next = createMatch({
         decks: [[...deckIds], [...DEFAULT_OPPONENT_DECK]],
-        seed: Date.now(),
       });
       setBattle(unwrapTransition(next));
       setSelectedAttacker(null);
       setPendingCard(null);
       setBattleMessage("战术链路建立。由你先手，选择一张手牌部署。");
       recordedBattleRef.current = null;
+      sectionRef.current = "battle";
       setSection("battle");
+      battleEffectSequenceRef.current += 1;
+      const effectId = battleEffectSequenceRef.current;
+      showBattleEffects(
+        [
+          {
+            id: `start-${effectId}`,
+            kind: "start",
+            side: "player",
+            label: "战术链路建立",
+          },
+          {
+            id: `turn-${effectId}`,
+            kind: "turn",
+            side: "player",
+            targetSide: "player",
+            label: "你的回合",
+          },
+        ],
+        { reset: true },
+      );
     } catch (error) {
       setNotice({
         tone: "warning",
@@ -1105,21 +1493,32 @@ export function GameApp({
   const issueCommand = (command: BattleCommand) => {
     if (!battle) return null;
     try {
+      const previous = battle as MatchState;
+      const previousEventCount = previous.events.length;
       const result = applyCommand(battle as MatchState, command);
       if (!result.accepted) {
         setBattleMessage(result.error?.message ?? "该战术指令当前不可执行。");
+        playSound("error");
         return null;
       }
-      const next = unwrapTransition(result);
+      const next = unwrapTransition(result) as MatchState;
       setBattle(next);
+      showBattleEffects(
+        battleEventsToEffects(next.events.slice(previousEventCount)),
+      );
       return next;
     } catch (error) {
       setBattleMessage(error instanceof Error ? error.message : "该战术指令当前不可执行。");
+      playSound("error");
       return null;
     }
   };
 
   const playCard = (handCard: BattleSide["hand"][number]) => {
+    if (battleEffectLockRef.current) {
+      setBattleMessage("战况回放中，请等待行动窗口稳定。");
+      return;
+    }
     if (!battleView || battleView.status !== "playing" || battleView.currentPlayer !== "player") {
       setBattleMessage("当前不是你的行动窗口。");
       return;
@@ -1132,6 +1531,7 @@ export function GameApp({
     if (card && card.target !== "none") {
       setPendingCard(handCard);
       setSelectedAttacker(null);
+      playSound("select");
       setBattleMessage(
         card.target.startsWith("enemy")
           ? `请选择「${card.name}」的敌方目标。`
@@ -1150,6 +1550,7 @@ export function GameApp({
   };
 
   const playCardAtTarget = (target: { kind: "unit" | "hero"; side: "player" | "ai"; id?: string }) => {
+    if (battleEffectLockRef.current) return;
     if (!pendingCard) return;
     const card = CARD_BY_ID.get(pendingCard.cardId);
     const next = issueCommand({
@@ -1168,6 +1569,7 @@ export function GameApp({
   };
 
   const attackTarget = (target: BattleTarget) => {
+    if (battleEffectLockRef.current) return;
     if (!battleView || !selectedAttacker) return;
     const next = issueCommand({
       type: "attack",
@@ -1186,7 +1588,12 @@ export function GameApp({
   };
 
   const endTurn = () => {
+    if (battleEffectLockRef.current) return;
     if (!battle || !battleView || battleView.currentPlayer !== "player") return;
+    if (aiTurnTimerRef.current !== null) {
+      window.clearTimeout(aiTurnTimerRef.current);
+      aiTurnTimerRef.current = null;
+    }
     const ended = issueCommand({
       type: "end-turn",
       player: 0,
@@ -1195,13 +1602,31 @@ export function GameApp({
     setSelectedAttacker(null);
     setPendingCard(null);
     setBattleMessage("演算体正在规划反制路线…");
-    try {
-      const result = runAiTurn(ended as MatchState, 1);
-      setBattle(unwrapTransition(result));
-      setBattleMessage("敌方行动已结束，新的能量窗口已开启。");
-    } catch (error) {
-      setBattleMessage(error instanceof Error ? error.message : "AI 回合演算异常。");
-    }
+    if ((ended as MatchState).phase === "game-over") return;
+
+    aiTurnTimerRef.current = window.setTimeout(() => {
+      aiTurnTimerRef.current = null;
+      try {
+        const beforeAiEvents = (ended as MatchState).events.length;
+        const result = runAiTurn(ended as MatchState, 1);
+        const next = unwrapTransition(result) as MatchState;
+        setBattle(next);
+        if (sectionRef.current === "battle") {
+          showBattleEffects(
+            battleEventsToEffects(next.events.slice(beforeAiEvents)),
+            { lock: true, maxEffects: 5 },
+          );
+        }
+        setBattleMessage(
+          next.phase === "game-over"
+            ? "敌方行动完成，正在结算演算结果。"
+            : "敌方行动已结束，新的能量窗口已开启。",
+        );
+      } catch (error) {
+        setBattleMessage(error instanceof Error ? error.message : "AI 回合演算异常。");
+        playSound("error");
+      }
+    }, 620);
   };
 
   useEffect(() => {
@@ -1431,20 +1856,25 @@ export function GameApp({
                 <BattleSection
                   battle={battleView}
                   message={battleMessage}
+                  effect={battleEffect}
                   selectedAttacker={selectedAttacker}
                   pendingCard={pendingCard}
                   busy={apiBusy === "record_match"}
+                  effectsLocked={battleEffectsLocked}
+                  soundEnabled={soundEnabled}
                   onStart={startBattle}
                   onPlayCard={playCard}
                   onSelectAttacker={(id) => {
                     setPendingCard(null);
                     setSelectedAttacker((current) => (current === id ? null : id));
+                    playSound("select");
                   }}
                   onCardTarget={playCardAtTarget}
                   onCancelTarget={() => setPendingCard(null)}
                   onAttack={attackTarget}
                   onEndTurn={endTurn}
                   onOpenDeck={() => switchSection("deck")}
+                  onToggleSound={toggleSound}
                 />
               )}
               {section === "operations" && (
@@ -1991,6 +2421,7 @@ function HeroCore({
   canTarget,
   onTarget,
   targetLabel,
+  effect,
 }: {
   side: BattleSide;
   active: boolean;
@@ -1998,7 +2429,9 @@ function HeroCore({
   canTarget?: boolean;
   onTarget?: () => void;
   targetLabel?: string;
+  effect?: BattleHeroEffect;
 }) {
+  const effectClass = effect ? `hero-core--${effect}` : "";
   const core = (
     <>
       <span className="hero-core__portrait"><Icon name={enemy ? "bot" : "user"} size={30} /></span>
@@ -2013,7 +2446,7 @@ function HeroCore({
   if (canTarget && onTarget) {
     return (
       <button
-        className={`hero-core ${enemy ? "hero-core--enemy" : ""} hero-core--targetable ${active ? "hero-core--active" : ""}`}
+        className={`hero-core ${enemy ? "hero-core--enemy" : ""} hero-core--targetable ${active ? "hero-core--active" : ""} ${effectClass}`}
         type="button"
         onClick={onTarget}
         aria-label={targetLabel ?? `选择${enemy ? "敌方" : "我方"}核心，剩余 ${side.health} 点生命`}
@@ -2022,7 +2455,7 @@ function HeroCore({
       </button>
     );
   }
-  return <div className={`hero-core ${enemy ? "hero-core--enemy" : ""} ${active ? "hero-core--active" : ""}`}>{core}</div>;
+  return <div className={`hero-core ${enemy ? "hero-core--enemy" : ""} ${active ? "hero-core--active" : ""} ${effectClass}`}>{core}</div>;
 }
 
 function BoardUnit({
@@ -2031,12 +2464,14 @@ function BoardUnit({
   targetable,
   onSelect,
   onTarget,
+  effect,
 }: {
   unit: BattleUnit;
   selected?: boolean;
   targetable?: boolean;
   onSelect?: () => void;
   onTarget?: () => void;
+  effect?: BattleUnitEffect;
 }) {
   const card = CARD_BY_ID.get(unit.cardId);
   const visualCard: CatalogCard =
@@ -2055,7 +2490,7 @@ function BoardUnit({
     };
   return (
     <button
-      className={`board-unit ${selected ? "board-unit--selected" : ""} ${targetable ? "board-unit--targetable" : ""} ${!unit.canAttack && onSelect ? "board-unit--exhausted" : ""}`}
+      className={`board-unit ${selected ? "board-unit--selected" : ""} ${targetable ? "board-unit--targetable" : ""} ${!unit.canAttack && onSelect ? "board-unit--exhausted" : ""} ${effect ? `board-unit--${effect}` : ""}`}
       type="button"
       onClick={targetable ? onTarget : onSelect}
       disabled={!targetable && (!onSelect || !unit.canAttack)}
@@ -2073,12 +2508,45 @@ function BoardUnit({
   );
 }
 
+function BattleEffectLayer({ effect }: { effect: BattleVisualEffect }) {
+  const cardName = effect.cardId ? CARD_BY_ID.get(effect.cardId)?.name : undefined;
+  const number =
+    typeof effect.amount === "number" &&
+    (effect.kind === "damage" || effect.kind === "heal")
+      ? `${effect.kind === "damage" ? "−" : "+"}${effect.amount}`
+      : null;
+
+  return (
+    <div
+      className={`battlefield__fx-layer battle-fx--${effect.kind} battle-fx--${effect.targetSide ?? effect.side ?? "neutral"}`}
+      aria-hidden="true"
+    >
+      <span className="battle-fx__vignette" />
+      <span className="battle-fx__scan" />
+      <span className="battle-fx__ring" />
+      <span className="battle-fx__slash" />
+      <span className="battle-fx__impact" />
+      <span className="battle-fx__particles">
+        {Array.from({ length: 8 }, (_, index) => <i key={index} />)}
+      </span>
+      <span className="battle-fx__banner">
+        <small>{cardName ?? "ASTRA COMBAT LINK"}</small>
+        <strong>{effect.label}</strong>
+      </span>
+      {number && <span className="battle-fx__number">{number}</span>}
+    </div>
+  );
+}
+
 function BattleSection({
   battle,
   message,
+  effect,
   selectedAttacker,
   pendingCard,
   busy,
+  effectsLocked,
+  soundEnabled,
   onStart,
   onPlayCard,
   onSelectAttacker,
@@ -2087,12 +2555,16 @@ function BattleSection({
   onAttack,
   onEndTurn,
   onOpenDeck,
+  onToggleSound,
 }: {
   battle: BattleView | null;
   message: string;
+  effect: BattleVisualEffect | null;
   selectedAttacker: string | null;
   pendingCard: BattleSide["hand"][number] | null;
   busy: boolean;
+  effectsLocked: boolean;
+  soundEnabled: boolean;
   onStart: () => void;
   onPlayCard: (card: BattleSide["hand"][number]) => void;
   onSelectAttacker: (id: string) => void;
@@ -2101,6 +2573,7 @@ function BattleSection({
   onAttack: (target: BattleTarget) => void;
   onEndTurn: () => void;
   onOpenDeck: () => void;
+  onToggleSound: () => void;
 }) {
   if (!battle) {
     return (
@@ -2126,6 +2599,16 @@ function BattleSection({
           </div>
           <div className="battle-lobby__actions">
             <button className="button button--ghost" type="button" onClick={onOpenDeck}>调整卡组</button>
+            <button
+              className="sound-toggle"
+              type="button"
+              onClick={onToggleSound}
+              aria-pressed={soundEnabled}
+              aria-label={soundEnabled ? "关闭战斗音效" : "开启战斗音效"}
+            >
+              <span aria-hidden="true">{soundEnabled ? "♪" : "×"}</span>
+              {soundEnabled ? "音效开启" : "音效静音"}
+            </button>
             <button className="button button--primary button--large" type="button" onClick={onStart}><Icon name="swords" />开始演算</button>
           </div>
         </div>
@@ -2134,6 +2617,7 @@ function BattleSection({
   }
 
   const playerTurn = battle.currentPlayer === "player" && battle.status === "playing";
+  const playerCanAct = playerTurn && !effectsLocked;
   const pendingDefinition = pendingCard ? CARD_BY_ID.get(pendingCard.cardId) : undefined;
   const targetRule = pendingDefinition?.target ?? "none";
   const cardCanTarget = (side: "player" | "ai", kind: "unit" | "hero") => {
@@ -2145,6 +2629,31 @@ function BattleSection({
     if (targetRule === "friendly-unit") return side === "player" && kind === "unit";
     return false;
   };
+  const effectForUnit = (unitId: string): BattleUnitEffect | undefined => {
+    if (!effect) return undefined;
+    if (effect.sourceId === unitId && (effect.kind === "summon" || effect.kind === "attack")) {
+      return effect.kind;
+    }
+    if (effect.targetId !== unitId) return undefined;
+    if (
+      effect.kind === "damage" ||
+      effect.kind === "heal" ||
+      effect.kind === "buff" ||
+      effect.kind === "shield"
+    ) {
+      return effect.kind;
+    }
+    return undefined;
+  };
+  const effectForHero = (side: "player" | "ai"): BattleHeroEffect | undefined => {
+    if (!effect || effect.targetKind !== "hero" || effect.targetSide !== side) {
+      return undefined;
+    }
+    if (effect.kind === "damage" || effect.kind === "heal" || effect.kind === "shield") {
+      return effect.kind;
+    }
+    return undefined;
+  };
   const enemyHeroTargetable = Boolean(selectedAttacker) || cardCanTarget("ai", "hero");
   const enemyUnitTargetable = Boolean(selectedAttacker) || cardCanTarget("ai", "unit");
   return (
@@ -2154,15 +2663,36 @@ function BattleSection({
           <span className="section-heading__eyebrow">LIVE SIMULATION · TURN {battle.turn}</span>
           <h1 id="battle-room-title">战术演算舱</h1>
         </div>
-        <div className={`turn-indicator ${playerTurn ? "turn-indicator--player" : ""}`}>
-          <span />
-          {battle.status === "finished" ? "演算结束" : playerTurn ? "你的回合" : "敌方回合"}
+        <div className="battle-room__status">
+          <button
+            className="sound-toggle sound-toggle--compact"
+            type="button"
+            onClick={onToggleSound}
+            aria-pressed={soundEnabled}
+            aria-label={soundEnabled ? "关闭战斗音效" : "开启战斗音效"}
+          >
+            <span aria-hidden="true">{soundEnabled ? "♪" : "×"}</span>
+            {soundEnabled ? "音效" : "静音"}
+          </button>
+          <div
+            className={`turn-indicator ${
+              battle.status === "finished"
+                ? "turn-indicator--finished"
+                : playerTurn
+                  ? "turn-indicator--player"
+                  : "turn-indicator--ai"
+            }`}
+          >
+            <span />
+            {battle.status === "finished" ? "演算结束" : playerTurn ? "你的回合" : "敌方回合"}
+          </div>
         </div>
       </header>
 
       <div className="battle-layout">
-        <div className="battlefield">
+        <div className={`battlefield ${effect ? `battlefield--fx-${effect.kind}` : ""}`}>
           <div className="battlefield__grid" aria-hidden="true" />
+          {effect && <BattleEffectLayer key={effect.id} effect={effect} />}
           <div className="battlefield__enemy-zone">
             <div className="battlefield__side-info">
               <HeroCore
@@ -2170,6 +2700,7 @@ function BattleSection({
                 enemy
                 active={battle.currentPlayer === "ai"}
                 canTarget={enemyHeroTargetable}
+                effect={effectForHero("ai")}
                 onTarget={() =>
                   pendingCard
                     ? onCardTarget({ kind: "hero", side: "ai" })
@@ -2195,6 +2726,7 @@ function BattleSection({
                   key={unit.id}
                   unit={unit}
                   targetable={enemyUnitTargetable}
+                  effect={effectForUnit(unit.id)}
                   onTarget={() =>
                     pendingCard
                       ? onCardTarget({ kind: "unit", side: "ai", id: unit.id })
@@ -2219,7 +2751,8 @@ function BattleSection({
                   unit={unit}
                   selected={selectedAttacker === unit.id}
                   targetable={cardCanTarget("player", "unit")}
-                  onSelect={pendingCard ? undefined : () => onSelectAttacker(unit.id)}
+                  effect={effectForUnit(unit.id)}
+                  onSelect={pendingCard || !playerCanAct ? undefined : () => onSelectAttacker(unit.id)}
                   onTarget={() => onCardTarget({ kind: "unit", side: "player", id: unit.id })}
                 />
               )) : <span className="board-row__empty">选择手牌，部署你的首个单位</span>}
@@ -2229,6 +2762,7 @@ function BattleSection({
                 side={battle.player}
                 active={playerTurn}
                 canTarget={cardCanTarget("player", "hero")}
+                effect={effectForHero("player")}
                 onTarget={() => onCardTarget({ kind: "hero", side: "player" })}
                 targetLabel={`以${pendingDefinition?.name ?? "卡牌"}选择我方核心`}
               />
@@ -2243,13 +2777,19 @@ function BattleSection({
               {battle.player.hand.map((handCard) => {
                 const card = CARD_BY_ID.get(handCard.cardId);
                 if (!card) return null;
-                const disabled = !playerTurn || card.cost > battle.player.mana;
+                const disabled = !playerCanAct || card.cost > battle.player.mana;
                 return (
                   <div
                     className={`hand-card ${disabled ? "hand-card--disabled" : ""} ${pendingCard?.instanceId === handCard.instanceId ? "hand-card--selected" : ""}`}
                     key={handCard.instanceId}
                   >
-                    <CardTile card={card} compact action={() => onPlayCard(handCard)} actionLabel={`使用${card.name}`} />
+                    <CardTile
+                      card={card}
+                      compact
+                      action={() => onPlayCard(handCard)}
+                      actionLabel={`使用${card.name}`}
+                      disabled={disabled}
+                    />
                   </div>
                 );
               })}
@@ -2295,8 +2835,8 @@ function BattleSection({
               <button className="button button--primary button--wide" type="button" onClick={onStart}>再次演算</button>
             </div>
           ) : (
-            <button className="button button--end-turn" type="button" disabled={!playerTurn} onClick={onEndTurn}>
-              <span>{playerTurn ? "结束回合" : "等待敌方"}</span>
+            <button className="button button--end-turn" type="button" disabled={!playerCanAct} onClick={onEndTurn}>
+              <span>{effectsLocked ? "战况回放" : playerTurn ? "结束回合" : "等待敌方"}</span>
               <Icon name="arrow" />
             </button>
           )}
