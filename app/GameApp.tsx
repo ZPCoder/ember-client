@@ -14,16 +14,23 @@ import {
   CARD_CATALOG,
   DEFAULT_OPPONENT_DECK,
   DEFAULT_STARTER_DECK,
+  KEYWORD_DEFINITIONS,
+  TRAIT_DEFINITIONS,
+  TRAIT_ORDER,
   applyCommand,
   battleEventsToEffects,
   createMatch,
+  getTraitStatuses,
   runAiTurn,
   validateDeck,
   type BattleEffectKind,
   type BattleCommand,
   type CardDefinition,
   type CardTargetRule,
+  type Keyword,
   type MatchState,
+  type SpellSchool,
+  type Trait,
   type BattleVisualEffect,
 } from "@/lib/game";
 
@@ -49,7 +56,9 @@ type CatalogCard = {
   attack?: number;
   health?: number;
   target: CardTargetRule;
-  keywords: string[];
+  keywords: Keyword[];
+  traits: Trait[];
+  school?: SpellSchool;
 };
 
 type PlayerTask = {
@@ -111,6 +120,7 @@ type BattleUnit = {
   attack: number;
   health: number;
   maxHealth: number;
+  stars: 1 | 2;
   canAttack: boolean;
 };
 
@@ -158,6 +168,12 @@ const TYPE_LABEL: Record<string, string> = {
   unit: "单位",
   minion: "单位",
   spell: "战术",
+};
+
+const SPELL_SCHOOL_LABEL: Record<SpellSchool, string> = {
+  radiance: "曜术",
+  tide: "潮术",
+  construct: "构术",
 };
 
 type IconName =
@@ -222,7 +238,16 @@ function cardFromRaw(raw: Record<string, unknown>): CatalogCard {
         ? asNumber(raw.health ?? raw.toughness)
         : undefined,
     target: asString(raw.target, "none") as CardTargetRule,
-    keywords: Array.isArray(raw.keywords) ? raw.keywords.map(String) : [],
+    keywords: Array.isArray(raw.keywords)
+      ? (raw.keywords.map(String) as Keyword[])
+      : [],
+    traits: Array.isArray(raw.traits)
+      ? (raw.traits.map(String) as Trait[])
+      : [],
+    school:
+      typeof raw.school === "string"
+        ? (raw.school as SpellSchool)
+        : undefined,
   };
 }
 
@@ -496,6 +521,10 @@ function normalizeBoard(value: unknown, turn: number): BattleUnit[] {
       attack: asNumber(item.attack ?? item.power, card?.attack ?? 0),
       health,
       maxHealth: asNumber(item.maxHealth, card?.health ?? health),
+      stars: Math.min(
+        2,
+        Math.max(1, asNumber(item.stars ?? item.starLevel ?? item.rank, 1)),
+      ) as 1 | 2,
       canAttack:
         typeof item.canAttack === "boolean"
           ? item.canAttack
@@ -749,6 +778,42 @@ function CardTile({
           <span>{TYPE_LABEL[card.type] ?? card.type}</span>
         </div>
         <h3>{card.name}</h3>
+        <div className="game-card__tags" aria-label="卡牌特质与关键词">
+          {card.traits.map((trait) => {
+            const definition = TRAIT_DEFINITIONS[trait];
+            return (
+              <span
+                className={`card-tag card-tag--trait card-tag--${trait}`}
+                title={`${definition.label}：${definition.descriptions[0]}`}
+                aria-label={`${definition.label}：${definition.descriptions[0]}`}
+                key={trait}
+              >
+                {definition.sigil} {definition.label}
+              </span>
+            );
+          })}
+          {card.school && (
+            <span
+              className="card-tag card-tag--school"
+              aria-label={`战术学派：${SPELL_SCHOOL_LABEL[card.school]}`}
+            >
+              {SPELL_SCHOOL_LABEL[card.school]}
+            </span>
+          )}
+          {card.keywords.map((keyword) => {
+            const definition = KEYWORD_DEFINITIONS[keyword];
+            return (
+              <span
+                className="card-tag card-tag--keyword"
+                title={`${definition.label}：${definition.description}`}
+                aria-label={`${definition.label}：${definition.description}`}
+                key={keyword}
+              >
+                {definition.label}
+              </span>
+            );
+          })}
+        </div>
         {!compact && <p>{card.description}</p>}
         <div className="game-card__footer">
           {card.type === "unit" ? (
@@ -1126,6 +1191,7 @@ export function GameApp({
   const [factionFilter, setFactionFilter] = useState("全部");
   const [typeFilter, setTypeFilter] = useState("全部");
   const [rarityFilter, setRarityFilter] = useState("全部");
+  const [traitFilter, setTraitFilter] = useState("全部");
   const [deckName, setDeckName] = useState("星火远征队");
   const [deckIds, setDeckIds] = useState<string[]>(() => [...STARTER_IDS]);
   const [battle, setBattle] = useState<unknown>(null);
@@ -1370,21 +1436,41 @@ export function GameApp({
     [],
   );
 
+  const traitOptions = useMemo(
+    () => TRAIT_ORDER.map((trait) => ({
+      id: trait,
+      label: TRAIT_DEFINITIONS[trait].label,
+    })),
+    [],
+  );
+
   const filteredCards = useMemo(() => {
     const needle = search.trim().toLocaleLowerCase("zh-CN");
     return CATALOG.filter((card) => {
       const matchesSearch =
         !needle ||
         card.name.toLocaleLowerCase("zh-CN").includes(needle) ||
-        card.description.toLocaleLowerCase("zh-CN").includes(needle);
+        card.description.toLocaleLowerCase("zh-CN").includes(needle) ||
+        card.traits.some((trait) =>
+          TRAIT_DEFINITIONS[trait].label.toLocaleLowerCase("zh-CN").includes(needle),
+        ) ||
+        card.keywords.some((keyword) =>
+          KEYWORD_DEFINITIONS[keyword].label.toLocaleLowerCase("zh-CN").includes(needle),
+        ) ||
+        (card.school
+          ? SPELL_SCHOOL_LABEL[card.school]
+              .toLocaleLowerCase("zh-CN")
+              .includes(needle)
+          : false);
       return (
         matchesSearch &&
         (factionFilter === "全部" || card.faction === factionFilter) &&
         (typeFilter === "全部" || card.type === typeFilter) &&
-        (rarityFilter === "全部" || card.rarity === rarityFilter)
+        (rarityFilter === "全部" || card.rarity === rarityFilter) &&
+        (traitFilter === "全部" || card.traits.includes(traitFilter as Trait))
       );
     });
-  }, [factionFilter, rarityFilter, search, typeFilter]);
+  }, [factionFilter, rarityFilter, search, traitFilter, typeFilter]);
 
   const battleView = useMemo(() => battleFromRaw(battle), [battle]);
 
@@ -1866,11 +1952,14 @@ export function GameApp({
                   faction={factionFilter}
                   type={typeFilter}
                   rarity={rarityFilter}
+                  trait={traitFilter}
                   factions={factions}
+                  traitOptions={traitOptions}
                   onSearch={setSearch}
                   onFaction={setFactionFilter}
                   onType={setTypeFilter}
                   onRarity={setRarityFilter}
+                  onTrait={setTraitFilter}
                   onAdd={addCard}
                   onOpenDeck={() => switchSection("deck")}
                 />
@@ -2186,11 +2275,14 @@ function CollectionSection({
   faction,
   type,
   rarity,
+  trait,
   factions,
+  traitOptions,
   onSearch,
   onFaction,
   onType,
   onRarity,
+  onTrait,
   onAdd,
   onOpenDeck,
 }: {
@@ -2201,11 +2293,14 @@ function CollectionSection({
   faction: string;
   type: string;
   rarity: string;
+  trait: string;
   factions: string[];
+  traitOptions: Array<{ id: Trait; label: string }>;
   onSearch: (value: string) => void;
   onFaction: (value: string) => void;
   onType: (value: string) => void;
   onRarity: (value: string) => void;
+  onTrait: (value: string) => void;
   onAdd: (card: CatalogCard) => void;
   onOpenDeck: () => void;
 }) {
@@ -2214,7 +2309,7 @@ function CollectionSection({
       <SectionHeading
         eyebrow="TACTICAL ARCHIVE / COLLECTION"
         title="卡牌收藏"
-        description="检索已解密的战术档案，按阵营、类型与稀有度筛选，并直接加入当前卡组。"
+        description="按阵营、类型、特质与关键词检索档案，围绕 2 / 4 档羁绊规划你的战术核心。"
         action={
           <button className="button button--outline" type="button" onClick={onOpenDeck}>
             <Icon name="layers" />
@@ -2261,6 +2356,15 @@ function CollectionSection({
             <option value="rare">稀有</option>
             <option value="epic">史诗</option>
             <option value="legendary">传说</option>
+          </select>
+        </label>
+        <label className="filter-field">
+          <span>特质</span>
+          <select value={trait} onChange={(event) => onTrait(event.target.value)}>
+            <option value="全部">全部</option>
+            {traitOptions.map((item) => (
+              <option value={item.id} key={item.id}>{item.label}</option>
+            ))}
           </select>
         </label>
       </div>
@@ -2331,13 +2435,31 @@ function DeckSection({
     return { cost: cost === 7 ? "7+" : String(cost), count };
   });
   const maxCurve = Math.max(1, ...manaCurve.map((item) => item.count));
+  const unitCount = deckIds.filter(
+    (id) => CARD_BY_ID.get(id)?.type === "unit",
+  ).length;
+  const spellCount = deckIds.length - unitCount;
+  const upgradeCandidates = uniqueDeckCards.filter(
+    ({ card, count }) => card.type === "unit" && count >= 2,
+  ).length;
+  const traitStatuses = getTraitStatuses(
+    uniqueDeckCards.map(({ card }) => card),
+  );
+  const keywordProfile = (Object.keys(KEYWORD_DEFINITIONS) as Keyword[])
+    .map((keyword) => ({
+      keyword,
+      count: deckIds.filter((id) =>
+        CARD_BY_ID.get(id)?.keywords.includes(keyword),
+      ).length,
+    }))
+    .filter((item) => item.count > 0);
 
   return (
     <section className="screen screen--deck" aria-labelledby="deck-title">
       <SectionHeading
         eyebrow="ARSENAL / DECK FORGE"
         title="卡组工坊"
-        description="编排 30 张战术档案。普通卡最多 2 张，传说卡最多 1 张。"
+        description="编排 30 张战术档案；不同单位启动特质，同名双份则用于对局内二星共鸣。"
         action={
           <div className="deck-heading-actions">
             <button className="button button--outline" type="button" disabled={saving} onClick={onSave}>
@@ -2371,6 +2493,12 @@ function DeckSection({
             </div>
           </div>
 
+          <div className="deck-profile" aria-label="卡组结构概览">
+            <span><small>单位</small><strong>{unitCount}</strong></span>
+            <span><small>战术</small><strong>{spellCount}</strong></span>
+            <span><small>二星组合</small><strong>{upgradeCandidates}</strong></span>
+          </div>
+
           <div className="mana-curve" aria-label="能量曲线">
             <div className="mana-curve__heading">
               <span>能量曲线</span>
@@ -2390,6 +2518,51 @@ function DeckSection({
                 </div>
               ))}
             </div>
+          </div>
+
+          <div className="deck-synergy" aria-label="特质羁绊规划">
+            <div className="deck-synergy__heading">
+              <span>特质羁绊</span>
+              <small>不同单位计数 · 2 / 4 档</small>
+            </div>
+            <div className="trait-planner">
+              {traitStatuses.map((status) => {
+                const target = status.nextThreshold ?? status.thresholds[1];
+                const description =
+                  status.tier > 0
+                    ? status.descriptions[status.tier - 1]
+                    : `再部署 ${Math.max(0, status.thresholds[0] - status.count)} 个不同单位可启动`;
+                return (
+                  <div
+                    className={`trait-row trait-row--tier-${status.tier}`}
+                    title={description}
+                    key={status.id}
+                  >
+                    <span className="trait-row__sigil">{status.sigil}</span>
+                    <span className="trait-row__copy">
+                      <strong>{status.label}<i>{status.tier > 0 ? ` ${status.tier === 1 ? "Ⅰ" : "Ⅱ"}` : ""}</i></strong>
+                      <small>{description}</small>
+                      <span className="trait-progress">
+                        <i style={{ width: `${Math.min(100, (status.count / target) * 100)}%` }} />
+                      </span>
+                    </span>
+                    <b>{status.count}<i> / {target}</i></b>
+                  </div>
+                );
+              })}
+            </div>
+            {keywordProfile.length > 0 && (
+              <div className="deck-keywords">
+                <small>关键词分布</small>
+                <div>
+                  {keywordProfile.map(({ keyword, count }) => (
+                    <span title={KEYWORD_DEFINITIONS[keyword].description} key={keyword}>
+                      {KEYWORD_DEFINITIONS[keyword].label} ×{count}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="deck-list">
@@ -2526,19 +2699,21 @@ function BoardUnit({
       health: unit.maxHealth,
       target: "none",
       keywords: [],
+      traits: [],
     };
   return (
     <button
-      className={`board-unit ${selected ? "board-unit--selected" : ""} ${targetable ? "board-unit--targetable" : ""} ${!unit.canAttack && onSelect ? "board-unit--exhausted" : ""} ${effect ? `board-unit--${effect}` : ""}`}
+      className={`board-unit ${unit.stars === 2 ? "board-unit--star-2" : ""} ${selected ? "board-unit--selected" : ""} ${targetable ? "board-unit--targetable" : ""} ${!unit.canAttack && onSelect ? "board-unit--exhausted" : ""} ${effect ? `board-unit--${effect}` : ""}`}
       type="button"
       onClick={targetable ? onTarget : onSelect}
       disabled={!targetable && (!onSelect || !unit.canAttack)}
       aria-pressed={onSelect ? selected : undefined}
-      aria-label={`${unit.name}，攻击 ${unit.attack}，生命 ${unit.health}${targetable ? "，设为攻击目标" : unit.canAttack ? "，选择攻击" : "，本回合无法攻击"}`}
+      aria-label={`${unit.name}，${unit.stars} 星，攻击 ${unit.attack}，生命 ${unit.health}${targetable ? "，设为攻击目标" : unit.canAttack ? "，选择攻击" : "，本回合无法攻击"}`}
     >
       <div className="board-unit__art">
         <Sigil card={visualCard} />
         <CardArtwork card={visualCard} className="board-unit__artwork" />
+        {unit.stars === 2 && <span className="board-unit__stars">★★</span>}
       </div>
       <strong>{unit.name}</strong>
       <div className="board-unit__stats"><span>⚔ {unit.attack}</span><span>◆ {unit.health}</span></div>
@@ -2573,6 +2748,58 @@ function BattleEffectLayer({ effect }: { effect: BattleVisualEffect }) {
         <strong>{effect.label}</strong>
       </span>
       {number && <span className="battle-fx__number">{number}</span>}
+    </div>
+  );
+}
+
+function BattleTraitProtocol({
+  label,
+  board,
+  enemy = false,
+}: {
+  label: string;
+  board: BattleUnit[];
+  enemy?: boolean;
+}) {
+  const cards = board
+    .map((unit) => CARD_BY_ID.get(unit.cardId))
+    .filter((card): card is CatalogCard => Boolean(card));
+  const statuses = getTraitStatuses(cards);
+  const active = statuses
+    .filter((status) => status.tier > 0)
+    .sort((left, right) => right.tier - left.tier || right.count - left.count);
+  const visible = active.length > 0
+    ? active.slice(0, 4)
+    : statuses
+        .filter((status) => status.count > 0)
+        .sort((left, right) => right.count - left.count)
+        .slice(0, 1);
+
+  return (
+    <div className={`battle-protocol ${enemy ? "battle-protocol--enemy" : ""}`}>
+      <div className="battle-protocol__heading">
+        <span>{label}</span>
+        <small>{active.length > 0 ? `${active.length} 项启动` : "尚未启动"}</small>
+      </div>
+      <div className="battle-protocol__traits">
+        {visible.length > 0 ? visible.map((status) => {
+          const target = status.nextThreshold ?? status.thresholds[1];
+          const description = status.tier > 0
+            ? status.descriptions[status.tier - 1]
+            : `还差 ${Math.max(0, status.thresholds[0] - status.count)} 个不同单位`;
+          return (
+            <span
+              className={`battle-trait battle-trait--tier-${status.tier}`}
+              title={description}
+              key={status.id}
+            >
+              <i>{status.sigil}</i>
+              <strong>{status.label}</strong>
+              <small>{status.count}/{target}</small>
+            </span>
+          );
+        }) : <span className="battle-protocol__empty">部署单位以接通特质协议</span>}
+      </div>
     </div>
   );
 }
@@ -2634,7 +2861,7 @@ function BattleSection({
           <div className="battle-lobby__brief">
             <div><span>对战模式</span><strong>标准 1V1</strong></div>
             <div><span>胜利条件</span><strong>摧毁敌方核心</strong></div>
-            <div><span>规则版本</span><strong>CORE 0.1</strong></div>
+            <div><span>规则版本</span><strong>CORE 0.2 · 特质升阶</strong></div>
           </div>
           <div className="battle-lobby__actions">
             <button className="button button--ghost" type="button" onClick={onOpenDeck}>调整卡组</button>
@@ -2857,6 +3084,10 @@ function BattleSection({
               )}
             </div>
           )}
+          <div className="battle-synergies" aria-label="实时特质协议">
+            <BattleTraitProtocol label="我方协议" board={battle.player.board} />
+            <BattleTraitProtocol label="敌方协议" board={battle.ai.board} enemy />
+          </div>
           <div className="battle-log">
             <div className="battle-log__heading"><span>战斗日志</span><small>EVENT STREAM</small></div>
             <ol>
