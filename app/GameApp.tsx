@@ -20,6 +20,8 @@ import {
   applyCommand,
   battleEventsToEffects,
   createMatch,
+  factionForDeck,
+  getHeroPower,
   getTraitStatuses,
   runAiTurn,
   validateDeck,
@@ -132,6 +134,9 @@ type BattleSide = {
   maxHealth: number;
   armor: number;
   heroPowerUsed: boolean;
+  heroPowerName: string;
+  heroPowerDescription: string;
+  heroPowerCost: number;
   coinAvailable: boolean;
   mana: number;
   maxMana: number;
@@ -765,6 +770,18 @@ function battleFromRaw(value: unknown): BattleView | null {
       0,
     ),
     heroPowerUsed: Boolean(side.heroPowerUsed),
+    heroPowerName: asString(
+      (side.heroPower as Record<string, unknown> | undefined)?.name ?? side.heroPowerName,
+      "核心脉冲",
+    ),
+    heroPowerDescription: asString(
+      (side.heroPower as Record<string, unknown> | undefined)?.description ?? side.heroPowerDescription,
+      "对敌方核心造成 1 点伤害。",
+    ),
+    heroPowerCost: asNumber(
+      (side.heroPower as Record<string, unknown> | undefined)?.cost ?? side.heroPowerCost,
+      2,
+    ),
     coinAvailable: Boolean(side.coinAvailable),
     mana: asNumber(side.mana ?? side.energy ?? side.currentMana),
     maxMana: asNumber(side.maxMana ?? side.maxEnergy, 1),
@@ -2754,7 +2771,7 @@ export function GameApp({
       player: 0,
     });
     if (next) {
-      setBattleMessage("核心脉冲命中敌方核心。");
+      setBattleMessage(`${battleView?.player.heroPowerName ?? "英雄技能"} 已结算。`);
     }
   };
 
@@ -3606,6 +3623,8 @@ function DeckSection({
       ).length,
     }))
     .filter((item) => item.count > 0);
+  const deckFaction = factionForDeck(deckIds);
+  const deckHeroPower = getHeroPower(deckFaction);
 
   return (
     <section className="screen screen--deck" aria-labelledby="deck-title">
@@ -3666,6 +3685,15 @@ function DeckSection({
             <span><small>单位</small><strong>{unitCount}</strong></span>
             <span><small>战术</small><strong>{spellCount}</strong></span>
             <span><small>二星组合</small><strong>{upgradeCandidates}</strong></span>
+          </div>
+
+          <div className="deck-hero-preview" aria-label={`阵营英雄技能：${deckHeroPower.name}`}>
+            <span className="deck-hero-preview__sigil">✦</span>
+            <span className="deck-hero-preview__copy">
+              <small>{deckFaction} · 英雄技能</small>
+              <strong>{deckHeroPower.name}<i>{deckHeroPower.cost} 能量</i></strong>
+              <span>{deckHeroPower.description}</span>
+            </span>
           </div>
 
           <div className="mana-curve" aria-label="能量曲线">
@@ -4367,12 +4395,13 @@ function BattleSection({
               <button
                 className={`hero-power-button ${battle.player.heroPowerUsed ? "hero-power-button--used" : ""}`}
                 type="button"
-                disabled={!playerCanAct || battle.player.heroPowerUsed || battle.player.mana < 2}
+                disabled={!playerCanAct || battle.player.heroPowerUsed || battle.player.mana < battle.player.heroPowerCost}
                 onClick={onHeroPower}
-                aria-label={battle.player.heroPowerUsed ? "核心脉冲本回合已使用" : "使用核心脉冲，消耗 2 点能量"}
+                title={battle.player.heroPowerDescription}
+                aria-label={battle.player.heroPowerUsed ? `${battle.player.heroPowerName}本回合已使用` : `使用${battle.player.heroPowerName}，消耗 ${battle.player.heroPowerCost} 点能量`}
               >
                 <span className="hero-power-button__icon">✦</span>
-                <span><strong>核心脉冲</strong><small>{battle.player.heroPowerUsed ? "本回合已用" : "2 能量 · 造成 1 点伤害"}</small></span>
+                <span><strong>{battle.player.heroPowerName}</strong><small>{battle.player.heroPowerUsed ? "本回合已用" : `${battle.player.heroPowerCost} 能量 · ${battle.player.heroPowerDescription}`}</small></span>
               </button>
             </div>
             <div className="player-hand">

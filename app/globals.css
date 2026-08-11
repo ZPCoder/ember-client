@@ -1799,6 +1799,67 @@ button.game-card:not(:disabled):hover .game-card__artwork,
   font-size: 13px;
 }
 
+.deck-hero-preview {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0 14px 14px;
+  padding: 10px;
+  border: 1px solid rgba(177, 133, 255, 0.25);
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(110, 75, 164, 0.16), rgba(255, 255, 255, 0.02));
+}
+
+.deck-hero-preview__sigil {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  color: #e3c8ff;
+  background: rgba(177, 133, 255, 0.2);
+  font-size: 15px;
+}
+
+.deck-hero-preview__copy {
+  min-width: 0;
+}
+
+.deck-hero-preview__copy small,
+.deck-hero-preview__copy strong,
+.deck-hero-preview__copy > span {
+  display: block;
+}
+
+.deck-hero-preview__copy small {
+  color: #8c7e9d;
+  font-size: 8px;
+  letter-spacing: 0.08em;
+}
+
+.deck-hero-preview__copy strong {
+  margin-top: 2px;
+  color: var(--paper-soft);
+  font-size: 11px;
+}
+
+.deck-hero-preview__copy strong i {
+  margin-left: 6px;
+  color: #b9a6ce;
+  font-size: 8px;
+  font-style: normal;
+}
+
+.deck-hero-preview__copy > span {
+  margin-top: 3px;
+  overflow: hidden;
+  color: #77857e;
+  font-size: 8px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .mana-curve {
   padding: 14px 17px 18px;
   border-bottom: 1px solid var(--line);
@@ -3057,6 +3118,9 @@ button.hero-core {
   align-items: center;
   justify-content: center;
   gap: 9px;
+  overflow-x: auto;
+  padding-inline: 4px;
+  scrollbar-width: thin;
 }
 
 .board-row--enemy {
