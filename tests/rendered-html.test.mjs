@@ -67,6 +67,7 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(game, /<Image[\s\S]*?\bunoptimized\b[\s\S]*?\/>/);
   assert.match(game, /AudioContext/);
   assert.match(game, /battleEventsToEffects/);
+  assert.match(game, /battleEventsToEffects\(next\.events\.slice\(previousEventCount\)\),\s*\{ lock: true \}/);
   assert.match(game, /BATTLE_EFFECT_STEP_MS = 1200/);
   assert.match(game, /BATTLE_EFFECT_QUEUE_LIMIT = 40/);
   assert.match(game, /TURN_TIME_LIMIT_SECONDS = 75/);

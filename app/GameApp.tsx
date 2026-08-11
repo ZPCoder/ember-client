@@ -2799,6 +2799,7 @@ export function GameApp({
       setBattle(next);
       showBattleEffects(
         battleEventsToEffects(next.events.slice(previousEventCount)),
+        { lock: true },
       );
       return next;
     } catch (error) {
