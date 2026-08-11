@@ -184,7 +184,7 @@ type PvpState = {
 };
 
 type PvpIncoming =
-  | { id: number; type: "match-start"; payload: { seed: number; decks: [string[], string[]]; matchToken?: string } }
+  | { id: number; type: "match-start"; payload: { seed: number; deck?: string[]; decks?: [string[], string[]]; matchToken?: string } }
   | { id: number; type: "match-sync"; payload: { state: MatchState; matchToken?: string } }
   | { id: number; type: "command"; command: BattleCommand; state?: MatchState; matchToken?: string }
   | { id: number; type: "room-reset" }
@@ -1610,14 +1610,25 @@ function useWebPvp(displayName: string) {
       return;
     }
     if (action === "match_start") {
+      const deck = Array.isArray(payload.deck)
+        ? payload.deck.map(String)
+        : undefined;
       const decks = Array.isArray(payload.decks) && payload.decks.length === 2
         ? payload.decks.map((deck) => Array.isArray(deck) ? deck.map(String) : []) as [string[], string[]]
         : null;
       const seed = Number(payload.seed);
-      if (!decks || !Number.isFinite(seed)) return;
+      if ((!deck && !decks) || !Number.isFinite(seed)) return;
       setState((current) => ({ ...current, status: "playing", message: "双方已准备，联机演算开始。" }));
       const matchToken = asString(payload.matchToken);
-      enqueueIncoming({ id: ++incomingIdRef.current, type: "match-start", payload: { seed, decks, ...(matchToken ? { matchToken } : {}) } });
+      enqueueIncoming({
+        id: ++incomingIdRef.current,
+        type: "match-start",
+        payload: {
+          seed,
+          ...(deck ? { deck } : { decks: decks as [string[], string[]] }),
+          ...(matchToken ? { matchToken } : {}),
+        },
+      });
       return;
     }
     if (action === "rematch") {
@@ -2625,10 +2636,10 @@ export function GameApp({
         return;
       }
       const localIndex = role === "host" ? 0 : 1;
-      const orderedDecks: [string[], string[]] = [
-        [...event.payload.decks[localIndex]],
-        [...event.payload.decks[localIndex === 0 ? 1 : 0]],
-      ];
+      const localDeck = event.payload.deck ?? event.payload.decks?.[localIndex] ?? deckIds;
+      // PVP state sync is authoritative; the placeholder opponent deck only
+      // opens the local mulligan shell without exposing the real deck list.
+      const orderedDecks: [string[], string[]] = [[...localDeck], [...DEFAULT_OPPONENT_DECK]];
       pvpMatchTokenRef.current = event.payload.matchToken ?? null;
       beginBattle(orderedDecks, role === "host" ? 0 : 1, true, pvp.state.peerName ?? "联机对手", event.payload.seed);
       pvp.acknowledgeIncoming(event.id);
@@ -2694,7 +2705,7 @@ export function GameApp({
       issueCommand({ ...remote, player: localPlayer, ...(mappedTarget ? { target: mappedTarget } : {}) } as BattleCommand, false);
       pvp.acknowledgeIncoming(event.id);
     }
-  }, [battle, beginBattle, issueCommand, playSound, pvp, showBattleEffects, stopBattleEffects]);
+  }, [battle, beginBattle, deckIds, issueCommand, playSound, pvp, showBattleEffects, stopBattleEffects]);
 
   useEffect(() => {
     if (
