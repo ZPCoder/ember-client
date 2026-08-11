@@ -171,6 +171,7 @@ type PvpIncoming =
   | { id: number; type: "match-start"; payload: { seed: number; decks: [string[], string[]]; matchToken?: string } }
   | { id: number; type: "match-sync"; payload: { state: MatchState; matchToken?: string } }
   | { id: number; type: "command"; command: BattleCommand; state?: MatchState; matchToken?: string }
+  | { id: number; type: "room-reset" }
   | { id: number; type: "rejected"; message: string; resync?: boolean };
 
 function orientPvpMatchForLocal(state: MatchState, role: PvpRole): MatchState {
@@ -1538,6 +1539,18 @@ function useWebPvp(displayName: string) {
       enqueueIncoming({ id: ++incomingIdRef.current, type: "match-start", payload: { seed, decks, ...(matchToken ? { matchToken } : {}) } });
       return;
     }
+    if (action === "rematch") {
+      setState((current) => ({
+        ...current,
+        status: "room",
+        localReady: false,
+        remoteReady: false,
+        remoteReadyDeck: null,
+        message: "本局已结束，可以重新准备下一局。",
+      }));
+      enqueueIncoming({ id: ++incomingIdRef.current, type: "room-reset" });
+      return;
+    }
     if (action === "command") {
       const command = payload.command;
       if (!command || typeof command !== "object" || typeof (command as Record<string, unknown>).type !== "string") return;
@@ -1808,6 +1821,11 @@ function useWebPvp(displayName: string) {
     return send({ type: "action", action: "command", payload: { command } });
   }, [send]);
 
+  const requestRematch = useCallback(() => {
+    if (state.role !== "host" || state.status === "offline" || !state.roomCode) return false;
+    return send({ type: "action", action: "rematch", payload: {} });
+  }, [send, state.role, state.roomCode, state.status]);
+
   const syncRoom = useCallback(() => {
     return send({ type: "sync" });
   }, [send]);
@@ -1830,7 +1848,7 @@ function useWebPvp(displayName: string) {
 
   useEffect(() => () => dispose(), [dispose]);
 
-  return { state, incoming, acknowledgeIncoming, connect, disconnect, createRoom, joinRoom, ready, sendMatchStart, sendCommand, syncRoom };
+  return { state, incoming, acknowledgeIncoming, connect, disconnect, createRoom, joinRoom, ready, sendMatchStart, sendCommand, requestRematch, syncRoom };
 }
 
 export function GameApp({
@@ -2501,6 +2519,24 @@ export function GameApp({
       pvp.acknowledgeIncoming(event.id);
       return;
     }
+    if (event.type === "room-reset") {
+      onlineStartSentRef.current = false;
+      pendingPvpCommandRef.current = false;
+      pvpMatchTokenRef.current = null;
+      recordedBattleRef.current = null;
+      stopBattleEffects();
+      setBattle(null);
+      setOnlineMatch(false);
+      setOnlineOpponent(null);
+      setSelectedAttacker(null);
+      setPendingCard(null);
+      setMulliganSelection([]);
+      setBattleMessage("房间已重置，双方点击“准备对战”开始下一局。");
+      sectionRef.current = "battle";
+      setSection("battle");
+      pvp.acknowledgeIncoming(event.id);
+      return;
+    }
     if (event.type === "match-start") {
       const role = pvp.state.role;
       if (!role) {
@@ -2577,7 +2613,7 @@ export function GameApp({
       issueCommand({ ...remote, player: localPlayer, ...(mappedTarget ? { target: mappedTarget } : {}) } as BattleCommand, false);
       pvp.acknowledgeIncoming(event.id);
     }
-  }, [battle, beginBattle, issueCommand, playSound, pvp, showBattleEffects]);
+  }, [battle, beginBattle, issueCommand, playSound, pvp, showBattleEffects, stopBattleEffects]);
 
   useEffect(() => {
     if (
@@ -2779,6 +2815,15 @@ export function GameApp({
     setSelectedAttacker(null);
     setPendingCard(null);
     setBattleMessage("你已结束本场演算，战报正在归档。");
+  };
+
+  const requestOnlineRematch = () => {
+    if (pvp.state.role !== "host") return;
+    if (pvp.requestRematch()) {
+      setBattleMessage("已通知对手，正在重置房间…");
+    } else {
+      setBattleMessage("联机连接尚未就绪，无法重新开始。");
+    }
   };
 
   useEffect(() => {
@@ -3025,6 +3070,7 @@ export function GameApp({
                   effectsLocked={battleEffectsLocked}
                   soundEnabled={soundEnabled}
                   onStart={startBattle}
+                  onRematch={requestOnlineRematch}
                   onPlayCard={playCard}
                   onToggleMulligan={toggleMulliganCard}
                   onConfirmMulligan={confirmMulligan}
@@ -4010,6 +4056,7 @@ function BattleSection({
   effectsLocked,
   soundEnabled,
   onStart,
+  onRematch,
   onPlayCard,
   onToggleMulligan,
   onConfirmMulligan,
@@ -4046,6 +4093,7 @@ function BattleSection({
   effectsLocked: boolean;
   soundEnabled: boolean;
   onStart: () => void;
+  onRematch: () => void;
   onPlayCard: (card: BattleSide["hand"][number]) => void;
   onToggleMulligan: (index: number) => void;
   onConfirmMulligan: () => void;
@@ -4404,7 +4452,18 @@ function BattleSection({
               <small>SIMULATION COMPLETE</small>
               <h2>{battle.winner === "player" ? "演算胜利" : "核心失守"}</h2>
               <p>{busy ? "正在归档战报与奖励…" : battle.winner === "player" ? "获得 60 金币，任务进度已更新。" : "获得 20 金币，战术日志已保留。"}</p>
-              <button className="button button--primary button--wide" type="button" onClick={onStart}>再次演算</button>
+              {online ? (
+                <button
+                  className="button button--primary button--wide"
+                  type="button"
+                  disabled={pvp.role !== "host" || pvp.status === "connecting" || pvp.status === "offline"}
+                  onClick={onRematch}
+                >
+                  {pvp.role === "host" ? "再来一局" : "等待房主重新开始"}
+                </button>
+              ) : (
+                <button className="button button--primary button--wide" type="button" onClick={onStart}>再次演算</button>
+              )}
             </div>
           ) : mulliganActive ? (
             <div className="battle-actions battle-actions--mulligan">
