@@ -2443,7 +2443,14 @@ export function GameApp({
         ...(command.commandId ? command : { ...command, commandId: makeId("command") }),
         expectedVersion: command.expectedVersion ?? previous.version,
       } as BattleCommand;
-      if (onlineMatch && pvp.state.status !== "playing") {
+      // The room transport can briefly remain in `ready` while the match-start
+      // snapshot is being applied. The authoritative match state already
+      // carries the active player and phase, so only a disconnected/error
+      // transport should block a command here.
+      if (
+        onlineMatch &&
+        (!pvp.state.roomCode || pvp.state.status === "offline" || pvp.state.status === "error" || pvp.state.status === "connecting")
+      ) {
         setBattleMessage("联机连接已断开，无法继续发送指令。");
         return null;
       }
@@ -4120,8 +4127,14 @@ function BattleSection({
 
   const playerTurn = battle.currentPlayer === "player" && battle.status === "playing";
   const mulliganActive = battle.status === "mulligan";
-  const playerCanMulligan = mulliganActive && !battle.mulliganDone && !effectsLocked && (!online || pvp.status === "playing");
-  const playerCanAct = playerTurn && !effectsLocked && (!online || pvp.status === "playing");
+  const onlineTransportReady = !online || (
+    Boolean(pvp.roomCode) &&
+    pvp.status !== "offline" &&
+    pvp.status !== "error" &&
+    pvp.status !== "connecting"
+  );
+  const playerCanMulligan = mulliganActive && !battle.mulliganDone && !effectsLocked && onlineTransportReady;
+  const playerCanAct = playerTurn && !effectsLocked && onlineTransportReady;
   const pendingDefinition = pendingCard ? CARD_BY_ID.get(pendingCard.cardId) : undefined;
   const targetRule = pendingDefinition?.target ?? "none";
   const cardCanTarget = (side: "player" | "ai", kind: "unit" | "hero") => {
