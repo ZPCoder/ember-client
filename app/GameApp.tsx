@@ -2636,7 +2636,10 @@ export function GameApp({
         return;
       }
       const localIndex = role === "host" ? 0 : 1;
-      const localDeck = event.payload.deck ?? event.payload.decks?.[localIndex] ?? deckIds;
+      const localDeckCandidate = event.payload.deck ?? event.payload.decks?.[localIndex];
+      const localDeck = localDeckCandidate && localDeckCandidate.length === 30
+        ? localDeckCandidate
+        : deckIds;
       // PVP state sync is authoritative; the placeholder opponent deck only
       // opens the local mulligan shell without exposing the real deck list.
       const orderedDecks: [string[], string[]] = [[...localDeck], [...DEFAULT_OPPONENT_DECK]];
