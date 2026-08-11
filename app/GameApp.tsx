@@ -166,8 +166,42 @@ type PvpState = {
 };
 
 type PvpIncoming =
-  | { id: number; type: "match-start"; payload: { seed: number; decks: [string[], string[]] } }
-  | { id: number; type: "command"; command: BattleCommand };
+  | { id: number; type: "match-start"; payload: { seed: number; decks: [string[], string[]]; matchToken?: string } }
+  | { id: number; type: "match-sync"; payload: { state: MatchState; matchToken?: string } }
+  | { id: number; type: "command"; command: BattleCommand; state?: MatchState; matchToken?: string }
+  | { id: number; type: "rejected"; message: string };
+
+function orientPvpMatchForLocal(state: MatchState, role: PvpRole): MatchState {
+  if (role === "host") return state;
+  const swap = (player: 0 | 1): 0 | 1 => (player === 0 ? 1 : 0);
+  const players = state.players.map((player, index) => ({
+    ...player,
+    id: swap(index as 0 | 1),
+    hero: { ...player.hero },
+    deck: [...player.deck],
+    hand: [...player.hand],
+    board: player.board.map((unit) => ({ ...unit, owner: swap(unit.owner) })),
+  })) as [MatchState["players"][0], MatchState["players"][1]];
+  return {
+    ...state,
+    activePlayer: swap(state.activePlayer),
+    players: [players[1], players[0]],
+    winner: state.winner === null ? null : swap(state.winner),
+    result: state.result
+      ? { ...state.result, winner: state.result.winner === null ? null : swap(state.result.winner) }
+      : null,
+    events: state.events.map((event) => ({
+      ...event,
+      player: event.player === undefined ? undefined : swap(event.player),
+      data: event.data
+        ? {
+            ...event.data,
+            ...(typeof event.data.winner === "number" ? { winner: swap(event.data.winner as 0 | 1) } : {}),
+          }
+        : undefined,
+    })),
+  };
+}
 
 function getDefaultPvpUrl(): string {
   if (typeof window === "undefined") return "ws://127.0.0.1:8787";
@@ -1446,6 +1480,21 @@ function useWebPvp(displayName: string) {
       setState((current) => ({ ...current, status: "error", message: asString(message.message, "联机大厅返回错误。") }));
       return;
     }
+    if (type === "action_rejected") {
+      const rejection = asString(message.message, "服务器拒绝了这条指令。");
+      setState((current) => ({ ...current, message: rejection }));
+      enqueueIncoming({ id: ++incomingIdRef.current, type: "rejected", message: rejection });
+      return;
+    }
+    if (type === "match_sync") {
+      const payload = message.payload;
+      const state = payload && typeof payload === "object" ? (payload as Record<string, unknown>).state : null;
+      if (!state || typeof state !== "object" || !Array.isArray((state as Record<string, unknown>).players)) return;
+      const matchToken = payload && typeof payload === "object" ? asString((payload as Record<string, unknown>).matchToken) : "";
+      setState((current) => ({ ...current, status: "playing", message: "已恢复联机对局状态。" }));
+      enqueueIncoming({ id: ++incomingIdRef.current, type: "match-sync", payload: { state: state as MatchState, ...(matchToken ? { matchToken } : {}) } });
+      return;
+    }
     if (type !== "action") return;
     const sequence = Number(message.sequence);
     if (Number.isFinite(sequence)) {
@@ -1466,13 +1515,24 @@ function useWebPvp(displayName: string) {
       const seed = Number(payload.seed);
       if (!decks || !Number.isFinite(seed)) return;
       setState((current) => ({ ...current, status: "playing", message: "双方已准备，联机演算开始。" }));
-      enqueueIncoming({ id: ++incomingIdRef.current, type: "match-start", payload: { seed, decks } });
+      const matchToken = asString(payload.matchToken);
+      enqueueIncoming({ id: ++incomingIdRef.current, type: "match-start", payload: { seed, decks, ...(matchToken ? { matchToken } : {}) } });
       return;
     }
     if (action === "command") {
       const command = payload.command;
       if (!command || typeof command !== "object" || typeof (command as Record<string, unknown>).type !== "string") return;
-      enqueueIncoming({ id: ++incomingIdRef.current, type: "command", command: command as BattleCommand });
+      const authoritativeState = payload.state && typeof payload.state === "object" && Array.isArray((payload.state as Record<string, unknown>).players)
+        ? payload.state as MatchState
+        : undefined;
+      const matchToken = asString(payload.matchToken);
+      enqueueIncoming({
+        id: ++incomingIdRef.current,
+        type: "command",
+        command: command as BattleCommand,
+        ...(authoritativeState ? { state: authoritativeState } : {}),
+        ...(matchToken ? { matchToken } : {}),
+      });
     }
   }, [enqueueIncoming]);
 
@@ -1674,7 +1734,7 @@ function useWebPvp(displayName: string) {
         }
       }, 1800);
     }
-  }, [canFallbackToPolling, disconnect, displayName, handleMessage, tryStartPolling]);
+  }, [canFallbackToPolling, disconnect, displayName, handleMessage, startPolling, tryStartPolling]);
 
   const send = useCallback((message: Record<string, unknown>) => {
     if (transportRef.current === "poll") {
@@ -1721,12 +1781,12 @@ function useWebPvp(displayName: string) {
 
   const sendMatchStart = useCallback((payload: { seed: number; decks: [string[], string[]] }) => {
     if (send({ type: "action", action: "match_start", payload })) {
-      setState((current) => ({ ...current, status: "playing", message: "双方已准备，联机演算开始。" }));
+      setState((current) => ({ ...current, status: "ready", message: "已提交开局请求，等待服务器确认。" }));
     }
   }, [send]);
 
   const sendCommand = useCallback((command: BattleCommand) => {
-    send({ type: "action", action: "command", payload: { command } });
+    return send({ type: "action", action: "command", payload: { command } });
   }, [send]);
 
   const dispose = useCallback(() => {
@@ -1817,6 +1877,8 @@ export function GameApp({
   const [onlineMatch, setOnlineMatch] = useState(false);
   const [onlineOpponent, setOnlineOpponent] = useState<string | null>(null);
   const onlineStartSentRef = useRef(false);
+  const pvpMatchTokenRef = useRef<string | null>(null);
+  const pendingPvpCommandRef = useRef(false);
   const pvpEventCursorRef = useRef(0);
 
   const stopBattleEffects = useCallback(() => {
@@ -1974,7 +2036,9 @@ export function GameApp({
               ? "云端档案暂不可用，当前使用本机临时档案。"
               : "云端指挥链暂不可用，已切换到本地演示档案。刷新后会保留本机进度。",
           });
-          persistLocalPlayer(player);
+          // Never seed an authenticated account's cache with the initial demo
+          // state: that can overwrite a later cloud recovery on refresh.
+          if (!identity?.authenticated) persistLocalPlayer(player);
         }
       } finally {
         if (active) setLoading(false);
@@ -2254,7 +2318,7 @@ export function GameApp({
 
   // This transition is shared by AI and transport-driven PVP starts.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const beginBattle = (decks: [string[], string[]], startingPlayer: 0 | 1, online: boolean, opponentName?: string) => {
+  const beginBattle = (decks: [string[], string[]], startingPlayer: 0 | 1, online: boolean, opponentName?: string, seed?: number) => {
     if (!deckValidation.valid) {
       switchSection("deck");
       setNotice({ tone: "warning", text: `无法部署：${deckValidation.errors[0]}` });
@@ -2266,10 +2330,12 @@ export function GameApp({
         aiTurnTimerRef.current = null;
       }
       unlockAudio();
-      const next = createMatch({ decks, startingPlayer });
+      const next = createMatch({ decks, startingPlayer, ...(seed === undefined ? {} : { seed }) });
       setBattle(unwrapTransition(next));
       setOnlineMatch(online);
       setOnlineOpponent(online ? opponentName ?? "联机对手" : null);
+      if (!online) pvpMatchTokenRef.current = null;
+      pendingPvpCommandRef.current = false;
       setSelectedAttacker(null);
       setPendingCard(null);
       setBattleMessage(online ? "联机战术链路建立，等待行动窗口。" : "战术链路建立。由你先手，选择一张手牌部署。");
@@ -2313,7 +2379,8 @@ export function GameApp({
     beginBattle([[...deckIds], [...DEFAULT_OPPONENT_DECK]], 0, false);
   };
 
-  // Commands must close over the latest reducer state before broadcasting.
+  // In PVP the server reducer is authoritative. The local client only sends a
+  // command and renders the resulting snapshot that the server broadcasts.
   const issueCommand = useCallback((command: BattleCommand, broadcast = true) => {
     if (!battle) return null;
     try {
@@ -2324,6 +2391,20 @@ export function GameApp({
       } as BattleCommand;
       if (onlineMatch && pvp.state.status !== "playing") {
         setBattleMessage("联机连接已断开，无法继续发送指令。");
+        return null;
+      }
+      if (onlineMatch && broadcast) {
+        if (pendingPvpCommandRef.current) {
+          setBattleMessage("上一条指令正在等待服务器结算。");
+          return null;
+        }
+        pendingPvpCommandRef.current = true;
+        if (!pvp.sendCommand(preparedCommand)) {
+          pendingPvpCommandRef.current = false;
+          setBattleMessage("联机连接尚未就绪，指令未发送。");
+          return null;
+        }
+        setBattleMessage("指令已提交，等待服务器确认…");
         return null;
       }
       const previousEventCount = previous.events.length;
@@ -2338,7 +2419,6 @@ export function GameApp({
       showBattleEffects(
         battleEventsToEffects(next.events.slice(previousEventCount)),
       );
-      if (onlineMatch && broadcast) pvp.sendCommand(preparedCommand);
       return next;
     } catch (error) {
       setBattleMessage(error instanceof Error ? error.message : "该战术指令当前不可执行。");
@@ -2351,6 +2431,14 @@ export function GameApp({
     const event = pvp.incoming;
     if (!event || event.id <= pvpEventCursorRef.current) return;
     pvpEventCursorRef.current = event.id;
+    if (event.type === "rejected") {
+      pendingPvpCommandRef.current = false;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setBattleMessage(event.message);
+      playSound("error");
+      pvp.acknowledgeIncoming(event.id);
+      return;
+    }
     if (event.type === "match-start") {
       const role = pvp.state.role;
       if (!role) {
@@ -2362,22 +2450,70 @@ export function GameApp({
         [...event.payload.decks[localIndex]],
         [...event.payload.decks[localIndex === 0 ? 1 : 0]],
       ];
-      // The reducer transition is intentionally driven by the external PVP event.
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      beginBattle(orderedDecks, role === "host" ? 0 : 1, true, pvp.state.peerName ?? "联机对手");
+      pvpMatchTokenRef.current = event.payload.matchToken ?? null;
+      beginBattle(orderedDecks, role === "host" ? 0 : 1, true, pvp.state.peerName ?? "联机对手", event.payload.seed);
+      pvp.acknowledgeIncoming(event.id);
+      return;
+    }
+    if (event.type === "match-sync") {
+      const role = pvp.state.role;
+      if (!role) {
+        pvp.acknowledgeIncoming(event.id);
+        return;
+      }
+      const oriented = orientPvpMatchForLocal(event.payload.state, role);
+      pvpMatchTokenRef.current = event.payload.matchToken ?? null;
+      pendingPvpCommandRef.current = false;
+      setBattle(oriented);
+      setOnlineMatch(true);
+      setOnlineOpponent(pvp.state.peerName ?? "联机对手");
+      setSelectedAttacker(null);
+      setPendingCard(null);
+      setBattleMessage(oriented.phase === "game-over" ? "已恢复已结束的联机战报。" : "已恢复联机对局，等待行动窗口。");
+      sectionRef.current = "battle";
+      setSection("battle");
       pvp.acknowledgeIncoming(event.id);
       return;
     }
     if (event.type === "command") {
+      pendingPvpCommandRef.current = false;
+      if (event.state) {
+        const role = pvp.state.role;
+        if (!role) {
+          pvp.acknowledgeIncoming(event.id);
+          return;
+        }
+        const previous = battle as MatchState | null;
+        const oriented = orientPvpMatchForLocal(event.state, role);
+        pvpMatchTokenRef.current = event.matchToken ?? pvpMatchTokenRef.current;
+        setBattle(oriented);
+        setSelectedAttacker(null);
+        setPendingCard(null);
+        if (previous) {
+          showBattleEffects(battleEventsToEffects(oriented.events.slice(previous.events.length)), {
+            lock: oriented.phase === "game-over",
+            maxEffects: oriented.phase === "game-over" ? 6 : 8,
+          });
+        }
+        setBattleMessage(
+          oriented.phase === "game-over"
+            ? oriented.result?.winner === 0 ? "对局结束：我方核心存活。" : "对局结束：敌方核心存活。"
+            : oriented.activePlayer === 0 ? "服务器已结算，你的行动窗口已开启。" : "服务器已结算，等待对手行动…",
+        );
+        pvp.acknowledgeIncoming(event.id);
+        return;
+      }
       const remote = event.command;
       const target = remote.target;
-      const mappedTarget = target?.kind === "hero"
+      const role = pvp.state.role;
+      const localPlayer = role === "guest" ? (remote.player === 0 ? 1 : 0) : remote.player;
+      const mappedTarget = target?.kind === "hero" && role === "guest"
         ? { ...target, player: target.player === 0 ? 1 : 0 }
         : target;
-      issueCommand({ ...remote, player: 1, ...(mappedTarget ? { target: mappedTarget } : {}) } as BattleCommand, false);
+      issueCommand({ ...remote, player: localPlayer, ...(mappedTarget ? { target: mappedTarget } : {}) } as BattleCommand, false);
       pvp.acknowledgeIncoming(event.id);
     }
-  }, [beginBattle, issueCommand, onlineMatch, pvp]);
+  }, [battle, beginBattle, issueCommand, playSound, pvp, showBattleEffects]);
 
   useEffect(() => {
     if (
@@ -2396,13 +2532,13 @@ export function GameApp({
     };
     pvp.sendMatchStart(payload);
     onlineStartSentRef.current = true;
-    beginBattle(payload.decks, 0, true, pvp.state.peerName ?? "联机对手");
-  }, [beginBattle, deckIds, onlineMatch, pvp, pvp.sendMatchStart, pvp.state.localReady, pvp.state.remoteReady, pvp.state.remoteReadyDeck, pvp.state.peerName, pvp.state.role]);
+  }, [deckIds, onlineMatch, pvp, pvp.sendMatchStart, pvp.state.localReady, pvp.state.remoteReady, pvp.state.remoteReadyDeck, pvp.state.peerName, pvp.state.role]);
 
   useEffect(() => {
     if (pvp.state.status === "offline" || !pvp.state.roomCode) {
       onlineStartSentRef.current = false;
       pvpEventCursorRef.current = 0;
+      pendingPvpCommandRef.current = false;
       if (onlineMatch && battleView?.status === "playing") {
         // The disconnect event is an external transport update.
         // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -2560,6 +2696,8 @@ export function GameApp({
       result,
       mode: onlineMatch ? "pvp" : "ai",
       opponent: onlineMatch ? onlineOpponent ?? "联机对手" : "镜像演算体 K-7",
+      ...(onlineMatch && pvpMatchTokenRef.current ? { pvpToken: pvpMatchTokenRef.current } : {}),
+      ...(onlineMatch && pvp.state.role ? { pvpPlayer: pvp.state.role === "host" ? 0 : 1 } : {}),
     }).then((payload) => {
       if (payload) {
         setNotice({
@@ -2568,7 +2706,7 @@ export function GameApp({
         });
       }
     });
-  }, [battleView, onlineMatch, onlineOpponent, postAction]);
+  }, [battleView, onlineMatch, onlineOpponent, postAction, pvp.state.role]);
 
   const totalOwned = Object.values(player.collection).reduce((sum, count) => sum + count, 0);
   const uniqueOwned = Object.values(player.collection).filter((count) => count > 0).length;
