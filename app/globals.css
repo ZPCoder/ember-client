@@ -3224,6 +3224,38 @@ button.hero-core {
   animation: battle-target-pulse 1100ms ease-in-out infinite;
 }
 
+.hero-core__impact {
+  position: absolute;
+  z-index: 12;
+  top: 48%;
+  left: 56%;
+  min-width: 38px;
+  padding: 3px 7px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  color: #ff947d;
+  background: rgba(23, 8, 7, 0.86);
+  font-size: 16px;
+  font-weight: 900;
+  line-height: 1;
+  text-align: center;
+  text-shadow: 0 0 12px currentColor;
+  transform: translate(-50%, -50%);
+  animation: battle-target-impact 980ms ease-out both;
+  pointer-events: none;
+}
+
+.hero-core__impact--heal,
+.hero-core__impact--buff {
+  color: #9fe6bd;
+  background: rgba(5, 25, 19, 0.88);
+}
+
+.hero-core__impact--shield {
+  color: #b0ebff;
+  background: rgba(5, 20, 29, 0.88);
+}
+
 .mana-readout {
   min-width: 62px;
   color: var(--cyan);
@@ -3732,6 +3764,38 @@ button.hero-core {
   background: var(--cyan);
   font-size: 6px;
   font-weight: 900;
+}
+
+.board-unit__impact {
+  position: absolute;
+  z-index: 12;
+  top: 42%;
+  left: 50%;
+  min-width: 34px;
+  padding: 4px 6px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  color: #ff947d;
+  background: rgba(23, 8, 7, 0.9);
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1;
+  text-align: center;
+  text-shadow: 0 0 12px currentColor;
+  transform: translate(-50%, -50%);
+  animation: battle-target-impact 980ms ease-out both;
+  pointer-events: none;
+}
+
+.board-unit__impact--heal,
+.board-unit__impact--buff {
+  color: #9fe6bd;
+  background: rgba(5, 25, 19, 0.9);
+}
+
+.board-unit__impact--shield {
+  color: #b0ebff;
+  background: rgba(5, 20, 29, 0.9);
 }
 
 .board-unit__target-hint {
@@ -5267,6 +5331,27 @@ button.hero-core {
   }
 }
 
+@keyframes battle-target-impact {
+  0% {
+    opacity: 0;
+    filter: blur(5px);
+    transform: translate(-50%, -18%) scale(0.64);
+  }
+  22% {
+    opacity: 1;
+    filter: blur(0);
+    transform: translate(-50%, -58%) scale(1.18);
+  }
+  68% {
+    opacity: 1;
+    transform: translate(-50%, -74%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -138%) scale(0.92);
+  }
+}
+
 @keyframes battle-vignette-pulse {
   0% {
     opacity: 0;
@@ -5959,6 +6044,13 @@ button.hero-core {
   .battle-fx__number {
     opacity: 1;
     animation: none !important;
+  }
+
+  .board-unit__impact,
+  .hero-core__impact {
+    opacity: 1;
+    animation: none !important;
+    transform: translate(-50%, -50%);
   }
 
   .battle-fx__vignette {

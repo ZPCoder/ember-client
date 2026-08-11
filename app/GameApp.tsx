@@ -49,6 +49,17 @@ type BattleUnitEffect =
   | "buff"
   | "shield";
 
+function battleImpactText(effect?: BattleVisualEffect): string | undefined {
+  if (!effect) return undefined;
+  if (effect.kind === "damage") return `−${effect.amount ?? 0}`;
+  if (effect.kind === "heal") return `+${effect.amount ?? 0}`;
+  if (effect.kind === "shield") return "护盾";
+  if (effect.kind === "buff") return "增幅";
+  if (effect.kind === "transform") return "变形";
+  if (effect.kind === "destroy") return "离线";
+  return undefined;
+}
+
 type CatalogCard = {
   id: string;
   name: string;
@@ -239,12 +250,19 @@ function orientPvpMatchForLocal(state: MatchState, role: PvpRole): MatchState {
     events: state.events.map((event) => ({
       ...event,
       player: event.player === undefined ? undefined : swap(event.player),
-      data: event.data
-        ? {
-            ...event.data,
-            ...(typeof event.data.winner === "number" ? { winner: swap(event.data.winner as 0 | 1) } : {}),
-          }
-        : undefined,
+      data: event.data ? (() => {
+        const target = event.data?.target as { kind?: string; player?: number } | undefined;
+        return {
+          ...event.data,
+          ...(typeof event.data.winner === "number" ? { winner: swap(event.data.winner as 0 | 1) } : {}),
+          ...(event.data.targetPlayer === 0 || event.data.targetPlayer === 1
+            ? { targetPlayer: swap(event.data.targetPlayer) }
+            : {}),
+          ...(target?.kind === "hero" && (target.player === 0 || target.player === 1)
+            ? { target: { ...target, player: swap(target.player) } }
+            : {}),
+        };
+      })() : undefined,
     })),
   };
 }
@@ -4290,6 +4308,7 @@ function HeroCore({
   onTarget,
   targetLabel,
   effect,
+  impact,
 }: {
   side: BattleSide;
   active: boolean;
@@ -4299,8 +4318,10 @@ function HeroCore({
   onTarget?: () => void;
   targetLabel?: string;
   effect?: BattleHeroEffect;
+  impact?: BattleVisualEffect;
 }) {
   const effectClass = effect ? `hero-core--${effect}` : "";
+  const impactText = battleImpactText(impact);
   const core = (
     <>
       <span className="hero-core__portrait"><Icon name={enemy ? "bot" : "user"} size={30} /></span>
@@ -4331,6 +4352,11 @@ function HeroCore({
       <span className="hero-core__health"><Icon name="shield" size={17} /> CORE</span>
       {active && <span className="hero-core__active">行动中</span>}
       {canTarget && <span className="hero-core__target-hint">选择目标</span>}
+      {impactText && (
+        <span className={`hero-core__impact hero-core__impact--${impact?.kind}`} aria-hidden="true">
+          {impactText}
+        </span>
+      )}
     </>
   );
   if (canTarget && onTarget) {
@@ -4356,6 +4382,7 @@ function BoardUnit({
   onTarget,
   onInspect,
   effect,
+  impact,
 }: {
   unit: BattleUnit;
   selected?: boolean;
@@ -4364,6 +4391,7 @@ function BoardUnit({
   onTarget?: () => void;
   onInspect?: () => void;
   effect?: BattleUnitEffect;
+  impact?: BattleVisualEffect;
 }) {
   const card = CARD_BY_ID.get(unit.cardId);
   const visualCard: CatalogCard =
@@ -4382,6 +4410,7 @@ function BoardUnit({
       traits: [],
       stealthActive: false,
     };
+  const impactText = battleImpactText(impact);
   return (
     <div className="board-unit-shell">
       <button
@@ -4413,6 +4442,11 @@ function BoardUnit({
         <span className="board-unit__temporary" title="回合结束时移除">
           ◇ 临时 {unit.temporaryAttackBonus >= 0 ? "+" : ""}{unit.temporaryAttackBonus}/
           {unit.temporaryHealthBonus >= 0 ? "+" : ""}{unit.temporaryHealthBonus}
+        </span>
+      )}
+      {impactText && (
+        <span className={`board-unit__impact board-unit__impact--${impact?.kind}`} aria-hidden="true">
+          {impactText}
         </span>
       )}
       {unit.canAttack && onSelect && <span className="board-unit__ready">READY</span>}
@@ -4799,6 +4833,18 @@ function BattleSection({
     }
     return undefined;
   };
+  const impactForUnit = (unitId: string): BattleVisualEffect | undefined => {
+    if (!effect || effect.targetKind !== "unit" || effect.targetId !== unitId) {
+      return undefined;
+    }
+    return effect;
+  };
+  const impactForHero = (side: "player" | "ai"): BattleVisualEffect | undefined => {
+    if (!effect || effect.targetKind !== "hero" || effect.targetSide !== side) {
+      return undefined;
+    }
+    return effect;
+  };
   const visibleEnemyTaunts = battle.ai.board.filter(
     (unit) => unit.keywords.includes("taunt") && !unit.stealthActive,
   );
@@ -4879,6 +4925,7 @@ function BattleSection({
                 active={battle.currentPlayer === "ai"}
                 canTarget={enemyHeroTargetable}
                 effect={effectForHero("ai")}
+                impact={impactForHero("ai")}
                 onTarget={() =>
                   pendingCard || pendingHeroPower
                     ? onCardTarget({ kind: "hero", side: "ai" })
@@ -4912,6 +4959,7 @@ function BattleSection({
                   unit={unit}
                   targetable={enemyUnitTargetable(unit)}
                   effect={effectForUnit(unit.id)}
+                  impact={impactForUnit(unit.id)}
                   onTarget={() =>
                     pendingCard || pendingHeroPower
                       ? onCardTarget({ kind: "unit", side: "ai", id: unit.id })
@@ -4947,6 +4995,7 @@ function BattleSection({
                   selected={selectedAttacker === unit.id}
                   targetable={cardCanTarget("player", "unit")}
                   effect={effectForUnit(unit.id)}
+                  impact={impactForUnit(unit.id)}
                   onSelect={pendingCard || pendingHeroPower || !playerCanAct ? undefined : () => onSelectAttacker(unit.id)}
                   onTarget={() => onCardTarget({ kind: "unit", side: "player", id: unit.id })}
                   onInspect={() => {
@@ -4965,6 +5014,7 @@ function BattleSection({
                 active={playerTurn}
                 canTarget={cardCanTarget("player", "hero")}
                 effect={effectForHero("player")}
+                impact={impactForHero("player")}
                 onTarget={() => onCardTarget({ kind: "hero", side: "player" })}
                 targetLabel={`以${pendingDefinition?.name ?? (pendingHeroPower ? battle.player.heroPowerName : "卡牌")}选择我方核心`}
               />
