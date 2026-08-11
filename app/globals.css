@@ -3648,6 +3648,14 @@ button.hero-core {
   font-size: 9px;
 }
 
+.battle-console__replay {
+  display: block;
+  margin-top: 6px;
+  color: #f0bf75;
+  font-size: 8px;
+  letter-spacing: 0.04em;
+}
+
 .mulligan-prompt {
   display: flex;
   align-items: center;
@@ -3965,6 +3973,28 @@ button.hero-core {
 
 .battle-actions--mulligan {
   grid-template-columns: 1fr;
+}
+
+.battle-actions--replay {
+  grid-template-columns: 1fr auto;
+  align-items: stretch;
+  padding: 8px;
+  border-top: 1px solid rgba(228, 164, 80, 0.18);
+  background: rgba(228, 164, 80, 0.05);
+}
+
+.battle-actions--replay .battle-actions__waiting {
+  min-height: 42px;
+  justify-items: start;
+  padding: 0 10px;
+  background: transparent;
+}
+
+.battle-actions--replay .button {
+  min-height: 42px;
+  padding: 0 12px;
+  white-space: nowrap;
+  font-size: 8px;
 }
 
 .button--end-turn {

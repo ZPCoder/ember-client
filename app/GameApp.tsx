@@ -1238,11 +1238,15 @@ function SectionHeading({
 }
 
 type BattleSoundCue = BattleEffectKind | "select" | "error";
-const BATTLE_EFFECT_STEP_MS = 900;
+// Keep each combat beat readable on a phone. The reducer still emits every
+// event; the client now replays a longer, ordered queue instead of collapsing
+// an AI turn into one frame.
+const BATTLE_EFFECT_STEP_MS = 1200;
 // Give the opponent a readable planning window before its complete reducer
 // transition is revealed. This keeps a full AI turn from collapsing into one
 // frame on slower phones and makes the event stream match the board animation.
-const AI_TURN_DELAY_MS = 1600;
+const AI_TURN_DELAY_MS = 2200;
+const BATTLE_EFFECT_QUEUE_LIMIT = 40;
 
 function battleEffectPriority(kind: BattleEffectKind) {
   switch (kind) {
@@ -2040,6 +2044,7 @@ export function GameApp({
   const [mulliganSelection, setMulliganSelection] = useState<number[]>([]);
   const [battleMessage, setBattleMessage] = useState("准备部署你的战术卡组。");
   const [battleEffect, setBattleEffect] = useState<BattleVisualEffect | null>(null);
+  const [battleEffectCount, setBattleEffectCount] = useState(0);
   const [battleEffectsLocked, setBattleEffectsLocked] = useState(false);
   const recordedBattleRef = useRef<string | null>(null);
   const sectionRef = useRef<SectionKey>("overview");
@@ -2069,6 +2074,7 @@ export function GameApp({
     battleEffectDrainingRef.current = false;
     battleEffectLockRef.current = false;
     setBattleEffect(null);
+    setBattleEffectCount(0);
     setBattleEffectsLocked(false);
   }, []);
 
@@ -2086,10 +2092,12 @@ export function GameApp({
           setBattleEffectsLocked(false);
         }
         setBattleEffect(null);
+        setBattleEffectCount(0);
         return;
       }
 
       setBattleEffect(next);
+      setBattleEffectCount(battleEffectQueueRef.current.length);
       playSound(next.kind);
       battleEffectTimerRef.current = window.setTimeout(
         playNext,
@@ -2108,7 +2116,7 @@ export function GameApp({
       if (options.reset) {
         stopBattleEffects();
       }
-      const maxEffects = options.maxEffects ?? 8;
+      const maxEffects = options.maxEffects ?? 20;
       const playlist =
         effects.length <= maxEffects
           ? [...effects]
@@ -2126,7 +2134,7 @@ export function GameApp({
               .slice(0, maxEffects)
               .sort((first, second) => first.index - second.index)
               .map(({ effect }) => effect);
-      const capacity = Math.max(0, 12 - battleEffectQueueRef.current.length);
+      const capacity = Math.max(0, BATTLE_EFFECT_QUEUE_LIMIT - battleEffectQueueRef.current.length);
       const incoming = playlist.slice(0, capacity);
       const terminalEffect = playlist.at(-1);
       if (
@@ -2138,6 +2146,7 @@ export function GameApp({
         incoming[incoming.length - 1] = terminalEffect;
       }
       battleEffectQueueRef.current.push(...incoming);
+      setBattleEffectCount(battleEffectQueueRef.current.length);
 
       if (options.lock) {
         battleEffectLockRef.current = true;
@@ -2978,7 +2987,7 @@ export function GameApp({
         if (sectionRef.current === "battle") {
           showBattleEffects(
             battleEventsToEffects(next.events.slice(beforeAiEvents)),
-            { lock: true, maxEffects: 4 },
+            { lock: true, maxEffects: 20 },
           );
         }
         setBattleMessage(
@@ -3253,6 +3262,7 @@ export function GameApp({
                   mulliganSelection={mulliganSelection}
                   busy={apiBusy === "record_match"}
                   effectsLocked={battleEffectsLocked}
+                  effectCount={battleEffectCount}
                   soundEnabled={soundEnabled}
                   onStart={startBattle}
                   onRematch={requestOnlineRematch}
@@ -3276,6 +3286,7 @@ export function GameApp({
                   onHeroPower={useHeroPower}
                   onUseCoin={useCoin}
                   onEndTurn={endTurn}
+                  onSkipEffects={stopBattleEffects}
                   onConcede={concedeBattle}
                   onOpenDeck={() => switchSection("deck")}
                   onToggleSound={toggleSound}
@@ -4293,6 +4304,7 @@ function BattleSection({
   mulliganSelection,
   busy,
   effectsLocked,
+  effectCount,
   soundEnabled,
   onStart,
   onRematch,
@@ -4309,6 +4321,7 @@ function BattleSection({
   onHeroPower,
   onUseCoin,
   onEndTurn,
+  onSkipEffects,
   onConcede,
   onOpenDeck,
   onToggleSound,
@@ -4333,6 +4346,7 @@ function BattleSection({
   mulliganSelection: number[];
   busy: boolean;
   effectsLocked: boolean;
+  effectCount: number;
   soundEnabled: boolean;
   onStart: () => void;
   onRematch: () => void;
@@ -4349,6 +4363,7 @@ function BattleSection({
   onHeroPower: () => void;
   onUseCoin: () => void;
   onEndTurn: () => void;
+  onSkipEffects: () => void;
   onConcede: () => void;
   onOpenDeck: () => void;
   onToggleSound: () => void;
@@ -4681,7 +4696,14 @@ function BattleSection({
         <aside className="battle-console">
           <div className="battle-console__message" role="status">
             <span><Icon name="radar" /></span>
-            <p>{message}</p>
+            <p>
+              {message}
+              {effectsLocked && (
+                <small className="battle-console__replay">
+                  战况回放中 · 还有 {effectCount} 个效果
+                </small>
+              )}
+            </p>
           </div>
           {mulliganActive && (
             <div className="mulligan-prompt" role="status">
@@ -4798,6 +4820,13 @@ function BattleSection({
               ) : (
                 <button className="button button--primary button--wide" type="button" onClick={onStart}>再次演算</button>
               )}
+            </div>
+          ) : effectsLocked ? (
+            <div className="battle-actions battle-actions--replay">
+              <span className="battle-actions__waiting">正在逐条播放战斗事件</span>
+              <button className="button button--outline" type="button" onClick={onSkipEffects}>
+                跳过回放
+              </button>
             </div>
           ) : mulliganActive ? (
             <div className="battle-actions battle-actions--mulligan">
