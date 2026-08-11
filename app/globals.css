@@ -2268,6 +2268,78 @@ button.game-card:not(:disabled):hover .game-card__artwork,
   margin-top: 22px;
 }
 
+.ai-archetype-picker {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  min-width: 300px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0 40px;
+  padding: 12px 14px;
+  border: 1px solid rgba(177, 133, 255, 0.22);
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(110, 75, 164, 0.13), rgba(8, 23, 19, 0.7));
+}
+
+.ai-archetype-picker__copy {
+  min-width: 0;
+}
+
+.ai-archetype-picker__copy > span,
+.ai-archetype-picker__copy > strong,
+.ai-archetype-picker__copy > small {
+  display: block;
+}
+
+.ai-archetype-picker__copy > span {
+  color: #bda8df;
+  font-size: 7px;
+  letter-spacing: 0.15em;
+}
+
+.ai-archetype-picker__copy > strong {
+  margin-top: 4px;
+  color: #eee4ff;
+  font-size: 13px;
+}
+
+.ai-archetype-picker__copy > small {
+  margin-top: 3px;
+  overflow: hidden;
+  color: #a79bb8;
+  font-size: 8px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ai-archetype-picker label,
+.ai-archetype-picker label span {
+  display: block;
+}
+
+.ai-archetype-picker label {
+  min-width: 170px;
+}
+
+.ai-archetype-picker label span {
+  margin-bottom: 4px;
+  color: #7f8b84;
+  font-size: 8px;
+}
+
+.ai-archetype-picker select {
+  width: 100%;
+  min-height: 34px;
+  padding: 0 9px;
+  border: 1px solid rgba(177, 133, 255, 0.32);
+  border-radius: 8px;
+  color: #eee4ff;
+  background: #171527;
+  font-size: 9px;
+}
+
 .pvp-lobby {
   position: relative;
   z-index: 2;
@@ -5536,6 +5608,17 @@ button.hero-core {
 
   .battle-lobby__actions {
     justify-content: center;
+  }
+
+  .ai-archetype-picker {
+    min-width: 0;
+    flex-direction: column;
+    align-items: stretch;
+    margin: 0 14px;
+  }
+
+  .ai-archetype-picker label {
+    min-width: 0;
   }
 
   .pvp-lobby {

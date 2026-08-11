@@ -426,6 +426,60 @@ function getStarterDeck(): string[] {
 
 const STARTER_IDS = getStarterDeck();
 
+type AiArchetype = {
+  id: string;
+  name: string;
+  faction: Faction;
+  description: string;
+  deck: readonly string[];
+};
+
+function buildAiArchetypeDeck(faction: Faction): readonly string[] {
+  const factionCards = CATALOG.filter((card) => card.faction === faction);
+  const units = factionCards
+    .filter((card) => card.type === "unit")
+    .sort((left, right) => left.cost - right.cost || left.id.localeCompare(right.id, "en"))
+    .slice(0, 10);
+  const spells = factionCards
+    .filter((card) => card.type === "spell")
+    .sort((left, right) => left.cost - right.cost || left.id.localeCompare(right.id, "en"))
+    .slice(0, 4);
+  const weapon = factionCards.find((card) => card.type === "weapon");
+  const uniqueCards = [...units, ...spells, ...(weapon ? [weapon] : [])].slice(0, 15);
+  return Object.freeze(uniqueCards.flatMap((card) => [card.id, card.id]));
+}
+
+const AI_ARCHETYPES: readonly AiArchetype[] = Object.freeze([
+  {
+    id: "tide-control",
+    name: "幽潮 · 逆流控场",
+    faction: "幽潮",
+    description: "嘲讽、冻结与汲取，擅长拖长战局。",
+    deck: DEFAULT_OPPONENT_DECK,
+  },
+  {
+    id: "ember-rush",
+    name: "烬火 · 熔线突袭",
+    faction: "烬火",
+    description: "低费冲锋与直伤，前期压力更强。",
+    deck: buildAiArchetypeDeck("烬火"),
+  },
+  {
+    id: "astral-value",
+    name: "星穹 · 观测增值",
+    faction: "星穹",
+    description: "发现、抽牌与高费单位，后期资源更厚。",
+    deck: buildAiArchetypeDeck("星穹"),
+  },
+  {
+    id: "storm-overload",
+    name: "雷铸 · 过载炮台",
+    faction: "雷铸",
+    description: "过载、武器与范围伤害，压制宽战场。",
+    deck: buildAiArchetypeDeck("雷铸"),
+  },
+]);
+
 function formatTime(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "刚刚";
@@ -2087,6 +2141,7 @@ export function GameApp({
   const [pvpRoomInput, setPvpRoomInput] = useState("");
   const [onlineMatch, setOnlineMatch] = useState(false);
   const [onlineOpponent, setOnlineOpponent] = useState<string | null>(null);
+  const [aiArchetypeId, setAiArchetypeId] = useState(AI_ARCHETYPES[0]?.id ?? "tide-control");
   const onlineStartSentRef = useRef(false);
   const pvpMatchTokenRef = useRef<string | null>(null);
   const pendingPvpCommandRef = useRef(false);
@@ -2430,6 +2485,7 @@ export function GameApp({
   const battleCurrentPlayer = battleView?.currentPlayer;
   const battleTurn = battleView?.turn;
   const hasBattleTurnClock = battleTurnClockSeconds !== null;
+  const selectedAiArchetype = AI_ARCHETYPES.find((archetype) => archetype.id === aiArchetypeId) ?? AI_ARCHETYPES[0];
 
   const switchSection = (next: SectionKey) => {
     sectionRef.current = next;
@@ -2593,7 +2649,7 @@ export function GameApp({
       setBattle(unwrapTransition(next));
       setInspectedCard(null);
       setOnlineMatch(online);
-      setOnlineOpponent(online ? opponentName ?? "联机对手" : null);
+      setOnlineOpponent(opponentName ?? (online ? "联机对手" : "镜像演算体 K-7"));
       if (!online) pvpMatchTokenRef.current = null;
       pendingPvpCommandRef.current = false;
       setSelectedAttacker(null);
@@ -2644,7 +2700,8 @@ export function GameApp({
       setNotice({ tone: "warning", text: `无法部署：${deckValidation.errors[0]}` });
       return;
     }
-    beginBattle([[...deckIds], [...DEFAULT_OPPONENT_DECK]], 0, false);
+    const opponent = selectedAiArchetype ?? AI_ARCHETYPES[0];
+    beginBattle([[...deckIds], [...(opponent?.deck ?? DEFAULT_OPPONENT_DECK)]], 0, false, opponent?.name);
   };
 
   // In PVP the server reducer is authoritative. The local client only sends a
@@ -3192,7 +3249,7 @@ export function GameApp({
       idempotencyKey: makeId("match"),
       result,
       mode: onlineMatch ? "pvp" : "ai",
-      opponent: onlineMatch ? onlineOpponent ?? "联机对手" : "镜像演算体 K-7",
+      opponent: onlineOpponent ?? (onlineMatch ? "联机对手" : "镜像演算体 K-7"),
       ...(onlineMatch && pvpMatchTokenRef.current ? { pvpToken: pvpMatchTokenRef.current } : {}),
       ...(onlineMatch && pvp.state.role ? { pvpPlayer: pvp.state.role === "host" ? 0 : 1 } : {}),
     }).then((payload) => {
@@ -3464,6 +3521,9 @@ export function GameApp({
                   onOpenDeck={() => switchSection("deck")}
                   onToggleSound={toggleSound}
                   pvp={pvp.state}
+                  aiArchetypes={AI_ARCHETYPES}
+                  aiArchetypeId={aiArchetypeId}
+                  onAiArchetype={setAiArchetypeId}
                   pvpUrl={pvpUrl}
                   pvpRoomInput={pvpRoomInput}
                   onPvpUrl={setPvpUrl}
@@ -4555,6 +4615,9 @@ function BattleSection({
   onOpenDeck,
   onToggleSound,
   pvp,
+  aiArchetypes,
+  aiArchetypeId,
+  onAiArchetype,
   pvpUrl,
   pvpRoomInput,
   onPvpUrl,
@@ -4603,6 +4666,9 @@ function BattleSection({
   onOpenDeck: () => void;
   onToggleSound: () => void;
   pvp: PvpState;
+  aiArchetypes: readonly AiArchetype[];
+  aiArchetypeId: string;
+  onAiArchetype: (id: string) => void;
   pvpUrl: string;
   pvpRoomInput: string;
   onPvpUrl: (value: string) => void;
@@ -4636,6 +4702,19 @@ function BattleSection({
             <div><span>对战模式</span><strong>标准 1V1</strong></div>
             <div><span>胜利条件</span><strong>摧毁敌方核心</strong></div>
             <div><span>规则版本</span><strong>CORE 0.2 · 特质升阶</strong></div>
+          </div>
+          <div className="ai-archetype-picker">
+            <div className="ai-archetype-picker__copy">
+              <span>选择演算对手</span>
+              <strong>{aiArchetypes.find((archetype) => archetype.id === aiArchetypeId)?.name ?? "镜像演算体 K-7"}</strong>
+              <small>{aiArchetypes.find((archetype) => archetype.id === aiArchetypeId)?.description ?? "自适应基础策略。"}</small>
+            </div>
+            <label>
+              <span>AI 卡组</span>
+              <select value={aiArchetypeId} onChange={(event) => onAiArchetype(event.target.value)} aria-label="选择演算对手">
+                {aiArchetypes.map((archetype) => <option value={archetype.id} key={archetype.id}>{archetype.name}</option>)}
+              </select>
+            </label>
           </div>
           <div className="battle-lobby__actions">
             <button className="button button--ghost" type="button" onClick={onOpenDeck}>调整卡组</button>
@@ -4796,7 +4875,7 @@ function BattleSection({
               <HeroCore
                 side={battle.ai}
                 enemy
-                enemyLabel={online ? opponentName ?? "联机对手" : undefined}
+                enemyLabel={opponentName ?? (online ? "联机对手" : "镜像演算体 K-7")}
                 active={battle.currentPlayer === "ai"}
                 canTarget={enemyHeroTargetable}
                 effect={effectForHero("ai")}
