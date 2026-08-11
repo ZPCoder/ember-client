@@ -1134,9 +1134,11 @@ function Sigil({ card }: { card: CatalogCard }) {
 function CardArtwork({
   card,
   className = "",
+  eager = false,
 }: {
   card: Pick<CatalogCard, "id" | "name">;
   className?: string;
+  eager?: boolean;
 }) {
   return (
     <Image
@@ -1148,7 +1150,7 @@ function CardArtwork({
       unoptimized
       sizes="(max-width: 720px) 50vw, 220px"
       aria-hidden="true"
-      loading="lazy"
+      loading={eager ? "eager" : "lazy"}
       decoding="async"
       draggable={false}
       onError={(event) => {
@@ -4565,7 +4567,8 @@ function BoardUnit({
 }
 
 function BattleEffectLayer({ effect }: { effect: BattleVisualEffect }) {
-  const cardName = effect.cardId ? CARD_BY_ID.get(effect.cardId)?.name : undefined;
+  const revealCard = effect.cardId ? CARD_BY_ID.get(effect.cardId) : undefined;
+  const cardName = revealCard?.name;
   const number =
     typeof effect.amount === "number" &&
     (effect.kind === "damage" || effect.kind === "heal")
@@ -4586,8 +4589,16 @@ function BattleEffectLayer({ effect }: { effect: BattleVisualEffect }) {
         {Array.from({ length: 8 }, (_, index) => <i key={index} />)}
       </span>
       <span className="battle-fx__banner">
-        <small>{cardName ?? "ASTRA COMBAT LINK"}</small>
-        <strong>{effect.label}</strong>
+        {revealCard && (
+          <span className="battle-fx__card-reveal" aria-hidden="true">
+            <CardArtwork card={revealCard} className="battle-fx__card-art" eager />
+            <b>{revealCard.cost}</b>
+          </span>
+        )}
+        <span className="battle-fx__copy">
+          <small>{cardName ?? "ASTRA COMBAT LINK"}</small>
+          <strong>{effect.label}</strong>
+        </span>
       </span>
       {number && <span className="battle-fx__number">{number}</span>}
     </div>
