@@ -51,8 +51,8 @@ type BattleUnitEffect =
 
 function battleImpactText(effect?: BattleVisualEffect): string | undefined {
   if (!effect) return undefined;
-  if (effect.kind === "damage") return `−${effect.amount ?? 0}`;
-  if (effect.kind === "heal") return `+${effect.amount ?? 0}`;
+  if (effect.kind === "damage") return effect.amount && effect.amount > 0 ? `−${effect.amount}` : undefined;
+  if (effect.kind === "heal") return effect.amount && effect.amount > 0 ? `+${effect.amount}` : undefined;
   if (effect.kind === "shield") return "护盾";
   if (effect.kind === "buff") return "增幅";
   if (effect.kind === "transform") return "变形";
@@ -2149,7 +2149,9 @@ export function GameApp({
   const battleEffectTimerRef = useRef<number | null>(null);
   const battleEffectDrainingRef = useRef(false);
   const battleEffectLockRef = useRef(false);
+  const aiReplayActiveRef = useRef(false);
   const battleEffectSequenceRef = useRef(0);
+  const aiReplayFinalStateRef = useRef<MatchState | null>(null);
   const aiTurnTimerRef = useRef<number | null>(null);
   const turnTimeoutHandledRef = useRef<number | null>(null);
   const endTurnRef = useRef<() => void>(() => undefined);
@@ -2173,10 +2175,31 @@ export function GameApp({
     battleEffectQueueRef.current = [];
     battleEffectDrainingRef.current = false;
     battleEffectLockRef.current = false;
+    aiReplayActiveRef.current = false;
     setBattleEffect(null);
     setBattleEffectCount(0);
     setBattleEffectsLocked(false);
   }, []);
+
+  const skipBattleReplay = useCallback(() => {
+    if (aiTurnTimerRef.current !== null) {
+      window.clearTimeout(aiTurnTimerRef.current);
+      aiTurnTimerRef.current = null;
+    }
+    const finalState = aiReplayFinalStateRef.current;
+    aiReplayFinalStateRef.current = null;
+    if (finalState) {
+      setBattle(finalState);
+    }
+    stopBattleEffects();
+    if (finalState) {
+      setBattleMessage(
+        finalState.phase === "game-over"
+          ? "敌方行动已结束，演算结果已锁定。"
+          : "敌方行动回放已跳过，新的能量窗口已开启。",
+      );
+    }
+  }, [stopBattleEffects]);
 
   const drainBattleEffects = useCallback(() => {
     if (battleEffectDrainingRef.current) return;
@@ -2187,7 +2210,7 @@ export function GameApp({
       if (!next) {
         battleEffectDrainingRef.current = false;
         battleEffectTimerRef.current = null;
-        if (battleEffectLockRef.current) {
+        if (battleEffectLockRef.current && !aiReplayActiveRef.current) {
           battleEffectLockRef.current = false;
           setBattleEffectsLocked(false);
         }
@@ -3166,20 +3189,74 @@ export function GameApp({
       aiTurnTimerRef.current = null;
       try {
         const beforeAiEvents = (ended as MatchState).events.length;
-        const result = runAiTurn(ended as MatchState, 1);
-        const next = unwrapTransition(result) as MatchState;
-        setBattle(next);
-        if (sectionRef.current === "battle") {
-          showBattleEffects(
-            battleEventsToEffects(next.events.slice(beforeAiEvents)),
-            { lock: true, maxEffects: 20 },
-          );
-        }
-        setBattleMessage(
-          next.phase === "game-over"
-            ? "敌方行动完成，正在结算演算结果。"
-            : "敌方行动已结束，新的能量窗口已开启。",
+        const replaySteps: Array<{ state: MatchState; eventCount: number }> = [];
+        const result = runAiTurn(
+          ended as MatchState,
+          1,
+          (stepState) => {
+            replaySteps.push({ state: stepState, eventCount: stepState.events.length });
+          },
         );
+        const next = unwrapTransition(result) as MatchState;
+        const states = replaySteps.length > 0
+          ? replaySteps
+          : [{ state: next, eventCount: next.events.length }];
+        const replayEffects = battleEventsToEffects(
+          states.flatMap((step, index) => {
+            const previousEventCount = index === 0
+              ? beforeAiEvents
+              : states[index - 1]?.eventCount ?? beforeAiEvents;
+            return step.state.events.slice(previousEventCount, step.eventCount);
+          }),
+        );
+
+        // Reveal each accepted AI command as a real board transition instead
+        // of jumping directly to the final turn snapshot. The effect queue
+        // remains the timing authority, so the board and the combat overlay
+        // move at the same readable cadence on mobile and desktop.
+        if (sectionRef.current === "battle") {
+          aiReplayFinalStateRef.current = next;
+          aiReplayActiveRef.current = true;
+          setBattle(states[0]?.state ?? next);
+          showBattleEffects(replayEffects, {
+            lock: true,
+            maxEffects: BATTLE_EFFECT_QUEUE_LIMIT,
+          });
+          let replayIndex = 1;
+          const revealNext = () => {
+            const step = states[replayIndex];
+            if (!step) {
+              aiTurnTimerRef.current = null;
+              aiReplayFinalStateRef.current = null;
+              aiReplayActiveRef.current = false;
+              if (battleEffectLockRef.current && battleEffectQueueRef.current.length === 0) {
+                battleEffectLockRef.current = false;
+                setBattleEffectsLocked(false);
+                setBattleEffect(null);
+                setBattleEffectCount(0);
+              }
+              setBattleMessage(
+                next.phase === "game-over"
+                  ? "敌方行动完成，正在结算演算结果。"
+                  : "敌方行动已结束，新的能量窗口已开启。",
+              );
+              return;
+            }
+            setBattle(step.state);
+            replayIndex += 1;
+            aiTurnTimerRef.current = window.setTimeout(
+              revealNext,
+              BATTLE_EFFECT_STEP_MS,
+            );
+          };
+          aiTurnTimerRef.current = window.setTimeout(
+            revealNext,
+            BATTLE_EFFECT_STEP_MS,
+          );
+        } else {
+          setBattle(next);
+        }
+        setBattleMessage("敌方正在逐步执行战术动作…");
       } catch (error) {
         setBattleMessage(error instanceof Error ? error.message : "AI 回合演算异常。");
         playSound("error");
@@ -3534,7 +3611,7 @@ export function GameApp({
                   onHeroPower={useHeroPower}
                   onUseCoin={useCoin}
                   onEndTurn={endTurn}
-                  onSkipEffects={stopBattleEffects}
+                  onSkipEffects={skipBattleReplay}
                   onConcede={concedeBattle}
                   onOpenDeck={() => switchSection("deck")}
                   onToggleSound={toggleSound}
