@@ -3337,6 +3337,7 @@ export function GameApp({
                   onCardTarget={playCardAtTarget}
                   onCancelTarget={() => {
                     setPendingCard(null);
+                    setSelectedAttacker(null);
                     setBattleMessage("已取消目标选择，可继续行动。");
                   }}
                   onAttack={attackTarget}
@@ -4777,6 +4778,35 @@ function BattleSection({
                 );
               })}
               {battle.player.hand.length === 0 && <span className="player-hand__empty">手牌为空</span>}
+            </div>
+            <div className="battle-mobile-dock" aria-label="移动端战斗操作">
+              {effectsLocked ? (
+                <button className="button button--outline" type="button" onClick={onSkipEffects}>
+                  跳过回放
+                </button>
+              ) : mulliganActive ? (
+                <button className="button button--primary" type="button" disabled={!playerCanMulligan} onClick={onConfirmMulligan}>
+                  {battle.mulliganDone ? "等待对手" : `确认起手${mulliganSelection.length > 0 ? `（换 ${mulliganSelection.length} 张）` : ""}`}
+                </button>
+              ) : discoverActive ? (
+                <span className="battle-mobile-dock__waiting">请选择一张发现卡牌</span>
+              ) : chooseOneActive ? (
+                <span className="battle-mobile-dock__waiting">请选择一个战术分支</span>
+              ) : battle.status === "playing" ? (
+                <>
+                  <button className="button button--end-turn" type="button" disabled={!playerCanAct} onClick={onEndTurn}>
+                    {playerTurn ? "结束回合" : "等待敌方"}
+                  </button>
+                  <button className="button button--concede" type="button" disabled={!playerTurn} onClick={onConcede}>
+                    投降
+                  </button>
+                </>
+              ) : null}
+              {(selectedAttacker || pendingCard) && !effectsLocked && (
+                <button className="battle-mobile-dock__cancel" type="button" onClick={onCancelTarget}>
+                  取消选择
+                </button>
+              )}
             </div>
             <span className="deck-counter"><Icon name="cards" size={16} /> 牌库 {battle.player.deckCount}</span>
           </div>
