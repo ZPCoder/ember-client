@@ -1350,6 +1350,10 @@ function useWebPvp(displayName: string) {
   const pollClientRef = useRef<string | null>(null);
   const pollCursorRef = useRef(0);
   const pollEndpointRef = useRef<string | null>(null);
+  // Keep one opaque polling id per browser tab. sessionStorage survives a
+  // refresh (and normal mobile tab restores) without making two tabs share a
+  // live PVP session.
+  const pollResumeClientRef = useRef<string | null>(null);
   const pollTimerRef = useRef<number | null>(null);
   const pollInFlightRef = useRef(false);
   const incomingQueueRef = useRef<PvpIncoming[]>([]);
@@ -1472,7 +1476,7 @@ function useWebPvp(displayName: string) {
     }
   }, [enqueueIncoming]);
 
-  const stopPolling = useCallback(() => {
+  const stopPolling = useCallback((leaveRoom = true) => {
     if (pollTimerRef.current !== null) {
       window.clearInterval(pollTimerRef.current);
       pollTimerRef.current = null;
@@ -1483,7 +1487,7 @@ function useWebPvp(displayName: string) {
     pollEndpointRef.current = null;
     pollCursorRef.current = 0;
     pollInFlightRef.current = false;
-    if (clientId && endpoint) {
+    if (leaveRoom && clientId && endpoint) {
       void fetch(`${endpoint}?clientId=${encodeURIComponent(clientId)}`, { method: "DELETE", keepalive: true }).catch(() => undefined);
     }
     incomingQueueRef.current = [];
@@ -1498,7 +1502,7 @@ function useWebPvp(displayName: string) {
       fallbackTimerRef.current = null;
     }
     transportRef.current = null;
-    stopPolling();
+    stopPolling(true);
     const socket = socketRef.current;
     socketRef.current = null;
     if (socket && socket.readyState !== WebSocket.CLOSED) socket.close();
@@ -1529,7 +1533,21 @@ function useWebPvp(displayName: string) {
       const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: "connect", name: displayName || "旅者" }),
+        body: JSON.stringify({
+          type: "connect",
+          name: displayName || "旅者",
+          clientId: (() => {
+            if (pollResumeClientRef.current) return pollResumeClientRef.current;
+            const storageKey = "astra-protocol:pvp-session:v1";
+            let value = typeof window !== "undefined" ? window.sessionStorage.getItem(storageKey) : null;
+            if (!value) {
+              value = makeId("poll");
+              if (typeof window !== "undefined") window.sessionStorage.setItem(storageKey, value);
+            }
+            pollResumeClientRef.current = value;
+            return value;
+          })(),
+        }),
       });
       const payload = await response.json() as Record<string, unknown>;
       if (!response.ok || payload.ok !== true || typeof payload.clientId !== "string") throw new Error("poll connect failed");
@@ -1551,7 +1569,7 @@ function useWebPvp(displayName: string) {
         } catch {
           if (connectionIdRef.current === connectionId && transportRef.current === "poll") {
             transportRef.current = null;
-            stopPolling();
+            stopPolling(false);
             setState((current) => ({ ...current, status: "error", message: "联机大厅连接已断开，请重新连接。" }));
           }
         } finally {
@@ -1562,7 +1580,7 @@ function useWebPvp(displayName: string) {
     } catch {
       if (connectionIdRef.current !== connectionId) return;
       transportRef.current = null;
-      stopPolling();
+      stopPolling(false);
       setState((current) => ({ ...current, status: "error", message: "联机大厅连接失败，请稍后重试。" }));
     }
   }, [displayName, handleMessage, stopPolling]);
@@ -1711,7 +1729,23 @@ function useWebPvp(displayName: string) {
     send({ type: "action", action: "command", payload: { command } });
   }, [send]);
 
-  useEffect(() => () => disconnect("联机大厅已关闭。"), [disconnect]);
+  const dispose = useCallback(() => {
+    connectionIdRef.current += 1;
+    fallbackStartedRef.current = null;
+    if (fallbackTimerRef.current !== null) {
+      window.clearTimeout(fallbackTimerRef.current);
+      fallbackTimerRef.current = null;
+    }
+    transportRef.current = null;
+    // Do not DELETE the D1 session during page teardown. The next page load
+    // reuses the opaque session id and restores the room membership.
+    stopPolling(false);
+    const socket = socketRef.current;
+    socketRef.current = null;
+    if (socket && socket.readyState !== WebSocket.CLOSED) socket.close();
+  }, [stopPolling]);
+
+  useEffect(() => () => dispose(), [dispose]);
 
   return { state, incoming, acknowledgeIncoming, connect, disconnect, createRoom, joinRoom, ready, sendMatchStart, sendCommand };
 }
