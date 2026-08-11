@@ -2511,6 +2511,16 @@ button.game-card:not(:disabled):hover .game-card__artwork,
   box-shadow: 0 0 10px rgba(228, 164, 80, 0.48);
 }
 
+.turn-indicator--discover {
+  color: #b9e5dc;
+  border-color: rgba(85, 185, 173, 0.32);
+}
+
+.turn-indicator--discover::before {
+  background: #6dc9bc;
+  box-shadow: 0 0 10px rgba(109, 201, 188, 0.6);
+}
+
 .turn-indicator--finished {
   color: #d7c8ad;
   border-color: rgba(218, 198, 159, 0.24);
@@ -2836,8 +2846,15 @@ button.game-card:not(:disabled):hover .game-card__artwork,
 
 .battlefield__player-zone {
   grid-template-columns: 200px 1fr 80px;
-  grid-template-rows: 1fr 118px;
+  grid-template-rows: 1fr 30px 118px;
   align-items: end;
+}
+
+.battlefield__player-zone > .secret-tray {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  justify-content: center;
+  align-self: center;
 }
 
 .battlefield__side-info {
@@ -2847,7 +2864,7 @@ button.game-card:not(:disabled):hover .game-card__artwork,
 }
 
 .battlefield__side-info--player {
-  grid-row: 2;
+  grid-row: 3;
   display: grid;
   width: 100%;
   grid-template-columns: minmax(0, 1fr) 54px;
@@ -3170,6 +3187,62 @@ button.hero-core {
   padding-top: 3px;
 }
 
+.secret-tray {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 6px;
+  color: #dfbd7a;
+  font-size: 7px;
+}
+
+.secret-tray--enemy {
+  justify-content: flex-end;
+  color: #ba9bdc;
+}
+
+.secret-tray__label {
+  flex: 0 0 auto;
+  letter-spacing: 0.04em;
+}
+
+.secret-tray__cards {
+  display: flex;
+  min-width: 0;
+  gap: 4px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.secret-chip {
+  display: inline-flex;
+  min-width: 58px;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 5px;
+  border: 1px solid rgba(228, 164, 80, 0.32);
+  border-radius: 6px;
+  color: #f5d394;
+  background: rgba(131, 86, 36, 0.18);
+}
+
+.secret-tray--enemy .secret-chip {
+  border-color: rgba(177, 133, 255, 0.34);
+  color: #d7c4fa;
+  background: rgba(110, 75, 164, 0.18);
+}
+
+.secret-chip strong {
+  font-size: 10px;
+}
+
+.secret-chip small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .card-back {
   display: block;
   width: 36px;
@@ -3416,7 +3489,7 @@ button.hero-core {
 .player-hand {
   display: flex;
   min-width: 0;
-  grid-row: 2;
+  grid-row: 3;
   align-items: end;
   justify-content: center;
   gap: 6px;
@@ -3482,7 +3555,7 @@ button.hero-core {
 }
 
 .deck-counter {
-  grid-row: 2;
+  grid-row: 3;
   align-self: end;
   justify-self: end;
   display: inline-flex;
@@ -3552,6 +3625,65 @@ button.hero-core {
   padding: 0 10px;
   white-space: nowrap;
   font-size: 8px;
+}
+
+.discover-prompt {
+  padding: 12px;
+  border-bottom: 1px solid rgba(85, 185, 173, 0.24);
+  background: linear-gradient(145deg, rgba(53, 132, 125, 0.14), rgba(12, 31, 27, 0.38));
+}
+
+.discover-prompt__heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.discover-prompt__heading strong {
+  color: #b9e5dc;
+  font-size: 11px;
+}
+
+.discover-prompt__heading p {
+  margin: 4px 0 0;
+  color: #8faea6;
+  font-size: 8px;
+  line-height: 1.5;
+}
+
+.discover-prompt__heading > span {
+  color: #6dc9bc;
+  font-size: 7px;
+  letter-spacing: 0.14em;
+}
+
+.discover-prompt__cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+  margin-top: 10px;
+}
+
+.discover-prompt__cards .game-card {
+  min-height: 174px;
+}
+
+.discover-prompt__cards .game-card__art {
+  height: 64px;
+}
+
+.discover-prompt__cards .game-card__meta h3 {
+  font-size: 9px;
+}
+
+.battle-actions__waiting {
+  display: grid;
+  min-height: 58px;
+  place-items: center;
+  color: #8faea6;
+  background: rgba(85, 185, 173, 0.08);
+  font-size: 9px;
 }
 
 .target-prompt {

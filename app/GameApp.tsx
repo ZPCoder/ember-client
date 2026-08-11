@@ -140,6 +140,7 @@ type BattleSide = {
   heroPowerCost: number;
   coinAvailable: boolean;
   heroHasAttacked: boolean;
+  secrets: Array<{ secretId: string; name: string; description: string }>;
   weapon: {
     cardId: string;
     name: string;
@@ -155,7 +156,7 @@ type BattleSide = {
 };
 
 type BattleView = {
-  status: "mulligan" | "playing" | "finished";
+  status: "mulligan" | "discover" | "playing" | "finished";
   mulliganDone: boolean;
   winner: "player" | "ai" | null;
   currentPlayer: "player" | "ai";
@@ -163,6 +164,7 @@ type BattleView = {
   player: BattleSide;
   ai: BattleSide;
   log: string[];
+  discover: { sourceCardId: string; choices: string[] } | null;
 };
 
 type PvpRole = "host" | "guest";
@@ -196,6 +198,7 @@ function orientPvpMatchForLocal(state: MatchState, role: PvpRole): MatchState {
     id: swap(index as 0 | 1),
     hero: { ...player.hero },
     weapon: player.weapon ? { ...player.weapon } : null,
+    secrets: (player.secrets ?? []).map((secret) => ({ ...secret, effect: { ...secret.effect } })),
     deck: [...player.deck],
     hand: [...player.hand],
     board: player.board.map((unit) => ({ ...unit, owner: swap(unit.owner) })),
@@ -204,6 +207,9 @@ function orientPvpMatchForLocal(state: MatchState, role: PvpRole): MatchState {
     ...state,
     activePlayer: swap(state.activePlayer),
     mulliganDone: [state.mulliganDone?.[1] ?? true, state.mulliganDone?.[0] ?? true],
+    discover: state.discover
+      ? { ...state.discover, player: swap(state.discover.player), choices: [...state.discover.choices] }
+      : null,
     players: [players[1], players[0]],
     winner: state.winner === null ? null : swap(state.winner),
     result: state.result
@@ -799,6 +805,16 @@ function battleFromRaw(value: unknown): BattleView | null {
     ),
     coinAvailable: Boolean(side.coinAvailable),
     heroHasAttacked: Boolean(side.heroHasAttacked),
+    secrets: Array.isArray(side.secrets)
+      ? side.secrets.map((entry) => {
+          const secret = entry as Record<string, unknown>;
+          return {
+            secretId: asString(secret.secretId),
+            name: asString(secret.name, "未知奥秘"),
+            description: asString(secret.description, "等待敌方行动触发。"),
+          };
+        })
+      : [],
     weapon:
       side.weapon && typeof side.weapon === "object"
         ? (() => {
@@ -823,6 +839,16 @@ function battleFromRaw(value: unknown): BattleView | null {
   });
   const statusRaw = asString(raw.status ?? raw.phase, "playing").toLowerCase();
   const isMulligan = statusRaw === "mulligan";
+  const isDiscover = statusRaw === "discover";
+  const rawDiscover = raw.discover && typeof raw.discover === "object"
+    ? raw.discover as Record<string, unknown>
+    : null;
+  const discover = isDiscover && rawDiscover && Array.isArray(rawDiscover.choices)
+    ? {
+        sourceCardId: asString(rawDiscover.sourceCardId),
+        choices: rawDiscover.choices.map((choice) => asString(choice)).filter(Boolean),
+      }
+    : null;
   const winnerValue = raw.winner ?? raw.winnerId;
   const winnerRaw = asString(winnerValue).toLowerCase();
   const currentValue = raw.currentPlayer ?? raw.activePlayer ?? raw.activeSide;
@@ -846,6 +872,8 @@ function battleFromRaw(value: unknown): BattleView | null {
     status:
       isMulligan
         ? "mulligan"
+        : isDiscover
+          ? "discover"
         : statusRaw === "finished" ||
       statusRaw === "ended" ||
       statusRaw === "game-over" ||
@@ -874,6 +902,7 @@ function battleFromRaw(value: unknown): BattleView | null {
     player: normalizeSide(player),
     ai: normalizeSide(ai),
     log,
+    discover,
   };
 }
 
@@ -2761,6 +2790,20 @@ export function GameApp({
     if (next) setBattleMessage(`已部署「${card?.name ?? "战术卡"}」。`);
   };
 
+  const chooseDiscover = (cardId: string) => {
+    if (battleEffectLockRef.current) {
+      setBattleMessage("战况回放中，请等待选择窗口稳定。");
+      return;
+    }
+    if (!battleView || battleView.status !== "discover" || battleView.currentPlayer !== "player") {
+      setBattleMessage("当前没有可用的发现选择。");
+      return;
+    }
+    const card = CARD_BY_ID.get(cardId);
+    const next = issueCommand({ type: "choose-discover", player: 0, cardId });
+    if (next) setBattleMessage(`已选择「${card?.name ?? "发现卡牌"}」加入手牌。`);
+  };
+
   const playCardAtTarget = (target: { kind: "unit" | "hero"; side: "player" | "ai"; id?: string }) => {
     if (battleEffectLockRef.current) return;
     if (!pendingCard) return;
@@ -3139,6 +3182,7 @@ export function GameApp({
                   onStart={startBattle}
                   onRematch={requestOnlineRematch}
                   onPlayCard={playCard}
+                  onChooseDiscover={chooseDiscover}
                   onToggleMulligan={toggleMulliganCard}
                   onConfirmMulligan={confirmMulligan}
                   onSelectAttacker={(id) => {
@@ -3879,6 +3923,29 @@ function DeckSection({
   );
 }
 
+function SecretTray({
+  secrets,
+  enemy = false,
+}: {
+  secrets: BattleSide["secrets"];
+  enemy?: boolean;
+}) {
+  if (secrets.length === 0) return null;
+  return (
+    <div className={`secret-tray ${enemy ? "secret-tray--enemy" : ""}`} aria-label={enemy ? `敌方有 ${secrets.length} 个奥秘` : `我方有 ${secrets.length} 个奥秘`}>
+      <span className="secret-tray__label">✦ {enemy ? "敌方奥秘" : "我方奥秘"}</span>
+      <div className="secret-tray__cards">
+        {secrets.map((secret) => (
+          <span className="secret-chip" key={secret.secretId} title={enemy ? "敌方奥秘，触发前不可见" : secret.description}>
+            <strong>{enemy ? "?" : "✦"}</strong>
+            <small>{enemy ? "未解密" : secret.name}</small>
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function HeroCore({
   side,
   active,
@@ -4147,6 +4214,7 @@ function BattleSection({
   onStart,
   onRematch,
   onPlayCard,
+  onChooseDiscover,
   onToggleMulligan,
   onConfirmMulligan,
   onSelectAttacker,
@@ -4185,6 +4253,7 @@ function BattleSection({
   onStart: () => void;
   onRematch: () => void;
   onPlayCard: (card: BattleSide["hand"][number]) => void;
+  onChooseDiscover: (cardId: string) => void;
   onToggleMulligan: (index: number) => void;
   onConfirmMulligan: () => void;
   onSelectAttacker: (id: string) => void;
@@ -4266,6 +4335,7 @@ function BattleSection({
 
   const playerTurn = battle.currentPlayer === "player" && battle.status === "playing";
   const mulliganActive = battle.status === "mulligan";
+  const discoverActive = battle.status === "discover" && Boolean(battle.discover);
   const onlineTransportReady = !online || (
     Boolean(pvp.roomCode) &&
     pvp.status !== "offline" &&
@@ -4274,6 +4344,7 @@ function BattleSection({
   );
   const playerCanMulligan = mulliganActive && !battle.mulliganDone && !effectsLocked && onlineTransportReady;
   const playerCanAct = playerTurn && !effectsLocked && onlineTransportReady;
+  const playerCanDiscover = discoverActive && battle.currentPlayer === "player" && !effectsLocked && onlineTransportReady;
   const pendingDefinition = pendingCard ? CARD_BY_ID.get(pendingCard.cardId) : undefined;
   const targetRule = pendingDefinition?.target ?? "none";
   const cardCanTarget = (side: "player" | "ai", kind: "unit" | "hero") => {
@@ -4348,13 +4419,15 @@ function BattleSection({
                 ? "turn-indicator--finished"
                 : mulliganActive
                   ? "turn-indicator--mulligan"
+                : discoverActive
+                  ? "turn-indicator--discover"
                 : playerTurn
                   ? "turn-indicator--player"
                   : "turn-indicator--ai"
             }`}
           >
             <span />
-            {battle.status === "finished" ? "演算结束" : mulliganActive ? "起手换牌" : playerTurn ? "你的回合" : "敌方回合"}
+            {battle.status === "finished" ? "演算结束" : mulliganActive ? "起手换牌" : discoverActive ? "发现选择" : playerTurn ? "你的回合" : "敌方回合"}
           </div>
         </div>
       </header>
@@ -4391,6 +4464,7 @@ function BattleSection({
               {battle.ai.hand.map((card, index) => <span className="card-back" key={`${card.instanceId}-${index}`} />)}
               <small>{battle.ai.deckCount} 张牌库</small>
             </div>
+            <SecretTray secrets={battle.ai.secrets} enemy />
             <div className="board-row board-row--enemy">
               {battle.ai.board.length > 0 ? battle.ai.board.map((unit) => (
                 <BoardUnit
@@ -4479,6 +4553,7 @@ function BattleSection({
                 <span><strong>{battle.player.heroPowerName}</strong><small>{battle.player.heroPowerUsed ? "本回合已用" : `${battle.player.heroPowerCost} 能量 · ${battle.player.heroPowerDescription}`}</small></span>
               </button>
             </div>
+            <SecretTray secrets={battle.player.secrets} />
             <div className="player-hand">
               {battle.player.hand.map((handCard, handIndex) => {
                 const card = CARD_BY_ID.get(handCard.cardId);
@@ -4522,6 +4597,33 @@ function BattleSection({
               <button className="button button--primary" type="button" disabled={!playerCanMulligan} onClick={onConfirmMulligan}>
                 {battle.mulliganDone ? "等待对手" : `确认起手${mulliganSelection.length > 0 ? `（换 ${mulliganSelection.length} 张）` : ""}`}
               </button>
+            </div>
+          )}
+          {discoverActive && battle.discover && (
+            <div className="discover-prompt" role="dialog" aria-label="发现卡牌">
+              <div className="discover-prompt__heading">
+                <div>
+                  <strong>发现一张卡牌</strong>
+                  <p>从三张候选档案中选择一张加入手牌。</p>
+                </div>
+                <span>DISCOVER</span>
+              </div>
+              <div className="discover-prompt__cards">
+                {battle.discover.choices.map((cardId) => {
+                  const card = CARD_BY_ID.get(cardId);
+                  if (!card) return null;
+                  return (
+                    <CardTile
+                      key={cardId}
+                      card={card}
+                      compact
+                      action={() => onChooseDiscover(cardId)}
+                      actionLabel={`选择${card.name}`}
+                      disabled={!playerCanDiscover}
+                    />
+                  );
+                })}
+              </div>
             </div>
           )}
           {(selectedAttacker || pendingCard) && (
@@ -4575,6 +4677,10 @@ function BattleSection({
                 <span>{battle.mulliganDone ? "等待对手" : "确认起手"}</span>
                 <Icon name="check" />
               </button>
+            </div>
+          ) : discoverActive ? (
+            <div className="battle-actions battle-actions--mulligan">
+              <span className="battle-actions__waiting">请选择一张候选卡牌</span>
             </div>
           ) : (
             <div className="battle-actions">
