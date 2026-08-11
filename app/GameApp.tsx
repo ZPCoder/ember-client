@@ -5086,16 +5086,17 @@ function BattleSection({
         : remainingHealth > 0
           ? `预计剩 ${remainingHealth}`
           : "预计击破";
-      const retaliation = remainingHealth > 0
-        ? selectedAttackerUnit
-          ? selectedAttackerUnit.keywords.includes("shield")
-            ? 0
-            : Math.min(
-                selectedAttackerUnit.health,
-                Math.max(1, unit.attack - (selectedAttackerHasBulwark ? playerBulwarkTier : 0)),
-              )
-          : Math.min(battle.player.health, Math.max(0, unit.attack - battle.player.armor))
-        : 0;
+      // Combat damage is simultaneous: a defender still gets its strike even
+      // when the previewed hit is lethal.  Keep the prediction aligned with
+      // the reducer so players can make informed trades before committing.
+      const retaliation = selectedAttackerUnit
+        ? selectedAttackerUnit.keywords.includes("shield")
+          ? 0
+          : Math.min(
+              selectedAttackerUnit.health,
+              Math.max(1, unit.attack - (selectedAttackerHasBulwark ? playerBulwarkTier : 0)),
+            )
+        : Math.min(battle.player.health, Math.max(0, unit.attack - battle.player.armor));
       return retaliation > 0 ? `${outcome} · 反击 −${retaliation}` : outcome;
     }
     if ((pendingCard || pendingHeroPower) && cardCanTarget(side, "unit")) {
