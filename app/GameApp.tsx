@@ -169,7 +169,7 @@ type PvpIncoming =
   | { id: number; type: "match-start"; payload: { seed: number; decks: [string[], string[]]; matchToken?: string } }
   | { id: number; type: "match-sync"; payload: { state: MatchState; matchToken?: string } }
   | { id: number; type: "command"; command: BattleCommand; state?: MatchState; matchToken?: string }
-  | { id: number; type: "rejected"; message: string };
+  | { id: number; type: "rejected"; message: string; resync?: boolean };
 
 function orientPvpMatchForLocal(state: MatchState, role: PvpRole): MatchState {
   if (role === "host") return state;
@@ -1483,7 +1483,12 @@ function useWebPvp(displayName: string) {
     if (type === "action_rejected") {
       const rejection = asString(message.message, "服务器拒绝了这条指令。");
       setState((current) => ({ ...current, message: rejection }));
-      enqueueIncoming({ id: ++incomingIdRef.current, type: "rejected", message: rejection });
+      enqueueIncoming({
+        id: ++incomingIdRef.current,
+        type: "rejected",
+        message: rejection,
+        ...(message.resync === true ? { resync: true } : {}),
+      });
       return;
     }
     if (type === "match_sync") {
@@ -1789,6 +1794,10 @@ function useWebPvp(displayName: string) {
     return send({ type: "action", action: "command", payload: { command } });
   }, [send]);
 
+  const syncRoom = useCallback(() => {
+    return send({ type: "sync" });
+  }, [send]);
+
   const dispose = useCallback(() => {
     connectionIdRef.current += 1;
     fallbackStartedRef.current = null;
@@ -1807,7 +1816,7 @@ function useWebPvp(displayName: string) {
 
   useEffect(() => () => dispose(), [dispose]);
 
-  return { state, incoming, acknowledgeIncoming, connect, disconnect, createRoom, joinRoom, ready, sendMatchStart, sendCommand };
+  return { state, incoming, acknowledgeIncoming, connect, disconnect, createRoom, joinRoom, ready, sendMatchStart, sendCommand, syncRoom };
 }
 
 export function GameApp({
@@ -2082,7 +2091,11 @@ export function GameApp({
         }
         return payload;
       } catch (error) {
-        if (allowLocalFallback) {
+        // Authenticated profiles must remain cloud-authoritative. Applying a
+        // local reward or deck mutation after a 5xx would create a divergent
+        // account that can overwrite the real profile on a later retry.
+        const isUnverifiedPvpResult = action === "record_match" && body.mode === "pvp";
+        if (allowLocalFallback && !identity?.authenticated && !isUnverifiedPvpResult) {
           const localPayload = applyLocalAction(player, action, body);
           setPlayer(localPayload.player);
           setProfileSource(identity?.authenticated ? "cached" : "demo");
@@ -2319,7 +2332,7 @@ export function GameApp({
   // This transition is shared by AI and transport-driven PVP starts.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const beginBattle = (decks: [string[], string[]], startingPlayer: 0 | 1, online: boolean, opponentName?: string, seed?: number) => {
-    if (!deckValidation.valid) {
+    if (!online && !deckValidation.valid) {
       switchSection("deck");
       setNotice({ tone: "warning", text: `无法部署：${deckValidation.errors[0]}` });
       return;
@@ -2436,6 +2449,7 @@ export function GameApp({
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setBattleMessage(event.message);
       playSound("error");
+      if (event.resync) pvp.syncRoom();
       pvp.acknowledgeIncoming(event.id);
       return;
     }
