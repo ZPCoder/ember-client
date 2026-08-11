@@ -19,6 +19,7 @@ import {
   TRAIT_ORDER,
   applyCommand,
   battleEventsToEffects,
+  chooseAiMulliganIndexes,
   createMatch,
   factionForDeck,
   getHeroPower,
@@ -2565,7 +2566,7 @@ export function GameApp({
         const aiMulligan = applyCommand(next, {
           type: "mulligan",
           player: 1,
-          cardIndexes: [],
+          cardIndexes: chooseAiMulliganIndexes(next, 1),
         });
         if (aiMulligan.accepted) next = aiMulligan.state;
       }
