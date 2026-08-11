@@ -1,0 +1,3907 @@
+[
+  {
+    "id": "sun-dawn-scout",
+    "name": "晨辉斥候",
+    "description": "冲锋。",
+    "faction": "曜光",
+    "type": "unit",
+    "cost": 1,
+    "rarity": "普通",
+    "attack": 2,
+    "health": 1,
+    "keywords": [
+      "charge"
+    ],
+    "traits": [
+      "swift",
+      "hunt"
+    ]
+  },
+  {
+    "id": "sun-mirror-warden",
+    "name": "镜盾守望者",
+    "description": "护盾。",
+    "faction": "曜光",
+    "type": "unit",
+    "cost": 2,
+    "rarity": "普通",
+    "attack": 2,
+    "health": 3,
+    "keywords": [
+      "shield"
+    ],
+    "traits": [
+      "bulwark",
+      "craft"
+    ]
+  },
+  {
+    "id": "sun-banner-bearer",
+    "name": "曙色旗手",
+    "description": "激昂。登场时抽一张牌。",
+    "faction": "曜光",
+    "type": "unit",
+    "cost": 3,
+    "rarity": "稀有",
+    "attack": 3,
+    "health": 3,
+    "keywords": [
+      "fury"
+    ],
+    "traits": [
+      "arcane"
+    ],
+    "onPlay": [
+      {
+        "kind": "draw",
+        "count": 1
+      }
+    ]
+  },
+  {
+    "id": "sun-lion-guard",
+    "name": "曜原狮卫",
+    "description": "嘲讽。",
+    "faction": "曜光",
+    "type": "unit",
+    "cost": 4,
+    "rarity": "稀有",
+    "attack": 3,
+    "health": 6,
+    "keywords": [
+      "taunt"
+    ],
+    "traits": [
+      "bulwark",
+      "arcane"
+    ]
+  },
+  {
+    "id": "sun-skyfire-roc",
+    "name": "焰羽巡天者",
+    "description": "冲锋。",
+    "faction": "曜光",
+    "type": "unit",
+    "cost": 5,
+    "rarity": "史诗",
+    "attack": 5,
+    "health": 4,
+    "keywords": [
+      "charge"
+    ],
+    "traits": [
+      "swift",
+      "hunt"
+    ]
+  },
+  {
+    "id": "sun-focused-ray",
+    "name": "聚光灼流",
+    "description": "对一个敌方角色造成 2 点伤害。",
+    "faction": "曜光",
+    "type": "spell",
+    "cost": 1,
+    "rarity": "普通",
+    "school": "radiance",
+    "target": "enemy-character",
+    "effect": [
+      {
+        "kind": "damage",
+        "amount": 2
+      }
+    ]
+  },
+  {
+    "id": "sun-dew-blessing",
+    "name": "晨露祝福",
+    "description": "为一个友方角色恢复 4 点生命。",
+    "faction": "曜光",
+    "type": "spell",
+    "cost": 2,
+    "rarity": "普通",
+    "school": "radiance",
+    "target": "friendly-character",
+    "effect": [
+      {
+        "kind": "heal",
+        "amount": 4
+      }
+    ]
+  },
+  {
+    "id": "sun-daybreak-order",
+    "name": "破晓号令",
+    "description": "使一个友方单位获得 +2/+2。",
+    "faction": "曜光",
+    "type": "spell",
+    "cost": 3,
+    "rarity": "稀有",
+    "school": "radiance",
+    "target": "friendly-unit",
+    "effect": [
+      {
+        "kind": "buff",
+        "attack": 2,
+        "health": 2
+      }
+    ]
+  },
+  {
+    "id": "void-mist-lurker",
+    "name": "雾汐潜行者",
+    "description": "汲取。来自幽潮浅滩的敏捷猎手。",
+    "faction": "幽潮",
+    "type": "unit",
+    "cost": 1,
+    "rarity": "普通",
+    "attack": 1,
+    "health": 3,
+    "keywords": [
+      "lifesteal"
+    ],
+    "traits": [
+      "swift",
+      "hunt"
+    ]
+  },
+  {
+    "id": "void-undertow-guard",
+    "name": "逆流卫士",
+    "description": "嘲讽。",
+    "faction": "幽潮",
+    "type": "unit",
+    "cost": 2,
+    "rarity": "普通",
+    "attack": 2,
+    "health": 4,
+    "keywords": [
+      "taunt"
+    ],
+    "traits": [
+      "bulwark"
+    ]
+  },
+  {
+    "id": "void-echo-mimic",
+    "name": "回声拟形",
+    "description": "护盾。",
+    "faction": "幽潮",
+    "type": "unit",
+    "cost": 3,
+    "rarity": "稀有",
+    "attack": 3,
+    "health": 3,
+    "keywords": [
+      "shield"
+    ],
+    "traits": [
+      "arcane",
+      "craft"
+    ]
+  },
+  {
+    "id": "void-nightfin-raider",
+    "name": "夜鳍突袭者",
+    "description": "冲锋，激昂。",
+    "faction": "幽潮",
+    "type": "unit",
+    "cost": 4,
+    "rarity": "稀有",
+    "attack": 5,
+    "health": 3,
+    "keywords": [
+      "charge",
+      "fury"
+    ],
+    "traits": [
+      "swift",
+      "hunt"
+    ]
+  },
+  {
+    "id": "void-abyss-whale",
+    "name": "渊歌巨鲸",
+    "description": "嘲讽。",
+    "faction": "幽潮",
+    "type": "unit",
+    "cost": 6,
+    "rarity": "史诗",
+    "attack": 6,
+    "health": 7,
+    "keywords": [
+      "taunt"
+    ],
+    "traits": [
+      "bulwark",
+      "arcane"
+    ]
+  },
+  {
+    "id": "void-chill-needle",
+    "name": "寒潮刺针",
+    "description": "对一个敌方角色造成 2 点伤害。",
+    "faction": "幽潮",
+    "type": "spell",
+    "cost": 1,
+    "rarity": "普通",
+    "school": "tide",
+    "target": "enemy-character",
+    "effect": [
+      {
+        "kind": "damage",
+        "amount": 2
+      }
+    ]
+  },
+  {
+    "id": "void-moonless-surge",
+    "name": "无月涌流",
+    "description": "抽两张牌。",
+    "faction": "幽潮",
+    "type": "spell",
+    "cost": 3,
+    "rarity": "普通",
+    "school": "tide",
+    "target": "none",
+    "effect": [
+      {
+        "kind": "draw",
+        "count": 2
+      }
+    ]
+  },
+  {
+    "id": "void-ink-storm",
+    "name": "墨云震荡",
+    "description": "对一个随机敌方角色造成 3 点伤害。",
+    "faction": "幽潮",
+    "type": "spell",
+    "cost": 4,
+    "rarity": "史诗",
+    "school": "tide",
+    "target": "none",
+    "effect": [
+      {
+        "kind": "random-enemy-damage",
+        "amount": 3
+      }
+    ]
+  },
+  {
+    "id": "neutral-moss-runner",
+    "name": "苔径奔行兽",
+    "description": "穿行于古老商路的小兽。",
+    "faction": "中立",
+    "type": "unit",
+    "cost": 1,
+    "rarity": "普通",
+    "attack": 1,
+    "health": 2,
+    "traits": [
+      "swift",
+      "hunt"
+    ]
+  },
+  {
+    "id": "neutral-clockwork-beetle",
+    "name": "发条甲虫",
+    "description": "可靠但吵闹的机械伙伴。",
+    "faction": "中立",
+    "type": "unit",
+    "cost": 2,
+    "rarity": "普通",
+    "attack": 3,
+    "health": 2,
+    "traits": [
+      "swift",
+      "craft"
+    ]
+  },
+  {
+    "id": "neutral-caravan-guard",
+    "name": "远途商队卫",
+    "description": "嘲讽。",
+    "faction": "中立",
+    "type": "unit",
+    "cost": 3,
+    "rarity": "普通",
+    "attack": 2,
+    "health": 5,
+    "keywords": [
+      "taunt"
+    ],
+    "traits": [
+      "bulwark",
+      "craft"
+    ]
+  },
+  {
+    "id": "neutral-stonehorn",
+    "name": "石角驮兽",
+    "description": "激昂。沉稳强壮的荒原驮兽。",
+    "faction": "中立",
+    "type": "unit",
+    "cost": 4,
+    "rarity": "普通",
+    "attack": 4,
+    "health": 5,
+    "keywords": [
+      "fury"
+    ],
+    "traits": [
+      "bulwark",
+      "hunt"
+    ]
+  },
+  {
+    "id": "neutral-wandering-alchemist",
+    "name": "云游调剂师",
+    "description": "汲取。登场时为一个友方角色恢复 2 点生命。",
+    "faction": "中立",
+    "type": "unit",
+    "cost": 3,
+    "rarity": "稀有",
+    "attack": 3,
+    "health": 3,
+    "keywords": [
+      "lifesteal"
+    ],
+    "traits": [
+      "arcane"
+    ],
+    "target": "friendly-character",
+    "onPlay": [
+      {
+        "kind": "heal",
+        "amount": 2
+      }
+    ]
+  },
+  {
+    "id": "neutral-tactical-map",
+    "name": "折痕战术图",
+    "description": "抽一张牌。",
+    "faction": "中立",
+    "type": "spell",
+    "cost": 2,
+    "rarity": "普通",
+    "school": "construct",
+    "target": "none",
+    "effect": [
+      {
+        "kind": "draw",
+        "count": 1
+      }
+    ]
+  },
+  {
+    "id": "neutral-repair-sprite",
+    "name": "修补精灵",
+    "description": "登场时抽一张牌。",
+    "faction": "中立",
+    "type": "unit",
+    "cost": 2,
+    "rarity": "稀有",
+    "attack": 2,
+    "health": 2,
+    "traits": [
+      "arcane",
+      "craft"
+    ],
+    "onPlay": [
+      {
+        "kind": "draw",
+        "count": 1
+      }
+    ]
+  },
+  {
+    "id": "neutral-thunder-egg",
+    "name": "蕴雷晶卵",
+    "description": "护盾。",
+    "faction": "中立",
+    "type": "unit",
+    "cost": 5,
+    "rarity": "传说",
+    "attack": 5,
+    "health": 5,
+    "keywords": [
+      "shield"
+    ],
+    "traits": [
+      "craft"
+    ]
+  },
+  {
+    "id": "sun-lumen-page",
+    "name": "微光侍读",
+    "description": "守护晨祷书页的年轻学徒。",
+    "faction": "曜光",
+    "type": "unit",
+    "cost": 1,
+    "rarity": "普通",
+    "attack": 1,
+    "health": 3,
+    "traits": [
+      "arcane"
+    ]
+  },
+  {
+    "id": "sun-glasswing-courier",
+    "name": "琉翼信使",
+    "description": "冲锋。它的羽翼会把捷报折射到整片天幕。",
+    "faction": "曜光",
+    "type": "unit",
+    "cost": 1,
+    "rarity": "普通",
+    "attack": 2,
+    "health": 1,
+    "keywords": [
+      "charge"
+    ],
+    "traits": [
+      "swift",
+      "craft"
+    ]
+  },
+  {
+    "id": "sun-prism-squire",
+    "name": "棱镜扈从",
+    "description": "护盾。随身的折光甲仍带着工坊的温度。",
+    "faction": "曜光",
+    "type": "unit",
+    "cost": 2,
+    "rarity": "普通",
+    "attack": 2,
+    "health": 3,
+    "keywords": [
+      "shield"
+    ],
+    "traits": [
+      "bulwark",
+      "craft"
+    ]
+  },
+  {
+    "id": "sun-horizon-hunter",
+    "name": "天际猎手",
+    "description": "沿着第一束晨光锁定远方猎物。",
+    "faction": "曜光",
+    "type": "unit",
+    "cost": 2,
+    "rarity": "普通",
+    "attack": 3,
+    "health": 2,
+    "traits": [
+      "hunt"
+    ]
+  },
+  {
+    "id": "sun-choir-acolyte",
+    "name": "晨咏侍祭",
+    "description": "登场时，为一个友方角色恢复 2 点生命。",
+    "faction": "曜光",
+    "type": "unit",
+    "cost": 2,
+    "rarity": "稀有",
+    "attack": 2,
+    "health": 2,
+    "traits": [
+      "arcane"
+    ],
+    "target": "friendly-character",
+    "onPlay": [
+      {
+        "kind": "heal",
+        "amount": 2
+      }
+    ]
+  },
+  {
+    "id": "sun-gilded-lancer",
+    "name": "鎏金枪骑",
+    "description": "冲锋。长枪掠过之处只留下灼亮的弧线。",
+    "faction": "曜光",
+    "type": "unit",
+    "cost": 3,
+    "rarity": "普通",
+    "attack": 4,
+    "health": 2,
+    "keywords": [
+      "charge"
+    ],
+    "traits": [
+      "swift",
+      "hunt"
+    ]
+  },
+  {
+    "id": "sun-sunwell-artificer",
+    "name": "日井匠师",
+    "description": "护盾。她能把一缕日光锻造成坚实甲片。",
+    "faction": "曜光",
+    "type": "unit",
+    "cost": 3,
+    "rarity": "稀有",
+    "attack": 2,
+    "health": 4,
+    "keywords": [
+      "shield"
+    ],
+    "traits": [
+      "arcane",
+      "craft"
+    ]
+  },
+  {
+    "id": "sun-aurora-duelist",
+    "name": "极昼决斗家",
+    "description": "激昂。每一次交锋都让她的剑芒更加炽烈。",
+    "faction": "曜光",
+    "type": "unit",
+    "cost": 3,
+    "rarity": "稀有",
+    "attack": 3,
+    "health": 4,
+    "keywords": [
+      "fury"
+    ],
+    "traits": [
+      "swift"
+    ]
+  },
+  {
+    "id": "sun-halo-captain",
+    "name": "光环卫队长",
+    "description": "嘲讽。身后的光轮标示着不可后退的阵线。",
+    "faction": "曜光",
+    "type": "unit",
+    "cost": 4,
+    "rarity": "普通",
+    "attack": 4,
+    "health": 5,
+    "keywords": [
+      "taunt"
+    ],
+    "traits": [
+      "bulwark"
+    ]
+  },
+  {
+    "id": "sun-whitefire-priest",
+    "name": "白焰司祭",
+    "description": "汲取。净化之火也会回馈执炬之人。",
+    "faction": "曜光",
+    "type": "unit",
+    "cost": 4,
+    "rarity": "史诗",
+    "attack": 3,
+    "health": 5,
+    "keywords": [
+      "lifesteal"
+    ],
+    "traits": [
+      "arcane"
+    ]
+  },
+  {
+    "id": "sun-prism-huntress",
+    "name": "虹棱女猎手",
+    "description": "她用分光箭矢封锁猎物的每条退路。",
+    "faction": "曜光",
+    "type": "unit",
+    "cost": 4,
+    "rarity": "稀有",
+    "attack": 5,
+    "health": 4,
+    "traits": [
+      "hunt",
+      "craft"
+    ]
+  },
+  {
+    "id": "sun-zenith-golem",
+    "name": "正午晶铠像",
+    "description": "嘲讽，护盾。正午时分，它的晶甲坚不可摧。",
+    "faction": "曜光",
+    "type": "unit",
+    "cost": 5,
+    "rarity": "史诗",
+    "attack": 4,
+    "health": 7,
+    "keywords": [
+      "taunt",
+      "shield"
+    ],
+    "traits": [
+      "bulwark",
+      "craft"
+    ]
+  },
+  {
+    "id": "sun-radiant-griffin",
+    "name": "辉穹狮鹫",
+    "description": "冲锋。它从云层俯冲时宛如坠落的太阳。",
+    "faction": "曜光",
+    "type": "unit",
+    "cost": 5,
+    "rarity": "史诗",
+    "attack": 6,
+    "health": 4,
+    "keywords": [
+      "charge"
+    ],
+    "traits": [
+      "swift",
+      "hunt"
+    ]
+  },
+  {
+    "id": "sun-corona-archon",
+    "name": "日冕执政官",
+    "description": "汲取。古老光誓在他的冠冕中循环不息。",
+    "faction": "曜光",
+    "type": "unit",
+    "cost": 6,
+    "rarity": "史诗",
+    "attack": 6,
+    "health": 7,
+    "keywords": [
+      "lifesteal"
+    ],
+    "traits": [
+      "arcane",
+      "bulwark"
+    ]
+  },
+  {
+    "id": "sun-daystar-titan",
+    "name": "曜日泰坦",
+    "description": "嘲讽，激昂。沉睡的太阳引擎终于再次迈步。",
+    "faction": "曜光",
+    "type": "unit",
+    "cost": 8,
+    "rarity": "传说",
+    "attack": 8,
+    "health": 10,
+    "keywords": [
+      "taunt",
+      "fury"
+    ],
+    "traits": [
+      "bulwark",
+      "craft"
+    ]
+  },
+  {
+    "id": "sun-flare-spark",
+    "name": "耀斑火种",
+    "description": "对一个敌方角色造成 1 点伤害。一点强光足以暴露破绽。",
+    "faction": "曜光",
+    "type": "spell",
+    "cost": 0,
+    "rarity": "普通",
+    "school": "radiance",
+    "target": "enemy-character",
+    "effect": [
+      {
+        "kind": "damage",
+        "amount": 1
+      }
+    ]
+  },
+  {
+    "id": "sun-refraction-aid",
+    "name": "折光援护",
+    "description": "为一个友方角色恢复 3 点生命。折射的暖光会封住伤口。",
+    "faction": "曜光",
+    "type": "spell",
+    "cost": 1,
+    "rarity": "普通",
+    "school": "radiance",
+    "target": "friendly-character",
+    "effect": [
+      {
+        "kind": "heal",
+        "amount": 3
+      }
+    ]
+  },
+  {
+    "id": "sun-mirror-tempering",
+    "name": "镜甲淬炼",
+    "description": "使一个友方单位获得 +1/+2。",
+    "faction": "曜光",
+    "type": "spell",
+    "cost": 2,
+    "rarity": "普通",
+    "school": "radiance",
+    "target": "friendly-unit",
+    "effect": [
+      {
+        "kind": "buff",
+        "attack": 1,
+        "health": 2
+      }
+    ]
+  },
+  {
+    "id": "sun-orbit-insight",
+    "name": "环日启示",
+    "description": "为一个友方角色恢复 1 点生命，并抽一张牌。",
+    "faction": "曜光",
+    "type": "spell",
+    "cost": 2,
+    "rarity": "稀有",
+    "school": "radiance",
+    "target": "friendly-character",
+    "effect": [
+      {
+        "kind": "heal",
+        "amount": 1
+      },
+      {
+        "kind": "draw",
+        "count": 1
+      }
+    ]
+  },
+  {
+    "id": "sun-spear-descent",
+    "name": "天枪坠击",
+    "description": "对一个敌方单位造成 4 点伤害。",
+    "faction": "曜光",
+    "type": "spell",
+    "cost": 3,
+    "rarity": "稀有",
+    "school": "radiance",
+    "target": "enemy-unit",
+    "effect": [
+      {
+        "kind": "damage",
+        "amount": 4
+      }
+    ]
+  },
+  {
+    "id": "sun-dawn-muster",
+    "name": "晨阵集结",
+    "description": "使一个友方单位获得 +3/+3。",
+    "faction": "曜光",
+    "type": "spell",
+    "cost": 4,
+    "rarity": "史诗",
+    "school": "radiance",
+    "target": "friendly-unit",
+    "effect": [
+      {
+        "kind": "buff",
+        "attack": 3,
+        "health": 3
+      }
+    ]
+  },
+  {
+    "id": "sun-supernova-judgment",
+    "name": "新星裁决",
+    "description": "对一个随机敌方角色造成 6 点伤害，并抽一张牌。",
+    "faction": "曜光",
+    "type": "spell",
+    "cost": 6,
+    "rarity": "传说",
+    "school": "radiance",
+    "target": "none",
+    "effect": [
+      {
+        "kind": "random-enemy-damage",
+        "amount": 6
+      },
+      {
+        "kind": "draw",
+        "count": 1
+      }
+    ]
+  },
+  {
+    "id": "void-brine-skulker",
+    "name": "盐雾伏游者",
+    "description": "在潮痕之间出没的浅海伏击者。",
+    "faction": "幽潮",
+    "type": "unit",
+    "cost": 1,
+    "rarity": "普通",
+    "attack": 2,
+    "health": 2,
+    "traits": [
+      "hunt"
+    ]
+  },
+  {
+    "id": "void-duskfin-darter",
+    "name": "暮鳍疾刺",
+    "description": "冲锋。暮色落水前，它已经刺穿第一道浪。",
+    "faction": "幽潮",
+    "type": "unit",
+    "cost": 1,
+    "rarity": "普通",
+    "attack": 2,
+    "health": 1,
+    "keywords": [
+      "charge"
+    ],
+    "traits": [
+      "swift"
+    ]
+  },
+  {
+    "id": "void-shellback-sentinel",
+    "name": "覆壳哨卫",
+    "description": "嘲讽。它用沉重背壳堵住狭窄的礁道。",
+    "faction": "幽潮",
+    "type": "unit",
+    "cost": 2,
+    "rarity": "普通",
+    "attack": 1,
+    "health": 5,
+    "keywords": [
+      "taunt"
+    ],
+    "traits": [
+      "bulwark"
+    ]
+  },
+  {
+    "id": "void-inkveil-oracle",
+    "name": "墨帷先知",
+    "description": "登场时抽一张牌。她在墨云中读见下一股暗流。",
+    "faction": "幽潮",
+    "type": "unit",
+    "cost": 2,
+    "rarity": "稀有",
+    "attack": 2,
+    "health": 2,
+    "traits": [
+      "arcane"
+    ],
+    "onPlay": [
+      {
+        "kind": "draw",
+        "count": 1
+      }
+    ]
+  },
+  {
+    "id": "void-siphon-lamprey",
+    "name": "噬流七鳃鳗",
+    "description": "汲取。它追逐的不是血，而是目标体内的魔潮。",
+    "faction": "幽潮",
+    "type": "unit",
+    "cost": 2,
+    "rarity": "稀有",
+    "attack": 2,
+    "health": 3,
+    "keywords": [
+      "lifesteal"
+    ],
+    "traits": [
+      "hunt"
+    ]
+  },
+  {
+    "id": "void-coral-mimic",
+    "name": "蚀珊瑚拟态",
+    "description": "护盾。静止时，它与幽暗礁石毫无区别。",
+    "faction": "幽潮",
+    "type": "unit",
+    "cost": 3,
+    "rarity": "普通",
+    "attack": 3,
+    "health": 4,
+    "keywords": [
+      "shield"
+    ],
+    "traits": [
+      "craft"
+    ]
+  },
+  {
+    "id": "void-riptide-duelist",
+    "name": "裂潮斗士",
+    "description": "激昂。越猛烈的浪头越能激起他的战意。",
+    "faction": "幽潮",
+    "type": "unit",
+    "cost": 3,
+    "rarity": "稀有",
+    "attack": 3,
+    "health": 4,
+    "keywords": [
+      "fury"
+    ],
+    "traits": [
+      "swift",
+      "hunt"
+    ]
+  },
+  {
+    "id": "void-trench-mender",
+    "name": "海沟缝合师",
+    "description": "登场时，为一个友方角色恢复 3 点生命。",
+    "faction": "幽潮",
+    "type": "unit",
+    "cost": 3,
+    "rarity": "稀有",
+    "attack": 2,
+    "health": 4,
+    "traits": [
+      "arcane",
+      "craft"
+    ],
+    "target": "friendly-character",
+    "onPlay": [
+      {
+        "kind": "heal",
+        "amount": 3
+      }
+    ]
+  },
+  {
+    "id": "void-razorfin-corsair",
+    "name": "刃鳍掠夺者",
+    "description": "冲锋。骨刃切开的浪花会替它掩护突进。",
+    "faction": "幽潮",
+    "type": "unit",
+    "cost": 4,
+    "rarity": "普通",
+    "attack": 5,
+    "health": 3,
+    "keywords": [
+      "charge"
+    ],
+    "traits": [
+      "swift",
+      "hunt"
+    ]
+  },
+  {
+    "id": "void-murkplate-hermit",
+    "name": "玄甲寄居者",
+    "description": "嘲讽，护盾。它背负着一座沉没神殿的残门。",
+    "faction": "幽潮",
+    "type": "unit",
+    "cost": 4,
+    "rarity": "史诗",
+    "attack": 3,
+    "health": 6,
+    "keywords": [
+      "taunt",
+      "shield"
+    ],
+    "traits": [
+      "bulwark",
+      "craft"
+    ]
+  },
+  {
+    "id": "void-abyssal-chanter",
+    "name": "深渊吟潮者",
+    "description": "汲取。低沉潮歌会从敌人身上带回生命。",
+    "faction": "幽潮",
+    "type": "unit",
+    "cost": 4,
+    "rarity": "史诗",
+    "attack": 4,
+    "health": 5,
+    "keywords": [
+      "lifesteal"
+    ],
+    "traits": [
+      "arcane"
+    ]
+  },
+  {
+    "id": "void-moonjaw-shark",
+    "name": "月颚猎鲨",
+    "description": "激昂。银白牙列会在每次受击后咬得更深。",
+    "faction": "幽潮",
+    "type": "unit",
+    "cost": 5,
+    "rarity": "稀有",
+    "attack": 5,
+    "health": 6,
+    "keywords": [
+      "fury"
+    ],
+    "traits": [
+      "hunt"
+    ]
+  },
+  {
+    "id": "void-drowned-leviathan",
+    "name": "溺忆海兽",
+    "description": "嘲讽。它的呼吸携带着失落舰队的回声。",
+    "faction": "幽潮",
+    "type": "unit",
+    "cost": 6,
+    "rarity": "史诗",
+    "attack": 6,
+    "health": 8,
+    "keywords": [
+      "taunt"
+    ],
+    "traits": [
+      "bulwark",
+      "arcane"
+    ]
+  },
+  {
+    "id": "void-tempest-manta",
+    "name": "暴潮魔鬼鱼",
+    "description": "冲锋，护盾。它把雷云披在宽阔双翼之上。",
+    "faction": "幽潮",
+    "type": "unit",
+    "cost": 6,
+    "rarity": "史诗",
+    "attack": 7,
+    "health": 5,
+    "keywords": [
+      "charge",
+      "shield"
+    ],
+    "traits": [
+      "swift",
+      "craft"
+    ]
+  },
+  {
+    "id": "void-thalassic-sovereign",
+    "name": "幽海无冠王",
+    "description": "汲取，激昂。整片深海都在等待它重新加冕。",
+    "faction": "幽潮",
+    "type": "unit",
+    "cost": 8,
+    "rarity": "传说",
+    "attack": 9,
+    "health": 9,
+    "keywords": [
+      "lifesteal",
+      "fury"
+    ],
+    "traits": [
+      "arcane",
+      "hunt"
+    ]
+  },
+  {
+    "id": "void-saltbite",
+    "name": "盐蚀咬痕",
+    "description": "对一个敌方角色造成 1 点伤害。",
+    "faction": "幽潮",
+    "type": "spell",
+    "cost": 0,
+    "rarity": "普通",
+    "school": "tide",
+    "target": "enemy-character",
+    "effect": [
+      {
+        "kind": "damage",
+        "amount": 1
+      }
+    ]
+  },
+  {
+    "id": "void-deepwater-draught",
+    "name": "深水汲饮",
+    "description": "为一个友方角色恢复 3 点生命。",
+    "faction": "幽潮",
+    "type": "spell",
+    "cost": 1,
+    "rarity": "普通",
+    "school": "tide",
+    "target": "friendly-character",
+    "effect": [
+      {
+        "kind": "heal",
+        "amount": 3
+      }
+    ]
+  },
+  {
+    "id": "void-pressure-spike",
+    "name": "压潮尖刺",
+    "description": "对一个敌方单位造成 3 点伤害。",
+    "faction": "幽潮",
+    "type": "spell",
+    "cost": 2,
+    "rarity": "普通",
+    "school": "tide",
+    "target": "enemy-unit",
+    "effect": [
+      {
+        "kind": "damage",
+        "amount": 3
+      }
+    ]
+  },
+  {
+    "id": "void-echoing-current",
+    "name": "回响暗流",
+    "description": "抽一张牌，并为一个友方角色恢复 1 点生命。",
+    "faction": "幽潮",
+    "type": "spell",
+    "cost": 2,
+    "rarity": "稀有",
+    "school": "tide",
+    "target": "friendly-character",
+    "effect": [
+      {
+        "kind": "draw",
+        "count": 1
+      },
+      {
+        "kind": "heal",
+        "amount": 1
+      }
+    ]
+  },
+  {
+    "id": "void-moonpool-mutation",
+    "name": "月池异变",
+    "description": "使一个友方单位获得 +2/+3。",
+    "faction": "幽潮",
+    "type": "spell",
+    "cost": 3,
+    "rarity": "稀有",
+    "school": "tide",
+    "target": "friendly-unit",
+    "effect": [
+      {
+        "kind": "buff",
+        "attack": 2,
+        "health": 3
+      }
+    ]
+  },
+  {
+    "id": "void-blackwake-torpedo",
+    "name": "黑浪鱼雷",
+    "description": "对一个敌方角色造成 5 点伤害。",
+    "faction": "幽潮",
+    "type": "spell",
+    "cost": 4,
+    "rarity": "史诗",
+    "school": "tide",
+    "target": "enemy-character",
+    "effect": [
+      {
+        "kind": "damage",
+        "amount": 5
+      }
+    ]
+  },
+  {
+    "id": "void-maelstrom-memory",
+    "name": "漩涡旧梦",
+    "description": "对一个随机敌方角色造成 5 点伤害，并抽两张牌。",
+    "faction": "幽潮",
+    "type": "spell",
+    "cost": 7,
+    "rarity": "传说",
+    "school": "tide",
+    "target": "none",
+    "effect": [
+      {
+        "kind": "random-enemy-damage",
+        "amount": 5
+      },
+      {
+        "kind": "draw",
+        "count": 2
+      }
+    ]
+  },
+  {
+    "id": "neutral-lantern-mouse",
+    "name": "绒鼠引路",
+    "description": "抽一张牌。提灯绒鼠会把旅人带向仍亮着灯的驿站。",
+    "faction": "中立",
+    "type": "spell",
+    "cost": 1,
+    "rarity": "普通",
+    "school": "construct",
+    "target": "none",
+    "effect": [
+      {
+        "kind": "draw",
+        "count": 1
+      }
+    ]
+  },
+  {
+    "id": "neutral-windstep-messenger",
+    "name": "踏风报信人",
+    "description": "冲锋。他总能比坏消息更早抵达。",
+    "faction": "中立",
+    "type": "unit",
+    "cost": 1,
+    "rarity": "普通",
+    "attack": 2,
+    "health": 1,
+    "keywords": [
+      "charge"
+    ],
+    "traits": [
+      "swift"
+    ]
+  },
+  {
+    "id": "neutral-ironpot-cook",
+    "name": "铁锅行厨",
+    "description": "登场时，为一个友方角色恢复 2 点生命。热汤先到，伤药随后。",
+    "faction": "中立",
+    "type": "unit",
+    "cost": 2,
+    "rarity": "普通",
+    "attack": 2,
+    "health": 3,
+    "traits": [
+      "craft"
+    ],
+    "target": "friendly-character",
+    "onPlay": [
+      {
+        "kind": "heal",
+        "amount": 2
+      }
+    ]
+  },
+  {
+    "id": "neutral-brassback-badger",
+    "name": "铜背獾",
+    "description": "嘲讽。商旅们都知道不要惊醒守车的它。",
+    "faction": "中立",
+    "type": "unit",
+    "cost": 2,
+    "rarity": "普通",
+    "attack": 2,
+    "health": 4,
+    "keywords": [
+      "taunt"
+    ],
+    "traits": [
+      "bulwark"
+    ]
+  },
+  {
+    "id": "neutral-relic-appraiser",
+    "name": "遗物估价师",
+    "description": "登场时抽一张牌。真品的故事往往比价格更高。",
+    "faction": "中立",
+    "type": "unit",
+    "cost": 2,
+    "rarity": "稀有",
+    "attack": 2,
+    "health": 2,
+    "traits": [
+      "arcane"
+    ],
+    "onPlay": [
+      {
+        "kind": "draw",
+        "count": 1
+      }
+    ]
+  },
+  {
+    "id": "neutral-riveted-ram",
+    "name": "铆钉撞角羊",
+    "description": "护盾。工匠们给它装上了真正的攻城护额。",
+    "faction": "中立",
+    "type": "unit",
+    "cost": 3,
+    "rarity": "普通",
+    "attack": 3,
+    "health": 4,
+    "keywords": [
+      "shield"
+    ],
+    "traits": [
+      "craft",
+      "bulwark"
+    ]
+  },
+  {
+    "id": "neutral-crossroad-duelist",
+    "name": "岔路决斗客",
+    "description": "激昂。他在每一个路口都能找到新的对手。",
+    "faction": "中立",
+    "type": "unit",
+    "cost": 3,
+    "rarity": "稀有",
+    "attack": 3,
+    "health": 4,
+    "keywords": [
+      "fury"
+    ],
+    "traits": [
+      "swift"
+    ]
+  },
+  {
+    "id": "neutral-dune-tracker",
+    "name": "沙迹追猎者",
+    "description": "冲锋。没有足印能逃过他掌中的铜盘。",
+    "faction": "中立",
+    "type": "unit",
+    "cost": 3,
+    "rarity": "稀有",
+    "attack": 4,
+    "health": 2,
+    "keywords": [
+      "charge"
+    ],
+    "traits": [
+      "swift",
+      "hunt"
+    ]
+  },
+  {
+    "id": "neutral-aether-peddler",
+    "name": "以太货郎",
+    "description": "汲取。他出售的瓶装魔力总会悄悄回流。",
+    "faction": "中立",
+    "type": "unit",
+    "cost": 4,
+    "rarity": "稀有",
+    "attack": 4,
+    "health": 4,
+    "keywords": [
+      "lifesteal"
+    ],
+    "traits": [
+      "arcane"
+    ]
+  },
+  {
+    "id": "neutral-bastion-tortoise",
+    "name": "驮垒巨龟",
+    "description": "嘲讽。它背上的小型堡垒从未失守。",
+    "faction": "中立",
+    "type": "unit",
+    "cost": 4,
+    "rarity": "普通",
+    "attack": 3,
+    "health": 7,
+    "keywords": [
+      "taunt"
+    ],
+    "traits": [
+      "bulwark"
+    ]
+  },
+  {
+    "id": "neutral-gearhawk-handler",
+    "name": "齿隼驯养师",
+    "description": "护盾。她和机械猎隼共用一套警戒视野。",
+    "faction": "中立",
+    "type": "unit",
+    "cost": 4,
+    "rarity": "史诗",
+    "attack": 4,
+    "health": 5,
+    "keywords": [
+      "shield"
+    ],
+    "traits": [
+      "hunt",
+      "craft"
+    ]
+  },
+  {
+    "id": "neutral-ruin-stag",
+    "name": "遗迹冠鹿",
+    "description": "激昂。古代符文会回应它踏碎石板的轰鸣。",
+    "faction": "中立",
+    "type": "unit",
+    "cost": 5,
+    "rarity": "史诗",
+    "attack": 5,
+    "health": 6,
+    "keywords": [
+      "fury"
+    ],
+    "traits": [
+      "arcane",
+      "hunt"
+    ]
+  },
+  {
+    "id": "neutral-mobile-forge",
+    "name": "自走熔铸炉",
+    "description": "嘲讽，护盾。四条机械腿让整座工坊随军前进。",
+    "faction": "中立",
+    "type": "unit",
+    "cost": 6,
+    "rarity": "史诗",
+    "attack": 5,
+    "health": 8,
+    "keywords": [
+      "taunt",
+      "shield"
+    ],
+    "traits": [
+      "bulwark",
+      "craft"
+    ]
+  },
+  {
+    "id": "neutral-cloudrail-behemoth",
+    "name": "云轨冲撞令",
+    "description": "对一个敌方角色造成 7 点伤害。重新启动废弃天轨的代价十分昂贵。",
+    "faction": "中立",
+    "type": "spell",
+    "cost": 6,
+    "rarity": "史诗",
+    "school": "construct",
+    "target": "enemy-character",
+    "effect": [
+      {
+        "kind": "damage",
+        "amount": 7
+      }
+    ]
+  },
+  {
+    "id": "neutral-worldroad-colossus",
+    "name": "万途驮城者",
+    "description": "嘲讽，汲取。无数商路最终汇聚在它背负的城邦。",
+    "faction": "中立",
+    "type": "unit",
+    "cost": 8,
+    "rarity": "传说",
+    "attack": 8,
+    "health": 11,
+    "keywords": [
+      "taunt",
+      "lifesteal"
+    ],
+    "traits": [
+      "bulwark",
+      "arcane"
+    ]
+  },
+  {
+    "id": "neutral-pocket-remedy",
+    "name": "行囊急救剂",
+    "description": "为一个友方角色恢复 2 点生命。",
+    "faction": "中立",
+    "type": "spell",
+    "cost": 0,
+    "rarity": "普通",
+    "school": "construct",
+    "target": "friendly-character",
+    "effect": [
+      {
+        "kind": "heal",
+        "amount": 2
+      }
+    ]
+  },
+  {
+    "id": "neutral-springtrap",
+    "name": "便携弹簧阱",
+    "description": "对一个敌方单位造成 2 点伤害。",
+    "faction": "中立",
+    "type": "spell",
+    "cost": 1,
+    "rarity": "普通",
+    "school": "construct",
+    "target": "enemy-unit",
+    "effect": [
+      {
+        "kind": "damage",
+        "amount": 2
+      }
+    ]
+  },
+  {
+    "id": "neutral-field-reinforcement",
+    "name": "野战加固",
+    "description": "使一个友方单位获得 +1/+3。",
+    "faction": "中立",
+    "type": "spell",
+    "cost": 2,
+    "rarity": "普通",
+    "school": "construct",
+    "target": "friendly-unit",
+    "effect": [
+      {
+        "kind": "buff",
+        "attack": 1,
+        "health": 3
+      }
+    ]
+  },
+  {
+    "id": "neutral-route-ledger",
+    "name": "通途账册",
+    "description": "为一个友方角色恢复 1 点生命，并抽一张牌。账册记得每处补给站。",
+    "faction": "中立",
+    "type": "spell",
+    "cost": 2,
+    "rarity": "稀有",
+    "school": "construct",
+    "target": "friendly-character",
+    "effect": [
+      {
+        "kind": "draw",
+        "count": 1
+      },
+      {
+        "kind": "heal",
+        "amount": 1
+      }
+    ]
+  },
+  {
+    "id": "neutral-calibrated-bolt",
+    "name": "校准弩炮",
+    "description": "对一个敌方角色造成 4 点伤害。",
+    "faction": "中立",
+    "type": "spell",
+    "cost": 3,
+    "rarity": "稀有",
+    "school": "construct",
+    "target": "enemy-character",
+    "effect": [
+      {
+        "kind": "damage",
+        "amount": 4
+      }
+    ]
+  },
+  {
+    "id": "neutral-masterwork-plating",
+    "name": "大师级覆甲",
+    "description": "使一个友方单位获得 +3/+4。",
+    "faction": "中立",
+    "type": "spell",
+    "cost": 5,
+    "rarity": "史诗",
+    "school": "construct",
+    "target": "friendly-unit",
+    "effect": [
+      {
+        "kind": "buff",
+        "attack": 3,
+        "health": 4
+      }
+    ]
+  },
+  {
+    "id": "neutral-grand-expedition",
+    "name": "万里远征令",
+    "description": "抽三张牌，并为一个友方角色恢复 3 点生命。",
+    "faction": "中立",
+    "type": "spell",
+    "cost": 7,
+    "rarity": "传说",
+    "school": "construct",
+    "target": "friendly-character",
+    "effect": [
+      {
+        "kind": "draw",
+        "count": 3
+      },
+      {
+        "kind": "heal",
+        "amount": 3
+      }
+    ]
+  },
+  {
+    "id": "ember-cinder-scout",
+    "name": "火星斥候",
+    "description": "冲锋。踏过的焦土会替后来者标出进攻路线。",
+    "faction": "烬火",
+    "type": "unit",
+    "cost": 1,
+    "rarity": "普通",
+    "attack": 2,
+    "health": 1,
+    "keywords": [
+      "charge"
+    ],
+    "traits": [
+      "swift",
+      "hunt"
+    ]
+  },
+  {
+    "id": "ember-coalfang-pup",
+    "name": "炭牙幼兽",
+    "description": "激昂。每一次交锋都让它体内的火种更加旺盛。",
+    "faction": "烬火",
+    "type": "unit",
+    "cost": 1,
+    "rarity": "普通",
+    "attack": 1,
+    "health": 3,
+    "keywords": [
+      "fury"
+    ],
+    "traits": [
+      "hunt"
+    ]
+  },
+  {
+    "id": "ember-ash-forager",
+    "name": "灰烬搜寻者",
+    "description": "登场时，对一个随机敌方角色造成 1 点伤害。它总能从余烬里翻出仍可利用的火星。",
+    "faction": "烬火",
+    "type": "unit",
+    "cost": 2,
+    "rarity": "普通",
+    "attack": 2,
+    "health": 2,
+    "traits": [
+      "craft",
+      "hunt"
+    ],
+    "onPlay": [
+      {
+        "kind": "random-enemy-damage",
+        "amount": 1
+      }
+    ]
+  },
+  {
+    "id": "ember-blade-acolyte",
+    "name": "炽刃侍从",
+    "description": "激昂。她用每一道新伤痕校准下一次挥击。",
+    "faction": "烬火",
+    "type": "unit",
+    "cost": 2,
+    "rarity": "普通",
+    "attack": 3,
+    "health": 2,
+    "keywords": [
+      "fury"
+    ],
+    "traits": [
+      "swift"
+    ]
+  },
+  {
+    "id": "ember-charrock-guard",
+    "name": "焦岩卫士",
+    "description": "嘲讽。冷却的岩壳之下仍有熔流奔涌。",
+    "faction": "烬火",
+    "type": "unit",
+    "cost": 2,
+    "rarity": "普通",
+    "attack": 2,
+    "health": 4,
+    "keywords": [
+      "taunt"
+    ],
+    "traits": [
+      "bulwark"
+    ]
+  },
+  {
+    "id": "ember-flamespine-vanguard",
+    "name": "焰脊先锋",
+    "description": "冲锋。号角尚未落音，他已经越过战线。",
+    "faction": "烬火",
+    "type": "unit",
+    "cost": 3,
+    "rarity": "普通",
+    "attack": 3,
+    "health": 3,
+    "keywords": [
+      "charge"
+    ],
+    "traits": [
+      "swift",
+      "hunt"
+    ]
+  },
+  {
+    "id": "ember-forge-smith",
+    "name": "熔炉铸师",
+    "description": "登场时，使一个友方单位获得 +1/+1。",
+    "faction": "烬火",
+    "type": "unit",
+    "cost": 3,
+    "rarity": "稀有",
+    "attack": 3,
+    "health": 4,
+    "traits": [
+      "craft"
+    ],
+    "target": "friendly-unit",
+    "onPlay": [
+      {
+        "kind": "buff",
+        "attack": 1,
+        "health": 1
+      }
+    ]
+  },
+  {
+    "id": "ember-heart-drinker",
+    "name": "焰心汲能者",
+    "description": "汲取。它把敌人的余温重新炼入自己的核心。",
+    "faction": "烬火",
+    "type": "unit",
+    "cost": 3,
+    "rarity": "稀有",
+    "attack": 3,
+    "health": 3,
+    "keywords": [
+      "lifesteal"
+    ],
+    "traits": [
+      "arcane",
+      "hunt"
+    ]
+  },
+  {
+    "id": "ember-slag-sentinel",
+    "name": "炉渣哨兵",
+    "description": "嘲讽，护盾。由熔炉废料压铸成的移动壁垒。",
+    "faction": "烬火",
+    "type": "unit",
+    "cost": 4,
+    "rarity": "稀有",
+    "attack": 3,
+    "health": 5,
+    "keywords": [
+      "taunt",
+      "shield"
+    ],
+    "traits": [
+      "bulwark",
+      "craft"
+    ]
+  },
+  {
+    "id": "ember-crimson-duelist",
+    "name": "赤焰决斗家",
+    "description": "激昂。她只承认从正面赢下的胜利。",
+    "faction": "烬火",
+    "type": "unit",
+    "cost": 4,
+    "rarity": "稀有",
+    "attack": 5,
+    "health": 4,
+    "keywords": [
+      "fury"
+    ],
+    "traits": [
+      "swift"
+    ]
+  },
+  {
+    "id": "ember-magma-hornbeast",
+    "name": "熔角战兽",
+    "description": "登场时，对一个随机敌方角色造成 1 点伤害。它用滚烫长角犁开阵线。",
+    "faction": "烬火",
+    "type": "unit",
+    "cost": 4,
+    "rarity": "普通",
+    "attack": 4,
+    "health": 5,
+    "traits": [
+      "hunt",
+      "bulwark"
+    ],
+    "onPlay": [
+      {
+        "kind": "random-enemy-damage",
+        "amount": 1
+      }
+    ]
+  },
+  {
+    "id": "ember-oath-pyromancer",
+    "name": "焚誓祭司",
+    "description": "登场时，对一个敌方角色造成 2 点伤害。",
+    "faction": "烬火",
+    "type": "unit",
+    "cost": 5,
+    "rarity": "稀有",
+    "attack": 4,
+    "health": 5,
+    "traits": [
+      "arcane"
+    ],
+    "target": "enemy-character",
+    "onPlay": [
+      {
+        "kind": "damage",
+        "amount": 2
+      }
+    ]
+  },
+  {
+    "id": "ember-volcanic-ram",
+    "name": "火山冲角兽",
+    "description": "冲锋。它的角尖总比熔岩前沿更早抵达。",
+    "faction": "烬火",
+    "type": "unit",
+    "cost": 5,
+    "rarity": "稀有",
+    "attack": 6,
+    "health": 5,
+    "keywords": [
+      "charge"
+    ],
+    "traits": [
+      "swift",
+      "hunt"
+    ]
+  },
+  {
+    "id": "ember-heatbound-colossus",
+    "name": "炽铠巨像",
+    "description": "嘲讽。每块甲片都封存着一座旧熔炉的热量。",
+    "faction": "烬火",
+    "type": "unit",
+    "cost": 6,
+    "rarity": "普通",
+    "attack": 6,
+    "health": 8,
+    "keywords": [
+      "taunt"
+    ],
+    "traits": [
+      "bulwark",
+      "craft"
+    ]
+  },
+  {
+    "id": "ember-ashwing-phoenix",
+    "name": "灰翼不死鸟",
+    "description": "冲锋，护盾。第一层灰烬只是它的新生外壳。",
+    "faction": "烬火",
+    "type": "unit",
+    "cost": 6,
+    "rarity": "史诗",
+    "attack": 6,
+    "health": 5,
+    "keywords": [
+      "charge",
+      "shield"
+    ],
+    "traits": [
+      "swift",
+      "arcane"
+    ]
+  },
+  {
+    "id": "ember-war-drummer",
+    "name": "燎原战鼓手",
+    "description": "登场时，使一个友方单位获得 +2 攻击。",
+    "faction": "烬火",
+    "type": "unit",
+    "cost": 4,
+    "rarity": "稀有",
+    "attack": 3,
+    "health": 5,
+    "traits": [
+      "craft",
+      "swift"
+    ],
+    "target": "friendly-unit",
+    "onPlay": [
+      {
+        "kind": "buff",
+        "attack": 2,
+        "health": 0
+      }
+    ]
+  },
+  {
+    "id": "ember-scorchland-hydra",
+    "name": "灼地多首兽",
+    "description": "激昂。登场时，对一个随机敌方角色造成 3 点伤害。",
+    "faction": "烬火",
+    "type": "unit",
+    "cost": 7,
+    "rarity": "史诗",
+    "attack": 7,
+    "health": 7,
+    "keywords": [
+      "fury"
+    ],
+    "traits": [
+      "hunt"
+    ],
+    "onPlay": [
+      {
+        "kind": "random-enemy-damage",
+        "amount": 3
+      }
+    ]
+  },
+  {
+    "id": "ember-forgecrown-general",
+    "name": "炉冠统领",
+    "description": "冲锋，激昂。登场时抽一张牌。",
+    "faction": "烬火",
+    "type": "unit",
+    "cost": 7,
+    "rarity": "传说",
+    "attack": 7,
+    "health": 8,
+    "keywords": [
+      "charge",
+      "fury"
+    ],
+    "traits": [
+      "swift",
+      "craft"
+    ],
+    "onPlay": [
+      {
+        "kind": "draw",
+        "count": 1
+      }
+    ]
+  },
+  {
+    "id": "ember-caldera-core",
+    "name": "地心焰核",
+    "description": "嘲讽，护盾。登场时，对一个随机敌方角色造成 4 点伤害。",
+    "faction": "烬火",
+    "type": "unit",
+    "cost": 8,
+    "rarity": "传说",
+    "attack": 8,
+    "health": 10,
+    "keywords": [
+      "taunt",
+      "shield"
+    ],
+    "traits": [
+      "bulwark",
+      "arcane"
+    ],
+    "onPlay": [
+      {
+        "kind": "random-enemy-damage",
+        "amount": 4
+      }
+    ]
+  },
+  {
+    "id": "ember-spark-artificer",
+    "name": "余烬工程师",
+    "description": "登场时抽一张牌。她能从将熄的火堆里拆出完整零件。",
+    "faction": "烬火",
+    "type": "unit",
+    "cost": 3,
+    "rarity": "史诗",
+    "attack": 2,
+    "health": 4,
+    "traits": [
+      "craft",
+      "arcane"
+    ],
+    "onPlay": [
+      {
+        "kind": "draw",
+        "count": 1
+      }
+    ]
+  },
+  {
+    "id": "ember-leaping-spark",
+    "name": "跳火",
+    "description": "对一个敌方角色造成 1 点伤害。最小的火星也知道该往哪里落。",
+    "faction": "烬火",
+    "type": "spell",
+    "cost": 0,
+    "rarity": "普通",
+    "school": "ember",
+    "target": "enemy-character",
+    "effect": [
+      {
+        "kind": "damage",
+        "amount": 1
+      }
+    ]
+  },
+  {
+    "id": "ember-flame-pierce",
+    "name": "烈焰穿刺",
+    "description": "对一个敌方角色造成 2 点伤害。热浪会替矛尖完成最后一寸突进。",
+    "faction": "烬火",
+    "type": "spell",
+    "cost": 1,
+    "rarity": "普通",
+    "school": "ember",
+    "target": "enemy-character",
+    "effect": [
+      {
+        "kind": "damage",
+        "amount": 2
+      }
+    ]
+  },
+  {
+    "id": "ember-ignite-morale",
+    "name": "战意点燃",
+    "description": "使一个友方单位获得 +2/+1。",
+    "faction": "烬火",
+    "type": "spell",
+    "cost": 2,
+    "rarity": "普通",
+    "school": "ember",
+    "target": "friendly-unit",
+    "effect": [
+      {
+        "kind": "buff",
+        "attack": 2,
+        "health": 1
+      }
+    ]
+  },
+  {
+    "id": "ember-cinder-dispatch",
+    "name": "余烬急报",
+    "description": "抽一张牌，并对一个随机敌方角色造成 1 点伤害。",
+    "faction": "烬火",
+    "type": "spell",
+    "cost": 2,
+    "rarity": "稀有",
+    "school": "ember",
+    "target": "none",
+    "effect": [
+      {
+        "kind": "draw",
+        "count": 1
+      },
+      {
+        "kind": "random-enemy-damage",
+        "amount": 1
+      }
+    ]
+  },
+  {
+    "id": "ember-fireline-lockdown",
+    "name": "火线封锁",
+    "description": "对一个随机敌方角色造成 3 点伤害。燃烧边界正在迅速收拢。",
+    "faction": "烬火",
+    "type": "spell",
+    "cost": 3,
+    "rarity": "普通",
+    "school": "ember",
+    "target": "none",
+    "effect": [
+      {
+        "kind": "random-enemy-damage",
+        "amount": 3
+      }
+    ]
+  },
+  {
+    "id": "ember-ash-rekindling",
+    "name": "灰烬再燃",
+    "description": "召唤两个火星斥候。",
+    "faction": "烬火",
+    "type": "spell",
+    "cost": 3,
+    "rarity": "稀有",
+    "school": "ember",
+    "target": "none",
+    "effect": [
+      {
+        "kind": "summon",
+        "cardId": "ember-cinder-scout",
+        "count": 2
+      }
+    ]
+  },
+  {
+    "id": "ember-molten-core-overload",
+    "name": "熔芯过载",
+    "description": "使一个友方单位获得 +3/+3。稳定运转从来不是它的设计目标。",
+    "faction": "烬火",
+    "type": "spell",
+    "cost": 4,
+    "rarity": "稀有",
+    "school": "ember",
+    "target": "friendly-unit",
+    "effect": [
+      {
+        "kind": "buff",
+        "attack": 3,
+        "health": 3
+      }
+    ]
+  },
+  {
+    "id": "ember-cinder-rain",
+    "name": "烬雨齐射",
+    "description": "对一个随机敌方角色造成 5 点伤害。",
+    "faction": "烬火",
+    "type": "spell",
+    "cost": 5,
+    "rarity": "史诗",
+    "school": "ember",
+    "target": "none",
+    "effect": [
+      {
+        "kind": "random-enemy-damage",
+        "amount": 5
+      }
+    ]
+  },
+  {
+    "id": "ember-calamity-verdict",
+    "name": "灾火审判",
+    "description": "对一个敌方角色造成 6 点伤害。",
+    "faction": "烬火",
+    "type": "spell",
+    "cost": 6,
+    "rarity": "史诗",
+    "school": "ember",
+    "target": "enemy-character",
+    "effect": [
+      {
+        "kind": "damage",
+        "amount": 6
+      }
+    ]
+  },
+  {
+    "id": "ember-red-lotus-finale",
+    "name": "红莲终式",
+    "description": "对一个敌方角色造成 8 点伤害。",
+    "faction": "烬火",
+    "type": "spell",
+    "cost": 8,
+    "rarity": "史诗",
+    "school": "ember",
+    "target": "enemy-character",
+    "effect": [
+      {
+        "kind": "damage",
+        "amount": 8
+      }
+    ]
+  },
+  {
+    "id": "astral-stardust-familiar",
+    "name": "星尘伴灵",
+    "description": "护盾。它把主人遗漏的愿望藏在微光里。",
+    "faction": "星穹",
+    "type": "unit",
+    "cost": 1,
+    "rarity": "普通",
+    "attack": 1,
+    "health": 2,
+    "keywords": [
+      "shield"
+    ],
+    "traits": [
+      "arcane"
+    ]
+  },
+  {
+    "id": "astral-skychart-apprentice",
+    "name": "天图学徒",
+    "description": "登场时抽一张牌。她总能在星图边缘发现新航路。",
+    "faction": "星穹",
+    "type": "unit",
+    "cost": 1,
+    "rarity": "稀有",
+    "attack": 1,
+    "health": 1,
+    "traits": [
+      "arcane"
+    ],
+    "onPlay": [
+      {
+        "kind": "draw",
+        "count": 1
+      }
+    ]
+  },
+  {
+    "id": "astral-prism-guard",
+    "name": "棱镜守卫",
+    "description": "护盾。折射装甲会把第一道威胁散入星幕。",
+    "faction": "星穹",
+    "type": "unit",
+    "cost": 2,
+    "rarity": "普通",
+    "attack": 1,
+    "health": 4,
+    "keywords": [
+      "shield"
+    ],
+    "traits": [
+      "bulwark"
+    ]
+  },
+  {
+    "id": "astral-comet-scribe",
+    "name": "彗迹抄录员",
+    "description": "登场时抽一张牌。彗尾是宇宙写给她的速记。",
+    "faction": "星穹",
+    "type": "unit",
+    "cost": 2,
+    "rarity": "普通",
+    "attack": 2,
+    "health": 2,
+    "traits": [
+      "arcane"
+    ],
+    "onPlay": [
+      {
+        "kind": "draw",
+        "count": 1
+      }
+    ]
+  },
+  {
+    "id": "astral-orbit-moonhare",
+    "name": "环轨月兔",
+    "description": "护盾。它沿着看不见的轨道跳过危险。",
+    "faction": "星穹",
+    "type": "unit",
+    "cost": 2,
+    "rarity": "普通",
+    "attack": 2,
+    "health": 3,
+    "keywords": [
+      "shield"
+    ],
+    "traits": [
+      "swift"
+    ]
+  },
+  {
+    "id": "astral-veil-seer",
+    "name": "星幕先知",
+    "description": "汲取。她从遥远星光中借来尚未消逝的生命。",
+    "faction": "星穹",
+    "type": "unit",
+    "cost": 3,
+    "rarity": "稀有",
+    "attack": 2,
+    "health": 4,
+    "keywords": [
+      "lifesteal"
+    ],
+    "traits": [
+      "arcane"
+    ]
+  },
+  {
+    "id": "astral-mirror-adept",
+    "name": "镜宙修习者",
+    "description": "护盾。她在镜面宇宙里预演每一次受击。",
+    "faction": "星穹",
+    "type": "unit",
+    "cost": 3,
+    "rarity": "普通",
+    "attack": 3,
+    "health": 3,
+    "keywords": [
+      "shield"
+    ],
+    "traits": [
+      "craft"
+    ]
+  },
+  {
+    "id": "astral-constellation-gardener",
+    "name": "星座园丁",
+    "description": "登场时，为一个友方角色恢复 2 点生命。她把暗淡星辰修剪成新的航标。",
+    "faction": "星穹",
+    "type": "unit",
+    "cost": 3,
+    "rarity": "稀有",
+    "attack": 2,
+    "health": 5,
+    "traits": [
+      "arcane",
+      "bulwark"
+    ],
+    "target": "friendly-character",
+    "onPlay": [
+      {
+        "kind": "heal",
+        "amount": 2
+      }
+    ]
+  },
+  {
+    "id": "astral-nebula-knight",
+    "name": "星云骑士",
+    "description": "嘲讽。她的披风展开时，就像一道横贯夜空的城墙。",
+    "faction": "星穹",
+    "type": "unit",
+    "cost": 4,
+    "rarity": "普通",
+    "attack": 4,
+    "health": 5,
+    "keywords": [
+      "taunt"
+    ],
+    "traits": [
+      "bulwark"
+    ]
+  },
+  {
+    "id": "astral-archive-stargazer",
+    "name": "秘库观星官",
+    "description": "登场时抽一张牌。封存的每颗星都是一条可调用的档案。",
+    "faction": "星穹",
+    "type": "unit",
+    "cost": 4,
+    "rarity": "稀有",
+    "attack": 3,
+    "health": 4,
+    "traits": [
+      "arcane",
+      "craft"
+    ],
+    "onPlay": [
+      {
+        "kind": "draw",
+        "count": 1
+      }
+    ]
+  },
+  {
+    "id": "astral-eclipse-stalker",
+    "name": "食影巡猎者",
+    "description": "汲取。它只在两颗月亮同时沉没时现身。",
+    "faction": "星穹",
+    "type": "unit",
+    "cost": 4,
+    "rarity": "稀有",
+    "attack": 4,
+    "health": 4,
+    "keywords": [
+      "lifesteal"
+    ],
+    "traits": [
+      "hunt"
+    ]
+  },
+  {
+    "id": "astral-prismatic-stag",
+    "name": "棱光星鹿",
+    "description": "嘲讽，护盾。它踏出的光环会成为同伴的避难所。",
+    "faction": "星穹",
+    "type": "unit",
+    "cost": 5,
+    "rarity": "史诗",
+    "attack": 4,
+    "health": 7,
+    "keywords": [
+      "taunt",
+      "shield"
+    ],
+    "traits": [
+      "bulwark"
+    ]
+  },
+  {
+    "id": "astral-comet-rider",
+    "name": "彗星骑手",
+    "description": "冲锋，护盾。她以短暂燃烧换取一次完美抵达。",
+    "faction": "星穹",
+    "type": "unit",
+    "cost": 5,
+    "rarity": "史诗",
+    "attack": 5,
+    "health": 5,
+    "keywords": [
+      "charge",
+      "shield"
+    ],
+    "traits": [
+      "swift"
+    ]
+  },
+  {
+    "id": "astral-galaxy-weaver",
+    "name": "银河编织者",
+    "description": "登场时，使一个友方单位获得 +2/+2。",
+    "faction": "星穹",
+    "type": "unit",
+    "cost": 5,
+    "rarity": "稀有",
+    "attack": 4,
+    "health": 6,
+    "traits": [
+      "arcane"
+    ],
+    "target": "friendly-unit",
+    "onPlay": [
+      {
+        "kind": "buff",
+        "attack": 2,
+        "health": 2
+      }
+    ]
+  },
+  {
+    "id": "astral-lunar-vessel",
+    "name": "月相载体",
+    "description": "嘲讽。它用盈亏交替的外壳承受漫长战斗。",
+    "faction": "星穹",
+    "type": "unit",
+    "cost": 6,
+    "rarity": "普通",
+    "attack": 5,
+    "health": 8,
+    "keywords": [
+      "taunt"
+    ],
+    "traits": [
+      "bulwark",
+      "craft"
+    ]
+  },
+  {
+    "id": "astral-deepspace-oracle",
+    "name": "深空神谕者",
+    "description": "登场时抽两张牌。它传回的答案总比问题更早抵达。",
+    "faction": "星穹",
+    "type": "unit",
+    "cost": 6,
+    "rarity": "史诗",
+    "attack": 5,
+    "health": 6,
+    "traits": [
+      "arcane"
+    ],
+    "onPlay": [
+      {
+        "kind": "draw",
+        "count": 2
+      }
+    ]
+  },
+  {
+    "id": "astral-zenith-dragon",
+    "name": "天顶星龙",
+    "description": "护盾。它盘踞的高度没有阴影能够触及。",
+    "faction": "星穹",
+    "type": "unit",
+    "cost": 7,
+    "rarity": "史诗",
+    "attack": 7,
+    "health": 7,
+    "keywords": [
+      "shield"
+    ],
+    "traits": [
+      "hunt"
+    ]
+  },
+  {
+    "id": "astral-horizon-guardian",
+    "name": "视界守护者",
+    "description": "嘲讽。登场时，为一个友方角色恢复 4 点生命。",
+    "faction": "星穹",
+    "type": "unit",
+    "cost": 7,
+    "rarity": "稀有",
+    "attack": 6,
+    "health": 9,
+    "keywords": [
+      "taunt"
+    ],
+    "traits": [
+      "bulwark",
+      "arcane"
+    ],
+    "target": "friendly-character",
+    "onPlay": [
+      {
+        "kind": "heal",
+        "amount": 4
+      }
+    ]
+  },
+  {
+    "id": "astral-cosmos-sovereign",
+    "name": "万象星主",
+    "description": "护盾。登场时抽两张牌。它以群星为冠，以长夜为座。",
+    "faction": "星穹",
+    "type": "unit",
+    "cost": 8,
+    "rarity": "传说",
+    "attack": 7,
+    "health": 10,
+    "keywords": [
+      "shield"
+    ],
+    "traits": [
+      "arcane",
+      "craft"
+    ],
+    "onPlay": [
+      {
+        "kind": "draw",
+        "count": 2
+      }
+    ]
+  },
+  {
+    "id": "astral-infinite-observer",
+    "name": "无垠观测者",
+    "description": "嘲讽，护盾。登场时抽一张牌。它的凝视横跨无数纪元。",
+    "faction": "星穹",
+    "type": "unit",
+    "cost": 8,
+    "rarity": "传说",
+    "attack": 8,
+    "health": 8,
+    "keywords": [
+      "taunt",
+      "shield"
+    ],
+    "traits": [
+      "bulwark",
+      "arcane"
+    ],
+    "onPlay": [
+      {
+        "kind": "draw",
+        "count": 1
+      }
+    ]
+  },
+  {
+    "id": "astral-glimmer-echo",
+    "name": "微光回响",
+    "description": "为一个友方角色恢复 1 点生命。",
+    "faction": "星穹",
+    "type": "spell",
+    "cost": 0,
+    "rarity": "普通",
+    "school": "astral",
+    "target": "friendly-character",
+    "effect": [
+      {
+        "kind": "heal",
+        "amount": 1
+      }
+    ]
+  },
+  {
+    "id": "astral-chart-revelation",
+    "name": "星图启示",
+    "description": "抽一张牌。星轨交会之处，答案自行显现。",
+    "faction": "星穹",
+    "type": "spell",
+    "cost": 1,
+    "rarity": "普通",
+    "school": "astral",
+    "target": "none",
+    "effect": [
+      {
+        "kind": "draw",
+        "count": 1
+      }
+    ]
+  },
+  {
+    "id": "astral-phase-shift",
+    "name": "相位跃迁",
+    "description": "使一个友方单位获得 +2 生命。",
+    "faction": "星穹",
+    "type": "spell",
+    "cost": 1,
+    "rarity": "普通",
+    "school": "astral",
+    "target": "friendly-unit",
+    "effect": [
+      {
+        "kind": "buff",
+        "attack": 0,
+        "health": 2
+      }
+    ]
+  },
+  {
+    "id": "astral-gentle-orbit",
+    "name": "温柔轨道",
+    "description": "为一个友方角色恢复 4 点生命。偏离战火的轨道容得下一次喘息。",
+    "faction": "星穹",
+    "type": "spell",
+    "cost": 2,
+    "rarity": "普通",
+    "school": "astral",
+    "target": "friendly-character",
+    "effect": [
+      {
+        "kind": "heal",
+        "amount": 4
+      }
+    ]
+  },
+  {
+    "id": "astral-lucid-script",
+    "name": "清醒星文",
+    "description": "抽一张牌，并为一个友方角色恢复 2 点生命。",
+    "faction": "星穹",
+    "type": "spell",
+    "cost": 2,
+    "rarity": "稀有",
+    "school": "astral",
+    "target": "friendly-character",
+    "effect": [
+      {
+        "kind": "draw",
+        "count": 1
+      },
+      {
+        "kind": "heal",
+        "amount": 2
+      }
+    ]
+  },
+  {
+    "id": "astral-mirror-lesson",
+    "name": "镜像课程",
+    "description": "使一个友方单位获得 +1/+3。镜中的自己总能指出防守缺口。",
+    "faction": "星穹",
+    "type": "spell",
+    "cost": 3,
+    "rarity": "稀有",
+    "school": "astral",
+    "target": "friendly-unit",
+    "effect": [
+      {
+        "kind": "buff",
+        "attack": 1,
+        "health": 3
+      }
+    ]
+  },
+  {
+    "id": "astral-constellation-call",
+    "name": "星群呼唤",
+    "description": "召唤两个星尘伴灵。",
+    "faction": "星穹",
+    "type": "spell",
+    "cost": 3,
+    "rarity": "稀有",
+    "school": "astral",
+    "target": "none",
+    "effect": [
+      {
+        "kind": "summon",
+        "cardId": "astral-stardust-familiar",
+        "count": 2
+      }
+    ]
+  },
+  {
+    "id": "astral-meteor-pin",
+    "name": "流星钉刺",
+    "description": "对一个敌方角色造成 4 点伤害。一线星火将目标钉在既定轨迹。",
+    "faction": "星穹",
+    "type": "spell",
+    "cost": 4,
+    "rarity": "稀有",
+    "school": "astral",
+    "target": "enemy-character",
+    "effect": [
+      {
+        "kind": "damage",
+        "amount": 4
+      }
+    ]
+  },
+  {
+    "id": "astral-deep-divination",
+    "name": "深空占卜",
+    "description": "抽三张牌。",
+    "faction": "星穹",
+    "type": "spell",
+    "cost": 5,
+    "rarity": "史诗",
+    "school": "astral",
+    "target": "none",
+    "effect": [
+      {
+        "kind": "draw",
+        "count": 3
+      }
+    ]
+  },
+  {
+    "id": "astral-supernova-ripple",
+    "name": "超新星涟漪",
+    "description": "对一个随机敌方角色造成 5 点伤害，并抽两张牌。毁灭的闪光也会照亮知识。",
+    "faction": "星穹",
+    "type": "spell",
+    "cost": 7,
+    "rarity": "史诗",
+    "school": "astral",
+    "target": "none",
+    "effect": [
+      {
+        "kind": "random-enemy-damage",
+        "amount": 5
+      },
+      {
+        "kind": "draw",
+        "count": 2
+      }
+    ]
+  },
+  {
+    "id": "verdant-spore-scout",
+    "name": "孢芽斥候",
+    "description": "林地中最不起眼，也最可靠的先行者。",
+    "faction": "苍林",
+    "type": "unit",
+    "cost": 0,
+    "rarity": "普通",
+    "attack": 1,
+    "health": 1,
+    "traits": [
+      "hunt"
+    ]
+  },
+  {
+    "id": "verdant-dewleaf-apprentice",
+    "name": "露叶学徒",
+    "description": "汲取。登场时为一个友方角色恢复 1 点生命。",
+    "faction": "苍林",
+    "type": "unit",
+    "cost": 1,
+    "rarity": "普通",
+    "attack": 1,
+    "health": 2,
+    "keywords": [
+      "lifesteal"
+    ],
+    "traits": [
+      "arcane"
+    ],
+    "target": "friendly-character",
+    "onPlay": [
+      {
+        "kind": "heal",
+        "amount": 1
+      }
+    ]
+  },
+  {
+    "id": "verdant-mossback-keeper",
+    "name": "苔背守苗人",
+    "description": "嘲讽。以厚实苔甲护住新生幼苗。",
+    "faction": "苍林",
+    "type": "unit",
+    "cost": 1,
+    "rarity": "普通",
+    "attack": 1,
+    "health": 3,
+    "keywords": [
+      "taunt"
+    ],
+    "traits": [
+      "bulwark"
+    ]
+  },
+  {
+    "id": "verdant-thornstep-runner",
+    "name": "棘步疾行者",
+    "description": "冲锋。藤棘会为它让开最短的道路。",
+    "faction": "苍林",
+    "type": "unit",
+    "cost": 1,
+    "rarity": "普通",
+    "attack": 2,
+    "health": 1,
+    "keywords": [
+      "charge"
+    ],
+    "traits": [
+      "swift",
+      "hunt"
+    ]
+  },
+  {
+    "id": "verdant-seedsong-sprite",
+    "name": "种歌精灵",
+    "description": "登场时抽一张牌。它记得每颗种子的歌。",
+    "faction": "苍林",
+    "type": "unit",
+    "cost": 1,
+    "rarity": "稀有",
+    "attack": 1,
+    "health": 2,
+    "traits": [
+      "arcane"
+    ],
+    "onPlay": [
+      {
+        "kind": "draw",
+        "count": 1
+      }
+    ]
+  },
+  {
+    "id": "verdant-antler-pathfinder",
+    "name": "青角寻径者",
+    "description": "循着花粉与月光寻找隐秘林道。",
+    "faction": "苍林",
+    "type": "unit",
+    "cost": 2,
+    "rarity": "普通",
+    "attack": 2,
+    "health": 3,
+    "traits": [
+      "hunt",
+      "craft"
+    ]
+  },
+  {
+    "id": "verdant-barkshield-sentinel",
+    "name": "树甲哨卫",
+    "description": "嘲讽。年轮就是它从不后退的证明。",
+    "faction": "苍林",
+    "type": "unit",
+    "cost": 2,
+    "rarity": "普通",
+    "attack": 2,
+    "health": 4,
+    "keywords": [
+      "taunt"
+    ],
+    "traits": [
+      "bulwark"
+    ]
+  },
+  {
+    "id": "verdant-nectar-mender",
+    "name": "蜜露愈师",
+    "description": "汲取。登场时为一个友方角色恢复 2 点生命。",
+    "faction": "苍林",
+    "type": "unit",
+    "cost": 2,
+    "rarity": "稀有",
+    "attack": 2,
+    "health": 3,
+    "keywords": [
+      "lifesteal"
+    ],
+    "traits": [
+      "arcane"
+    ],
+    "target": "friendly-character",
+    "onPlay": [
+      {
+        "kind": "heal",
+        "amount": 2
+      }
+    ]
+  },
+  {
+    "id": "verdant-vinewhip-duelist",
+    "name": "藤鞭斗士",
+    "description": "激昂。每一道伤痕都会催生新的藤刺。",
+    "faction": "苍林",
+    "type": "unit",
+    "cost": 2,
+    "rarity": "普通",
+    "attack": 3,
+    "health": 2,
+    "keywords": [
+      "fury"
+    ],
+    "traits": [
+      "swift"
+    ]
+  },
+  {
+    "id": "verdant-canopy-archer",
+    "name": "冠层猎弓手",
+    "description": "登场时对一个敌方角色造成 1 点伤害。",
+    "faction": "苍林",
+    "type": "unit",
+    "cost": 2,
+    "rarity": "稀有",
+    "attack": 3,
+    "health": 2,
+    "traits": [
+      "hunt"
+    ],
+    "target": "enemy-character",
+    "onPlay": [
+      {
+        "kind": "damage",
+        "amount": 1
+      }
+    ]
+  },
+  {
+    "id": "verdant-rootweave-artisan",
+    "name": "盘根编甲师",
+    "description": "护盾。将活根编织成会自行愈合的甲胄。",
+    "faction": "苍林",
+    "type": "unit",
+    "cost": 2,
+    "rarity": "稀有",
+    "attack": 2,
+    "health": 3,
+    "keywords": [
+      "shield"
+    ],
+    "traits": [
+      "craft",
+      "bulwark"
+    ]
+  },
+  {
+    "id": "verdant-bloom-banner",
+    "name": "繁花执旗者",
+    "description": "登场时使一个友方单位获得 +1/+1。",
+    "faction": "苍林",
+    "type": "unit",
+    "cost": 3,
+    "rarity": "稀有",
+    "attack": 3,
+    "health": 4,
+    "traits": [
+      "arcane",
+      "bulwark"
+    ],
+    "target": "friendly-unit",
+    "onPlay": [
+      {
+        "kind": "buff",
+        "attack": 1,
+        "health": 1
+      }
+    ]
+  },
+  {
+    "id": "verdant-moonfern-stalker",
+    "name": "月蕨追猎者",
+    "description": "冲锋。月色落下之前，猎物只会看见一道绿影。",
+    "faction": "苍林",
+    "type": "unit",
+    "cost": 3,
+    "rarity": "普通",
+    "attack": 4,
+    "health": 3,
+    "keywords": [
+      "charge"
+    ],
+    "traits": [
+      "hunt",
+      "swift"
+    ]
+  },
+  {
+    "id": "verdant-grovebond-shaman",
+    "name": "林契萨满",
+    "description": "登场时为一个友方角色恢复 3 点生命。",
+    "faction": "苍林",
+    "type": "unit",
+    "cost": 3,
+    "rarity": "稀有",
+    "attack": 3,
+    "health": 4,
+    "traits": [
+      "arcane"
+    ],
+    "target": "friendly-character",
+    "onPlay": [
+      {
+        "kind": "heal",
+        "amount": 3
+      }
+    ]
+  },
+  {
+    "id": "verdant-briarhide-boar",
+    "name": "荆皮战野猪",
+    "description": "嘲讽，激昂。它的冲撞会让整片灌木一同震颤。",
+    "faction": "苍林",
+    "type": "unit",
+    "cost": 3,
+    "rarity": "史诗",
+    "attack": 4,
+    "health": 5,
+    "keywords": [
+      "taunt",
+      "fury"
+    ],
+    "traits": [
+      "bulwark",
+      "hunt"
+    ]
+  },
+  {
+    "id": "verdant-ancient-bough-guardian",
+    "name": "古枝壁垒",
+    "description": "嘲讽，护盾。它曾为三代森林挡下烈火。",
+    "faction": "苍林",
+    "type": "unit",
+    "cost": 4,
+    "rarity": "史诗",
+    "attack": 3,
+    "health": 7,
+    "keywords": [
+      "taunt",
+      "shield"
+    ],
+    "traits": [
+      "bulwark"
+    ]
+  },
+  {
+    "id": "verdant-dawnpetal-stag",
+    "name": "曦瓣灵鹿",
+    "description": "汲取。踏过之处会在破晓时开花。",
+    "faction": "苍林",
+    "type": "unit",
+    "cost": 4,
+    "rarity": "史诗",
+    "attack": 5,
+    "health": 5,
+    "keywords": [
+      "lifesteal"
+    ],
+    "traits": [
+      "hunt",
+      "arcane"
+    ]
+  },
+  {
+    "id": "verdant-seedvault-engineer",
+    "name": "种库构筑师",
+    "description": "护盾。它用远古种壳搭建会呼吸的工事。",
+    "faction": "苍林",
+    "type": "unit",
+    "cost": 5,
+    "rarity": "史诗",
+    "attack": 4,
+    "health": 6,
+    "keywords": [
+      "shield"
+    ],
+    "traits": [
+      "craft",
+      "bulwark"
+    ]
+  },
+  {
+    "id": "verdant-thousandleaf-titan",
+    "name": "千叶巨灵",
+    "description": "嘲讽。万千叶片在它肩头汇成不破冠冕。",
+    "faction": "苍林",
+    "type": "unit",
+    "cost": 6,
+    "rarity": "史诗",
+    "attack": 5,
+    "health": 9,
+    "keywords": [
+      "taunt"
+    ],
+    "traits": [
+      "bulwark",
+      "arcane"
+    ]
+  },
+  {
+    "id": "verdant-worldroot-matriarch",
+    "name": "世界根母",
+    "description": "嘲讽，汲取。登场时为一个友方角色恢复 5 点生命。",
+    "faction": "苍林",
+    "type": "unit",
+    "cost": 7,
+    "rarity": "传说",
+    "attack": 6,
+    "health": 10,
+    "keywords": [
+      "taunt",
+      "lifesteal"
+    ],
+    "traits": [
+      "bulwark",
+      "arcane"
+    ],
+    "target": "friendly-character",
+    "onPlay": [
+      {
+        "kind": "heal",
+        "amount": 5
+      }
+    ]
+  },
+  {
+    "id": "verdant-sprout-pact",
+    "name": "萌芽之约",
+    "description": "使一个友方单位获得 +0/+1。",
+    "faction": "苍林",
+    "type": "spell",
+    "cost": 0,
+    "rarity": "普通",
+    "school": "verdant",
+    "target": "friendly-unit",
+    "effect": [
+      {
+        "kind": "buff",
+        "attack": 0,
+        "health": 1
+      }
+    ]
+  },
+  {
+    "id": "verdant-morning-dew",
+    "name": "林间晨露",
+    "description": "为一个友方角色恢复 3 点生命。",
+    "faction": "苍林",
+    "type": "spell",
+    "cost": 1,
+    "rarity": "普通",
+    "school": "verdant",
+    "target": "friendly-character",
+    "effect": [
+      {
+        "kind": "heal",
+        "amount": 3
+      }
+    ]
+  },
+  {
+    "id": "verdant-thorn-lash",
+    "name": "荆藤抽击",
+    "description": "对一个敌方角色造成 2 点伤害。",
+    "faction": "苍林",
+    "type": "spell",
+    "cost": 1,
+    "rarity": "普通",
+    "school": "verdant",
+    "target": "enemy-character",
+    "effect": [
+      {
+        "kind": "damage",
+        "amount": 2
+      }
+    ]
+  },
+  {
+    "id": "verdant-rooting-rite",
+    "name": "扎根仪式",
+    "description": "使一个友方单位获得 +1/+3。",
+    "faction": "苍林",
+    "type": "spell",
+    "cost": 2,
+    "rarity": "普通",
+    "school": "verdant",
+    "target": "friendly-unit",
+    "effect": [
+      {
+        "kind": "buff",
+        "attack": 1,
+        "health": 3
+      }
+    ]
+  },
+  {
+    "id": "verdant-pathfinder-call",
+    "name": "寻径者号角",
+    "description": "抽两张牌。",
+    "faction": "苍林",
+    "type": "spell",
+    "cost": 3,
+    "rarity": "稀有",
+    "school": "verdant",
+    "target": "none",
+    "effect": [
+      {
+        "kind": "draw",
+        "count": 2
+      }
+    ]
+  },
+  {
+    "id": "verdant-canopy-ambush",
+    "name": "冠林伏击",
+    "description": "对一个随机敌方角色造成 3 点伤害。",
+    "faction": "苍林",
+    "type": "spell",
+    "cost": 3,
+    "rarity": "稀有",
+    "school": "verdant",
+    "target": "none",
+    "effect": [
+      {
+        "kind": "random-enemy-damage",
+        "amount": 3
+      }
+    ]
+  },
+  {
+    "id": "verdant-seedburst",
+    "name": "种荚迸裂",
+    "description": "召唤两个孢芽斥候。",
+    "faction": "苍林",
+    "type": "spell",
+    "cost": 3,
+    "rarity": "史诗",
+    "school": "verdant",
+    "target": "none",
+    "effect": [
+      {
+        "kind": "summon",
+        "cardId": "verdant-spore-scout",
+        "count": 2
+      }
+    ]
+  },
+  {
+    "id": "verdant-wild-regrowth",
+    "name": "野性复苏",
+    "description": "为一个友方角色恢复 7 点生命。",
+    "faction": "苍林",
+    "type": "spell",
+    "cost": 4,
+    "rarity": "稀有",
+    "school": "verdant",
+    "target": "friendly-character",
+    "effect": [
+      {
+        "kind": "heal",
+        "amount": 7
+      }
+    ]
+  },
+  {
+    "id": "verdant-flourishing-chorus",
+    "name": "繁盛合唱",
+    "description": "使一个友方单位获得 +3/+4。",
+    "faction": "苍林",
+    "type": "spell",
+    "cost": 5,
+    "rarity": "史诗",
+    "school": "verdant",
+    "target": "friendly-unit",
+    "effect": [
+      {
+        "kind": "buff",
+        "attack": 3,
+        "health": 4
+      }
+    ]
+  },
+  {
+    "id": "verdant-all-roots-as-one",
+    "name": "万根归一",
+    "description": "为一个友方角色恢复 10 点生命，抽两张牌，并召唤两个孢芽斥候。",
+    "faction": "苍林",
+    "type": "spell",
+    "cost": 8,
+    "rarity": "传说",
+    "school": "verdant",
+    "target": "friendly-character",
+    "effect": [
+      {
+        "kind": "heal",
+        "amount": 10
+      },
+      {
+        "kind": "draw",
+        "count": 2
+      },
+      {
+        "kind": "summon",
+        "cardId": "verdant-spore-scout",
+        "count": 2
+      }
+    ]
+  },
+  {
+    "id": "storm-spark-mite",
+    "name": "火花螨",
+    "description": "一团装进黄铜外壳的活跃电火花。",
+    "faction": "雷铸",
+    "type": "unit",
+    "cost": 0,
+    "rarity": "普通",
+    "attack": 1,
+    "health": 1,
+    "traits": [
+      "craft"
+    ]
+  },
+  {
+    "id": "storm-coppercoil-cadet",
+    "name": "铜线圈新兵",
+    "description": "激昂。每次受击都会让线圈转得更快。",
+    "faction": "雷铸",
+    "type": "unit",
+    "cost": 1,
+    "rarity": "普通",
+    "attack": 2,
+    "health": 1,
+    "keywords": [
+      "fury"
+    ],
+    "traits": [
+      "craft",
+      "swift"
+    ]
+  },
+  {
+    "id": "storm-lightning-courier",
+    "name": "闪电信使",
+    "description": "冲锋。讯息尚未发出，它已经抵达。",
+    "faction": "雷铸",
+    "type": "unit",
+    "cost": 1,
+    "rarity": "普通",
+    "attack": 2,
+    "health": 1,
+    "keywords": [
+      "charge"
+    ],
+    "traits": [
+      "swift"
+    ]
+  },
+  {
+    "id": "storm-capacitor-sentry",
+    "name": "蓄能哨机",
+    "description": "护盾。待机时会默默收集空气里的电荷。",
+    "faction": "雷铸",
+    "type": "unit",
+    "cost": 1,
+    "rarity": "普通",
+    "attack": 1,
+    "health": 3,
+    "keywords": [
+      "shield"
+    ],
+    "traits": [
+      "craft",
+      "bulwark"
+    ]
+  },
+  {
+    "id": "storm-ironcloud-scavenger",
+    "name": "铁云拾荒客",
+    "description": "登场时抽一张牌。它总能从雷雨后捡到好东西。",
+    "faction": "雷铸",
+    "type": "unit",
+    "cost": 1,
+    "rarity": "稀有",
+    "attack": 1,
+    "health": 2,
+    "traits": [
+      "craft",
+      "hunt"
+    ],
+    "onPlay": [
+      {
+        "kind": "draw",
+        "count": 1
+      }
+    ]
+  },
+  {
+    "id": "storm-voltedge-duelist",
+    "name": "伏刃决斗家",
+    "description": "激昂。剑锋上的电弧随怒意一同增长。",
+    "faction": "雷铸",
+    "type": "unit",
+    "cost": 2,
+    "rarity": "普通",
+    "attack": 3,
+    "health": 2,
+    "keywords": [
+      "fury"
+    ],
+    "traits": [
+      "swift"
+    ]
+  },
+  {
+    "id": "storm-relay-shieldguard",
+    "name": "继电盾卫",
+    "description": "嘲讽，护盾。它是雷铸阵线最稳定的接地点。",
+    "faction": "雷铸",
+    "type": "unit",
+    "cost": 2,
+    "rarity": "稀有",
+    "attack": 2,
+    "health": 3,
+    "keywords": [
+      "taunt",
+      "shield"
+    ],
+    "traits": [
+      "bulwark",
+      "craft"
+    ]
+  },
+  {
+    "id": "storm-coil-sage",
+    "name": "线圈贤者",
+    "description": "登场时对一个随机敌方角色造成 1 点伤害。",
+    "faction": "雷铸",
+    "type": "unit",
+    "cost": 2,
+    "rarity": "稀有",
+    "attack": 2,
+    "health": 3,
+    "traits": [
+      "arcane",
+      "craft"
+    ],
+    "onPlay": [
+      {
+        "kind": "random-enemy-damage",
+        "amount": 1
+      }
+    ]
+  },
+  {
+    "id": "storm-thundertrack-hound",
+    "name": "逐雷猎犬",
+    "description": "冲锋。它只追逐刚刚落下的那道闪电。",
+    "faction": "雷铸",
+    "type": "unit",
+    "cost": 2,
+    "rarity": "普通",
+    "attack": 3,
+    "health": 2,
+    "keywords": [
+      "charge"
+    ],
+    "traits": [
+      "hunt",
+      "swift"
+    ]
+  },
+  {
+    "id": "storm-magnetic-salvager",
+    "name": "磁流回收者",
+    "description": "汲取。它会把逸散的能量重新导回核心。",
+    "faction": "雷铸",
+    "type": "unit",
+    "cost": 2,
+    "rarity": "普通",
+    "attack": 2,
+    "health": 3,
+    "keywords": [
+      "lifesteal"
+    ],
+    "traits": [
+      "craft"
+    ]
+  },
+  {
+    "id": "storm-forge-armorer",
+    "name": "雷炉铸甲师",
+    "description": "登场时使一个友方单位获得 +1/+1。",
+    "faction": "雷铸",
+    "type": "unit",
+    "cost": 3,
+    "rarity": "稀有",
+    "attack": 3,
+    "health": 4,
+    "traits": [
+      "craft",
+      "bulwark"
+    ],
+    "target": "friendly-unit",
+    "onPlay": [
+      {
+        "kind": "buff",
+        "attack": 1,
+        "health": 1
+      }
+    ]
+  },
+  {
+    "id": "storm-arcspark-marksman",
+    "name": "弧光神射手",
+    "description": "登场时对一个随机敌方角色造成 1 点伤害。",
+    "faction": "雷铸",
+    "type": "unit",
+    "cost": 3,
+    "rarity": "稀有",
+    "attack": 4,
+    "health": 3,
+    "traits": [
+      "hunt"
+    ],
+    "onPlay": [
+      {
+        "kind": "random-enemy-damage",
+        "amount": 1
+      }
+    ]
+  },
+  {
+    "id": "storm-turbine-lancer",
+    "name": "涡轮枪骑",
+    "description": "冲锋，激昂。加速装置从来没有低速档。",
+    "faction": "雷铸",
+    "type": "unit",
+    "cost": 3,
+    "rarity": "史诗",
+    "attack": 4,
+    "health": 3,
+    "keywords": [
+      "charge",
+      "fury"
+    ],
+    "traits": [
+      "swift",
+      "craft"
+    ]
+  },
+  {
+    "id": "storm-overcharge-golem",
+    "name": "过载魔像",
+    "description": "激昂。警示灯越亮，它的拳头就越重。",
+    "faction": "雷铸",
+    "type": "unit",
+    "cost": 3,
+    "rarity": "普通",
+    "attack": 4,
+    "health": 5,
+    "keywords": [
+      "fury"
+    ],
+    "traits": [
+      "craft"
+    ]
+  },
+  {
+    "id": "storm-cloudbreaker-captain",
+    "name": "破云舰长",
+    "description": "护盾。登场时抽一张牌。",
+    "faction": "雷铸",
+    "type": "unit",
+    "cost": 3,
+    "rarity": "史诗",
+    "attack": 3,
+    "health": 5,
+    "keywords": [
+      "shield"
+    ],
+    "traits": [
+      "arcane",
+      "craft"
+    ],
+    "onPlay": [
+      {
+        "kind": "draw",
+        "count": 1
+      }
+    ]
+  },
+  {
+    "id": "storm-tempest-bulwark",
+    "name": "风暴壁垒机",
+    "description": "嘲讽，护盾。雷鸣在它的装甲内变得沉默。",
+    "faction": "雷铸",
+    "type": "unit",
+    "cost": 4,
+    "rarity": "史诗",
+    "attack": 3,
+    "health": 7,
+    "keywords": [
+      "taunt",
+      "shield"
+    ],
+    "traits": [
+      "bulwark",
+      "craft"
+    ]
+  },
+  {
+    "id": "storm-chainbolt-colossus",
+    "name": "链雷巨像",
+    "description": "登场时对一个随机敌方角色造成 2 点伤害。",
+    "faction": "雷铸",
+    "type": "unit",
+    "cost": 4,
+    "rarity": "史诗",
+    "attack": 5,
+    "health": 5,
+    "traits": [
+      "craft",
+      "arcane"
+    ],
+    "onPlay": [
+      {
+        "kind": "random-enemy-damage",
+        "amount": 2
+      }
+    ]
+  },
+  {
+    "id": "storm-skyrail-ace",
+    "name": "天轨王牌",
+    "description": "冲锋。从云端俯冲时，它与雷声同时抵达。",
+    "faction": "雷铸",
+    "type": "unit",
+    "cost": 4,
+    "rarity": "史诗",
+    "attack": 5,
+    "health": 4,
+    "keywords": [
+      "charge"
+    ],
+    "traits": [
+      "hunt",
+      "swift"
+    ]
+  },
+  {
+    "id": "storm-living-dynamo",
+    "name": "活体雷轮",
+    "description": "护盾，激昂。没有人知道究竟是谁启动了它。",
+    "faction": "雷铸",
+    "type": "unit",
+    "cost": 5,
+    "rarity": "史诗",
+    "attack": 6,
+    "health": 6,
+    "keywords": [
+      "shield",
+      "fury"
+    ],
+    "traits": [
+      "craft",
+      "arcane"
+    ]
+  },
+  {
+    "id": "storm-skyforge-thunderking",
+    "name": "天铸雷王",
+    "description": "护盾，激昂。登场时对一个随机敌方角色造成 4 点伤害。",
+    "faction": "雷铸",
+    "type": "unit",
+    "cost": 7,
+    "rarity": "传说",
+    "attack": 7,
+    "health": 8,
+    "keywords": [
+      "shield",
+      "fury"
+    ],
+    "traits": [
+      "craft",
+      "bulwark"
+    ],
+    "onPlay": [
+      {
+        "kind": "random-enemy-damage",
+        "amount": 4
+      }
+    ]
+  },
+  {
+    "id": "storm-static-spark",
+    "name": "游离电火",
+    "description": "对一个随机敌方角色造成 1 点伤害。",
+    "faction": "雷铸",
+    "type": "spell",
+    "cost": 0,
+    "rarity": "普通",
+    "school": "storm",
+    "target": "none",
+    "effect": [
+      {
+        "kind": "random-enemy-damage",
+        "amount": 1
+      }
+    ]
+  },
+  {
+    "id": "storm-bolt-calibration",
+    "name": "雷栓校准",
+    "description": "对一个敌方角色造成 2 点伤害。",
+    "faction": "雷铸",
+    "type": "spell",
+    "cost": 1,
+    "rarity": "普通",
+    "school": "storm",
+    "target": "enemy-character",
+    "effect": [
+      {
+        "kind": "damage",
+        "amount": 2
+      }
+    ]
+  },
+  {
+    "id": "storm-emergency-plating",
+    "name": "应急镀层",
+    "description": "使一个友方单位获得 +0/+2。",
+    "faction": "雷铸",
+    "type": "spell",
+    "cost": 1,
+    "rarity": "普通",
+    "school": "storm",
+    "target": "friendly-unit",
+    "effect": [
+      {
+        "kind": "buff",
+        "attack": 0,
+        "health": 2
+      }
+    ]
+  },
+  {
+    "id": "storm-capacitor-draw",
+    "name": "电容抽载",
+    "description": "抽一张牌。",
+    "faction": "雷铸",
+    "type": "spell",
+    "cost": 2,
+    "rarity": "普通",
+    "school": "storm",
+    "target": "none",
+    "effect": [
+      {
+        "kind": "draw",
+        "count": 1
+      }
+    ]
+  },
+  {
+    "id": "storm-chain-discharge",
+    "name": "链式放电",
+    "description": "对一个随机敌方角色造成 3 点伤害。",
+    "faction": "雷铸",
+    "type": "spell",
+    "cost": 3,
+    "rarity": "稀有",
+    "school": "storm",
+    "target": "none",
+    "effect": [
+      {
+        "kind": "random-enemy-damage",
+        "amount": 3
+      }
+    ]
+  },
+  {
+    "id": "storm-forge-temper",
+    "name": "雷炉淬炼",
+    "description": "使一个友方单位获得 +2/+2。",
+    "faction": "雷铸",
+    "type": "spell",
+    "cost": 3,
+    "rarity": "稀有",
+    "school": "storm",
+    "target": "friendly-unit",
+    "effect": [
+      {
+        "kind": "buff",
+        "attack": 2,
+        "health": 2
+      }
+    ]
+  },
+  {
+    "id": "storm-drone-deployment",
+    "name": "火花机群",
+    "description": "召唤两个火花螨。",
+    "faction": "雷铸",
+    "type": "spell",
+    "cost": 3,
+    "rarity": "史诗",
+    "school": "storm",
+    "target": "none",
+    "effect": [
+      {
+        "kind": "summon",
+        "cardId": "storm-spark-mite",
+        "count": 2
+      }
+    ]
+  },
+  {
+    "id": "storm-thunder-salvo",
+    "name": "雷云齐射",
+    "description": "对一个随机敌方角色造成 4 点伤害。",
+    "faction": "雷铸",
+    "type": "spell",
+    "cost": 4,
+    "rarity": "稀有",
+    "school": "storm",
+    "target": "none",
+    "effect": [
+      {
+        "kind": "random-enemy-damage",
+        "amount": 4
+      }
+    ]
+  },
+  {
+    "id": "storm-overload-reactor",
+    "name": "过载反应炉",
+    "description": "对一个敌方角色造成 5 点伤害，并抽一张牌。",
+    "faction": "雷铸",
+    "type": "spell",
+    "cost": 5,
+    "rarity": "史诗",
+    "school": "storm",
+    "target": "enemy-character",
+    "effect": [
+      {
+        "kind": "damage",
+        "amount": 5
+      },
+      {
+        "kind": "draw",
+        "count": 1
+      }
+    ]
+  },
+  {
+    "id": "storm-ninefold-tempest",
+    "name": "九霄雷暴",
+    "description": "三次对随机敌方角色造成 3 点伤害，然后抽一张牌。",
+    "faction": "雷铸",
+    "type": "spell",
+    "cost": 8,
+    "rarity": "传说",
+    "school": "storm",
+    "target": "none",
+    "effect": [
+      {
+        "kind": "random-enemy-damage",
+        "amount": 3
+      },
+      {
+        "kind": "random-enemy-damage",
+        "amount": 3
+      },
+      {
+        "kind": "random-enemy-damage",
+        "amount": 3
+      },
+      {
+        "kind": "draw",
+        "count": 1
+      }
+    ]
+  }
+]

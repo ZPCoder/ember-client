@@ -1,0 +1,922 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:math';
+
+import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../data/catalog.dart';
+import '../models/card_definition.dart';
+
+class GameController extends ChangeNotifier {
+  GameController();
+
+  List<CardDefinition> catalog = const [];
+  final Map<String, int> collection = <String, int>{};
+  final List<String> deckIds = <String>[];
+  BattleState? battle;
+  bool isLoading = true;
+  String? errorMessage;
+  String commanderName = '旅者 071';
+  int gold = 1280;
+  int dust = 360;
+  int packs = 1;
+  int wins = 0;
+  int losses = 0;
+  int matchesPlayed = 0;
+  bool isResolvingTurn = false;
+
+  final Random _random = Random(20260809);
+  SharedPreferences? _prefs;
+  Timer? _turnTimer;
+
+  Map<String, CardDefinition> get cardsById => {
+    for (final card in catalog) card.id: card,
+  };
+
+  Future<void> initialize() async {
+    try {
+      catalog = await loadCatalog();
+      _prefs = await SharedPreferences.getInstance();
+      _restoreState();
+      if (deckIds.isEmpty) _seedStarterDeck();
+      if (collection.isEmpty) {
+        for (final card in catalog) {
+          collection[card.id] =
+              card.id.startsWith('sun-') || card.id.startsWith('neutral-')
+              ? 2
+              : 0;
+        }
+        _persistCollection();
+      }
+    } catch (error) {
+      errorMessage = '卡牌档案加载失败：$error';
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  void _restoreState() {
+    final storedDeck = _prefs?.getStringList('deck_ids');
+    if (storedDeck != null) deckIds.addAll(storedDeck);
+    final storedCollection = _prefs?.getString('collection');
+    if (storedCollection != null) {
+      final decoded = jsonDecode(storedCollection);
+      if (decoded is Map) {
+        for (final entry in decoded.entries) {
+          if (entry.value is num) {
+            collection[entry.key.toString()] = (entry.value as num).toInt();
+          }
+        }
+      }
+    }
+    commanderName = _prefs?.getString('commander_name') ?? commanderName;
+    gold = _prefs?.getInt('gold') ?? gold;
+    dust = _prefs?.getInt('dust') ?? dust;
+    packs = _prefs?.getInt('packs') ?? packs;
+    wins = _prefs?.getInt('wins') ?? wins;
+    losses = _prefs?.getInt('losses') ?? losses;
+    matchesPlayed = _prefs?.getInt('matches') ?? matchesPlayed;
+  }
+
+  void _seedStarterDeck() {
+    final starter = catalog
+        .where((card) => card.faction == '曜光' || card.id.startsWith('neutral-'))
+        .take(15);
+    for (final card in starter) {
+      deckIds.add(card.id);
+      deckIds.add(card.id);
+    }
+  }
+
+  CardDefinition? card(String id) => cardsById[id];
+
+  int owned(String id) => collection[id] ?? 0;
+
+  bool addToDeck(CardDefinition card) {
+    if (deckIds.length >= 30 ||
+        owned(card.id) <= deckIds.where((id) => id == card.id).length) {
+      return false;
+    }
+    if (card.rarity == '传说' &&
+        deckIds.where((id) => id == card.id).isNotEmpty) {
+      return false;
+    }
+    final faction = _deckFaction;
+    if (card.faction != '中立' && faction != null && faction != card.faction) {
+      return false;
+    }
+    deckIds.add(card.id);
+    notifyListeners();
+    return true;
+  }
+
+  void removeFromDeck(String id) {
+    final index = deckIds.lastIndexOf(id);
+    if (index >= 0) {
+      deckIds.removeAt(index);
+      notifyListeners();
+    }
+  }
+
+  String? get _deckFaction {
+    for (final id in deckIds) {
+      final faction = card(id)?.faction;
+      if (faction != null && faction != '中立') return faction;
+    }
+    return null;
+  }
+
+  Set<String> get _deckFactions => deckIds
+      .map((id) => card(id)?.faction)
+      .whereType<String>()
+      .where((faction) => faction != '中立')
+      .toSet();
+
+  bool get deckValid => deckIds.length == 30 && _deckFactions.length <= 1;
+
+  String get deckStatus {
+    if (deckIds.length != 30) return '还差 ${30 - deckIds.length} 张卡牌';
+    if (_deckFactions.length > 1) return '不能混合两个非中立阵营';
+    return '卡组协议有效';
+  }
+
+  Future<void> saveDeck() async {
+    await _prefs?.setStringList('deck_ids', deckIds);
+    await _prefs?.setString('commander_name', commanderName);
+    notifyListeners();
+  }
+
+  void openPack() {
+    if (packs <= 0 || catalog.isEmpty) return;
+    packs--;
+    for (var i = 0; i < 5; i++) {
+      final picked = catalog[_random.nextInt(catalog.length)];
+      collection[picked.id] = (collection[picked.id] ?? 0) + 1;
+    }
+    gold += 50;
+    _prefs?.setInt('packs', packs);
+    _prefs?.setInt('gold', gold);
+    _persistCollection();
+    notifyListeners();
+  }
+
+  void _persistCollection() {
+    _prefs?.setString('collection', jsonEncode(collection));
+  }
+
+  void startBattle() {
+    if (catalog.isEmpty || isResolvingTurn) return;
+    _turnTimer?.cancel();
+    final deck = deckIds.length == 30
+        ? deckIds
+        : catalog
+              .where((card) => card.faction == '曜光' || card.faction == '中立')
+              .take(15)
+              .expand((card) => [card.id, card.id])
+              .toList();
+    final playerDeck = deck.map((id) => card(id)!).toList()..shuffle(_random);
+    final aiDeck =
+        catalog
+            .where((card) => card.faction == '幽潮' || card.faction == '中立')
+            .take(15)
+            .expand((card) => [card, card])
+            .toList()
+          ..shuffle(_random);
+    final player = BattleSide(
+      heroHealth: 30,
+      maxHeroHealth: 30,
+      mana: 1,
+      maxMana: 1,
+      deck: playerDeck,
+      hand: [],
+      board: [],
+    );
+    final ai = BattleSide(
+      heroHealth: 30,
+      maxHeroHealth: 30,
+      mana: 1,
+      maxMana: 1,
+      deck: aiDeck,
+      hand: [],
+      board: [],
+    );
+    battle = BattleState(
+      player: player,
+      ai: ai,
+      turn: 1,
+      activePlayer: 'player',
+      logs: ['第 1 回合开始，获得 1 点法力。'],
+    );
+    for (var i = 0; i < 3; i++) {
+      _draw(player);
+      _draw(ai);
+    }
+    _emitFx(
+      'start',
+      '战斗开始',
+      '抽取起始手牌，准备部署你的第一支部队。',
+      Icons.sports_kabaddi,
+      0xFF69CFC3,
+    );
+    _startTurnTimer();
+    notifyListeners();
+  }
+
+  void _startTurnTimer() {
+    _turnTimer?.cancel();
+    final state = battle;
+    if (state == null || state.finished || state.activePlayer != 'player') {
+      return;
+    }
+    state.turnSecondsLeft = 75;
+    _turnTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      final current = battle;
+      if (current == null ||
+          current.finished ||
+          current.activePlayer != 'player') {
+        _turnTimer?.cancel();
+        return;
+      }
+      current.turnSecondsLeft--;
+      if (current.turnSecondsLeft <= 0 && !isResolvingTurn) {
+        _turnTimer?.cancel();
+        endTurn();
+      }
+      notifyListeners();
+    });
+  }
+
+  void _draw(BattleSide side) {
+    if (side.deck.isNotEmpty && side.hand.length < 10) {
+      side.hand.add(side.deck.removeLast());
+    } else if (side.deck.isEmpty) {
+      side.fatigue++;
+      _damageHero(side, side.fatigue);
+    }
+  }
+
+  bool playCard(
+    CardDefinition card, {
+    BattleUnit? target,
+    bool targetHero = false,
+  }) {
+    final state = battle;
+    if (state == null ||
+        state.finished ||
+        state.activePlayer != 'player' ||
+        state.phase != 'main' ||
+        state.player.mana < card.cost) {
+      return false;
+    }
+    if (!_validHandCard(state.player, card) ||
+        (card.isUnit && state.player.board.length >= 7) ||
+        !_validTarget(card, state.player, state.ai, target)) {
+      return false;
+    }
+    _playCardForSide(
+      card,
+      source: state.player,
+      enemy: state.ai,
+      owner: 'player',
+      target: target,
+      targetHero: targetHero,
+    );
+    _checkFinished();
+    notifyListeners();
+    return true;
+  }
+
+  bool useHeroPower() {
+    final state = battle;
+    if (state == null ||
+        state.finished ||
+        state.activePlayer != 'player' ||
+        state.phase != 'main' ||
+        state.heroPowerUsed ||
+        state.player.mana < 2) {
+      return false;
+    }
+    state.player.mana -= 2;
+    state.heroPowerUsed = true;
+    final dealt = _damageHero(state.ai, 2);
+    state.logs.insert(0, '星骇脉冲命中敌方核心，造成 $dealt 点伤害。');
+    _emitFx(
+      'hero-power',
+      '星骇脉冲',
+      '英雄技能造成 $dealt 点伤害',
+      Icons.bolt,
+      0xFF65CDDA,
+      sourceId: 'hero-power',
+      targetId: 'ai-hero',
+      amount: dealt,
+    );
+    _checkFinished();
+    notifyListeners();
+    return true;
+  }
+
+  BattleUnit _summonUnit(
+    CardDefinition card, {
+    required String owner,
+    int? healthOverride,
+    bool reborn = false,
+  }) {
+    final rush = card.keywords.contains('rush');
+    final charge = card.keywords.contains('charge');
+    return BattleUnit(
+      instanceId:
+          '$owner-${DateTime.now().microsecondsSinceEpoch}-${card.id}-${_random.nextInt(9999)}',
+      card: card,
+      owner: owner,
+      attack: card.attack ?? 0,
+      health: healthOverride ?? card.health ?? 1,
+      maxHealth: healthOverride ?? card.health ?? 1,
+      hasAttacked: !charge && !rush,
+      divineShield: card.keywords.contains('shield') && !reborn,
+      summoningSick: !charge && !rush,
+      rushOnly: rush,
+      stealthActive: card.keywords.contains('stealth'),
+      rebornUsed: reborn,
+    );
+  }
+
+  void _playCardForSide(
+    CardDefinition card, {
+    required BattleSide source,
+    required BattleSide enemy,
+    required String owner,
+    BattleUnit? target,
+    bool targetHero = false,
+  }) {
+    final handIndex = source.hand.indexWhere((item) => item.id == card.id);
+    if (handIndex < 0) return;
+    source.hand.removeAt(handIndex);
+    source.mana -= card.cost;
+    if (card.isUnit) {
+      final unit = _summonUnit(card, owner: owner);
+      source.board.add(unit);
+      source.board.length == 1 && owner == 'player'
+          ? _emitFx(
+              'summon',
+              '${card.name} 登场',
+              card.description,
+              Icons.auto_awesome,
+              factionColors[card.faction] ?? 0xFF69CFC3,
+              sourceId: unit.instanceId,
+            )
+          : _emitFx(
+              'summon',
+              owner == 'player' ? '${card.name} 登场' : '敌方部署 ${card.name}',
+              card.description,
+              Icons.auto_awesome,
+              factionColors[card.faction] ?? 0xFF69CFC3,
+              sourceId: unit.instanceId,
+            );
+      stateLog(owner == 'player' ? '${card.name} 登场。' : '敌方部署 ${card.name}。');
+      _resolveEffects(
+        card.onPlay,
+        source: source,
+        enemy: enemy,
+        target: target ?? (card.target == null ? unit : null),
+        targetHero: targetHero,
+        sourceName: card.name,
+      );
+    } else {
+      _emitFx(
+        'spell',
+        '${card.name} 释放',
+        card.description,
+        Icons.auto_awesome,
+        factionColors[card.faction] ?? 0xFFA692D1,
+        sourceId: card.id,
+        amount: _cardEffectAmount(card),
+      );
+      _resolveEffects(
+        card.effect,
+        source: source,
+        enemy: enemy,
+        target: target,
+        targetHero: targetHero,
+        sourceName: card.name,
+      );
+      stateLog(card.name, card.description);
+    }
+    _processDeaths();
+  }
+
+  bool _validHandCard(BattleSide side, CardDefinition card) =>
+      side.hand.any((item) => item.id == card.id);
+
+  bool _validTarget(
+    CardDefinition card,
+    BattleSide source,
+    BattleSide enemy,
+    BattleUnit? target,
+  ) {
+    final targetType = card.target ?? '';
+    if (!targetType.contains('unit')) return true;
+    if (target == null) {
+      return false;
+    }
+    if (target.stealthActive) return false;
+    final friendly = targetType.startsWith('friendly');
+    return friendly
+        ? source.board.contains(target)
+        : enemy.board.contains(target);
+  }
+
+  void _resolveEffects(
+    List<Map<String, dynamic>> effects, {
+    required BattleSide source,
+    required BattleSide enemy,
+    BattleUnit? target,
+    bool targetHero = false,
+    required String sourceName,
+  }) {
+    for (final effect in effects) {
+      final kind = effect['kind']?.toString();
+      final amount = (effect['amount'] as num?)?.toInt() ?? 0;
+      switch (kind) {
+        case 'damage':
+          if (target != null && enemy.board.contains(target)) {
+            _damageUnit(target, amount);
+          } else {
+            final dealt = _damageHero(enemy, amount);
+            stateLog('$sourceName：', '对敌方核心造成 $dealt 点伤害');
+          }
+          break;
+        case 'freeze':
+          if (target != null && enemy.board.contains(target)) {
+            target.frozenTurns = max(target.frozenTurns, max(1, amount));
+            stateLog(sourceName, '${target.card.name} 被冻结。');
+          }
+          break;
+        case 'random-enemy-freeze':
+          final candidates = enemy.board
+              .where((unit) => !unit.stealthActive)
+              .toList();
+          if (candidates.isNotEmpty) {
+            final frozen = candidates[_random.nextInt(candidates.length)];
+            frozen.frozenTurns = max(frozen.frozenTurns, max(1, amount));
+            stateLog(sourceName, '${frozen.card.name} 被冻结。');
+          }
+          break;
+        case 'random-enemy-damage':
+          final candidates = [...enemy.board];
+          if (candidates.isEmpty) {
+            _damageHero(enemy, amount);
+          } else {
+            _damageUnit(candidates[_random.nextInt(candidates.length)], amount);
+          }
+          break;
+        case 'heal':
+          if (target != null && source.board.contains(target)) {
+            target.health = min(target.maxHealth, target.health + amount);
+          } else {
+            final before = source.heroHealth;
+            source.heroHealth = min(
+              source.maxHeroHealth,
+              source.heroHealth + amount,
+            );
+            final healed = source.heroHealth - before;
+            stateLog('$sourceName：', '恢复 $healed 点核心生命');
+          }
+          break;
+        case 'draw':
+          final count = (effect['count'] as num?)?.toInt() ?? 1;
+          for (var i = 0; i < count; i++) {
+            _draw(source);
+          }
+          break;
+        case 'buff':
+          final unit = target != null && source.board.contains(target)
+              ? target
+              : source.board.isEmpty
+              ? null
+              : source.board.last;
+          if (unit != null) {
+            final attack = (effect['attack'] as num?)?.toInt() ?? 0;
+            final health = (effect['health'] as num?)?.toInt() ?? 0;
+            unit.attack += attack;
+            unit.maxHealth += health;
+            unit.health += health;
+            stateLog('$sourceName：', '${unit.card.name} 获得 +$attack/+$health');
+          }
+          break;
+        case 'armor':
+          source.armor += amount;
+          break;
+        case 'summon':
+          final cardId = effect['cardId']?.toString();
+          final summonCard = cardId == null ? null : card(cardId);
+          final count = (effect['count'] as num?)?.toInt() ?? 1;
+          if (summonCard != null && summonCard.isUnit) {
+            for (var i = 0; i < count && source.board.length < 7; i++) {
+              final unit = _summonUnit(summonCard, owner: _ownerOf(source));
+              source.board.add(unit);
+              _emitFx(
+                'summon',
+                '${summonCard.name} 被召唤',
+                '效果生成一个新的战场单位',
+                Icons.auto_awesome,
+                factionColors[summonCard.faction] ?? 0xFF69CFC3,
+                sourceId: unit.instanceId,
+              );
+            }
+          }
+          break;
+      }
+      _processDeaths();
+    }
+  }
+
+  bool attack(BattleUnit attacker, {BattleUnit? target}) {
+    final state = battle;
+    if (state == null ||
+        state.finished ||
+        state.activePlayer != 'player' ||
+        state.phase != 'main' ||
+        !attacker.canAttack ||
+        !state.player.board.contains(attacker)) {
+      return false;
+    }
+    final taunts = state.ai.board
+        .where((unit) => unit.hasTaunt && !unit.stealthActive)
+        .toList();
+    if (taunts.isNotEmpty && (target == null || !target.hasTaunt)) {
+      return false;
+    }
+    if (target != null && !state.ai.board.contains(target)) return false;
+    if (target?.stealthActive ?? false) return false;
+    if (target == null && attacker.rushOnly) return false;
+    _performAttack(attacker, state.ai, target);
+    _checkFinished();
+    notifyListeners();
+    return true;
+  }
+
+  void _performAttack(
+    BattleUnit attacker,
+    BattleSide defender,
+    BattleUnit? target,
+  ) {
+    attacker.stealthActive = false;
+    attacker.attacksMade++;
+    attacker.hasAttacked = true;
+    final defenderName = target?.card.name ?? '敌方核心';
+    final outgoing = target == null
+        ? _damageHero(defender, attacker.attack)
+        : _damageUnit(target, attacker.attack, source: attacker);
+    if (attacker.hasLifesteal && outgoing > 0) {
+      final before = _sideFor(attacker).heroHealth;
+      final side = _sideFor(attacker);
+      side.heroHealth = min(side.maxHeroHealth, side.heroHealth + outgoing);
+      stateLog('${attacker.card.name}：', '汲取 $outgoing 点生命');
+      if (side.heroHealth > before) {
+        _emitFx(
+          'heal',
+          '生命汲取',
+          '${attacker.card.name} 恢复自身核心',
+          Icons.favorite,
+          0xFF79B980,
+        );
+      }
+    }
+    if (target != null && target.health > 0) {
+      final reflected = _damageUnit(attacker, target.attack, source: target);
+      if (target.hasLifesteal && reflected > 0) {
+        final side = _sideFor(target);
+        side.heroHealth = min(side.maxHeroHealth, side.heroHealth + reflected);
+      }
+    }
+    _emitFx(
+      'attack',
+      '${attacker.card.name} 发起攻击',
+      target == null ? '对敌方核心造成 $outgoing 点伤害' : '与 $defenderName 发生交战',
+      Icons.flash_on,
+      0xFFE46D3F,
+      sourceId: attacker.instanceId,
+      targetId: target?.instanceId ?? 'ai-hero',
+      amount: outgoing,
+    );
+    stateLog(
+      attacker.card.name,
+      target == null ? '对敌方核心造成 $outgoing 点伤害。' : '与 $defenderName 交战。',
+    );
+    _processDeaths();
+  }
+
+  int _damageHero(BattleSide side, int amount) {
+    if (amount <= 0) return 0;
+    final absorbed = min(side.armor, amount);
+    side.armor -= absorbed;
+    final healthDamage = amount - absorbed;
+    side.heroHealth = max(0, side.heroHealth - healthDamage);
+    return healthDamage;
+  }
+
+  int _damageUnit(BattleUnit unit, int amount, {BattleUnit? source}) {
+    if (amount <= 0 || unit.health <= 0) return 0;
+    if (unit.divineShield) {
+      unit.divineShield = false;
+      _emitFx(
+        'shield',
+        '护盾破碎',
+        '${unit.card.name} 的护盾抵消了伤害',
+        Icons.shield,
+        0xFFE7BD7A,
+        sourceId: unit.instanceId,
+        targetId: unit.instanceId,
+      );
+      return 0;
+    }
+    final applied = min(unit.health, amount);
+    unit.health = max(0, unit.health - amount);
+    if (source?.hasPoisonous == true && applied > 0 && unit.health > 0) {
+      unit.health = 0;
+      stateLog('${source!.card.name}：', '${unit.card.name} 受到剧毒。');
+      _emitFx(
+        'poison',
+        '剧毒生效',
+        '${unit.card.name} 被剧毒摧毁',
+        Icons.coronavirus,
+        0xFF79B980,
+        sourceId: source.instanceId,
+        targetId: unit.instanceId,
+      );
+    }
+    if (unit.hasFury && !unit.furyTriggered && unit.health > 0) {
+      unit.furyTriggered = true;
+      unit.attack += 1;
+      stateLog('${unit.card.name}：', '激昂触发，攻击力 +1');
+      _emitFx(
+        'fury',
+        '激昂触发',
+        '${unit.card.name} 获得 +1 攻击',
+        Icons.whatshot,
+        0xFFE46D3F,
+        sourceId: unit.instanceId,
+        targetId: unit.instanceId,
+      );
+    }
+    return applied;
+  }
+
+  BattleSide _sideFor(BattleUnit unit) {
+    final state = battle!;
+    return unit.owner == 'player' ? state.player : state.ai;
+  }
+
+  String _ownerOf(BattleSide side) {
+    final state = battle!;
+    return identical(side, state.player) ? 'player' : 'ai';
+  }
+
+  void _processDeaths() {
+    final state = battle;
+    if (state == null) return;
+    for (final side in [state.player, state.ai]) {
+      final dead = side.board.where((unit) => unit.health <= 0).toList();
+      final enemy = identical(side, state.player) ? state.ai : state.player;
+      for (final unit in dead) {
+        side.board.remove(unit);
+        stateLog('亡语回响', '${unit.card.name} 离开战场。');
+        _emitFx(
+          'death',
+          '${unit.card.name} 被摧毁',
+          '战场位置已释放',
+          Icons.blur_on,
+          0xFF9D7567,
+          sourceId: unit.instanceId,
+          targetId: unit.instanceId,
+        );
+        if (unit.card.hasDeathrattle) {
+          _resolveEffects(
+            unit.card.onDeath,
+            source: side,
+            enemy: enemy,
+            sourceName: '${unit.card.name} 的亡语',
+          );
+        }
+        if (unit.hasReborn && !unit.rebornUsed && side.board.length < 7) {
+          final reborn = _summonUnit(
+            unit.card,
+            owner: unit.owner,
+            healthOverride: 1,
+            reborn: true,
+          );
+          side.board.add(reborn);
+          _emitFx(
+            'reborn',
+            '${unit.card.name} 复生',
+            '以 1 点生命重新回到战场',
+            Icons.autorenew,
+            0xFFA692D1,
+            sourceId: reborn.instanceId,
+          );
+        }
+      }
+    }
+  }
+
+  Future<void> endTurn() async {
+    final state = battle;
+    if (state == null || state.finished || state.activePlayer != 'player') {
+      return;
+    }
+    if (isResolvingTurn) return;
+    isResolvingTurn = true;
+    _turnTimer?.cancel();
+    state.phase = 'end';
+    state.activePlayer = 'ai';
+    state.logs.insert(0, '你结束回合，敌方演算体获得行动权。');
+    _emitFx('turn', '回合交接', '敌方演算体开始行动', Icons.swap_vert, 0xFFA692D1);
+    notifyListeners();
+    await Future<void>.delayed(const Duration(milliseconds: 700));
+    await _aiTurn(state);
+    if (!state.finished) {
+      await Future<void>.delayed(const Duration(milliseconds: 650));
+      state.turn++;
+      state.activePlayer = 'player';
+      state.phase = 'main';
+      state.heroPowerUsed = false;
+      state.player.maxMana = min(10, state.player.maxMana + 1);
+      state.player.mana = state.player.maxMana;
+      _refreshSideForTurn(state.player);
+      _draw(state.player);
+      state.logs.insert(0, '第 ${state.turn} 回合开始，法力恢复至 ${state.player.mana}。');
+      _emitFx(
+        'turn',
+        '第 ${state.turn} 回合',
+        '你的法力已恢复，轮到你行动',
+        Icons.hourglass_top,
+        0xFF69CFC3,
+      );
+      _startTurnTimer();
+    }
+    isResolvingTurn = false;
+    notifyListeners();
+  }
+
+  Future<void> _aiTurn(BattleState state) async {
+    state.phase = 'main';
+    _refreshSideForTurn(state.ai);
+    state.ai.maxMana = min(10, state.ai.maxMana + 1);
+    state.ai.mana = state.ai.maxMana;
+    final playable = [...state.ai.hand]
+      ..sort((a, b) => a.cost.compareTo(b.cost));
+    for (final card in playable) {
+      if (state.finished || card.cost > state.ai.mana) continue;
+      if (card.isUnit && state.ai.board.length >= 7) continue;
+      final target = _aiTarget(card, state);
+      if (!_validTarget(card, state.ai, state.player, target)) continue;
+      _playCardForSide(
+        card,
+        source: state.ai,
+        enemy: state.player,
+        owner: 'ai',
+        target: target,
+      );
+      _checkFinished();
+      notifyListeners();
+      // Leave enough room for the client-side cast, card flight and impact
+      // beats to finish before the next AI action starts.
+      await Future<void>.delayed(const Duration(milliseconds: 1280));
+    }
+    if (state.finished) return;
+    final attackers = [...state.ai.board];
+    final taunts = state.player.board
+        .where((unit) => unit.hasTaunt && !unit.stealthActive)
+        .toList();
+    for (final unit in attackers) {
+      if (state.finished || !unit.canAttack || !state.ai.board.contains(unit)) {
+        continue;
+      }
+      final visibleUnits = state.player.board
+          .where((candidate) => !candidate.stealthActive)
+          .toList();
+      if (unit.rushOnly && visibleUnits.isEmpty) continue;
+      final targetPool = taunts.isNotEmpty ? taunts : visibleUnits;
+      final target = unit.rushOnly || taunts.isNotEmpty
+          ? (targetPool.isEmpty
+                ? null
+                : targetPool[_random.nextInt(targetPool.length)])
+          : null;
+      _performAttack(unit, state.player, target);
+      _checkFinished();
+      notifyListeners();
+      await Future<void>.delayed(const Duration(milliseconds: 1380));
+    }
+    _draw(state.ai);
+    _checkFinished();
+  }
+
+  void _refreshSideForTurn(BattleSide side) {
+    for (final unit in side.board) {
+      unit.attacksMade = 0;
+      if (unit.frozenTurns > 0) {
+        unit.frozenTurns--;
+        unit.hasAttacked = true;
+        unit.summoningSick = true;
+      } else {
+        unit.hasAttacked = false;
+        unit.summoningSick = false;
+        unit.rushOnly = false;
+      }
+    }
+  }
+
+  BattleUnit? _aiTarget(CardDefinition card, BattleState state) {
+    final type = card.target ?? '';
+    if (type.startsWith('friendly')) {
+      if (type.contains('unit')) {
+        return state.ai.board.isEmpty ? null : state.ai.board.first;
+      }
+      return null;
+    }
+    if (type.startsWith('enemy') && type.contains('unit')) {
+      return state.player.board.isEmpty ? null : state.player.board.first;
+    }
+    return null;
+  }
+
+  void _checkFinished() {
+    final state = battle;
+    if (state == null || state.finished) return;
+    if (state.player.heroHealth <= 0 || state.ai.heroHealth <= 0) {
+      state.finished = true;
+      _turnTimer?.cancel();
+      state.winner = state.ai.heroHealth <= 0 ? 'player' : 'ai';
+      if (state.winner == 'player') {
+        wins++;
+        gold += 60;
+      } else {
+        losses++;
+        gold += 20;
+      }
+      matchesPlayed++;
+      _prefs?.setInt('wins', wins);
+      _prefs?.setInt('losses', losses);
+      _prefs?.setInt('matches', matchesPlayed);
+      _prefs?.setInt('gold', gold);
+      final victory = state.winner == 'player';
+      state.logs.insert(0, victory ? '演算胜利，获得 60 金币。' : '演算结束，获得 20 金币。');
+      _emitFx(
+        victory ? 'victory' : 'defeat',
+        victory ? '演算胜利' : '演算结束',
+        victory ? '战报已归档，获得 60 金币' : '保留战术日志，获得 20 金币',
+        victory ? Icons.emoji_events : Icons.close,
+        victory ? 0xFFE7BD7A : 0xFFE46D3F,
+      );
+    }
+  }
+
+  void stateLog(String title, [String? description]) {
+    final state = battle;
+    if (state == null) return;
+    state.logs.insert(0, description == null ? title : '$title$description');
+    if (state.logs.length > 20) state.logs.removeLast();
+  }
+
+  void _emitFx(
+    String kind,
+    String title,
+    String subtitle,
+    IconData icon,
+    int color, {
+    String? sourceId,
+    String? targetId,
+    int? amount,
+  }) {
+    final state = battle;
+    if (state == null) return;
+    state.fxSequence++;
+    state.fx = BattleFxEvent(
+      kind: kind,
+      title: title,
+      subtitle: subtitle,
+      icon: icon.codePoint,
+      color: color,
+      sequence: state.fxSequence,
+      sourceId: sourceId,
+      targetId: targetId,
+      amount: amount,
+    );
+  }
+
+  int? _cardEffectAmount(CardDefinition card) {
+    for (final effect in [...card.effect, ...card.onPlay]) {
+      final value = effect['amount'];
+      if (value is num && value > 0) return value.toInt();
+    }
+    return null;
+  }
+
+  @override
+  void dispose() {
+    _turnTimer?.cancel();
+    super.dispose();
+  }
+}

@@ -4,7 +4,7 @@ import "./globals.css";
 
 const title = "余烬协议｜回合制策略卡牌";
 const description =
-  "构筑原创卡组，在确定性的回合制战场中挑战 AI，完成任务并验证你的战术闭环。";
+  "从七大阵营、210 张原创卡牌中构筑战术卡组，在回合制战场中挑战 AI。";
 
 export async function generateMetadata(): Promise<Metadata> {
   const requestHeaders = await headers();

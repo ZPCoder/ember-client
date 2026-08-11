@@ -11,6 +11,8 @@ const eslintConfig = defineConfig([
     ".next/**",
     "out/**",
     "build/**",
+    "flutter_app/.dart_tool/**",
+    "flutter_app/build/**",
     "next-env.d.ts",
   ]),
 ]);

@@ -27,6 +27,7 @@ import {
   type BattleCommand,
   type CardDefinition,
   type CardTargetRule,
+  type Faction,
   type Keyword,
   type MatchState,
   type SpellSchool,
@@ -50,7 +51,7 @@ type CatalogCard = {
   name: string;
   cost: number;
   type: "unit" | "spell";
-  faction: string;
+  faction: Faction;
   rarity: string;
   description: string;
   attack?: number;
@@ -122,11 +123,15 @@ type BattleUnit = {
   maxHealth: number;
   stars: 1 | 2;
   canAttack: boolean;
+  keywords: Keyword[];
+  stealthActive: boolean;
 };
 
 type BattleSide = {
   health: number;
   maxHealth: number;
+  armor: number;
+  heroPowerUsed: boolean;
   mana: number;
   maxMana: number;
   deckCount: number;
@@ -144,6 +149,26 @@ type BattleView = {
   log: string[];
 };
 
+type PvpRole = "host" | "guest";
+type PvpStatus = "offline" | "connecting" | "connected" | "room" | "ready" | "playing" | "error";
+
+type PvpState = {
+  status: PvpStatus;
+  url: string;
+  playerId: string | null;
+  roomCode: string | null;
+  role: PvpRole | null;
+  peerName: string | null;
+  localReady: boolean;
+  remoteReady: boolean;
+  remoteReadyDeck: string[] | null;
+  message: string;
+};
+
+type PvpIncoming =
+  | { id: number; type: "match-start"; payload: { seed: number; decks: [string[], string[]] } }
+  | { id: number; type: "command"; command: BattleCommand };
+
 type ValidationView = {
   valid: boolean;
   errors: string[];
@@ -158,10 +183,23 @@ const NAV_ITEMS: Array<{ id: SectionKey; label: string; eyebrow: string; icon: I
 ];
 
 const CARD_USAGE = [
-  { name: "棱镜守卫", faction: "星穹", usage: 68, winRate: 54.8, trend: "+3.2%" },
+  { name: "棱镜守卫", faction: "星穹", usage: 68, winRate: 53.8, trend: "+3.2%" },
   { name: "焰脊先锋", faction: "烬火", usage: 61, winRate: 52.6, trend: "+1.7%" },
-  { name: "相位跃迁", faction: "星穹", usage: 49, winRate: 51.9, trend: "−0.4%" },
-  { name: "熔芯过载", faction: "烬火", usage: 46, winRate: 49.3, trend: "−2.1%" },
+  { name: "晨辉斥候", faction: "曜光", usage: 58, winRate: 51.4, trend: "+0.8%" },
+  { name: "雾汐潜行者", faction: "幽潮", usage: 55, winRate: 50.7, trend: "+0.3%" },
+  { name: "世界根母", faction: "苍林", usage: 49, winRate: 49.8, trend: "−0.2%" },
+  { name: "天铸雷王", faction: "雷铸", usage: 46, winRate: 49.1, trend: "−0.9%" },
+  { name: "远途商队卫", faction: "中立", usage: 43, winRate: 48.7, trend: "−1.1%" },
+];
+
+const FACTION_BALANCE: Array<{ faction: Faction; winRate: number; color: string }> = [
+  { faction: "曜光", winRate: 50.6, color: "#e9cc78" },
+  { faction: "幽潮", winRate: 50.2, color: "#68a9d8" },
+  { faction: "中立", winRate: 48.9, color: "#b6a17e" },
+  { faction: "烬火", winRate: 51.1, color: "#e46d3f" },
+  { faction: "星穹", winRate: 51.8, color: "#a692d1" },
+  { faction: "苍林", winRate: 49.8, color: "#79b980" },
+  { faction: "雷铸", winRate: 49.4, color: "#65cdda" },
 ];
 
 const TYPE_LABEL: Record<string, string> = {
@@ -174,7 +212,26 @@ const SPELL_SCHOOL_LABEL: Record<SpellSchool, string> = {
   radiance: "曜术",
   tide: "潮术",
   construct: "构术",
+  ember: "烬术",
+  astral: "星术",
+  verdant: "森术",
+  storm: "雷术",
 };
+
+const FACTION_DEFINITIONS: Record<
+  Faction,
+  { sigil: string; doctrine: string; tone: string }
+> = {
+  曜光: { sigil: "☼", doctrine: "护盾 · 增益", tone: "sun" },
+  幽潮: { sigil: "◒", doctrine: "汲取 · 手牌", tone: "void" },
+  中立: { sigil: "◇", doctrine: "通用 · 巧铸", tone: "neutral" },
+  烬火: { sigil: "△", doctrine: "冲锋 · 直伤", tone: "ember" },
+  星穹: { sigil: "✦", doctrine: "秘契 · 护盾", tone: "astral" },
+  苍林: { sigil: "♧", doctrine: "治疗 · 猎痕", tone: "verdant" },
+  雷铸: { sigil: "ϟ", doctrine: "巧铸 · 激昂", tone: "storm" },
+};
+
+const FACTION_ORDER = Object.keys(FACTION_DEFINITIONS) as Faction[];
 
 type IconName =
   | "radar"
@@ -226,7 +283,7 @@ function cardFromRaw(raw: Record<string, unknown>): CatalogCard {
     name: asString(raw.name, "未命名协议"),
     cost: asNumber(raw.cost ?? raw.manaCost),
     type: rawType === "spell" ? "spell" : "unit",
-    faction: asString(raw.faction ?? raw.camp, "中立"),
+    faction: asString(raw.faction ?? raw.camp, "中立") as Faction,
     rarity,
     description: asString(raw.description ?? raw.text, "战术资料尚未解密。"),
     attack:
@@ -290,6 +347,57 @@ function makeId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
+type ProfileSource = "cloud" | "demo" | "cached";
+
+const LOCAL_PROFILE_KEY_PREFIX = "astra-protocol:player:v2:";
+
+function localProfileKey(email: string): string {
+  return `${LOCAL_PROFILE_KEY_PREFIX}${encodeURIComponent(email.trim().toLowerCase())}`;
+}
+
+function isPlayerSnapshot(value: unknown): value is PlayerSnapshot {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as Partial<PlayerSnapshot>;
+  return (
+    typeof candidate.id === "string" &&
+    typeof candidate.email === "string" &&
+    typeof candidate.displayName === "string" &&
+    !!candidate.currencies &&
+    typeof candidate.currencies.gold === "number" &&
+    typeof candidate.currencies.dust === "number" &&
+    typeof candidate.packsAvailable === "number" &&
+    !!candidate.collection &&
+    typeof candidate.collection === "object" &&
+    Array.isArray(candidate.decks) &&
+    Array.isArray(candidate.tasks) &&
+    Array.isArray(candidate.recentMatches) &&
+    !!candidate.stats &&
+    typeof candidate.stats.matchesPlayed === "number" &&
+    typeof candidate.updatedAt === "string"
+  );
+}
+
+function readLocalPlayer(email: string): PlayerSnapshot | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(localProfileKey(email));
+    if (!raw) return null;
+    const parsed: unknown = JSON.parse(raw);
+    return isPlayerSnapshot(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function persistLocalPlayer(player: PlayerSnapshot): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(localProfileKey(player.email), JSON.stringify(player));
+  } catch {
+    // Private browsing and quota errors must not break the game surface.
+  }
+}
+
 function makeDemoPlayer(identity?: {
   displayName: string;
   email: string;
@@ -332,9 +440,9 @@ function makeDemoPlayer(identity?: {
       {
         id: "collection",
         title: "档案扩容",
-        description: "收藏 24 张不同卡牌",
-        progress: Math.min(CATALOG.length, 24),
-        target: 24,
+        description: "收藏 210 张不同卡牌",
+        progress: Math.min(CATALOG.length, 210),
+        target: 210,
         rewardGold: 150,
         claimed: false,
       },
@@ -368,6 +476,13 @@ function applyLocalAction(
   body: Record<string, unknown>,
 ): GamePayload {
   const now = new Date().toISOString();
+  if (action === "reset_demo") {
+    const player = makeDemoPlayer({
+      displayName: current.displayName,
+      email: current.email,
+    });
+    return { ok: true, player, localFallback: true };
+  }
   if (action === "open_pack") {
     const seed = current.stats.matchesPlayed + current.packsAvailable + current.currencies.gold;
     const pulls = Array.from({ length: 5 }, (_, index) => {
@@ -384,6 +499,11 @@ function applyLocalAction(
       ...current,
       packsAvailable: Math.max(0, current.packsAvailable - 1),
       collection,
+      tasks: current.tasks.map((task) =>
+        task.id.includes("pack") || task.description.includes("卡包")
+          ? { ...task, progress: Math.min(task.target, task.progress + 1) }
+          : task,
+      ),
       updatedAt: now,
     };
     return {
@@ -396,7 +516,7 @@ function applyLocalAction(
 
   if (action === "save_deck") {
     const deckInput = (body.deck ?? {}) as Record<string, unknown>;
-    const id = asString(deckInput.id, current.activeDeckId ?? makeId("local-deck"));
+    const id = asString(deckInput.id) || makeId("local-deck");
     const savedDeck: SavedDeck = {
       id,
       name: asString(deckInput.name, "未命名卡组"),
@@ -512,8 +632,20 @@ function normalizeBoard(value: unknown, turn: number): BattleUnit[] {
     const card = CARD_BY_ID.get(cardId);
     const health = asNumber(item.health ?? item.currentHealth, card?.health ?? 1);
     const keywords = Array.isArray(item.keywords) ? item.keywords.map(String) : [];
+    const stealthActive =
+      typeof item.stealthActive === "boolean"
+        ? item.stealthActive
+        : keywords.includes("stealth");
     const hasAttacked = Boolean(item.hasAttacked);
     const summonedTurn = asNumber(item.summonedTurn, -1);
+    const attacksMade = asNumber(item.attacksMade, hasAttacked ? 1 : 0);
+    const frozenTurns = asNumber(item.frozenTurns, 0);
+    const summoningSick =
+      typeof item.summoningSick === "boolean"
+        ? item.summoningSick
+        : summonedTurn === turn &&
+          !keywords.includes("charge") &&
+          !keywords.includes("rush");
     return {
       id: asString(item.entityId ?? item.instanceId ?? item.uid ?? item.id, `unit-${index}`),
       cardId,
@@ -525,10 +657,14 @@ function normalizeBoard(value: unknown, turn: number): BattleUnit[] {
         2,
         Math.max(1, asNumber(item.stars ?? item.starLevel ?? item.rank, 1)),
       ) as 1 | 2,
+      keywords: keywords as Keyword[],
+      stealthActive,
       canAttack:
         typeof item.canAttack === "boolean"
           ? item.canAttack
-          : !hasAttacked && (summonedTurn !== turn || keywords.includes("charge")),
+          : !summoningSick &&
+            frozenTurns <= 0 &&
+            attacksMade < (keywords.includes("windfury") ? 2 : 1),
     };
   });
 }
@@ -557,6 +693,11 @@ function battleFromRaw(value: unknown): BattleView | null {
         side.maxHeroHealth,
       30,
     ),
+    armor: asNumber(
+      (side.hero as Record<string, unknown> | undefined)?.armor ?? side.armor,
+      0,
+    ),
+    heroPowerUsed: Boolean(side.heroPowerUsed),
     mana: asNumber(side.mana ?? side.energy ?? side.currentMana),
     maxMana: asNumber(side.maxMana ?? side.maxEnergy, 1),
     deckCount: Array.isArray(side.deck)
@@ -759,6 +900,8 @@ function CardTile({
   actionLabel?: string;
   disabled?: boolean;
 }) {
+  const factionTone = FACTION_DEFINITIONS[card.faction]?.tone ?? "neutral";
+  const cardClassName = `game-card game-card--faction-${factionTone} ${compact ? "game-card--compact" : ""}`;
   const content = (
     <>
       <div className="game-card__visual">
@@ -835,7 +978,7 @@ function CardTile({
   if (action) {
     return (
       <button
-        className={`game-card ${compact ? "game-card--compact" : ""}`}
+        className={cardClassName}
         type="button"
         onClick={action}
         disabled={disabled}
@@ -845,7 +988,7 @@ function CardTile({
       </button>
     );
   }
-  return <article className={`game-card ${compact ? "game-card--compact" : ""}`}>{content}</article>;
+  return <article className={cardClassName}>{content}</article>;
 }
 
 function EmptyState({
@@ -1168,6 +1311,207 @@ function useBattleAudio() {
   return { soundEnabled, unlockAudio, playSound, toggleSound };
 }
 
+function useWebPvp(displayName: string) {
+  const socketRef = useRef<WebSocket | null>(null);
+  const connectionIdRef = useRef(0);
+  const incomingIdRef = useRef(0);
+  const [state, setState] = useState<PvpState>({
+    status: "offline",
+    url: "ws://127.0.0.1:8787",
+    playerId: null,
+    roomCode: null,
+    role: null,
+    peerName: null,
+    localReady: false,
+    remoteReady: false,
+    remoteReadyDeck: null,
+    message: "未连接联机大厅",
+  });
+  const [incoming, setIncoming] = useState<PvpIncoming | null>(null);
+
+  const disconnect = useCallback((message = "已离开联机大厅。") => {
+    connectionIdRef.current += 1;
+    const socket = socketRef.current;
+    socketRef.current = null;
+    if (socket && socket.readyState !== WebSocket.CLOSED) socket.close();
+    setIncoming(null);
+    setState((current) => ({
+      ...current,
+      status: "offline",
+      playerId: null,
+      roomCode: null,
+      role: null,
+      peerName: null,
+      localReady: false,
+      remoteReady: false,
+      remoteReadyDeck: null,
+      message,
+    }));
+  }, []);
+
+  const connect = useCallback((rawUrl: string) => {
+    const url = rawUrl.trim();
+    let parsed: URL;
+    try {
+      parsed = new URL(url);
+    } catch {
+      setState((current) => ({ ...current, status: "error", message: "联机地址格式不正确。" }));
+      return;
+    }
+    if (parsed.protocol !== "ws:" && parsed.protocol !== "wss:") {
+      setState((current) => ({ ...current, status: "error", message: "联机地址必须使用 ws:// 或 wss://。" }));
+      return;
+    }
+
+    disconnect("正在连接联机大厅…");
+    const connectionId = connectionIdRef.current + 1;
+    connectionIdRef.current = connectionId;
+    setState((current) => ({
+      ...current,
+      status: "connecting",
+      url,
+      message: "正在连接联机大厅…",
+    }));
+    const socket = new WebSocket(parsed.toString());
+    socketRef.current = socket;
+    socket.onopen = () => {
+      if (connectionIdRef.current !== connectionId) return;
+      socket.send(JSON.stringify({ type: "hello", name: displayName || "旅者" }));
+      setState((current) => ({ ...current, status: "connected", message: "大厅已连接，创建或加入房间。" }));
+    };
+    socket.onmessage = (event) => {
+      if (connectionIdRef.current !== connectionId) return;
+      let message: Record<string, unknown>;
+      try {
+        const parsedMessage: unknown = JSON.parse(String(event.data));
+        if (!parsedMessage || typeof parsedMessage !== "object") return;
+        message = parsedMessage as Record<string, unknown>;
+      } catch {
+        return;
+      }
+      const type = String(message.type ?? "");
+      if (type === "welcome") {
+        setState((current) => ({ ...current, playerId: asString(message.playerId), message: "大厅已连接，创建或加入房间。" }));
+        return;
+      }
+      if (type === "room_created" || type === "room_joined") {
+        const roomCode = asString(message.room);
+        setState((current) => ({
+          ...current,
+          status: "room",
+          roomCode: roomCode || null,
+          role: type === "room_created" ? "host" : "guest",
+          localReady: false,
+          remoteReady: false,
+          remoteReadyDeck: null,
+          message: asString(message.message, type === "room_created" ? "房间已创建，等待对手加入。" : "已加入房间，等待房主准备。"),
+        }));
+        return;
+      }
+      if (type === "peer_joined") {
+        setState((current) => ({ ...current, peerName: asString(message.peerName, "对手"), status: "room", message: `${asString(message.peerName, "对手")} 已加入房间。` }));
+        return;
+      }
+      if (type === "peer_left") {
+        setState((current) => ({ ...current, peerName: null, remoteReady: false, remoteReadyDeck: null, status: "room", message: "对手已离开房间。" }));
+        return;
+      }
+      if (type === "room_state") {
+        const payload = message.payload;
+        const players = payload && typeof payload === "object" && Array.isArray((payload as Record<string, unknown>).players)
+          ? (payload as { players: Array<Record<string, unknown>> }).players
+          : [];
+        setState((current) => {
+          const peer = players.find((player) => asString(player.id) !== current.playerId);
+          return peer
+            ? { ...current, peerName: asString(peer.name, "对手"), status: current.localReady ? "ready" : "room" }
+            : current;
+        });
+        return;
+      }
+      if (type === "error") {
+        setState((current) => ({ ...current, status: "error", message: asString(message.message, "联机大厅返回错误。") }));
+        return;
+      }
+      if (type !== "action") return;
+      const action = asString(message.action);
+      const payload = message.payload && typeof message.payload === "object" ? message.payload as Record<string, unknown> : {};
+      if (action === "ready") {
+        const remoteDeck = Array.isArray(payload.deckIds) ? payload.deckIds.map(String) : [];
+        setState((current) => ({ ...current, remoteReady: true, remoteReadyDeck: remoteDeck, status: current.localReady ? "ready" : current.status, message: `${asString(message.peerName, "对手")} 已准备。` }));
+        return;
+      }
+      if (action === "match_start") {
+        const decks = Array.isArray(payload.decks) && payload.decks.length === 2
+          ? payload.decks.map((deck) => Array.isArray(deck) ? deck.map(String) : []) as [string[], string[]]
+          : null;
+        const seed = Number(payload.seed);
+        if (!decks || !Number.isFinite(seed)) return;
+        setState((current) => ({ ...current, status: "playing", message: "双方已准备，联机演算开始。" }));
+        setIncoming({ id: ++incomingIdRef.current, type: "match-start", payload: { seed, decks } });
+        return;
+      }
+      if (action === "command") {
+        const command = payload.command;
+        if (!command || typeof command !== "object" || typeof (command as Record<string, unknown>).type !== "string") return;
+        setIncoming({ id: ++incomingIdRef.current, type: "command", command: command as BattleCommand });
+      }
+    };
+    socket.onerror = () => {
+      if (connectionIdRef.current !== connectionId) return;
+      setState((current) => ({ ...current, status: "error", message: "联机大厅连接失败，请确认房间服务器地址。" }));
+    };
+    socket.onclose = () => {
+      if (connectionIdRef.current !== connectionId) return;
+      socketRef.current = null;
+      setState((current) => ({ ...current, status: "offline", roomCode: null, role: null, peerName: null, localReady: false, remoteReady: false, remoteReadyDeck: null, message: "联机大厅连接已断开。" }));
+    };
+  }, [disconnect, displayName]);
+
+  const send = useCallback((message: Record<string, unknown>) => {
+    const socket = socketRef.current;
+    if (!socket || socket.readyState !== WebSocket.OPEN) {
+      setState((current) => ({ ...current, status: "error", message: "联机连接尚未就绪。" }));
+      return false;
+    }
+    socket.send(JSON.stringify(message));
+    return true;
+  }, []);
+
+  const createRoom = useCallback(() => {
+    send({ type: "create_room" });
+  }, [send]);
+
+  const joinRoom = useCallback((roomCode: string) => {
+    const room = roomCode.trim().toUpperCase();
+    if (!/^[A-Z]{4}$/.test(room)) {
+      setState((current) => ({ ...current, status: "error", message: "房间码必须是 4 位字母。" }));
+      return;
+    }
+    send({ type: "join_room", room });
+  }, [send]);
+
+  const ready = useCallback((deckIds: string[]) => {
+    if (send({ type: "action", action: "ready", payload: { deckIds } })) {
+      setState((current) => ({ ...current, localReady: true, status: current.remoteReady ? "ready" : "ready", message: "你已准备，等待对手确认。" }));
+    }
+  }, [send]);
+
+  const sendMatchStart = useCallback((payload: { seed: number; decks: [string[], string[]] }) => {
+    if (send({ type: "action", action: "match_start", payload })) {
+      setState((current) => ({ ...current, status: "playing", message: "双方已准备，联机演算开始。" }));
+    }
+  }, [send]);
+
+  const sendCommand = useCallback((command: BattleCommand) => {
+    send({ type: "action", action: "command", payload: { command } });
+  }, [send]);
+
+  useEffect(() => () => disconnect("联机大厅已关闭。"), [disconnect]);
+
+  return { state, incoming, connect, disconnect, createRoom, joinRoom, ready, sendMatchStart, sendCommand };
+}
+
 export function GameApp({
   identity,
 }: {
@@ -1180,7 +1524,22 @@ export function GameApp({
   const [section, setSection] = useState<SectionKey>("overview");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [player, setPlayer] = useState<PlayerSnapshot>(() => makeDemoPlayer(identity));
-  const [isDemo, setIsDemo] = useState(!identity?.authenticated);
+  const [profileSource, setProfileSource] = useState<ProfileSource>(
+    identity?.authenticated ? "cloud" : "demo",
+  );
+  const isDemo = profileSource === "demo";
+  const profileNodeLabel =
+    profileSource === "cloud"
+      ? "云端节点在线"
+      : profileSource === "cached"
+        ? "本地缓存在线"
+        : "演示节点在线";
+  const profileStatusLabel =
+    profileSource === "cloud"
+      ? "已同步指挥官"
+      : profileSource === "cached"
+        ? "离线缓存档案"
+        : "本地演示档案";
   const [loading, setLoading] = useState(true);
   const [apiBusy, setApiBusy] = useState<string | null>(null);
   const [notice, setNotice] = useState<{ tone: "info" | "success" | "warning"; text: string } | null>(
@@ -1194,6 +1553,7 @@ export function GameApp({
   const [traitFilter, setTraitFilter] = useState("全部");
   const [deckName, setDeckName] = useState("星火远征队");
   const [deckIds, setDeckIds] = useState<string[]>(() => [...STARTER_IDS]);
+  const [editingDeckId, setEditingDeckId] = useState<string | null>(null);
   const [battle, setBattle] = useState<unknown>(null);
   const [selectedAttacker, setSelectedAttacker] = useState<string | null>(null);
   const [pendingCard, setPendingCard] = useState<BattleSide["hand"][number] | null>(null);
@@ -1209,6 +1569,13 @@ export function GameApp({
   const battleEffectSequenceRef = useRef(0);
   const aiTurnTimerRef = useRef<number | null>(null);
   const { soundEnabled, unlockAudio, playSound, toggleSound } = useBattleAudio();
+  const pvp = useWebPvp(player.displayName);
+  const [pvpUrl, setPvpUrl] = useState("ws://127.0.0.1:8787");
+  const [pvpRoomInput, setPvpRoomInput] = useState("");
+  const [onlineMatch, setOnlineMatch] = useState(false);
+  const [onlineOpponent, setOnlineOpponent] = useState<string | null>(null);
+  const onlineStartSentRef = useRef(false);
+  const pvpEventCursorRef = useRef(0);
 
   const stopBattleEffects = useCallback(() => {
     if (battleEffectTimerRef.current !== null) {
@@ -1310,14 +1677,6 @@ export function GameApp({
     [],
   );
 
-  const activeDeck = useMemo(
-    () =>
-      player.decks.find((deck) => deck.id === player.activeDeckId) ??
-      player.decks[0] ??
-      null,
-    [player.activeDeckId, player.decks],
-  );
-
   useEffect(() => {
     let active = true;
     async function hydrate() {
@@ -1330,21 +1689,47 @@ export function GameApp({
         if (!response.ok || !payload.ok) throw new Error("无法读取玩家档案");
         if (!active) return;
         setPlayer(payload.player);
-        setIsDemo(Boolean(payload.identity?.isDemo));
+        const nextSource: ProfileSource = payload.identity?.isDemo ? "demo" : "cloud";
+        setProfileSource(nextSource);
+        if (nextSource !== "cloud") persistLocalPlayer(payload.player);
         const firstDeck =
           payload.player.decks.find((deck) => deck.id === payload.player.activeDeckId) ??
           payload.player.decks[0];
         if (firstDeck) {
+          setEditingDeckId(firstDeck.id);
           setDeckIds([...firstDeck.cardIds]);
           setDeckName(firstDeck.name);
         }
       } catch {
         if (!active) return;
-        setIsDemo(true);
-        setNotice({
-          tone: "warning",
-          text: "云端指挥链暂不可用，已切换到本地演示档案。你的本次操作不会丢失页面状态。",
-        });
+        const email = identity?.email ?? "pilot@ember-protocol.local";
+        const cached = readLocalPlayer(email);
+        if (cached) {
+          setPlayer(cached);
+          setProfileSource(identity?.authenticated ? "cached" : "demo");
+          const firstDeck =
+            cached.decks.find((deck) => deck.id === cached.activeDeckId) ?? cached.decks[0];
+          if (firstDeck) {
+            setEditingDeckId(firstDeck.id);
+            setDeckIds([...firstDeck.cardIds]);
+            setDeckName(firstDeck.name);
+          }
+          setNotice({
+            tone: "warning",
+            text: identity?.authenticated
+              ? "云端档案暂不可用，已载入本机缓存；恢复连接后再继续同步。"
+              : "云端指挥链暂不可用，已载入本机演示档案。刷新页面不会丢失进度。",
+          });
+        } else {
+          setProfileSource(identity?.authenticated ? "cached" : "demo");
+          setNotice({
+            tone: "warning",
+            text: identity?.authenticated
+              ? "云端档案暂不可用，当前使用本机临时档案。"
+              : "云端指挥链暂不可用，已切换到本地演示档案。刷新后会保留本机进度。",
+          });
+          persistLocalPlayer(player);
+        }
       } finally {
         if (active) setLoading(false);
       }
@@ -1353,6 +1738,8 @@ export function GameApp({
     return () => {
       active = false;
     };
+  // This is a one-time archive hydration; later mutations update state directly.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const postAction = useCallback(
@@ -1380,12 +1767,16 @@ export function GameApp({
           );
         }
         setPlayer(payload.player);
+        if (profileSource !== "cloud" || payload.localFallback) {
+          persistLocalPlayer(payload.player);
+        }
         return payload;
       } catch (error) {
         if (allowLocalFallback) {
           const localPayload = applyLocalAction(player, action, body);
           setPlayer(localPayload.player);
-          setIsDemo(true);
+          setProfileSource(identity?.authenticated ? "cached" : "demo");
+          persistLocalPlayer(localPayload.player);
           return localPayload;
         }
         setNotice({
@@ -1400,7 +1791,7 @@ export function GameApp({
         setApiBusy(null);
       }
     },
-    [player],
+    [identity?.authenticated, player, profileSource],
   );
 
   const deckCounts = useMemo(() => {
@@ -1446,7 +1837,7 @@ export function GameApp({
 
   const filteredCards = useMemo(() => {
     const needle = search.trim().toLocaleLowerCase("zh-CN");
-    return CATALOG.filter((card) => {
+    const matches = CATALOG.filter((card) => {
       const matchesSearch =
         !needle ||
         card.name.toLocaleLowerCase("zh-CN").includes(needle) ||
@@ -1470,6 +1861,16 @@ export function GameApp({
         (traitFilter === "全部" || card.traits.includes(traitFilter as Trait))
       );
     });
+
+    if (factionFilter !== "全部") return matches;
+
+    const factionBuckets = FACTION_ORDER.map((faction) =>
+      matches.filter((card) => card.faction === faction),
+    );
+    const longestBucket = Math.max(0, ...factionBuckets.map((cards) => cards.length));
+    return Array.from({ length: longestBucket }, (_, index) =>
+      factionBuckets.map((cards) => cards[index]).filter(Boolean),
+    ).flat() as CatalogCard[];
   }, [factionFilter, rarityFilter, search, traitFilter, typeFilter]);
 
   const battleView = useMemo(() => battleFromRaw(battle), [battle]);
@@ -1517,12 +1918,13 @@ export function GameApp({
     const payload = await postAction("save_deck", {
       idempotencyKey: makeId("deck"),
       deck: {
-        id: activeDeck?.id,
+        ...(editingDeckId ? { id: editingDeckId } : {}),
         name: deckName.trim() || "未命名卡组",
         cardIds: deckIds,
       },
     });
     if (payload) {
+      if (payload.savedDeck) setEditingDeckId(payload.savedDeck.id);
       setNotice({
         tone: payload.localFallback ? "info" : "success",
         text: payload.localFallback
@@ -1530,6 +1932,22 @@ export function GameApp({
           : "卡组已加密保存，可立即投入演算。",
       });
     }
+  };
+
+  const selectDeck = (deckId: string) => {
+    const selected = player.decks.find((deck) => deck.id === deckId);
+    if (!selected) return;
+    setEditingDeckId(selected.id);
+    setDeckIds([...selected.cardIds]);
+    setDeckName(selected.name);
+    setNotice({ tone: "info", text: `已载入「${selected.name}」，保存后将设为当前卡组。` });
+  };
+
+  const createNewDeck = () => {
+    setEditingDeckId(null);
+    setDeckIds([...DEFAULT_STARTER_DECK]);
+    setDeckName("新建战术卡组");
+    setNotice({ tone: "info", text: "已创建新的卡组草稿，保存后会加入你的卡组列表。" });
   };
 
   const openPack = async () => {
@@ -1565,7 +1983,32 @@ export function GameApp({
     }
   };
 
-  const startBattle = () => {
+  const resetDemoProfile = async () => {
+    if (!isDemo) return;
+    if (typeof window !== "undefined" && !window.confirm("重置本地演示档案？收藏、卡组、任务和战绩都会恢复初始状态。")) {
+      return;
+    }
+    const payload = await postAction("reset_demo", {});
+    if (payload) {
+      setOpenedCards([]);
+      const firstDeck =
+        payload.player.decks.find((deck) => deck.id === payload.player.activeDeckId) ??
+        payload.player.decks[0];
+      if (firstDeck) {
+        setEditingDeckId(firstDeck.id);
+        setDeckIds([...firstDeck.cardIds]);
+        setDeckName(firstDeck.name);
+      }
+      setNotice({
+        tone: payload.localFallback ? "info" : "success",
+        text: "本地演示档案已重置，收藏、卡组、任务和战绩已恢复初始状态。",
+      });
+    }
+  };
+
+  // This transition is shared by AI and transport-driven PVP starts.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const beginBattle = (decks: [string[], string[]], startingPlayer: 0 | 1, online: boolean, opponentName?: string) => {
     if (!deckValidation.valid) {
       switchSection("deck");
       setNotice({ tone: "warning", text: `无法部署：${deckValidation.errors[0]}` });
@@ -1577,13 +2020,13 @@ export function GameApp({
         aiTurnTimerRef.current = null;
       }
       unlockAudio();
-      const next = createMatch({
-        decks: [[...deckIds], [...DEFAULT_OPPONENT_DECK]],
-      });
+      const next = createMatch({ decks, startingPlayer });
       setBattle(unwrapTransition(next));
+      setOnlineMatch(online);
+      setOnlineOpponent(online ? opponentName ?? "联机对手" : null);
       setSelectedAttacker(null);
       setPendingCard(null);
-      setBattleMessage("战术链路建立。由你先手，选择一张手牌部署。");
+      setBattleMessage(online ? "联机战术链路建立，等待行动窗口。" : "战术链路建立。由你先手，选择一张手牌部署。");
       recordedBattleRef.current = null;
       sectionRef.current = "battle";
       setSection("battle");
@@ -1615,12 +2058,30 @@ export function GameApp({
     }
   };
 
-  const issueCommand = (command: BattleCommand) => {
+  const startBattle = () => {
+    if (!deckValidation.valid) {
+      switchSection("deck");
+      setNotice({ tone: "warning", text: `无法部署：${deckValidation.errors[0]}` });
+      return;
+    }
+    beginBattle([[...deckIds], [...DEFAULT_OPPONENT_DECK]], 0, false);
+  };
+
+  // Commands must close over the latest reducer state before broadcasting.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const issueCommand = (command: BattleCommand, broadcast = true) => {
     if (!battle) return null;
     try {
+      const preparedCommand = command.commandId
+        ? command
+        : ({ ...command, commandId: makeId("command") } as BattleCommand);
+      if (onlineMatch && pvp.state.status !== "playing") {
+        setBattleMessage("联机连接已断开，无法继续发送指令。");
+        return null;
+      }
       const previous = battle as MatchState;
       const previousEventCount = previous.events.length;
-      const result = applyCommand(battle as MatchState, command);
+      const result = applyCommand(battle as MatchState, preparedCommand);
       if (!result.accepted) {
         setBattleMessage(result.error?.message ?? "该战术指令当前不可执行。");
         playSound("error");
@@ -1631,6 +2092,7 @@ export function GameApp({
       showBattleEffects(
         battleEventsToEffects(next.events.slice(previousEventCount)),
       );
+      if (onlineMatch && broadcast) pvp.sendCommand(preparedCommand);
       return next;
     } catch (error) {
       setBattleMessage(error instanceof Error ? error.message : "该战术指令当前不可执行。");
@@ -1638,6 +2100,65 @@ export function GameApp({
       return null;
     }
   };
+
+  useEffect(() => {
+    const event = pvp.incoming;
+    if (!event || event.id <= pvpEventCursorRef.current) return;
+    pvpEventCursorRef.current = event.id;
+    if (event.type === "match-start") {
+      const role = pvp.state.role;
+      if (!role) return;
+      const localIndex = role === "host" ? 0 : 1;
+      const orderedDecks: [string[], string[]] = [
+        [...event.payload.decks[localIndex]],
+        [...event.payload.decks[localIndex === 0 ? 1 : 0]],
+      ];
+      // The reducer transition is intentionally driven by the external PVP event.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      beginBattle(orderedDecks, role === "host" ? 0 : 1, true, pvp.state.peerName ?? "联机对手");
+      return;
+    }
+    if (event.type === "command") {
+      const remote = event.command;
+      const target = remote.target;
+      const mappedTarget = target?.kind === "hero"
+        ? { ...target, player: target.player === 0 ? 1 : 0 }
+        : target;
+      issueCommand({ ...remote, player: 1, ...(mappedTarget ? { target: mappedTarget } : {}) } as BattleCommand, false);
+    }
+  }, [beginBattle, issueCommand, onlineMatch, pvp.incoming, pvp.state.peerName, pvp.state.role]);
+
+  useEffect(() => {
+    if (
+      pvp.state.role !== "host" ||
+      !pvp.state.localReady ||
+      !pvp.state.remoteReady ||
+      !pvp.state.remoteReadyDeck ||
+      onlineMatch ||
+      onlineStartSentRef.current
+    ) {
+      return;
+    }
+    const payload = {
+      seed: Math.floor(Date.now() / 1000),
+      decks: [[...deckIds], [...pvp.state.remoteReadyDeck]] as [string[], string[]],
+    };
+    pvp.sendMatchStart(payload);
+    onlineStartSentRef.current = true;
+    beginBattle(payload.decks, 0, true, pvp.state.peerName ?? "联机对手");
+  }, [beginBattle, deckIds, onlineMatch, pvp, pvp.sendMatchStart, pvp.state.localReady, pvp.state.remoteReady, pvp.state.remoteReadyDeck, pvp.state.peerName, pvp.state.role]);
+
+  useEffect(() => {
+    if (pvp.state.status === "offline" || !pvp.state.roomCode) {
+      onlineStartSentRef.current = false;
+      pvpEventCursorRef.current = 0;
+      if (onlineMatch && battleView?.status === "playing") {
+        // The disconnect event is an external transport update.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setBattleMessage("联机大厅已断开，本场演算暂停。重新连接后可再次开始。");
+      }
+    }
+  }, [battleView?.status, onlineMatch, pvp.state.roomCode, pvp.state.status]);
 
   const playCard = (handCard: BattleSide["hand"][number]) => {
     if (battleEffectLockRef.current) {
@@ -1712,6 +2233,17 @@ export function GameApp({
     }
   };
 
+  const useHeroPower = () => {
+    if (battleEffectLockRef.current) return;
+    const next = issueCommand({
+      type: "hero-power",
+      player: 0,
+    });
+    if (next) {
+      setBattleMessage("核心脉冲命中敌方核心。");
+    }
+  };
+
   const endTurn = () => {
     if (battleEffectLockRef.current) return;
     if (!battle || !battleView || battleView.currentPlayer !== "player") return;
@@ -1726,8 +2258,10 @@ export function GameApp({
     if (!ended) return;
     setSelectedAttacker(null);
     setPendingCard(null);
-    setBattleMessage("演算体正在规划反制路线…");
+    setBattleMessage(onlineMatch ? "指令已同步，等待对手行动…" : "演算体正在规划反制路线…");
     if ((ended as MatchState).phase === "game-over") return;
+
+    if (onlineMatch) return;
 
     aiTurnTimerRef.current = window.setTimeout(() => {
       aiTurnTimerRef.current = null;
@@ -1754,6 +2288,15 @@ export function GameApp({
     }, 620);
   };
 
+  const concedeBattle = () => {
+    if (battleEffectLockRef.current || !battle || battleView?.status !== "playing") return;
+    const next = issueCommand({ type: "concede", player: 0 });
+    if (!next) return;
+    setSelectedAttacker(null);
+    setPendingCard(null);
+    setBattleMessage("你已结束本场演算，战报正在归档。");
+  };
+
   useEffect(() => {
     if (!battleView || battleView.status !== "finished" || !battleView.winner) return;
     const result = battleView.winner === "player" ? "win" : "loss";
@@ -1764,8 +2307,8 @@ export function GameApp({
     void postAction("record_match", {
       idempotencyKey: makeId("match"),
       result,
-      mode: "ai",
-      opponent: "镜像演算体 K-7",
+      mode: onlineMatch ? "pvp" : "ai",
+      opponent: onlineMatch ? onlineOpponent ?? "联机对手" : "镜像演算体 K-7",
     }).then((payload) => {
       if (payload) {
         setNotice({
@@ -1774,7 +2317,7 @@ export function GameApp({
         });
       }
     });
-  }, [battleView, postAction]);
+  }, [battleView, onlineMatch, onlineOpponent, postAction]);
 
   const totalOwned = Object.values(player.collection).reduce((sum, count) => sum + count, 0);
   const uniqueOwned = Object.values(player.collection).filter((count) => count > 0).length;
@@ -1834,7 +2377,7 @@ export function GameApp({
           <div className="system-status">
             <span className="system-status__pulse" />
             <div>
-              <strong>{isDemo ? "演示节点在线" : "云端节点在线"}</strong>
+              <strong>{profileNodeLabel}</strong>
               <span>内容版本 0.1.0 · CN-07</span>
             </div>
           </div>
@@ -1905,7 +2448,7 @@ export function GameApp({
             </span>
             <span className="profile-chip__copy">
               <strong>{player.displayName}</strong>
-              <small>{isDemo ? "本地演示档案" : "已同步指挥官"}</small>
+              <small>{profileStatusLabel}</small>
             </span>
           </div>
         </header>
@@ -1968,12 +2511,16 @@ export function GameApp({
                 <DeckSection
                   cards={CATALOG}
                   collection={player.collection}
+                  decks={player.decks}
+                  editingDeckId={editingDeckId}
                   deckIds={deckIds}
                   deckCounts={deckCounts}
                   name={deckName}
                   validation={deckValidation}
                   saving={apiBusy === "save_deck"}
                   onName={setDeckName}
+                  onSelectDeck={selectDeck}
+                  onNewDeck={createNewDeck}
                   onAdd={addCard}
                   onRemove={removeCard}
                   onSave={() => void saveDeck()}
@@ -1998,15 +2545,38 @@ export function GameApp({
                     playSound("select");
                   }}
                   onCardTarget={playCardAtTarget}
-                  onCancelTarget={() => setPendingCard(null)}
+                  onCancelTarget={() => {
+                    setPendingCard(null);
+                    setBattleMessage("已取消目标选择，可继续行动。");
+                  }}
                   onAttack={attackTarget}
+                  onHeroPower={useHeroPower}
                   onEndTurn={endTurn}
+                  onConcede={concedeBattle}
                   onOpenDeck={() => switchSection("deck")}
                   onToggleSound={toggleSound}
+                  pvp={pvp.state}
+                  pvpUrl={pvpUrl}
+                  pvpRoomInput={pvpRoomInput}
+                  onPvpUrl={setPvpUrl}
+                  onPvpRoomInput={setPvpRoomInput}
+                  onPvpConnect={() => pvp.connect(pvpUrl)}
+                  onPvpCreate={pvp.createRoom}
+                  onPvpJoin={() => pvp.joinRoom(pvpRoomInput)}
+                  onPvpReady={() => pvp.ready(deckIds)}
+                  onPvpDisconnect={() => pvp.disconnect()}
+                  online={onlineMatch}
+                  opponentName={onlineOpponent}
                 />
               )}
               {section === "operations" && (
-                <OperationsSection player={player} winRate={winRate} />
+                <OperationsSection
+                  player={player}
+                  winRate={winRate}
+                  isDemo={isDemo}
+                  resetting={apiBusy === "reset_demo"}
+                  onResetDemo={() => void resetDemoProfile()}
+                />
               )}
             </>
           )}
@@ -2304,12 +2874,17 @@ function CollectionSection({
   onAdd: (card: CatalogCard) => void;
   onOpenDeck: () => void;
 }) {
+  const filterSignature = `${search}|${faction}|${type}|${rarity}|${trait}`;
+  const [pagination, setPagination] = useState({ signature: filterSignature, count: 30 });
+  const visibleCount = pagination.signature === filterSignature ? pagination.count : 30;
+  const visibleCards = cards.slice(0, visibleCount);
+
   return (
     <section className="screen screen--collection" aria-labelledby="collection-title">
       <SectionHeading
         eyebrow="TACTICAL ARCHIVE / COLLECTION"
         title="卡牌收藏"
-        description="按阵营、类型、特质与关键词检索档案，围绕 2 / 4 档羁绊规划你的战术核心。"
+        description="浏览七大阵营共 210 张档案，按类型、特质与关键词检索，围绕 2 / 4 档羁绊规划战术核心。"
         action={
           <button className="button button--outline" type="button" onClick={onOpenDeck}>
             <Icon name="layers" />
@@ -2317,6 +2892,27 @@ function CollectionSection({
           </button>
         }
       />
+
+      <div className="faction-codex" aria-label="七大阵营">
+        {(Object.entries(FACTION_DEFINITIONS) as Array<
+          [Faction, (typeof FACTION_DEFINITIONS)[Faction]]
+        >).map(([name, definition]) => {
+          const count = CATALOG.filter((card) => card.faction === name).length;
+          return (
+            <button
+              className={`faction-codex__item faction-codex__item--${definition.tone} ${faction === name ? "is-active" : ""}`}
+              type="button"
+              onClick={() => onFaction(faction === name ? "全部" : name)}
+              aria-pressed={faction === name}
+              key={name}
+            >
+              <span>{definition.sigil}</span>
+              <strong>{name}</strong>
+              <small>{definition.doctrine}<i>{count} 张</i></small>
+            </button>
+          );
+        })}
+      </div>
 
       <div className="collection-toolbar">
         <label className="search-field">
@@ -2370,23 +2966,36 @@ function CollectionSection({
       </div>
 
       <div className="collection-summary">
-        <span><i className="summary-dot summary-dot--online" /> 显示 {cards.length} 张档案</span>
+        <span><i className="summary-dot summary-dot--online" /> 显示 {visibleCards.length} / {cards.length} 张档案</span>
         <span>点击卡牌加入当前卡组</span>
       </div>
 
       {cards.length > 0 ? (
-        <div className="card-grid">
-          {cards.map((card) => (
-            <CardTile
-              key={card.id}
-              card={card}
-              owned={collection[card.id] ?? 0}
-              countInDeck={deckCounts.get(card.id) ?? 0}
-              action={() => onAdd(card)}
-              actionLabel={`将${card.name}加入当前卡组`}
-            />
-          ))}
-        </div>
+        <>
+          <div className="card-grid">
+            {visibleCards.map((card) => (
+              <CardTile
+                key={card.id}
+                card={card}
+                owned={collection[card.id] ?? 0}
+                countInDeck={deckCounts.get(card.id) ?? 0}
+                action={() => onAdd(card)}
+                actionLabel={`将${card.name}加入当前卡组`}
+              />
+            ))}
+          </div>
+          {visibleCount < cards.length && (
+            <div className="collection-load-more">
+              <button
+                className="button button--outline"
+                type="button"
+                onClick={() => setPagination({ signature: filterSignature, count: visibleCount + 30 })}
+              >
+                再加载 {Math.min(30, cards.length - visibleCount)} 张
+              </button>
+            </div>
+          )}
+        </>
       ) : (
         <EmptyState icon="search" title="未找到匹配档案">
           调整搜索词或筛选条件，重新扫描卡牌数据库。
@@ -2399,12 +3008,16 @@ function CollectionSection({
 function DeckSection({
   cards,
   collection,
+  decks,
+  editingDeckId,
   deckIds,
   deckCounts,
   name,
   validation,
   saving,
   onName,
+  onSelectDeck,
+  onNewDeck,
   onAdd,
   onRemove,
   onSave,
@@ -2412,12 +3025,16 @@ function DeckSection({
 }: {
   cards: CatalogCard[];
   collection: Record<string, number>;
+  decks: SavedDeck[];
+  editingDeckId: string | null;
   deckIds: string[];
   deckCounts: Map<string, number>;
   name: string;
   validation: ValidationView;
   saving: boolean;
   onName: (name: string) => void;
+  onSelectDeck: (deckId: string) => void;
+  onNewDeck: () => void;
   onAdd: (card: CatalogCard) => void;
   onRemove: (cardId: string) => void;
   onSave: () => void;
@@ -2476,6 +3093,22 @@ function DeckSection({
 
       <div className="deck-workbench">
         <aside className="panel deck-manifest">
+          <div className="deck-loadout">
+            <label>
+              <span>已保存卡组</span>
+              <select
+                value={editingDeckId ?? ""}
+                onChange={(event) => event.target.value ? onSelectDeck(event.target.value) : onNewDeck()}
+                aria-label="选择已保存卡组"
+              >
+                <option value="">新建卡组草稿</option>
+                {decks.map((deck) => <option value={deck.id} key={deck.id}>{deck.name}</option>)}
+              </select>
+            </label>
+            <button className="button button--outline" type="button" onClick={onNewDeck}>
+              新建
+            </button>
+          </div>
           <div className="deck-name-field">
             <span className="deck-name-field__sigil"><Icon name="layers" /></span>
             <label>
@@ -2630,6 +3263,7 @@ function HeroCore({
   side,
   active,
   enemy,
+  enemyLabel,
   canTarget,
   onTarget,
   targetLabel,
@@ -2638,6 +3272,7 @@ function HeroCore({
   side: BattleSide;
   active: boolean;
   enemy?: boolean;
+  enemyLabel?: string;
   canTarget?: boolean;
   onTarget?: () => void;
   targetLabel?: string;
@@ -2648,8 +3283,9 @@ function HeroCore({
     <>
       <span className="hero-core__portrait"><Icon name={enemy ? "bot" : "user"} size={30} /></span>
       <span className="hero-core__copy">
-        <small>{enemy ? "镜像演算体 K-7" : "远征指挥官"}</small>
+        <small>{enemy ? enemyLabel ?? "镜像演算体 K-7" : "远征指挥官"}</small>
         <strong>{side.health}<i> / {side.maxHealth}</i></strong>
+        {side.armor > 0 && <em>护甲 {side.armor}</em>}
       </span>
       <span className="hero-core__health"><Icon name="shield" size={17} /> CORE</span>
       {active && <span className="hero-core__active">行动中</span>}
@@ -2700,6 +3336,7 @@ function BoardUnit({
       target: "none",
       keywords: [],
       traits: [],
+      stealthActive: false,
     };
   return (
     <button
@@ -2716,6 +3353,13 @@ function BoardUnit({
         {unit.stars === 2 && <span className="board-unit__stars">★★</span>}
       </div>
       <strong>{unit.name}</strong>
+      {unit.keywords.length > 0 && (
+        <div className="board-unit__keywords">
+          {unit.keywords.slice(0, 3).map((keyword) => (
+            <span key={keyword}>{KEYWORD_DEFINITIONS[keyword]?.label ?? keyword}</span>
+          ))}
+        </div>
+      )}
       <div className="board-unit__stats"><span>⚔ {unit.attack}</span><span>◆ {unit.health}</span></div>
       {unit.canAttack && onSelect && <span className="board-unit__ready">READY</span>}
     </button>
@@ -2804,6 +3448,67 @@ function BattleTraitProtocol({
   );
 }
 
+function PvpLobby({
+  state,
+  url,
+  roomInput,
+  onUrl,
+  onRoomInput,
+  onConnect,
+  onCreate,
+  onJoin,
+  onReady,
+  onDisconnect,
+}: {
+  state: PvpState;
+  url: string;
+  roomInput: string;
+  onUrl: (value: string) => void;
+  onRoomInput: (value: string) => void;
+  onConnect: () => void;
+  onCreate: () => void;
+  onJoin: () => void;
+  onReady: () => void;
+  onDisconnect: () => void;
+}) {
+  const connected = state.status !== "offline" && state.status !== "error" && state.status !== "connecting";
+  return (
+    <section className="pvp-lobby" aria-label="基础 PVP 联机大厅">
+      <div className="pvp-lobby__heading">
+        <div>
+          <span className="panel__eyebrow">LIVE PVP / ROOM LINK</span>
+          <h3>基础联机对战</h3>
+        </div>
+        <span className={`pvp-lobby__status pvp-lobby__status--${state.status}`}><i />{state.status === "offline" ? "未连接" : state.status === "connecting" ? "连接中" : state.status === "error" ? "连接异常" : state.status === "playing" ? "对战中" : "大厅在线"}</span>
+      </div>
+      <p>{state.message} 两端使用同一套战斗规则同步出牌、攻击和回合。</p>
+      {(state.status === "offline" || state.status === "error" || state.status === "connecting") && (
+        <div className="pvp-lobby__connect">
+          <label><span>房间服务器</span><input value={url} onChange={(event) => onUrl(event.target.value)} placeholder="ws://127.0.0.1:8787" /></label>
+          <button className="button button--outline" type="button" disabled={state.status === "connecting"} onClick={onConnect}>{state.status === "connecting" ? "连接中…" : "连接大厅"}</button>
+        </div>
+      )}
+      {connected && (
+        <div className="pvp-lobby__room">
+          {!state.roomCode ? (
+            <>
+              <button className="button button--primary" type="button" onClick={onCreate}>创建房间</button>
+              <label><span>房间码</span><input value={roomInput} maxLength={4} onChange={(event) => onRoomInput(event.target.value.toUpperCase())} placeholder="A7KQ" /></label>
+              <button className="button button--outline" type="button" onClick={onJoin}>加入房间</button>
+            </>
+          ) : (
+            <>
+              <div className="pvp-lobby__code"><small>房间码</small><strong>{state.roomCode}</strong><span>{state.peerName ? `对手：${state.peerName}` : "等待对手加入"}</span></div>
+              <button className="button button--primary" type="button" disabled={state.localReady || !state.peerName} onClick={onReady}>{state.localReady ? "已准备" : "准备对战"}</button>
+              <button className="button button--outline" type="button" onClick={onDisconnect}>离开房间</button>
+            </>
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
+
 function BattleSection({
   battle,
   message,
@@ -2819,9 +3524,23 @@ function BattleSection({
   onCardTarget,
   onCancelTarget,
   onAttack,
+  onHeroPower,
   onEndTurn,
+  onConcede,
   onOpenDeck,
   onToggleSound,
+  pvp,
+  pvpUrl,
+  pvpRoomInput,
+  onPvpUrl,
+  onPvpRoomInput,
+  onPvpConnect,
+  onPvpCreate,
+  onPvpJoin,
+  onPvpReady,
+  onPvpDisconnect,
+  online,
+  opponentName,
 }: {
   battle: BattleView | null;
   message: string;
@@ -2837,9 +3556,23 @@ function BattleSection({
   onCardTarget: (target: { kind: "unit" | "hero"; side: "player" | "ai"; id?: string }) => void;
   onCancelTarget: () => void;
   onAttack: (target: BattleTarget) => void;
+  onHeroPower: () => void;
   onEndTurn: () => void;
+  onConcede: () => void;
   onOpenDeck: () => void;
   onToggleSound: () => void;
+  pvp: PvpState;
+  pvpUrl: string;
+  pvpRoomInput: string;
+  onPvpUrl: (value: string) => void;
+  onPvpRoomInput: (value: string) => void;
+  onPvpConnect: () => void;
+  onPvpCreate: () => void;
+  onPvpJoin: () => void;
+  onPvpReady: () => void;
+  onPvpDisconnect: () => void;
+  online: boolean;
+  opponentName: string | null;
 }) {
   if (!battle) {
     return (
@@ -2877,13 +3610,25 @@ function BattleSection({
             </button>
             <button className="button button--primary button--large" type="button" onClick={onStart}><Icon name="swords" />开始演算</button>
           </div>
+          <PvpLobby
+            state={pvp}
+            url={pvpUrl}
+            roomInput={pvpRoomInput}
+            onUrl={onPvpUrl}
+            onRoomInput={onPvpRoomInput}
+            onConnect={onPvpConnect}
+            onCreate={onPvpCreate}
+            onJoin={onPvpJoin}
+            onReady={onPvpReady}
+            onDisconnect={onPvpDisconnect}
+          />
         </div>
       </section>
     );
   }
 
   const playerTurn = battle.currentPlayer === "player" && battle.status === "playing";
-  const playerCanAct = playerTurn && !effectsLocked;
+  const playerCanAct = playerTurn && !effectsLocked && (!online || pvp.status === "playing");
   const pendingDefinition = pendingCard ? CARD_BY_ID.get(pendingCard.cardId) : undefined;
   const targetRule = pendingDefinition?.target ?? "none";
   const cardCanTarget = (side: "player" | "ai", kind: "unit" | "hero") => {
@@ -2920,13 +3665,25 @@ function BattleSection({
     }
     return undefined;
   };
-  const enemyHeroTargetable = Boolean(selectedAttacker) || cardCanTarget("ai", "hero");
-  const enemyUnitTargetable = Boolean(selectedAttacker) || cardCanTarget("ai", "unit");
+  const visibleEnemyTaunts = battle.ai.board.filter(
+    (unit) => unit.keywords.includes("taunt") && !unit.stealthActive,
+  );
+  const attackBlockedByTaunt = Boolean(selectedAttacker && visibleEnemyTaunts.length > 0);
+  const enemyHeroTargetable = selectedAttacker
+    ? !attackBlockedByTaunt
+    : cardCanTarget("ai", "hero");
+  const enemyUnitTargetable = (unit: BattleUnit) => {
+    if (selectedAttacker) {
+      if (unit.stealthActive) return false;
+      return !attackBlockedByTaunt || unit.keywords.includes("taunt");
+    }
+    return cardCanTarget("ai", "unit") && !unit.stealthActive;
+  };
   return (
     <section className="screen screen--battle battle-room" aria-labelledby="battle-room-title">
       <header className="battle-room__top">
         <div>
-          <span className="section-heading__eyebrow">LIVE SIMULATION · TURN {battle.turn}</span>
+          <span className="section-heading__eyebrow">{online ? "LIVE PVP" : "LIVE SIMULATION"} · TURN {battle.turn}</span>
           <h1 id="battle-room-title">战术演算舱</h1>
         </div>
         <div className="battle-room__status">
@@ -2964,6 +3721,7 @@ function BattleSection({
               <HeroCore
                 side={battle.ai}
                 enemy
+                enemyLabel={online ? opponentName ?? "联机对手" : undefined}
                 active={battle.currentPlayer === "ai"}
                 canTarget={enemyHeroTargetable}
                 effect={effectForHero("ai")}
@@ -2991,7 +3749,7 @@ function BattleSection({
                 <BoardUnit
                   key={unit.id}
                   unit={unit}
-                  targetable={enemyUnitTargetable}
+                  targetable={enemyUnitTargetable(unit)}
                   effect={effectForUnit(unit.id)}
                   onTarget={() =>
                     pendingCard
@@ -3024,7 +3782,7 @@ function BattleSection({
               )) : <span className="board-row__empty">选择手牌，部署你的首个单位</span>}
             </div>
             <div className="battlefield__side-info battlefield__side-info--player">
-              <HeroCore
+                <HeroCore
                 side={battle.player}
                 active={playerTurn}
                 canTarget={cardCanTarget("player", "hero")}
@@ -3038,6 +3796,16 @@ function BattleSection({
                   {Array.from({ length: battle.player.maxMana }, (_, index) => <i className={index < battle.player.mana ? "is-filled" : ""} key={index} />)}
                 </div>
               </div>
+              <button
+                className={`hero-power-button ${battle.player.heroPowerUsed ? "hero-power-button--used" : ""}`}
+                type="button"
+                disabled={!playerCanAct || battle.player.heroPowerUsed || battle.player.mana < 2}
+                onClick={onHeroPower}
+                aria-label={battle.player.heroPowerUsed ? "核心脉冲本回合已使用" : "使用核心脉冲，消耗 2 点能量"}
+              >
+                <span className="hero-power-button__icon">✦</span>
+                <span><strong>核心脉冲</strong><small>{battle.player.heroPowerUsed ? "本回合已用" : "2 能量 · 造成 1 点伤害"}</small></span>
+              </button>
             </div>
             <div className="player-hand">
               {battle.player.hand.map((handCard) => {
@@ -3105,10 +3873,15 @@ function BattleSection({
               <button className="button button--primary button--wide" type="button" onClick={onStart}>再次演算</button>
             </div>
           ) : (
-            <button className="button button--end-turn" type="button" disabled={!playerCanAct} onClick={onEndTurn}>
-              <span>{effectsLocked ? "战况回放" : playerTurn ? "结束回合" : "等待敌方"}</span>
-              <Icon name="arrow" />
-            </button>
+            <div className="battle-actions">
+              <button className="button button--end-turn" type="button" disabled={!playerCanAct} onClick={onEndTurn}>
+                <span>{effectsLocked ? "战况回放" : playerTurn ? "结束回合" : "等待敌方"}</span>
+                <Icon name="arrow" />
+              </button>
+              <button className="button button--concede" type="button" disabled={!playerTurn || effectsLocked} onClick={onConcede}>
+                投降
+              </button>
+            </div>
           )}
         </aside>
       </div>
@@ -3116,7 +3889,19 @@ function BattleSection({
   );
 }
 
-function OperationsSection({ player, winRate }: { player: PlayerSnapshot; winRate: number }) {
+function OperationsSection({
+  player,
+  winRate,
+  isDemo,
+  resetting,
+  onResetDemo,
+}: {
+  player: PlayerSnapshot;
+  winRate: number;
+  isDemo: boolean;
+  resetting: boolean;
+  onResetDemo: () => void;
+}) {
   const metrics = [
     { label: "内测活跃指挥官", value: "486", delta: "+12.4%", icon: "user" as IconName },
     { label: "今日完成对局", value: "1,284", delta: "+8.1%", icon: "swords" as IconName },
@@ -3167,9 +3952,24 @@ function OperationsSection({ player, winRate }: { player: PlayerSnapshot; winRat
             <div><span className="panel__eyebrow">FACTION BALANCE</span><h2>阵营胜率</h2></div>
             <span className="panel__counter">目标 48–52%</span>
           </div>
-          <div className="balance-rings">
-            <div className="balance-ring balance-ring--cyan"><span><strong>51.8%</strong><small>星穹</small></span></div>
-            <div className="balance-ring balance-ring--amber"><span><strong>48.2%</strong><small>烬火</small></span></div>
+          <div className="balance-ledger" aria-label="七大阵营胜率">
+            {FACTION_BALANCE.map((item) => (
+              <div className="balance-ledger__row" key={item.faction}>
+                <span className="balance-ledger__faction">
+                  <i style={{ backgroundColor: item.color }} />
+                  {item.faction}
+                </span>
+                <span className="balance-ledger__track">
+                  <i
+                    style={{
+                      "--balance-rate": `${item.winRate}%`,
+                      "--balance-color": item.color,
+                    } as CSSProperties}
+                  />
+                </span>
+                <strong>{item.winRate}%</strong>
+              </div>
+            ))}
           </div>
           <p className="balance-note"><Icon name="check" size={16} /> 当前阵营差值处于一期平衡阈值内</p>
         </section>
@@ -3208,11 +4008,18 @@ function OperationsSection({ player, winRate }: { player: PlayerSnapshot; winRat
           </div>
           <dl className="audit-list">
             <div><dt>玩家标识</dt><dd>{player.id}</dd></div>
+            <div><dt>档案邮箱</dt><dd>{player.email}</dd></div>
             <div><dt>已完成对局</dt><dd>{player.stats.matchesPlayed}</dd></div>
             <div><dt>个人胜率</dt><dd>{winRate}%</dd></div>
             <div><dt>资产更新时间</dt><dd>{formatTime(player.updatedAt)}</dd></div>
           </dl>
           <div className="audit-note"><Icon name="shield" /><p><strong>资产保护启用</strong><span>奖励、开包与卡组保存均使用幂等业务键。</span></p></div>
+          {isDemo && (
+            <button className="button button--outline audit-reset" type="button" disabled={resetting} onClick={onResetDemo}>
+              <Icon name="clock" size={15} />
+              {resetting ? "重置中…" : "重置演示档案"}
+            </button>
+          )}
         </section>
       </div>
     </section>
