@@ -1102,6 +1102,10 @@ function SectionHeading({
 
 type BattleSoundCue = BattleEffectKind | "select" | "error";
 const BATTLE_EFFECT_STEP_MS = 900;
+// Give the opponent a readable planning window before its complete reducer
+// transition is revealed. This keeps a full AI turn from collapsing into one
+// frame on slower phones and makes the event stream match the board animation.
+const AI_TURN_DELAY_MS = 1600;
 
 function battleEffectPriority(kind: BattleEffectKind) {
   switch (kind) {
@@ -2066,6 +2070,18 @@ export function GameApp({
       action: string,
       body: Record<string, unknown>,
     ): Promise<GamePayload | null> => {
+      // A cached authenticated profile is deliberately read-only. Mutating it
+      // locally would make the next successful sync overwrite the real cloud
+      // account, which is especially dangerous for decks, rewards, and match
+      // history. Keep the UI usable for browsing and local battles, but make
+      // the sync boundary explicit until the profile can be reloaded.
+      if (identity?.authenticated && profileSource === "cached") {
+        setNotice({
+          tone: "warning",
+          text: "当前为云端档案的只读缓存，暂不能保存卡组、领取奖励或归档战绩；请恢复连接后重试。",
+        });
+        return null;
+      }
       setApiBusy(action);
       let allowLocalFallback = true;
       try {
@@ -2686,7 +2702,7 @@ export function GameApp({
         setBattleMessage(error instanceof Error ? error.message : "AI 回合演算异常。");
         playSound("error");
       }
-    }, 620);
+    }, AI_TURN_DELAY_MS);
   };
 
   const concedeBattle = () => {
