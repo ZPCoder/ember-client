@@ -2521,6 +2521,16 @@ button.game-card:not(:disabled):hover .game-card__artwork,
   box-shadow: 0 0 10px rgba(109, 201, 188, 0.6);
 }
 
+.turn-indicator--choose-one {
+  color: #d6c0f2;
+  border-color: rgba(171, 126, 223, 0.36);
+}
+
+.turn-indicator--choose-one::before {
+  background: #b78ee7;
+  box-shadow: 0 0 10px rgba(183, 142, 231, 0.64);
+}
+
 .turn-indicator--finished {
   color: #d7c8ad;
   border-color: rgba(218, 198, 159, 0.24);
@@ -2597,6 +2607,7 @@ button.game-card:not(:disabled):hover .game-card__artwork,
 .battle-fx--player,
 .battle-fx--heal,
 .battle-fx--buff,
+.battle-fx--transform,
 .battle-fx--win {
   --fx-color: #78d8cc;
   --fx-soft: rgba(85, 185, 173, 0.25);
@@ -2776,6 +2787,7 @@ button.game-card:not(:disabled):hover .game-card__artwork,
 .battle-fx--summon .battle-fx__ring,
 .battle-fx--heal .battle-fx__ring,
 .battle-fx--buff .battle-fx__ring,
+.battle-fx--transform .battle-fx__ring,
 .battle-fx--win .battle-fx__ring {
   animation: battle-ring-expand 820ms ease-out both;
 }
@@ -2798,6 +2810,7 @@ button.game-card:not(:disabled):hover .game-card__artwork,
 .battle-fx--damage .battle-fx__particles i,
 .battle-fx--heal .battle-fx__particles i,
 .battle-fx--buff .battle-fx__particles i,
+.battle-fx--transform .battle-fx__particles i,
 .battle-fx--shield .battle-fx__particles i,
 .battle-fx--destroy .battle-fx__particles i,
 .battle-fx--win .battle-fx__particles i {
@@ -2810,6 +2823,7 @@ button.game-card:not(:disabled):hover .game-card__artwork,
 .battle-fx--summon .battle-fx__banner,
 .battle-fx--attack .battle-fx__banner,
 .battle-fx--shield .battle-fx__banner,
+.battle-fx--transform .battle-fx__banner,
 .battle-fx--destroy .battle-fx__banner,
 .battle-fx--win .battle-fx__banner,
 .battle-fx--loss .battle-fx__banner {
@@ -2826,6 +2840,7 @@ button.game-card:not(:disabled):hover .game-card__artwork,
 .battle-fx--summon .battle-fx__vignette,
 .battle-fx--heal .battle-fx__vignette,
 .battle-fx--buff .battle-fx__vignette,
+.battle-fx--transform .battle-fx__vignette,
 .battle-fx--win .battle-fx__vignette,
 .battle-fx--loss .battle-fx__vignette {
   animation: battle-vignette-pulse 840ms ease-out both;
@@ -3710,6 +3725,100 @@ button.hero-core {
   border-radius: 8px;
   color: #7fa49b;
   font-size: 9px;
+}
+
+.choose-one-prompt {
+  padding: 12px;
+  border-bottom: 1px solid rgba(171, 126, 223, 0.3);
+  background: linear-gradient(145deg, rgba(116, 78, 157, 0.16), rgba(18, 20, 36, 0.44));
+}
+
+.choose-one-prompt__heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.choose-one-prompt__heading strong {
+  color: #e2d2f6;
+  font-size: 11px;
+}
+
+.choose-one-prompt__heading p {
+  margin: 4px 0 0;
+  color: #aaa0bf;
+  font-size: 8px;
+  line-height: 1.5;
+}
+
+.choose-one-prompt__heading > span {
+  color: #c09ce9;
+  font-size: 7px;
+  letter-spacing: 0.14em;
+  white-space: nowrap;
+}
+
+.choose-one-prompt__options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.choose-one-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 58px;
+  padding: 9px;
+  border: 1px solid rgba(183, 142, 231, 0.3);
+  border-radius: 9px;
+  color: #eee6fa;
+  background: rgba(95, 60, 132, 0.2);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+.choose-one-option:hover:not(:disabled),
+.choose-one-option:focus-visible:not(:disabled) {
+  border-color: rgba(222, 190, 255, 0.8);
+  background: rgba(126, 84, 170, 0.34);
+  transform: translateY(-1px);
+}
+
+.choose-one-option:disabled {
+  cursor: default;
+  opacity: 0.58;
+}
+
+.choose-one-option__index {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  place-items: center;
+  border: 1px solid rgba(219, 190, 252, 0.58);
+  border-radius: 50%;
+  color: #e4cfff;
+  font-size: 11px;
+}
+
+.choose-one-option strong,
+.choose-one-option small {
+  display: block;
+}
+
+.choose-one-option strong {
+  font-size: 9px;
+  line-height: 1.35;
+}
+
+.choose-one-option small {
+  margin-top: 3px;
+  color: #aa9abb;
+  font-size: 7px;
 }
 
 .battle-actions__waiting {
