@@ -4247,6 +4247,9 @@ button.hero-core {
 }
 
 .target-prompt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin-top: 9px;
   padding: 8px;
   border: 1px solid rgba(228, 109, 63, 0.28);
@@ -4257,6 +4260,7 @@ button.hero-core {
 }
 
 .target-prompt > span {
+  flex: 1;
   display: inline-flex;
   flex-direction: column;
   gap: 2px;
@@ -4278,6 +4282,33 @@ button.hero-core {
   font-style: normal;
   font-weight: 800;
   letter-spacing: 0.04em;
+}
+
+.target-prompt__preview {
+  color: #ffd49d;
+  font-size: 7px;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.target-prompt__cancel {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid rgba(255, 211, 190, 0.24);
+  border-radius: 7px;
+  color: #f3c2ae;
+  background: rgba(86, 39, 28, 0.34);
+  cursor: pointer;
+}
+
+.target-prompt__cancel:hover,
+.target-prompt__cancel:focus-visible {
+  border-color: rgba(255, 211, 190, 0.68);
+  color: #fff0df;
+  outline: none;
 }
 
 .battle-synergies {

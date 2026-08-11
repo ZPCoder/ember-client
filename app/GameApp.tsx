@@ -5141,12 +5141,20 @@ function BattleSection({
                     {selectedAttackerUnit.name} · ⚔ {selectedAttackerUnit.attack} · ◆ {selectedAttackerUnit.health}
                   </em>
                 )}
+                {selectedAttacker && (
+                  <em className="target-prompt__preview">
+                    预计命中伤害 {selectedAttackerUnit?.attack ?? battle.player.weapon?.attack ?? 0} 点
+                  </em>
+                )}
               </span>
-              {pendingCard && (
-                <button type="button" onClick={onCancelTarget} aria-label="取消选择卡牌目标">
-                  <Icon name="close" size={16} />
-                </button>
-              )}
+              <button
+                className="target-prompt__cancel"
+                type="button"
+                onClick={onCancelTarget}
+                aria-label={pendingCard ? "取消选择卡牌目标" : pendingHeroPower ? "取消选择核心技能目标" : "取消攻击目标选择"}
+              >
+                <Icon name="close" size={16} />
+              </button>
             </div>
           )}
           <div className="battle-synergies" aria-label="实时特质协议">
