@@ -4593,6 +4593,10 @@ function BoardUnit({
 function BattleEffectLayer({ effect }: { effect: BattleVisualEffect }) {
   const revealCard = effect.cardId ? CARD_BY_ID.get(effect.cardId) : undefined;
   const cardName = revealCard?.name;
+  const eventType =
+    effect.kind === "turn" && effect.label.includes("超时")
+      ? "turn-timed-out"
+      : undefined;
   const number =
     typeof effect.amount === "number" &&
     (effect.kind === "damage" || effect.kind === "heal")
@@ -4602,6 +4606,7 @@ function BattleEffectLayer({ effect }: { effect: BattleVisualEffect }) {
   return (
     <div
       className={`battlefield__fx-layer battle-fx--${effect.kind} battle-fx--${effect.targetSide ?? effect.side ?? "neutral"}`}
+      data-event-type={eventType}
       aria-hidden="true"
     >
       <span className="battle-fx__vignette" />
