@@ -169,6 +169,13 @@ type PvpIncoming =
   | { id: number; type: "match-start"; payload: { seed: number; decks: [string[], string[]] } }
   | { id: number; type: "command"; command: BattleCommand };
 
+function getDefaultPvpUrl(): string {
+  if (typeof window === "undefined") return "ws://127.0.0.1:8787";
+  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+  const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+  return isLocal ? `${protocol}//127.0.0.1:8787` : `${protocol}//${window.location.host}/api/pvp`;
+}
+
 type ValidationView = {
   valid: boolean;
   errors: string[];
@@ -1317,7 +1324,7 @@ function useWebPvp(displayName: string) {
   const incomingIdRef = useRef(0);
   const [state, setState] = useState<PvpState>({
     status: "offline",
-    url: "ws://127.0.0.1:8787",
+    url: getDefaultPvpUrl(),
     playerId: null,
     roomCode: null,
     role: null,
@@ -1570,7 +1577,7 @@ export function GameApp({
   const aiTurnTimerRef = useRef<number | null>(null);
   const { soundEnabled, unlockAudio, playSound, toggleSound } = useBattleAudio();
   const pvp = useWebPvp(player.displayName);
-  const [pvpUrl, setPvpUrl] = useState("ws://127.0.0.1:8787");
+  const [pvpUrl, setPvpUrl] = useState(() => getDefaultPvpUrl());
   const [pvpRoomInput, setPvpRoomInput] = useState("");
   const [onlineMatch, setOnlineMatch] = useState(false);
   const [onlineOpponent, setOnlineOpponent] = useState<string | null>(null);
@@ -3484,7 +3491,7 @@ function PvpLobby({
       <p>{state.message} 两端使用同一套战斗规则同步出牌、攻击和回合。</p>
       {(state.status === "offline" || state.status === "error" || state.status === "connecting") && (
         <div className="pvp-lobby__connect">
-          <label><span>房间服务器</span><input value={url} onChange={(event) => onUrl(event.target.value)} placeholder="ws://127.0.0.1:8787" /></label>
+          <label><span>房间服务器</span><input value={url} onChange={(event) => onUrl(event.target.value)} placeholder="wss://当前站点/api/pvp" /></label>
           <button className="button button--outline" type="button" disabled={state.status === "connecting"} onClick={onConnect}>{state.status === "connecting" ? "连接中…" : "连接大厅"}</button>
         </div>
       )}
