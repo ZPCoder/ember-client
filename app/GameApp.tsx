@@ -2415,6 +2415,9 @@ export function GameApp({
     }
     setSection(next);
     setSidebarOpen(false);
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
   };
 
   const addCard = (card: CatalogCard) => {
@@ -2576,6 +2579,9 @@ export function GameApp({
       recordedBattleRef.current = null;
       sectionRef.current = "battle";
       setSection("battle");
+      if (typeof window !== "undefined") {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
       battleEffectSequenceRef.current += 1;
       const effectId = battleEffectSequenceRef.current;
       const openingEffects: BattleVisualEffect[] = [

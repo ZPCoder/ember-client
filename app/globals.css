@@ -4970,6 +4970,34 @@ button.hero-core {
   }
 }
 
+@media (min-width: 901px) and (max-height: 780px) {
+  .battlefield,
+  .battle-console {
+    min-height: 600px;
+  }
+
+  .battlefield {
+    grid-template-rows: 0.95fr 32px 1fr;
+  }
+
+  .battlefield__enemy-zone,
+  .battlefield__player-zone {
+    padding: 12px;
+  }
+
+  .board-row {
+    min-height: 112px;
+  }
+
+  .player-hand {
+    padding-top: 14px;
+  }
+
+  .hand-card .game-card {
+    min-height: 150px;
+  }
+}
+
 @media (max-width: 900px) {
   :root {
     --sidebar: 260px;
