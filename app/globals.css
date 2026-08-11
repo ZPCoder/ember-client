@@ -3493,6 +3493,18 @@ button.hero-core {
   white-space: nowrap;
 }
 
+.board-unit__temporary {
+  display: block;
+  overflow: hidden;
+  padding: 0 5px 2px;
+  color: #f0bf75;
+  font-size: 6px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .board-unit__ready {
   position: absolute;
   top: 4px;

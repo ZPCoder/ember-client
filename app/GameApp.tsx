@@ -130,6 +130,8 @@ type BattleUnit = {
   keywords: Keyword[];
   stealthActive: boolean;
   spellDamage: number;
+  temporaryAttackBonus: number;
+  temporaryHealthBonus: number;
 };
 
 type BattleSide = {
@@ -773,6 +775,8 @@ function normalizeBoard(value: unknown, turn: number): BattleUnit[] {
       keywords: keywords as Keyword[],
       stealthActive,
       spellDamage: asNumber(item.spellDamage, card?.spellDamage ?? 0),
+      temporaryAttackBonus: asNumber(item.temporaryAttackBonus, 0),
+      temporaryHealthBonus: asNumber(item.temporaryHealthBonus, 0),
       canAttack:
         typeof item.canAttack === "boolean"
           ? item.canAttack
@@ -4126,6 +4130,12 @@ function BoardUnit({
       )}
       <div className="board-unit__stats"><span>⚔ {unit.attack}</span><span>◆ {unit.health}</span></div>
       {unit.spellDamage > 0 && <span className="board-unit__spell-damage" title="法术伤害加成">✦ 法术 +{unit.spellDamage}</span>}
+      {(unit.temporaryAttackBonus !== 0 || unit.temporaryHealthBonus !== 0) && (
+        <span className="board-unit__temporary" title="回合结束时移除">
+          ◇ 临时 {unit.temporaryAttackBonus >= 0 ? "+" : ""}{unit.temporaryAttackBonus}/
+          {unit.temporaryHealthBonus >= 0 ? "+" : ""}{unit.temporaryHealthBonus}
+        </span>
+      )}
       {unit.canAttack && onSelect && <span className="board-unit__ready">READY</span>}
     </button>
   );
