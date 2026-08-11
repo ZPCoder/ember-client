@@ -2042,6 +2042,7 @@ export function GameApp({
   const [typeFilter, setTypeFilter] = useState("全部");
   const [rarityFilter, setRarityFilter] = useState("全部");
   const [traitFilter, setTraitFilter] = useState("全部");
+  const [keywordFilter, setKeywordFilter] = useState("全部");
   const [deckName, setDeckName] = useState("星火远征队");
   const [deckIds, setDeckIds] = useState<string[]>(() => [...STARTER_IDS]);
   const [editingDeckId, setEditingDeckId] = useState<string | null>(null);
@@ -2356,6 +2357,16 @@ export function GameApp({
     [],
   );
 
+  const keywordOptions = useMemo(
+    () => (Object.entries(KEYWORD_DEFINITIONS) as Array<[
+      Keyword,
+      (typeof KEYWORD_DEFINITIONS)[Keyword],
+    ]>)
+      .filter(([keyword]) => CATALOG.some((card) => card.keywords.includes(keyword)))
+      .map(([id, definition]) => ({ id, label: definition.label })),
+    [],
+  );
+
   const filteredCards = useMemo(() => {
     const needle = search.trim().toLocaleLowerCase("zh-CN");
     const matches = CATALOG.filter((card) => {
@@ -2379,7 +2390,8 @@ export function GameApp({
         (factionFilter === "全部" || card.faction === factionFilter) &&
         (typeFilter === "全部" || card.type === typeFilter) &&
         (rarityFilter === "全部" || card.rarity === rarityFilter) &&
-        (traitFilter === "全部" || card.traits.includes(traitFilter as Trait))
+        (traitFilter === "全部" || card.traits.includes(traitFilter as Trait)) &&
+        (keywordFilter === "全部" || card.keywords.includes(keywordFilter as Keyword))
       );
     });
 
@@ -2392,7 +2404,7 @@ export function GameApp({
     return Array.from({ length: longestBucket }, (_, index) =>
       factionBuckets.map((cards) => cards[index]).filter(Boolean),
     ).flat() as CatalogCard[];
-  }, [factionFilter, rarityFilter, search, traitFilter, typeFilter]);
+  }, [factionFilter, keywordFilter, rarityFilter, search, traitFilter, typeFilter]);
 
   const battleView = useMemo(() => battleFromRaw(battle), [battle]);
 
@@ -3254,13 +3266,16 @@ export function GameApp({
                   type={typeFilter}
                   rarity={rarityFilter}
                   trait={traitFilter}
+                  keyword={keywordFilter}
                   factions={factions}
                   traitOptions={traitOptions}
+                  keywordOptions={keywordOptions}
                   onSearch={setSearch}
                   onFaction={setFactionFilter}
                   onType={setTypeFilter}
                   onRarity={setRarityFilter}
                   onTrait={setTraitFilter}
+                  onKeyword={setKeywordFilter}
                   onAdd={addCard}
                   onOpenDeck={() => switchSection("deck")}
                 />
@@ -3615,13 +3630,16 @@ function CollectionSection({
   type,
   rarity,
   trait,
+  keyword,
   factions,
   traitOptions,
+  keywordOptions,
   onSearch,
   onFaction,
   onType,
   onRarity,
   onTrait,
+  onKeyword,
   onAdd,
   onOpenDeck,
 }: {
@@ -3633,17 +3651,20 @@ function CollectionSection({
   type: string;
   rarity: string;
   trait: string;
+  keyword: string;
   factions: string[];
   traitOptions: Array<{ id: Trait; label: string }>;
+  keywordOptions: Array<{ id: Keyword; label: string }>;
   onSearch: (value: string) => void;
   onFaction: (value: string) => void;
   onType: (value: string) => void;
   onRarity: (value: string) => void;
   onTrait: (value: string) => void;
+  onKeyword: (value: string) => void;
   onAdd: (card: CatalogCard) => void;
   onOpenDeck: () => void;
 }) {
-  const filterSignature = `${search}|${faction}|${type}|${rarity}|${trait}`;
+  const filterSignature = `${search}|${faction}|${type}|${rarity}|${trait}|${keyword}`;
   const [pagination, setPagination] = useState({ signature: filterSignature, count: 30 });
   const visibleCount = pagination.signature === filterSignature ? pagination.count : 30;
   const visibleCards = cards.slice(0, visibleCount);
@@ -3729,6 +3750,15 @@ function CollectionSection({
           <select value={trait} onChange={(event) => onTrait(event.target.value)}>
             <option value="全部">全部</option>
             {traitOptions.map((item) => (
+              <option value={item.id} key={item.id}>{item.label}</option>
+            ))}
+          </select>
+        </label>
+        <label className="filter-field">
+          <span>关键词</span>
+          <select value={keyword} onChange={(event) => onKeyword(event.target.value)}>
+            <option value="全部">全部</option>
+            {keywordOptions.map((item) => (
               <option value={item.id} key={item.id}>{item.label}</option>
             ))}
           </select>

@@ -1270,7 +1270,7 @@ button.resource-chip:hover {
 
 .collection-toolbar {
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) repeat(4, minmax(105px, 0.22fr));
+  grid-template-columns: minmax(220px, 1fr) repeat(5, minmax(105px, 0.22fr));
   gap: 10px;
   margin-bottom: 13px;
 }
@@ -2579,6 +2579,12 @@ button.game-card:not(:disabled):hover .game-card__artwork,
   animation: battle-screen-flash 760ms ease-out both;
 }
 
+.battlefield--fx-draw::after,
+.battlefield--fx-trade::after {
+  background: radial-gradient(circle at 50% 58%, rgba(113, 170, 255, 0.2), transparent 62%);
+  animation: battle-screen-flash 760ms ease-out both;
+}
+
 .battlefield--fx-win::after {
   background:
     radial-gradient(circle at 50% 46%, rgba(255, 218, 137, 0.24), transparent 42%),
@@ -2611,6 +2617,12 @@ button.game-card:not(:disabled):hover .game-card__artwork,
 .battle-fx--win {
   --fx-color: #78d8cc;
   --fx-soft: rgba(85, 185, 173, 0.25);
+}
+
+.battle-fx--draw,
+.battle-fx--trade {
+  --fx-color: #8bbcff;
+  --fx-soft: rgba(91, 145, 238, 0.28);
 }
 
 .battle-fx--ai,
@@ -2778,7 +2790,8 @@ button.game-card:not(:disabled):hover .game-card__artwork,
 .battle-fx--start .battle-fx__scan,
 .battle-fx--turn .battle-fx__scan,
 .battle-fx--draw .battle-fx__scan,
-.battle-fx--card .battle-fx__scan {
+.battle-fx--card .battle-fx__scan,
+.battle-fx--trade .battle-fx__scan {
   animation: battle-scan-line 800ms ease-out both;
 }
 
@@ -2788,7 +2801,9 @@ button.game-card:not(:disabled):hover .game-card__artwork,
 .battle-fx--heal .battle-fx__ring,
 .battle-fx--buff .battle-fx__ring,
 .battle-fx--transform .battle-fx__ring,
-.battle-fx--win .battle-fx__ring {
+.battle-fx--win .battle-fx__ring,
+.battle-fx--draw .battle-fx__ring,
+.battle-fx--trade .battle-fx__ring {
   animation: battle-ring-expand 820ms ease-out both;
 }
 
@@ -2813,6 +2828,8 @@ button.game-card:not(:disabled):hover .game-card__artwork,
 .battle-fx--transform .battle-fx__particles i,
 .battle-fx--shield .battle-fx__particles i,
 .battle-fx--destroy .battle-fx__particles i,
+.battle-fx--draw .battle-fx__particles i,
+.battle-fx--trade .battle-fx__particles i,
 .battle-fx--win .battle-fx__particles i {
   animation: battle-particle-burst 780ms ease-out both;
 }
@@ -2824,6 +2841,8 @@ button.game-card:not(:disabled):hover .game-card__artwork,
 .battle-fx--attack .battle-fx__banner,
 .battle-fx--shield .battle-fx__banner,
 .battle-fx--transform .battle-fx__banner,
+.battle-fx--draw .battle-fx__banner,
+.battle-fx--trade .battle-fx__banner,
 .battle-fx--destroy .battle-fx__banner,
 .battle-fx--win .battle-fx__banner,
 .battle-fx--loss .battle-fx__banner {
@@ -2841,6 +2860,8 @@ button.game-card:not(:disabled):hover .game-card__artwork,
 .battle-fx--heal .battle-fx__vignette,
 .battle-fx--buff .battle-fx__vignette,
 .battle-fx--transform .battle-fx__vignette,
+.battle-fx--draw .battle-fx__vignette,
+.battle-fx--trade .battle-fx__vignette,
 .battle-fx--win .battle-fx__vignette,
 .battle-fx--loss .battle-fx__vignette {
   animation: battle-vignette-pulse 840ms ease-out both;
