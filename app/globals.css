@@ -3627,6 +3627,41 @@ button.hero-core {
   font-size: 9px;
 }
 
+.hand-card__trade {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  margin-top: 4px;
+  padding: 4px 5px;
+  border: 1px solid rgba(134, 183, 255, 0.36);
+  border-radius: 5px;
+  color: #a8caff;
+  background: rgba(31, 65, 104, 0.55);
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: 140ms ease;
+}
+
+.hand-card__trade:hover:not(:disabled) {
+  border-color: rgba(168, 202, 255, 0.78);
+  background: rgba(45, 91, 146, 0.72);
+  box-shadow: 0 0 14px rgba(89, 152, 240, 0.22);
+}
+
+.hand-card__trade:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
+.hand-card__trade span {
+  font-size: 10px;
+  line-height: 1;
+}
+
 .deck-counter {
   grid-row: 3;
   align-self: end;

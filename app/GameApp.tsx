@@ -60,6 +60,7 @@ type CatalogCard = {
   health?: number;
   durability?: number;
   spellDamage?: number;
+  tradeable?: boolean;
   target: CardTargetRule;
   keywords: Keyword[];
   traits: Trait[];
@@ -387,6 +388,7 @@ function cardFromRaw(raw: Record<string, unknown>): CatalogCard {
       typeof raw.spellDamage === "number"
         ? asNumber(raw.spellDamage)
         : undefined,
+    tradeable: raw.tradeable === true,
     target: asString(raw.target, "none") as CardTargetRule,
     keywords: Array.isArray(raw.keywords)
       ? (raw.keywords.map(String) as Keyword[])
@@ -1268,6 +1270,7 @@ function battleEffectPriority(kind: BattleEffectKind) {
       return 70;
     case "card":
       return 60;
+    case "trade":
     case "draw":
       return 50;
   }
@@ -1289,6 +1292,10 @@ const BATTLE_TONES: Record<BattleSoundCue, readonly BattleTone[]> = {
   ],
   draw: [
     { frequency: 520, endFrequency: 780, duration: 0.12, gain: 0.026, wave: "triangle" },
+  ],
+  trade: [
+    { frequency: 260, endFrequency: 520, duration: 0.16, gain: 0.028, wave: "triangle" },
+    { frequency: 780, endFrequency: 1040, duration: 0.18, delay: 0.08, gain: 0.022, wave: "sine" },
   ],
   card: [
     { frequency: 280, endFrequency: 540, duration: 0.18, gain: 0.035, wave: "triangle" },
@@ -2858,6 +2865,32 @@ export function GameApp({
     if (next) setBattleMessage(`已部署「${card?.name ?? "战术卡"}」。`);
   };
 
+  const tradeCard = (handCard: BattleSide["hand"][number]) => {
+    if (battleEffectLockRef.current) {
+      setBattleMessage("战况回放中，请等待行动窗口稳定。");
+      return;
+    }
+    if (!battleView || battleView.status !== "playing" || battleView.currentPlayer !== "player") {
+      setBattleMessage("当前不是你的行动窗口。");
+      return;
+    }
+    const card = CARD_BY_ID.get(handCard.cardId);
+    if (!card?.tradeable) {
+      setBattleMessage("这张卡牌不可交易。");
+      return;
+    }
+    if (battleView.player.mana < 1) {
+      setBattleMessage("交易需要 1 点能量。");
+      return;
+    }
+    const next = issueCommand({ type: "trade-card", player: 0, cardId: handCard.cardId });
+    if (next) {
+      setPendingCard(null);
+      setSelectedAttacker(null);
+      setBattleMessage(`已交易「${card.name}」，抽取一张替代牌。`);
+    }
+  };
+
   const chooseDiscover = (cardId: string) => {
     if (battleEffectLockRef.current) {
       setBattleMessage("战况回放中，请等待选择窗口稳定。");
@@ -3267,6 +3300,7 @@ export function GameApp({
                   onStart={startBattle}
                   onRematch={requestOnlineRematch}
                   onPlayCard={playCard}
+                  onTradeCard={tradeCard}
                   onChooseDiscover={chooseDiscover}
                   onChooseOne={chooseOne}
                   onToggleMulligan={toggleMulliganCard}
@@ -4309,6 +4343,7 @@ function BattleSection({
   onStart,
   onRematch,
   onPlayCard,
+  onTradeCard,
   onChooseDiscover,
   onChooseOne,
   onToggleMulligan,
@@ -4351,6 +4386,7 @@ function BattleSection({
   onStart: () => void;
   onRematch: () => void;
   onPlayCard: (card: BattleSide["hand"][number]) => void;
+  onTradeCard: (card: BattleSide["hand"][number]) => void;
   onChooseDiscover: (cardId: string) => void;
   onChooseOne: (optionIndex: number) => void;
   onToggleMulligan: (index: number) => void;
@@ -4687,6 +4723,17 @@ function BattleSection({
                       actionLabel={mulliganActive ? `${selectedForMulligan ? "保留" : "更换"}${card.name}` : `使用${card.name}`}
                       disabled={disabled}
                     />
+                    {!mulliganActive && card.tradeable && (
+                      <button
+                        className="hand-card__trade"
+                        type="button"
+                        disabled={!playerCanAct || battle.player.mana < 1}
+                        onClick={() => onTradeCard(handCard)}
+                        aria-label={`交易${card.name}，消耗 1 点能量`}
+                      >
+                        <span>↔</span> 交易 · 1
+                      </button>
+                    )}
                   </div>
                 );
               })}
