@@ -80,6 +80,8 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(game, /hero-core__target-hint/);
   assert.match(game, /target-prompt__preview/);
   assert.match(game, /取消攻击目标选择/);
+  assert.match(game, /hero-core__health-bar/);
+  assert.match(game, /hero-core__mobile-health/);
   assert.match(styles, /\.turn-clock/);
   assert.match(styles, /\.board-slot/);
   assert.match(styles, /battle-target-pulse/);

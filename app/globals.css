@@ -3039,6 +3039,10 @@ button.hero-core {
   background: var(--cyan-soft);
 }
 
+.hero-core__mobile-health {
+  display: none;
+}
+
 .hero-core--enemy .hero-core__portrait {
   color: var(--ember-bright);
   background: rgba(228, 109, 63, 0.11);
@@ -3051,6 +3055,35 @@ button.hero-core {
 
 .hero-core__copy strong {
   font-size: 10px;
+}
+
+.hero-core__health-bar {
+  display: block;
+  width: min(118px, 100%);
+  height: 4px;
+  margin-top: 4px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(228, 109, 63, 0.16);
+}
+
+.hero-core__health-bar > i {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #d9684e, #f2b66d);
+  box-shadow: 0 0 9px rgba(228, 109, 63, 0.36);
+  transition: width 260ms ease;
+}
+
+.hero-core:not(.hero-core--enemy) .hero-core__health-bar {
+  background: rgba(85, 185, 173, 0.15);
+}
+
+.hero-core:not(.hero-core--enemy) .hero-core__health-bar > i {
+  background: linear-gradient(90deg, #3faaa0, #a1e2b7);
+  box-shadow: 0 0 9px rgba(85, 185, 173, 0.36);
 }
 
 .hero-core__copy small {
@@ -5744,6 +5777,24 @@ button.hero-core {
 
   .hero-core__copy {
     display: none;
+  }
+
+  .hero-core__mobile-health {
+    display: grid;
+    min-width: 34px;
+    justify-items: center;
+    color: var(--paper-soft);
+    line-height: 1;
+  }
+
+  .hero-core__mobile-health strong {
+    font-size: 14px;
+  }
+
+  .hero-core__mobile-health small {
+    margin-top: 3px;
+    color: #e7bd7a;
+    font-size: 6px;
   }
 
   .board-row {

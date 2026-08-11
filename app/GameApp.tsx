@@ -4244,9 +4244,23 @@ function HeroCore({
   const core = (
     <>
       <span className="hero-core__portrait"><Icon name={enemy ? "bot" : "user"} size={30} /></span>
+      <span className="hero-core__mobile-health" aria-label={`${enemy ? "敌方" : "我方"}核心生命 ${side.health}/${side.maxHealth}`}>
+        <strong>{side.health}</strong>
+        {side.armor > 0 && <small>护甲 {side.armor}</small>}
+      </span>
       <span className="hero-core__copy">
         <small>{enemy ? enemyLabel ?? "镜像演算体 K-7" : "远征指挥官"}</small>
         <strong>{side.health}<i> / {side.maxHealth}</i></strong>
+        <span
+          className="hero-core__health-bar"
+          role="progressbar"
+          aria-label={`${enemy ? "敌方" : "我方"}核心生命 ${side.health}/${side.maxHealth}`}
+          aria-valuemin={0}
+          aria-valuemax={side.maxHealth}
+          aria-valuenow={Math.max(0, side.health)}
+        >
+          <i style={{ width: `${Math.min(100, Math.max(0, (side.health / Math.max(1, side.maxHealth)) * 100))}%` }} />
+        </span>
         {side.armor > 0 && <em>护甲 {side.armor}</em>}
         {side.weapon && (
           <span className="hero-core__weapon" aria-label={`装备 ${side.weapon.name}，攻击 ${side.weapon.attack}，耐久 ${side.weapon.durability}/${side.weapon.maxDurability}`}>
