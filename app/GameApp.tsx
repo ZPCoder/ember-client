@@ -1320,8 +1320,16 @@ function useBattleAudio() {
 
 function useWebPvp(displayName: string) {
   const socketRef = useRef<WebSocket | null>(null);
+  const transportRef = useRef<"websocket" | "poll" | null>(null);
   const connectionIdRef = useRef(0);
   const incomingIdRef = useRef(0);
+  const fallbackStartedRef = useRef<number | null>(null);
+  const fallbackTimerRef = useRef<number | null>(null);
+  const pollClientRef = useRef<string | null>(null);
+  const pollCursorRef = useRef(0);
+  const pollEndpointRef = useRef<string | null>(null);
+  const pollTimerRef = useRef<number | null>(null);
+  const pollInFlightRef = useRef(false);
   const [state, setState] = useState<PvpState>({
     status: "offline",
     url: getDefaultPvpUrl(),
@@ -1336,8 +1344,110 @@ function useWebPvp(displayName: string) {
   });
   const [incoming, setIncoming] = useState<PvpIncoming | null>(null);
 
+  const handleMessage = useCallback((connectionId: number, raw: unknown) => {
+    if (connectionIdRef.current !== connectionId) return;
+    let message: Record<string, unknown>;
+    try {
+      const parsedMessage: unknown = typeof raw === "string" ? JSON.parse(raw) : raw;
+      if (!parsedMessage || typeof parsedMessage !== "object") return;
+      message = parsedMessage as Record<string, unknown>;
+    } catch {
+      return;
+    }
+    const type = String(message.type ?? "");
+    if (type === "welcome") {
+      setState((current) => ({ ...current, playerId: asString(message.playerId), message: "大厅已连接，创建或加入房间。" }));
+      return;
+    }
+    if (type === "room_created" || type === "room_joined") {
+      const roomCode = asString(message.room);
+      setState((current) => ({
+        ...current,
+        status: "room",
+        roomCode: roomCode || null,
+        role: type === "room_created" ? "host" : "guest",
+        localReady: false,
+        remoteReady: false,
+        remoteReadyDeck: null,
+        message: asString(message.message, type === "room_created" ? "房间已创建，等待对手加入。" : "已加入房间，等待房主准备。"),
+      }));
+      return;
+    }
+    if (type === "peer_joined") {
+      setState((current) => ({ ...current, peerName: asString(message.peerName, "对手"), status: "room", message: `${asString(message.peerName, "对手")} 已加入房间。` }));
+      return;
+    }
+    if (type === "peer_left") {
+      setState((current) => ({ ...current, peerName: null, remoteReady: false, remoteReadyDeck: null, status: "room", message: "对手已离开房间。" }));
+      return;
+    }
+    if (type === "room_state") {
+      const payload = message.payload;
+      const players = payload && typeof payload === "object" && Array.isArray((payload as Record<string, unknown>).players)
+        ? (payload as { players: Array<Record<string, unknown>> }).players
+        : [];
+      setState((current) => {
+        const peer = players.find((player) => asString(player.id) !== current.playerId);
+        return peer
+          ? { ...current, peerName: asString(peer.name, "对手"), status: current.localReady ? "ready" : "room" }
+          : current;
+      });
+      return;
+    }
+    if (type === "error") {
+      setState((current) => ({ ...current, status: "error", message: asString(message.message, "联机大厅返回错误。") }));
+      return;
+    }
+    if (type !== "action") return;
+    const action = asString(message.action);
+    const payload = message.payload && typeof message.payload === "object" ? message.payload as Record<string, unknown> : {};
+    if (action === "ready") {
+      const remoteDeck = Array.isArray(payload.deckIds) ? payload.deckIds.map(String) : [];
+      setState((current) => ({ ...current, remoteReady: true, remoteReadyDeck: remoteDeck, status: current.localReady ? "ready" : current.status, message: `${asString(message.peerName, "对手")} 已准备。` }));
+      return;
+    }
+    if (action === "match_start") {
+      const decks = Array.isArray(payload.decks) && payload.decks.length === 2
+        ? payload.decks.map((deck) => Array.isArray(deck) ? deck.map(String) : []) as [string[], string[]]
+        : null;
+      const seed = Number(payload.seed);
+      if (!decks || !Number.isFinite(seed)) return;
+      setState((current) => ({ ...current, status: "playing", message: "双方已准备，联机演算开始。" }));
+      setIncoming({ id: ++incomingIdRef.current, type: "match-start", payload: { seed, decks } });
+      return;
+    }
+    if (action === "command") {
+      const command = payload.command;
+      if (!command || typeof command !== "object" || typeof (command as Record<string, unknown>).type !== "string") return;
+      setIncoming({ id: ++incomingIdRef.current, type: "command", command: command as BattleCommand });
+    }
+  }, []);
+
+  const stopPolling = useCallback(() => {
+    if (pollTimerRef.current !== null) {
+      window.clearInterval(pollTimerRef.current);
+      pollTimerRef.current = null;
+    }
+    const clientId = pollClientRef.current;
+    const endpoint = pollEndpointRef.current;
+    pollClientRef.current = null;
+    pollEndpointRef.current = null;
+    pollCursorRef.current = 0;
+    pollInFlightRef.current = false;
+    if (clientId && endpoint) {
+      void fetch(`${endpoint}?clientId=${encodeURIComponent(clientId)}`, { method: "DELETE", keepalive: true }).catch(() => undefined);
+    }
+  }, []);
+
   const disconnect = useCallback((message = "已离开联机大厅。") => {
     connectionIdRef.current += 1;
+    fallbackStartedRef.current = null;
+    if (fallbackTimerRef.current !== null) {
+      window.clearTimeout(fallbackTimerRef.current);
+      fallbackTimerRef.current = null;
+    }
+    transportRef.current = null;
+    stopPolling();
     const socket = socketRef.current;
     socketRef.current = null;
     if (socket && socket.readyState !== WebSocket.CLOSED) socket.close();
@@ -1354,7 +1464,68 @@ function useWebPvp(displayName: string) {
       remoteReadyDeck: null,
       message,
     }));
+  }, [stopPolling]);
+
+  const startPolling = useCallback(async (rawUrl: string, connectionId: number) => {
+    if (connectionIdRef.current !== connectionId || fallbackStartedRef.current !== connectionId) return;
+    const parsed = new URL(rawUrl);
+    const protocol = parsed.protocol === "wss:" ? "https:" : "http:";
+    const endpoint = `${protocol}//${parsed.host}/api/pvp-poll`;
+    transportRef.current = "poll";
+    socketRef.current = null;
+    pollEndpointRef.current = endpoint;
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "connect", name: displayName || "旅者" }),
+      });
+      const payload = await response.json() as Record<string, unknown>;
+      if (!response.ok || payload.ok !== true || typeof payload.clientId !== "string") throw new Error("poll connect failed");
+      if (connectionIdRef.current !== connectionId || transportRef.current !== "poll") return;
+      pollClientRef.current = payload.clientId;
+      pollCursorRef.current = Number(payload.cursor) || 0;
+      setState((current) => ({ ...current, status: "connected", url: rawUrl, message: "大厅已连接（HTTP 兼容模式），创建或加入房间。" }));
+      if (Array.isArray(payload.messages)) payload.messages.forEach((message) => handleMessage(connectionId, message));
+      const pollOnce = async () => {
+        const clientId = pollClientRef.current;
+        if (!clientId || pollInFlightRef.current || connectionIdRef.current !== connectionId || transportRef.current !== "poll") return;
+        pollInFlightRef.current = true;
+        try {
+          const result = await fetch(`${endpoint}?clientId=${encodeURIComponent(clientId)}&cursor=${pollCursorRef.current}`, { cache: "no-store" });
+          const next = await result.json() as Record<string, unknown>;
+          if (!result.ok || next.ok !== true) throw new Error("poll session expired");
+          pollCursorRef.current = Number(next.cursor) || pollCursorRef.current;
+          if (Array.isArray(next.messages)) next.messages.forEach((message) => handleMessage(connectionId, message));
+        } catch {
+          if (connectionIdRef.current === connectionId && transportRef.current === "poll") {
+            transportRef.current = null;
+            stopPolling();
+            setState((current) => ({ ...current, status: "error", message: "联机大厅连接已断开，请重新连接。" }));
+          }
+        } finally {
+          pollInFlightRef.current = false;
+        }
+      };
+      pollTimerRef.current = window.setInterval(() => void pollOnce(), 700);
+    } catch {
+      if (connectionIdRef.current !== connectionId) return;
+      transportRef.current = null;
+      stopPolling();
+      setState((current) => ({ ...current, status: "error", message: "联机大厅连接失败，请稍后重试。" }));
+    }
+  }, [displayName, handleMessage, stopPolling]);
+
+  const canFallbackToPolling = useCallback((parsed: URL) => {
+    const isLocal = parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1";
+    return !isLocal && parsed.pathname === "/api/pvp";
   }, []);
+
+  const tryStartPolling = useCallback((rawUrl: string, parsed: URL, connectionId: number) => {
+    if (!canFallbackToPolling(parsed) || fallbackStartedRef.current === connectionId) return;
+    fallbackStartedRef.current = connectionId;
+    void startPolling(rawUrl, connectionId);
+  }, [canFallbackToPolling, startPolling]);
 
   const connect = useCallback((rawUrl: string) => {
     const url = rawUrl.trim();
@@ -1373,6 +1544,8 @@ function useWebPvp(displayName: string) {
     disconnect("正在连接联机大厅…");
     const connectionId = connectionIdRef.current + 1;
     connectionIdRef.current = connectionId;
+    transportRef.current = "websocket";
+    fallbackStartedRef.current = null;
     setState((current) => ({
       ...current,
       status: "connecting",
@@ -1383,99 +1556,62 @@ function useWebPvp(displayName: string) {
     socketRef.current = socket;
     socket.onopen = () => {
       if (connectionIdRef.current !== connectionId) return;
+      if (fallbackTimerRef.current !== null) {
+        window.clearTimeout(fallbackTimerRef.current);
+        fallbackTimerRef.current = null;
+      }
+      if (transportRef.current !== "websocket") return;
       socket.send(JSON.stringify({ type: "hello", name: displayName || "旅者" }));
       setState((current) => ({ ...current, status: "connected", message: "大厅已连接，创建或加入房间。" }));
     };
     socket.onmessage = (event) => {
-      if (connectionIdRef.current !== connectionId) return;
-      let message: Record<string, unknown>;
-      try {
-        const parsedMessage: unknown = JSON.parse(String(event.data));
-        if (!parsedMessage || typeof parsedMessage !== "object") return;
-        message = parsedMessage as Record<string, unknown>;
-      } catch {
-        return;
-      }
-      const type = String(message.type ?? "");
-      if (type === "welcome") {
-        setState((current) => ({ ...current, playerId: asString(message.playerId), message: "大厅已连接，创建或加入房间。" }));
-        return;
-      }
-      if (type === "room_created" || type === "room_joined") {
-        const roomCode = asString(message.room);
-        setState((current) => ({
-          ...current,
-          status: "room",
-          roomCode: roomCode || null,
-          role: type === "room_created" ? "host" : "guest",
-          localReady: false,
-          remoteReady: false,
-          remoteReadyDeck: null,
-          message: asString(message.message, type === "room_created" ? "房间已创建，等待对手加入。" : "已加入房间，等待房主准备。"),
-        }));
-        return;
-      }
-      if (type === "peer_joined") {
-        setState((current) => ({ ...current, peerName: asString(message.peerName, "对手"), status: "room", message: `${asString(message.peerName, "对手")} 已加入房间。` }));
-        return;
-      }
-      if (type === "peer_left") {
-        setState((current) => ({ ...current, peerName: null, remoteReady: false, remoteReadyDeck: null, status: "room", message: "对手已离开房间。" }));
-        return;
-      }
-      if (type === "room_state") {
-        const payload = message.payload;
-        const players = payload && typeof payload === "object" && Array.isArray((payload as Record<string, unknown>).players)
-          ? (payload as { players: Array<Record<string, unknown>> }).players
-          : [];
-        setState((current) => {
-          const peer = players.find((player) => asString(player.id) !== current.playerId);
-          return peer
-            ? { ...current, peerName: asString(peer.name, "对手"), status: current.localReady ? "ready" : "room" }
-            : current;
-        });
-        return;
-      }
-      if (type === "error") {
-        setState((current) => ({ ...current, status: "error", message: asString(message.message, "联机大厅返回错误。") }));
-        return;
-      }
-      if (type !== "action") return;
-      const action = asString(message.action);
-      const payload = message.payload && typeof message.payload === "object" ? message.payload as Record<string, unknown> : {};
-      if (action === "ready") {
-        const remoteDeck = Array.isArray(payload.deckIds) ? payload.deckIds.map(String) : [];
-        setState((current) => ({ ...current, remoteReady: true, remoteReadyDeck: remoteDeck, status: current.localReady ? "ready" : current.status, message: `${asString(message.peerName, "对手")} 已准备。` }));
-        return;
-      }
-      if (action === "match_start") {
-        const decks = Array.isArray(payload.decks) && payload.decks.length === 2
-          ? payload.decks.map((deck) => Array.isArray(deck) ? deck.map(String) : []) as [string[], string[]]
-          : null;
-        const seed = Number(payload.seed);
-        if (!decks || !Number.isFinite(seed)) return;
-        setState((current) => ({ ...current, status: "playing", message: "双方已准备，联机演算开始。" }));
-        setIncoming({ id: ++incomingIdRef.current, type: "match-start", payload: { seed, decks } });
-        return;
-      }
-      if (action === "command") {
-        const command = payload.command;
-        if (!command || typeof command !== "object" || typeof (command as Record<string, unknown>).type !== "string") return;
-        setIncoming({ id: ++incomingIdRef.current, type: "command", command: command as BattleCommand });
-      }
+      handleMessage(connectionId, event.data);
     };
     socket.onerror = () => {
       if (connectionIdRef.current !== connectionId) return;
-      setState((current) => ({ ...current, status: "error", message: "联机大厅连接失败，请确认房间服务器地址。" }));
+      if (canFallbackToPolling(parsed)) {
+        setState((current) => ({ ...current, message: "WebSocket 不可用，正在切换兼容联机模式…" }));
+        tryStartPolling(url, parsed, connectionId);
+      } else {
+        setState((current) => ({ ...current, status: "error", message: "联机大厅连接失败，请确认房间服务器地址。" }));
+      }
     };
     socket.onclose = () => {
       if (connectionIdRef.current !== connectionId) return;
+      if (transportRef.current !== "websocket") return;
+      if (canFallbackToPolling(parsed)) {
+        tryStartPolling(url, parsed, connectionId);
+        return;
+      }
       socketRef.current = null;
       setState((current) => ({ ...current, status: "offline", roomCode: null, role: null, peerName: null, localReady: false, remoteReady: false, remoteReadyDeck: null, message: "联机大厅连接已断开。" }));
     };
-  }, [disconnect, displayName]);
+    if (canFallbackToPolling(parsed)) {
+      fallbackTimerRef.current = window.setTimeout(() => {
+        fallbackTimerRef.current = null;
+        if (connectionIdRef.current === connectionId && transportRef.current === "websocket" && socket.readyState !== WebSocket.OPEN) {
+          tryStartPolling(url, parsed, connectionId);
+          socket.close();
+        }
+      }, 1800);
+    }
+  }, [canFallbackToPolling, disconnect, displayName, handleMessage, tryStartPolling]);
 
   const send = useCallback((message: Record<string, unknown>) => {
+    if (transportRef.current === "poll") {
+      const clientId = pollClientRef.current;
+      const endpoint = pollEndpointRef.current;
+      if (!clientId || !endpoint) {
+        setState((current) => ({ ...current, status: "error", message: "联机连接尚未就绪。" }));
+        return false;
+      }
+      void fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clientId, type: "message", message }),
+      }).catch(() => undefined);
+      return true;
+    }
     const socket = socketRef.current;
     if (!socket || socket.readyState !== WebSocket.OPEN) {
       setState((current) => ({ ...current, status: "error", message: "联机连接尚未就绪。" }));
