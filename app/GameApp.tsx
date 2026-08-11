@@ -4947,8 +4947,24 @@ function BattleSection({
   const selectedAttackerUnit = selectedAttacker
     ? battle.player.board.find((unit) => unit.id === selectedAttacker)
     : undefined;
+  const traitTierForBoard = (board: BattleUnit[], trait: Trait) => {
+    const cards = board
+      .map((unit) => CARD_BY_ID.get(unit.cardId))
+      .filter((card): card is CatalogCard => Boolean(card));
+    return getTraitStatuses(cards).find((status) => status.id === trait)?.tier ?? 0;
+  };
+  const playerSwiftTier = traitTierForBoard(battle.player.board, "swift");
+  const playerBulwarkTier = traitTierForBoard(battle.player.board, "bulwark");
+  const enemyBulwarkTier = traitTierForBoard(battle.ai.board, "bulwark");
+  const selectedAttackerCard = selectedAttackerUnit
+    ? CARD_BY_ID.get(selectedAttackerUnit.cardId)
+    : undefined;
+  const selectedAttackerPoisonous = Boolean(selectedAttackerUnit?.keywords.includes("poisonous"));
+  const selectedAttackerHasBulwark = Boolean(selectedAttackerCard?.traits.includes("bulwark"));
   const selectedAttackValue = selectedAttacker
-    ? selectedAttackerUnit?.attack ?? battle.player.weapon?.attack ?? 0
+    ? selectedAttackerUnit
+      ? selectedAttackerUnit.attack + (selectedAttackerCard?.traits.includes("swift") ? playerSwiftTier : 0)
+      : battle.player.weapon?.attack ?? 0
     : 0;
   const rushOnlyAttack = Boolean(selectedAttackerUnit?.rushOnly);
   const enemyHeroTargetable = selectedAttacker
@@ -4965,11 +4981,39 @@ function BattleSection({
     if (!selectedAttacker || pendingCard || pendingHeroPower || !enemyUnitTargetable(unit)) {
       return undefined;
     }
-    const remainingHealth = Math.max(0, unit.health - selectedAttackValue);
-    return remainingHealth > 0 ? `预计剩 ${remainingHealth}` : "预计击破";
+    const targetCard = CARD_BY_ID.get(unit.cardId);
+    const hasShield = unit.keywords.includes("shield");
+    const reduction = targetCard?.traits.includes("bulwark") ? enemyBulwarkTier : 0;
+    const resolvedDamage = hasShield
+      ? 0
+      : Math.min(unit.health, Math.max(1, selectedAttackValue - reduction));
+    const poisoned = selectedAttackerPoisonous && resolvedDamage > 0;
+    const remainingHealth = poisoned ? 0 : Math.max(0, unit.health - resolvedDamage);
+    const outcome = hasShield
+      ? "先破护盾"
+      : remainingHealth > 0
+        ? `预计剩 ${remainingHealth}`
+        : "预计击破";
+    const retaliation = remainingHealth > 0
+      ? selectedAttackerUnit
+        ? selectedAttackerUnit.keywords.includes("shield")
+          ? 0
+          : Math.min(
+              selectedAttackerUnit.health,
+              Math.max(1, unit.attack - (selectedAttackerHasBulwark ? playerBulwarkTier : 0)),
+            )
+        : Math.min(battle.player.health, Math.max(0, unit.attack - battle.player.armor))
+      : 0;
+    return retaliation > 0 ? `${outcome} · 反击 −${retaliation}` : outcome;
   };
   const targetPreviewForHero = selectedAttacker && !pendingCard && !pendingHeroPower && enemyHeroTargetable
-    ? `预计 −${selectedAttackValue} 核心`
+    ? (() => {
+        const armorAbsorbed = Math.min(battle.ai.armor, selectedAttackValue);
+        const healthDamage = Math.min(battle.ai.health, Math.max(0, selectedAttackValue - armorAbsorbed));
+        return armorAbsorbed > 0
+          ? `预计破甲 ${armorAbsorbed} · −${healthDamage}`
+          : `预计 −${healthDamage} 核心`;
+      })()
     : undefined;
   return (
     <section className="screen screen--battle battle-room" aria-labelledby="battle-room-title">
@@ -5368,7 +5412,7 @@ function BattleSection({
             </div>
           )}
           {(selectedAttacker || pendingCard || pendingHeroPower) && (
-            <div className="target-prompt">
+            <div className="target-prompt" role="status" aria-live="polite">
               <Icon name="swords" />
               <span>
                 <strong>

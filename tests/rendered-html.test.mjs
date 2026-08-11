@@ -81,6 +81,9 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(game, /board-unit__target-preview/);
   assert.match(game, /hero-core__target-preview/);
   assert.match(game, /target-prompt__preview/);
+  assert.match(game, /预计破甲/);
+  assert.match(game, /先破护盾/);
+  assert.match(game, /反击 −/);
   assert.match(game, /取消攻击目标选择/);
   assert.match(game, /hero-core__health-bar/);
   assert.match(game, /hero-core__mobile-health/);
@@ -95,6 +98,8 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(styles, /battle-target-pulse/);
   assert.match(styles, /battle-target-impact/);
   assert.match(styles, /board-unit__target-preview/);
+  assert.match(styles, /\.screen\.battle-room/);
+  assert.match(styles, /@keyframes battle-room-enter/);
   assert.match(styles, /\.battlefield__fx-layer/);
   assert.match(styles, /battle-banner-enter 840ms/);
   assert.match(styles, /@keyframes battle-lunge-player/);

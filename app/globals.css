@@ -481,6 +481,13 @@ button.resource-chip:hover {
   animation: screen-enter 240ms ease both;
 }
 
+/* Keep the mobile action dock pinned to the viewport. A transform animation
+ * on an ancestor would otherwise turn its fixed position into page-relative
+ * positioning on phones. */
+.screen.battle-room {
+  animation: battle-room-enter 240ms ease both;
+}
+
 .section-heading {
   display: flex;
   align-items: flex-end;
@@ -5199,6 +5206,12 @@ button.hero-core {
   from {
     opacity: 0;
     transform: translateY(7px);
+  }
+}
+
+@keyframes battle-room-enter {
+  from {
+    opacity: 0;
   }
 }
 
