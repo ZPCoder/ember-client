@@ -3644,6 +3644,46 @@ button.hero-core {
   display: none;
 }
 
+/* A hand card opens into a readable Hearthstone-style preview on pointer
+ * devices, while touch layouts keep the compact fan to preserve room for the
+ * board. The description is rendered in the DOM so keyboard users can still
+ * inspect the card with the same focus treatment. */
+@media (hover: hover) and (min-width: 901px) {
+  .hand-card:focus-within,
+  .hand-card:hover {
+    z-index: 12;
+  }
+
+  .hand-card:focus-within .game-card,
+  .hand-card:hover .game-card {
+    min-height: 242px;
+    transform: translateY(-10px) scale(1.035);
+    box-shadow: 0 22px 42px rgba(0, 0, 0, 0.42), 0 0 0 1px color-mix(in srgb, var(--card-faction) 52%, transparent);
+  }
+
+  .hand-card:focus-within .game-card__visual,
+  .hand-card:hover .game-card__visual {
+    min-height: 110px;
+  }
+
+  .hand-card:focus-within .game-card__tags,
+  .hand-card:hover .game-card__tags {
+    display: flex;
+    max-height: 36px;
+    overflow: hidden;
+  }
+
+  .hand-card:focus-within .game-card__body > p,
+  .hand-card:hover .game-card__body > p {
+    display: block;
+    min-height: 0;
+    margin: 8px 0 10px;
+    color: #bcc8c0;
+    font-size: 9px;
+    line-height: 1.45;
+  }
+}
+
 .hand-card .game-card__meta h3 {
   font-size: 9px;
 }

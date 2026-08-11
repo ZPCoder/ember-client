@@ -1085,6 +1085,7 @@ function CardTile({
   owned,
   countInDeck,
   compact = false,
+  showDescription = false,
   action,
   actionLabel,
   disabled = false,
@@ -1093,6 +1094,7 @@ function CardTile({
   owned?: number;
   countInDeck?: number;
   compact?: boolean;
+  showDescription?: boolean;
   action?: () => void;
   actionLabel?: string;
   disabled?: boolean;
@@ -1154,7 +1156,7 @@ function CardTile({
             );
           })}
         </div>
-        {!compact && <p>{card.description}</p>}
+        {(!compact || showDescription) && <p>{card.description}</p>}
         <div className="game-card__footer">
           {card.type === "unit" ? (
             <div className="game-card__stats" aria-label={`攻击 ${card.attack ?? 0}，生命 ${card.health ?? 0}`}>
@@ -4755,6 +4757,7 @@ function BattleSection({
                     <CardTile
                       card={card}
                       compact
+                      showDescription
                       action={() => mulliganActive ? onToggleMulligan(handIndex) : onPlayCard(handCard)}
                       actionLabel={mulliganActive ? `${selectedForMulligan ? "保留" : "更换"}${card.name}` : `使用${card.name}`}
                       disabled={disabled}
