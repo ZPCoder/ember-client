@@ -1517,6 +1517,10 @@ button.game-card:not(:disabled):hover .game-card__artwork,
   color: var(--ember-bright);
 }
 
+.card-sigil--weapon .card-sigil__glyph {
+  color: #f0bd67;
+}
+
 .card-sigil__orbit {
   position: absolute;
   border: 1px solid rgba(239, 228, 199, 0.18);
@@ -1768,7 +1772,7 @@ button.game-card:not(:disabled):hover .game-card__artwork,
 
 .deck-profile {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 1px;
   margin: 0 14px 14px;
   overflow: hidden;
@@ -2974,6 +2978,18 @@ button.hero-core {
   letter-spacing: 0.06em;
 }
 
+.hero-core__weapon {
+  display: block;
+  max-width: 150px;
+  margin-top: 3px;
+  overflow: hidden;
+  color: #e6ba79;
+  font-size: 7px;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .hero-core__health {
   display: inline-flex;
   align-items: center;
@@ -3079,6 +3095,61 @@ button.hero-core {
 .hero-power-button strong,
 .hero-power-button small {
   display: block;
+}
+
+.weapon-attack-button {
+  display: inline-flex;
+  min-width: 112px;
+  grid-column: 1 / -1;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  padding: 7px 8px;
+  border: 1px solid rgba(228, 164, 80, 0.38);
+  border-radius: 10px;
+  color: #fff1d2;
+  background: rgba(148, 93, 35, 0.18);
+  text-align: left;
+  transition: border-color 180ms ease, background 180ms ease, opacity 180ms ease;
+}
+
+.weapon-attack-button:not(:disabled):hover,
+.weapon-attack-button--selected {
+  border-color: rgba(255, 202, 111, 0.82);
+  background: rgba(183, 113, 39, 0.32);
+}
+
+.weapon-attack-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
+.weapon-attack-button__icon {
+  display: grid;
+  width: 25px;
+  height: 25px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  color: #ffd38c;
+  background: rgba(228, 164, 80, 0.2);
+  font-size: 13px;
+}
+
+.weapon-attack-button strong,
+.weapon-attack-button small {
+  display: block;
+}
+
+.weapon-attack-button strong {
+  font-size: 9px;
+}
+
+.weapon-attack-button small {
+  margin-top: 2px;
+  color: #bba180;
+  font-size: 7px;
+  line-height: 1.2;
 }
 
 .hero-power-button strong {
