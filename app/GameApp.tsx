@@ -4398,6 +4398,7 @@ function HeroCore({
   targetLabel,
   effect,
   impact,
+  targetPreview,
 }: {
   side: BattleSide;
   active: boolean;
@@ -4408,6 +4409,7 @@ function HeroCore({
   targetLabel?: string;
   effect?: BattleHeroEffect;
   impact?: BattleVisualEffect;
+  targetPreview?: string;
 }) {
   const effectClass = effect ? `hero-core--${effect}` : "";
   const impactText = battleImpactText(impact);
@@ -4441,6 +4443,7 @@ function HeroCore({
       <span className="hero-core__health"><Icon name="shield" size={17} /> CORE</span>
       {active && <span className="hero-core__active">行动中</span>}
       {canTarget && <span className="hero-core__target-hint">选择目标</span>}
+      {targetPreview && <span className="hero-core__target-preview">{targetPreview}</span>}
       {impactText && (
         <span className={`hero-core__impact hero-core__impact--${impact?.kind}`} aria-hidden="true">
           {impactText}
@@ -4472,6 +4475,7 @@ function BoardUnit({
   onInspect,
   effect,
   impact,
+  targetPreview,
 }: {
   unit: BattleUnit;
   selected?: boolean;
@@ -4481,6 +4485,7 @@ function BoardUnit({
   onInspect?: () => void;
   effect?: BattleUnitEffect;
   impact?: BattleVisualEffect;
+  targetPreview?: string;
 }) {
   const card = CARD_BY_ID.get(unit.cardId);
   const visualCard: CatalogCard =
@@ -4517,6 +4522,7 @@ function BoardUnit({
         {unit.stars === 2 && <span className="board-unit__stars">★★</span>}
       </div>
       {targetable && <span className="board-unit__target-hint">选择目标</span>}
+      {targetPreview && <span className="board-unit__target-preview">{targetPreview}</span>}
       <strong>{unit.name}</strong>
       {unit.keywords.length > 0 && (
         <div className="board-unit__keywords">
@@ -4941,6 +4947,9 @@ function BattleSection({
   const selectedAttackerUnit = selectedAttacker
     ? battle.player.board.find((unit) => unit.id === selectedAttacker)
     : undefined;
+  const selectedAttackValue = selectedAttacker
+    ? selectedAttackerUnit?.attack ?? battle.player.weapon?.attack ?? 0
+    : 0;
   const rushOnlyAttack = Boolean(selectedAttackerUnit?.rushOnly);
   const enemyHeroTargetable = selectedAttacker
     ? !attackBlockedByTaunt && !rushOnlyAttack
@@ -4952,6 +4961,16 @@ function BattleSection({
     }
     return cardCanTarget("ai", "unit") && !unit.stealthActive;
   };
+  const targetPreviewForUnit = (unit: BattleUnit): string | undefined => {
+    if (!selectedAttacker || pendingCard || pendingHeroPower || !enemyUnitTargetable(unit)) {
+      return undefined;
+    }
+    const remainingHealth = Math.max(0, unit.health - selectedAttackValue);
+    return remainingHealth > 0 ? `预计剩 ${remainingHealth}` : "预计击破";
+  };
+  const targetPreviewForHero = selectedAttacker && !pendingCard && !pendingHeroPower && enemyHeroTargetable
+    ? `预计 −${selectedAttackValue} 核心`
+    : undefined;
   return (
     <section className="screen screen--battle battle-room" aria-labelledby="battle-room-title">
       <header className="battle-room__top">
@@ -5015,6 +5034,7 @@ function BattleSection({
                 canTarget={enemyHeroTargetable}
                 effect={effectForHero("ai")}
                 impact={impactForHero("ai")}
+                targetPreview={targetPreviewForHero}
                 onTarget={() =>
                   pendingCard || pendingHeroPower
                     ? onCardTarget({ kind: "hero", side: "ai" })
@@ -5049,6 +5069,7 @@ function BattleSection({
                   targetable={enemyUnitTargetable(unit)}
                   effect={effectForUnit(unit.id)}
                   impact={impactForUnit(unit.id)}
+                  targetPreview={targetPreviewForUnit(unit)}
                   onTarget={() =>
                     pendingCard || pendingHeroPower
                       ? onCardTarget({ kind: "unit", side: "ai", id: unit.id })

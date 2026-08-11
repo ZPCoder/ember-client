@@ -3224,6 +3224,24 @@ button.hero-core {
   animation: battle-target-pulse 1100ms ease-in-out infinite;
 }
 
+.hero-core__target-preview {
+  position: absolute;
+  right: 7px;
+  bottom: -8px;
+  z-index: 7;
+  padding: 3px 6px;
+  border: 1px solid rgba(255, 194, 116, 0.58);
+  border-radius: 999px;
+  color: #ffe0aa;
+  background: rgba(75, 39, 18, 0.94);
+  font-size: 7px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  animation: battle-target-pulse 1100ms ease-in-out infinite;
+  pointer-events: none;
+}
+
 .hero-core__impact {
   position: absolute;
   z-index: 12;
@@ -3812,6 +3830,27 @@ button.hero-core {
   font-weight: 900;
   letter-spacing: 0.04em;
   animation: battle-target-pulse 1100ms ease-in-out infinite;
+}
+
+.board-unit__target-preview {
+  position: absolute;
+  z-index: 6;
+  right: 4px;
+  bottom: 4px;
+  max-width: calc(100% - 8px);
+  overflow: hidden;
+  padding: 3px 4px;
+  border: 1px solid rgba(255, 194, 116, 0.58);
+  border-radius: 4px;
+  color: #ffe0aa;
+  background: rgba(75, 39, 18, 0.94);
+  font-size: 6px;
+  font-weight: 900;
+  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  animation: battle-target-pulse 1100ms ease-in-out infinite;
+  pointer-events: none;
 }
 
 .board-unit__inspect {
