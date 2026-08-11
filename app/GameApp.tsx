@@ -2150,6 +2150,7 @@ export function GameApp({
   const battleEffectDrainingRef = useRef(false);
   const battleEffectLockRef = useRef(false);
   const aiReplayActiveRef = useRef(false);
+  const aiReplayCompletionMessageRef = useRef<string | null>(null);
   const battleEffectSequenceRef = useRef(0);
   const aiReplayFinalStateRef = useRef<MatchState | null>(null);
   const aiTurnTimerRef = useRef<number | null>(null);
@@ -2176,6 +2177,7 @@ export function GameApp({
     battleEffectDrainingRef.current = false;
     battleEffectLockRef.current = false;
     aiReplayActiveRef.current = false;
+    aiReplayCompletionMessageRef.current = null;
     setBattleEffect(null);
     setBattleEffectCount(0);
     setBattleEffectsLocked(false);
@@ -2188,6 +2190,7 @@ export function GameApp({
     }
     const finalState = aiReplayFinalStateRef.current;
     aiReplayFinalStateRef.current = null;
+    aiReplayCompletionMessageRef.current = null;
     if (finalState) {
       setBattle(finalState);
     }
@@ -2213,6 +2216,9 @@ export function GameApp({
         if (battleEffectLockRef.current && !aiReplayActiveRef.current) {
           battleEffectLockRef.current = false;
           setBattleEffectsLocked(false);
+          const completionMessage = aiReplayCompletionMessageRef.current;
+          aiReplayCompletionMessageRef.current = null;
+          if (completionMessage) setBattleMessage(completionMessage);
         }
         setBattleEffect(null);
         setBattleEffectCount(0);
@@ -3217,6 +3223,9 @@ export function GameApp({
         if (sectionRef.current === "battle") {
           aiReplayFinalStateRef.current = next;
           aiReplayActiveRef.current = true;
+          aiReplayCompletionMessageRef.current = next.phase === "game-over"
+            ? "敌方行动完成，正在结算演算结果。"
+            : "敌方行动已结束，新的能量窗口已开启。";
           setBattle(states[0]?.state ?? next);
           showBattleEffects(replayEffects, {
             lock: true,
@@ -3234,12 +3243,15 @@ export function GameApp({
                 setBattleEffectsLocked(false);
                 setBattleEffect(null);
                 setBattleEffectCount(0);
+                aiReplayCompletionMessageRef.current = null;
+                setBattleMessage(
+                  next.phase === "game-over"
+                    ? "敌方行动完成，正在结算演算结果。"
+                    : "敌方行动已结束，新的能量窗口已开启。",
+                );
+              } else {
+                setBattleMessage("敌方动作已结算，正在完成战况回放…");
               }
-              setBattleMessage(
-                next.phase === "game-over"
-                  ? "敌方行动完成，正在结算演算结果。"
-                  : "敌方行动已结束，新的能量窗口已开启。",
-              );
               return;
             }
             setBattle(step.state);
