@@ -3330,9 +3330,16 @@ button.hero-core {
   letter-spacing: 0.08em;
 }
 
-.board-unit {
+.board-unit-shell {
   position: relative;
   width: 92px;
+  min-width: 92px;
+}
+
+.board-unit {
+  position: relative;
+  display: block;
+  width: 100%;
   min-height: 122px;
   overflow: hidden;
   padding: 0;
@@ -3536,6 +3543,42 @@ button.hero-core {
   background: var(--cyan);
   font-size: 6px;
   font-weight: 900;
+}
+
+.board-unit__inspect {
+  position: absolute;
+  z-index: 9;
+  top: 4px;
+  right: 4px;
+  display: grid;
+  width: 18px;
+  height: 18px;
+  place-items: center;
+  border: 1px solid rgba(228, 225, 198, 0.38);
+  border-radius: 50%;
+  color: #f5dfb1;
+  background: rgba(4, 12, 10, 0.74);
+  font-size: 9px;
+  font-style: italic;
+  font-weight: 900;
+  line-height: 1;
+  opacity: 0.76;
+  transition: 150ms ease;
+}
+
+.board-unit__inspect:hover,
+.board-unit__inspect:focus-visible {
+  border-color: var(--cyan);
+  color: #fff5d8;
+  background: rgba(24, 68, 62, 0.92);
+  opacity: 1;
+  transform: scale(1.08);
+}
+
+.hero-power-button--selected {
+  border-color: rgba(205, 169, 255, 0.9);
+  background: rgba(133, 90, 190, 0.34);
+  box-shadow: 0 0 22px rgba(177, 133, 255, 0.2);
 }
 
 .battlefield__divider {
@@ -5563,8 +5606,12 @@ button.hero-core {
   }
 
   .board-unit {
-    width: 66px;
     min-height: 96px;
+  }
+
+  .board-unit-shell {
+    width: 66px;
+    min-width: 66px;
   }
 
   .board-unit__art {

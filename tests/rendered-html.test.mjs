@@ -71,6 +71,8 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(game, /BATTLE_EFFECT_QUEUE_LIMIT = 40/);
   assert.match(game, /跳过回放/);
   assert.match(game, /aria-pressed=\{soundEnabled\}/);
+  assert.match(game, /heroPowerTarget/);
+  assert.match(game, /board-unit__inspect/);
   assert.match(styles, /\.battlefield__fx-layer/);
   assert.match(styles, /battle-banner-enter 840ms/);
   assert.match(styles, /@keyframes battle-lunge-player/);

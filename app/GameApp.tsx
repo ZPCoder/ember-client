@@ -144,6 +144,7 @@ type BattleSide = {
   heroPowerName: string;
   heroPowerDescription: string;
   heroPowerCost: number;
+  heroPowerTarget: CardTargetRule;
   coinAvailable: boolean;
   heroHasAttacked: boolean;
   secrets: Array<{ secretId: string; name: string; description: string }>;
@@ -831,6 +832,10 @@ function battleFromRaw(value: unknown): BattleView | null {
       (side.heroPower as Record<string, unknown> | undefined)?.cost ?? side.heroPowerCost,
       2,
     ),
+    heroPowerTarget: asString(
+      (side.heroPower as Record<string, unknown> | undefined)?.target ?? side.heroPowerTarget,
+      "none",
+    ) as CardTargetRule,
     coinAvailable: Boolean(side.coinAvailable),
     heroHasAttacked: Boolean(side.heroHasAttacked),
     overload: asNumber(side.overload, 0),
@@ -2053,6 +2058,7 @@ export function GameApp({
   const [inspectedCard, setInspectedCard] = useState<CatalogCard | null>(null);
   const [selectedAttacker, setSelectedAttacker] = useState<string | null>(null);
   const [pendingCard, setPendingCard] = useState<BattleSide["hand"][number] | null>(null);
+  const [pendingHeroPower, setPendingHeroPower] = useState(false);
   const [mulliganSelection, setMulliganSelection] = useState<number[]>([]);
   const [battleMessage, setBattleMessage] = useState("准备部署你的战术卡组。");
   const [battleEffect, setBattleEffect] = useState<BattleVisualEffect | null>(null);
@@ -2579,6 +2585,7 @@ export function GameApp({
       pendingPvpCommandRef.current = false;
       setSelectedAttacker(null);
       setPendingCard(null);
+      setPendingHeroPower(false);
       setMulliganSelection([]);
       setBattleMessage(online ? "联机战术链路建立，请先确认起手牌。" : "战术链路建立。点击不想保留的手牌，再确认起手。");
       recordedBattleRef.current = null;
@@ -2706,6 +2713,7 @@ export function GameApp({
       setOnlineOpponent(null);
       setSelectedAttacker(null);
       setPendingCard(null);
+      setPendingHeroPower(false);
       setMulliganSelection([]);
       setBattleMessage("房间已重置，双方点击“准备对战”开始下一局。");
       sectionRef.current = "battle";
@@ -2746,6 +2754,7 @@ export function GameApp({
       setOnlineOpponent(pvp.state.peerName ?? "联机对手");
       setSelectedAttacker(null);
       setPendingCard(null);
+      setPendingHeroPower(false);
       setMulliganSelection([]);
       setBattleMessage(oriented.phase === "game-over" ? "已恢复已结束的联机战报。" : "已恢复联机对局，等待行动窗口。");
       sectionRef.current = "battle";
@@ -2767,6 +2776,7 @@ export function GameApp({
         setBattle(oriented);
         setSelectedAttacker(null);
         setPendingCard(null);
+        setPendingHeroPower(false);
         setMulliganSelection([]);
         if (previous) {
           showBattleEffects(battleEventsToEffects(oriented.events.slice(previous.events.length)), {
@@ -2862,6 +2872,10 @@ export function GameApp({
       setBattleMessage("当前不是你的行动窗口。");
       return;
     }
+    if (pendingHeroPower) {
+      setBattleMessage("请先完成或取消核心技能目标选择。");
+      return;
+    }
     const card = CARD_BY_ID.get(handCard.cardId);
     if (card && card.cost > battleView.player.mana) {
       setBattleMessage(`能量不足：部署「${card.name}」需要 ${card.cost} 点能量。`);
@@ -2869,6 +2883,7 @@ export function GameApp({
     }
     if (card && card.target !== "none") {
       setPendingCard(handCard);
+      setPendingHeroPower(false);
       setSelectedAttacker(null);
       playSound("select");
       setBattleMessage(
@@ -2909,6 +2924,7 @@ export function GameApp({
     const next = issueCommand({ type: "trade-card", player: 0, cardId: handCard.cardId });
     if (next) {
       setPendingCard(null);
+      setPendingHeroPower(false);
       setSelectedAttacker(null);
       setBattleMessage(`已交易「${card.name}」，抽取一张替代牌。`);
     }
@@ -2946,20 +2962,25 @@ export function GameApp({
 
   const playCardAtTarget = (target: { kind: "unit" | "hero"; side: "player" | "ai"; id?: string }) => {
     if (battleEffectLockRef.current) return;
-    if (!pendingCard) return;
-    const card = CARD_BY_ID.get(pendingCard.cardId);
-    const next = issueCommand({
-      type: "play-card",
-      player: 0,
-      cardId: pendingCard.cardId,
-      target:
-        target.kind === "hero"
-          ? { kind: "hero", player: target.side === "player" ? 0 : 1 }
-          : { kind: "unit", entityId: target.id ?? "" },
-    });
+    if (!pendingCard && !pendingHeroPower) return;
+    const card = pendingCard ? CARD_BY_ID.get(pendingCard.cardId) : undefined;
+    const normalizedTarget = target.kind === "hero"
+      ? { kind: "hero" as const, player: target.side === "player" ? 0 as const : 1 as const }
+      : { kind: "unit" as const, entityId: target.id ?? "" };
+    const next = pendingHeroPower
+      ? issueCommand({ type: "hero-power", player: 0, target: normalizedTarget })
+      : issueCommand({
+          type: "play-card",
+          player: 0,
+          cardId: pendingCard?.cardId ?? "",
+          target: normalizedTarget,
+        });
     if (next) {
       setPendingCard(null);
-      setBattleMessage(`已部署「${card?.name ?? "战术卡"}」，目标效果完成结算。`);
+      setPendingHeroPower(false);
+      setBattleMessage(pendingHeroPower
+        ? `${battleView?.player.heroPowerName ?? "核心技能"} 已结算。`
+        : `已部署「${card?.name ?? "战术卡"}」，目标效果完成结算。`);
     }
   };
 
@@ -2981,6 +3002,7 @@ export function GameApp({
     if (next) {
       setSelectedAttacker(null);
       setPendingCard(null);
+      setPendingHeroPower(false);
       setBattleMessage(target.kind === "hero" ? "攻击已直达敌方核心。" : "单位交战已结算。");
     }
   };
@@ -2992,6 +3014,7 @@ export function GameApp({
       return;
     }
     setPendingCard(null);
+    setPendingHeroPower(false);
     setSelectedAttacker((current) => (current === "hero-0" ? null : "hero-0"));
     setBattleMessage("已准备英雄攻击，请选择敌方单位或核心。");
     playSound("select");
@@ -2999,6 +3022,23 @@ export function GameApp({
 
   const useHeroPower = () => {
     if (battleEffectLockRef.current) return;
+    if (!battleView || battleView.status !== "playing" || battleView.currentPlayer !== "player") {
+      setBattleMessage("当前不是你的行动窗口。");
+      return;
+    }
+    if (pendingHeroPower) {
+      setPendingHeroPower(false);
+      setBattleMessage("已取消核心技能目标选择。");
+      return;
+    }
+    if (battleView.player.heroPowerTarget !== "none") {
+      setPendingHeroPower(true);
+      setPendingCard(null);
+      setSelectedAttacker(null);
+      playSound("select");
+      setBattleMessage(`${battleView.player.heroPowerName}：请选择${battleView.player.heroPowerTarget === "enemy-unit" ? "敌方单位" : "友方目标"}。`);
+      return;
+    }
     const next = issueCommand({
       type: "hero-power",
       player: 0,
@@ -3028,6 +3068,7 @@ export function GameApp({
     if (!ended) return;
     setSelectedAttacker(null);
     setPendingCard(null);
+    setPendingHeroPower(false);
     setBattleMessage(onlineMatch ? "指令已同步，等待对手行动…" : "演算体正在规划反制路线…");
     if ((ended as MatchState).phase === "game-over") return;
 
@@ -3064,6 +3105,7 @@ export function GameApp({
     if (!next) return;
     setSelectedAttacker(null);
     setPendingCard(null);
+    setPendingHeroPower(false);
     setBattleMessage("你已结束本场演算，战报正在归档。");
   };
 
@@ -3321,6 +3363,7 @@ export function GameApp({
                   onCloseInspector={() => setInspectedCard(null)}
                   selectedAttacker={selectedAttacker}
                   pendingCard={pendingCard}
+                  pendingHeroPower={pendingHeroPower}
                   mulliganSelection={mulliganSelection}
                   busy={apiBusy === "record_match"}
                   effectsLocked={battleEffectsLocked}
@@ -3336,6 +3379,7 @@ export function GameApp({
                   onConfirmMulligan={confirmMulligan}
                   onSelectAttacker={(id) => {
                     setPendingCard(null);
+                    setPendingHeroPower(false);
                     setSelectedAttacker((current) => (current === id ? null : id));
                     playSound("select");
                   }}
@@ -3343,6 +3387,7 @@ export function GameApp({
                   onCardTarget={playCardAtTarget}
                   onCancelTarget={() => {
                     setPendingCard(null);
+                    setPendingHeroPower(false);
                     setSelectedAttacker(null);
                     setBattleMessage("已取消目标选择，可继续行动。");
                   }}
@@ -4170,6 +4215,7 @@ function BoardUnit({
   targetable,
   onSelect,
   onTarget,
+  onInspect,
   effect,
 }: {
   unit: BattleUnit;
@@ -4177,6 +4223,7 @@ function BoardUnit({
   targetable?: boolean;
   onSelect?: () => void;
   onTarget?: () => void;
+  onInspect?: () => void;
   effect?: BattleUnitEffect;
 }) {
   const card = CARD_BY_ID.get(unit.cardId);
@@ -4197,14 +4244,16 @@ function BoardUnit({
       stealthActive: false,
     };
   return (
-    <button
-      className={`board-unit ${unit.stars === 2 ? "board-unit--star-2" : ""} ${selected ? "board-unit--selected" : ""} ${targetable ? "board-unit--targetable" : ""} ${!unit.canAttack && onSelect ? "board-unit--exhausted" : ""} ${effect ? `board-unit--${effect}` : ""}`}
-      type="button"
-      onClick={targetable ? onTarget : onSelect}
-      disabled={!targetable && (!onSelect || !unit.canAttack)}
-      aria-pressed={onSelect ? selected : undefined}
-      aria-label={`${unit.name}，${unit.stars} 星，攻击 ${unit.attack}，生命 ${unit.health}${targetable ? "，设为攻击目标" : unit.canAttack ? "，选择攻击" : "，本回合无法攻击"}`}
-    >
+    <div className="board-unit-shell">
+      <button
+        className={`board-unit ${unit.stars === 2 ? "board-unit--star-2" : ""} ${selected ? "board-unit--selected" : ""} ${targetable ? "board-unit--targetable" : ""} ${!unit.canAttack && onSelect ? "board-unit--exhausted" : ""} ${effect ? `board-unit--${effect}` : ""}`}
+        type="button"
+        onClick={targetable ? onTarget : onSelect}
+        disabled={!targetable && (!onSelect || !unit.canAttack)}
+        aria-pressed={onSelect ? selected : undefined}
+        aria-label={`${unit.name}，${unit.stars} 星，攻击 ${unit.attack}，生命 ${unit.health}${targetable ? "，设为攻击目标" : unit.canAttack ? "，选择攻击" : "，本回合无法攻击"}`}
+        title={visualCard.description || `${unit.name} · ${unit.attack}/${unit.health}`}
+      >
       <div className="board-unit__art">
         <Sigil card={visualCard} />
         <CardArtwork card={visualCard} className="board-unit__artwork" />
@@ -4227,7 +4276,22 @@ function BoardUnit({
         </span>
       )}
       {unit.canAttack && onSelect && <span className="board-unit__ready">READY</span>}
-    </button>
+      </button>
+      {onInspect && (
+        <button
+          className="board-unit__inspect"
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            onInspect();
+          }}
+          aria-label={`查看${unit.name}卡牌详情`}
+          title={`查看${unit.name}卡牌详情`}
+        >
+          i
+        </button>
+      )}
+    </div>
   );
 }
 
@@ -4383,6 +4447,7 @@ function BattleSection({
   onCloseInspector,
   selectedAttacker,
   pendingCard,
+  pendingHeroPower,
   mulliganSelection,
   busy,
   effectsLocked,
@@ -4429,6 +4494,7 @@ function BattleSection({
   onCloseInspector: () => void;
   selectedAttacker: string | null;
   pendingCard: BattleSide["hand"][number] | null;
+  pendingHeroPower: boolean;
   mulliganSelection: number[];
   busy: boolean;
   effectsLocked: boolean;
@@ -4535,9 +4601,11 @@ function BattleSection({
   const playerCanDiscover = discoverActive && battle.currentPlayer === "player" && !effectsLocked && onlineTransportReady;
   const playerCanChooseOne = chooseOneActive && battle.currentPlayer === "player" && !effectsLocked && onlineTransportReady;
   const pendingDefinition = pendingCard ? CARD_BY_ID.get(pendingCard.cardId) : undefined;
-  const targetRule = pendingDefinition?.target ?? "none";
+  const targetRule = pendingHeroPower
+    ? battle.player.heroPowerTarget
+    : pendingDefinition?.target ?? "none";
   const cardCanTarget = (side: "player" | "ai", kind: "unit" | "hero") => {
-    if (!pendingDefinition) return false;
+    if (!pendingDefinition && !pendingHeroPower) return false;
     if (targetRule === "any-character") return true;
     if (targetRule === "enemy-character") return side === "ai";
     if (targetRule === "friendly-character") return side === "player";
@@ -4641,13 +4709,15 @@ function BattleSection({
                 canTarget={enemyHeroTargetable}
                 effect={effectForHero("ai")}
                 onTarget={() =>
-                  pendingCard
+                  pendingCard || pendingHeroPower
                     ? onCardTarget({ kind: "hero", side: "ai" })
                     : onAttack({ kind: "hero" })
                 }
                 targetLabel={
                   pendingCard
                     ? `以${pendingDefinition?.name ?? "卡牌"}选择敌方核心`
+                    : pendingHeroPower
+                      ? `以${battle.player.heroPowerName}选择敌方核心`
                     : "攻击敌方核心"
                 }
               />
@@ -4669,10 +4739,14 @@ function BattleSection({
                   targetable={enemyUnitTargetable(unit)}
                   effect={effectForUnit(unit.id)}
                   onTarget={() =>
-                    pendingCard
+                    pendingCard || pendingHeroPower
                       ? onCardTarget({ kind: "unit", side: "ai", id: unit.id })
                       : onAttack({ kind: "unit", id: unit.id })
                   }
+                  onInspect={() => {
+                    const card = CARD_BY_ID.get(unit.cardId);
+                    if (card) onInspectCard(card);
+                  }}
                 />
               )) : <span className="board-row__empty">敌方阵地空置</span>}
             </div>
@@ -4693,8 +4767,12 @@ function BattleSection({
                   selected={selectedAttacker === unit.id}
                   targetable={cardCanTarget("player", "unit")}
                   effect={effectForUnit(unit.id)}
-                  onSelect={pendingCard || !playerCanAct ? undefined : () => onSelectAttacker(unit.id)}
+                  onSelect={pendingCard || pendingHeroPower || !playerCanAct ? undefined : () => onSelectAttacker(unit.id)}
                   onTarget={() => onCardTarget({ kind: "unit", side: "player", id: unit.id })}
+                  onInspect={() => {
+                    const card = CARD_BY_ID.get(unit.cardId);
+                    if (card) onInspectCard(card);
+                  }}
                 />
               )) : <span className="board-row__empty">选择手牌，部署你的首个单位</span>}
             </div>
@@ -4705,7 +4783,7 @@ function BattleSection({
                 canTarget={cardCanTarget("player", "hero")}
                 effect={effectForHero("player")}
                 onTarget={() => onCardTarget({ kind: "hero", side: "player" })}
-                targetLabel={`以${pendingDefinition?.name ?? "卡牌"}选择我方核心`}
+                targetLabel={`以${pendingDefinition?.name ?? (pendingHeroPower ? battle.player.heroPowerName : "卡牌")}选择我方核心`}
               />
               <div className="mana-readout" aria-label={`我方能量 ${battle.player.mana}/${battle.player.maxMana}`}>
                 <Icon name="spark" size={16} /><strong>{battle.player.mana}</strong><span>/ {battle.player.maxMana}</span>
@@ -4743,15 +4821,15 @@ function BattleSection({
                 </button>
               )}
               <button
-                className={`hero-power-button ${battle.player.heroPowerUsed ? "hero-power-button--used" : ""}`}
+                className={`hero-power-button ${battle.player.heroPowerUsed ? "hero-power-button--used" : ""} ${pendingHeroPower ? "hero-power-button--selected" : ""}`}
                 type="button"
-                disabled={!playerCanAct || battle.player.heroPowerUsed || battle.player.mana < battle.player.heroPowerCost}
+                disabled={!playerCanAct || battle.player.heroPowerUsed || battle.player.mana < battle.player.heroPowerCost || Boolean(pendingCard)}
                 onClick={onHeroPower}
                 title={battle.player.heroPowerDescription}
-                aria-label={battle.player.heroPowerUsed ? `${battle.player.heroPowerName}本回合已使用` : `使用${battle.player.heroPowerName}，消耗 ${battle.player.heroPowerCost} 点能量`}
+                aria-label={battle.player.heroPowerUsed ? `${battle.player.heroPowerName}本回合已使用` : pendingHeroPower ? `取消${battle.player.heroPowerName}目标选择` : `使用${battle.player.heroPowerName}，消耗 ${battle.player.heroPowerCost} 点能量`}
               >
                 <span className="hero-power-button__icon">✦</span>
-                <span><strong>{battle.player.heroPowerName}</strong><small>{battle.player.heroPowerUsed ? "本回合已用" : `${battle.player.heroPowerCost} 能量 · ${battle.player.heroPowerDescription}`}</small></span>
+                <span><strong>{battle.player.heroPowerName}</strong><small>{battle.player.heroPowerUsed ? "本回合已用" : pendingHeroPower ? "选择目标中 · 点击下方目标" : `${battle.player.heroPowerCost} 能量 · ${battle.player.heroPowerDescription}`}</small></span>
               </button>
             </div>
             <SecretTray secrets={battle.player.secrets} />
@@ -4765,7 +4843,7 @@ function BattleSection({
                 const selectedForMulligan = mulliganSelection.includes(handIndex);
                 const disabled = mulliganActive
                   ? !playerCanMulligan
-                  : !playerCanAct || card.cost > battle.player.mana;
+                  : !playerCanAct || card.cost > battle.player.mana || pendingHeroPower;
                 return (
                   <div
                     className={`hand-card ${disabled ? "hand-card--disabled" : ""} ${pendingCard?.instanceId === handCard.instanceId || selectedForMulligan ? "hand-card--selected" : ""}`}
@@ -4827,7 +4905,7 @@ function BattleSection({
                   </button>
                 </>
               ) : null}
-              {(selectedAttacker || pendingCard) && !effectsLocked && (
+              {(selectedAttacker || pendingCard || pendingHeroPower) && !effectsLocked && (
                 <button className="battle-mobile-dock__cancel" type="button" onClick={onCancelTarget}>
                   取消选择
                 </button>
@@ -4946,14 +5024,22 @@ function BattleSection({
               )}
             </div>
           )}
-          {(selectedAttacker || pendingCard) && (
+          {(selectedAttacker || pendingCard || pendingHeroPower) && (
             <div className="target-prompt">
               <Icon name="swords" />
               <span>
-                <strong>{pendingCard ? `${pendingDefinition?.name ?? "卡牌"} · 选择目标` : "目标锁定模式"}</strong>
+                <strong>
+                  {pendingCard
+                    ? `${pendingDefinition?.name ?? "卡牌"} · 选择目标`
+                    : pendingHeroPower
+                      ? `${battle.player.heroPowerName} · 选择目标`
+                      : "目标锁定模式"}
+                </strong>
                 <small>
                   {pendingCard
                     ? "场上可用目标已高亮"
+                    : pendingHeroPower
+                      ? targetRule === "enemy-unit" ? "敌方单位已高亮" : "友方角色已高亮"
                     : rushOnlyAttack
                       ? "突袭：本回合只能攻击敌方单位"
                       : attackBlockedByTaunt
