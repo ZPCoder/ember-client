@@ -4256,6 +4256,7 @@ function HeroCore({
       </span>
       <span className="hero-core__health"><Icon name="shield" size={17} /> CORE</span>
       {active && <span className="hero-core__active">行动中</span>}
+      {canTarget && <span className="hero-core__target-hint">选择目标</span>}
     </>
   );
   if (canTarget && onTarget) {
@@ -4323,6 +4324,7 @@ function BoardUnit({
         <CardArtwork card={visualCard} className="board-unit__artwork" />
         {unit.stars === 2 && <span className="board-unit__stars">★★</span>}
       </div>
+      {targetable && <span className="board-unit__target-hint">选择目标</span>}
       <strong>{unit.name}</strong>
       {unit.keywords.length > 0 && (
         <div className="board-unit__keywords">

@@ -76,8 +76,11 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(game, /aria-pressed=\{soundEnabled\}/);
   assert.match(game, /heroPowerTarget/);
   assert.match(game, /board-unit__inspect/);
+  assert.match(game, /board-unit__target-hint/);
+  assert.match(game, /hero-core__target-hint/);
   assert.match(styles, /\.turn-clock/);
   assert.match(styles, /\.board-slot/);
+  assert.match(styles, /battle-target-pulse/);
   assert.match(styles, /\.battlefield__fx-layer/);
   assert.match(styles, /battle-banner-enter 840ms/);
   assert.match(styles, /@keyframes battle-lunge-player/);

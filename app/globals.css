@@ -3104,6 +3104,21 @@ button.hero-core {
   font-weight: 800;
 }
 
+.hero-core__target-hint {
+  position: absolute;
+  top: -8px;
+  left: 8px;
+  padding: 3px 6px;
+  border: 1px solid rgba(111, 225, 208, 0.6);
+  border-radius: 999px;
+  color: #d7fff5;
+  background: rgba(22, 103, 91, 0.9);
+  font-size: 7px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  animation: battle-target-pulse 1100ms ease-in-out infinite;
+}
+
 .mana-readout {
   min-width: 62px;
   color: var(--cyan);
@@ -3612,6 +3627,22 @@ button.hero-core {
   background: var(--cyan);
   font-size: 6px;
   font-weight: 900;
+}
+
+.board-unit__target-hint {
+  position: absolute;
+  z-index: 5;
+  top: 4px;
+  left: 4px;
+  padding: 2px 4px;
+  border: 1px solid rgba(111, 225, 208, 0.58);
+  border-radius: 4px;
+  color: #d7fff5;
+  background: rgba(22, 103, 91, 0.86);
+  font-size: 6px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  animation: battle-target-pulse 1100ms ease-in-out infinite;
 }
 
 .board-unit__inspect {
@@ -5132,6 +5163,13 @@ button.hero-core {
   50% {
     box-shadow: 0 0 18px rgba(228, 109, 63, 0.22);
     transform: scale(1.025);
+  }
+}
+
+@keyframes battle-target-pulse {
+  50% {
+    box-shadow: 0 0 14px rgba(85, 185, 173, 0.26);
+    filter: brightness(1.12);
   }
 }
 
