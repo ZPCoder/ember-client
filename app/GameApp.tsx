@@ -141,6 +141,7 @@ type BattleSide = {
   coinAvailable: boolean;
   heroHasAttacked: boolean;
   secrets: Array<{ secretId: string; name: string; description: string }>;
+  overload: number;
   weapon: {
     cardId: string;
     name: string;
@@ -805,6 +806,7 @@ function battleFromRaw(value: unknown): BattleView | null {
     ),
     coinAvailable: Boolean(side.coinAvailable),
     heroHasAttacked: Boolean(side.heroHasAttacked),
+    overload: asNumber(side.overload, 0),
     secrets: Array.isArray(side.secrets)
       ? side.secrets.map((entry) => {
           const secret = entry as Record<string, unknown>;
@@ -4472,6 +4474,7 @@ function BattleSection({
               />
               <div className="mana-readout mana-readout--enemy" aria-label={`敌方能量 ${battle.ai.mana}/${battle.ai.maxMana}`}>
                 <Icon name="spark" size={16} /><strong>{battle.ai.mana}</strong><span>/ {battle.ai.maxMana}</span>
+                {battle.ai.overload > 0 && <small className="mana-readout__overload">下回合锁定 {battle.ai.overload}</small>}
               </div>
             </div>
             <div className="enemy-hand" aria-label={`敌方有 ${battle.ai.hand.length} 张手牌`}>
@@ -4527,8 +4530,13 @@ function BattleSection({
               />
               <div className="mana-readout" aria-label={`我方能量 ${battle.player.mana}/${battle.player.maxMana}`}>
                 <Icon name="spark" size={16} /><strong>{battle.player.mana}</strong><span>/ {battle.player.maxMana}</span>
+                {battle.player.overload > 0 && <small className="mana-readout__overload">下回合锁定 {battle.player.overload}</small>}
                 <div className="mana-pips" aria-hidden="true">
-                  {Array.from({ length: battle.player.maxMana }, (_, index) => <i className={index < battle.player.mana ? "is-filled" : ""} key={index} />)}
+                  {Array.from({ length: battle.player.maxMana }, (_, index) => {
+                    const isFilled = index < battle.player.mana;
+                    const isLocked = !isFilled && index >= battle.player.maxMana - battle.player.overload;
+                    return <i className={`${isFilled ? "is-filled" : ""} ${isLocked ? "is-locked" : ""}`.trim()} key={index} />;
+                  })}
                 </div>
               </div>
               {battle.player.coinAvailable && (

@@ -3048,6 +3048,13 @@ button.hero-core {
   color: var(--ember-bright);
 }
 
+.mana-readout__overload {
+  display: block;
+  margin-top: 3px;
+  color: #dd956f;
+  font-size: 7px;
+}
+
 .mana-pips {
   display: flex;
   flex-wrap: wrap;
@@ -3066,6 +3073,11 @@ button.hero-core {
 .mana-pips i.is-filled {
   background: var(--cyan);
   box-shadow: 0 0 5px var(--cyan);
+}
+
+.mana-pips i.is-locked {
+  background: #aa5e4d;
+  box-shadow: 0 0 5px rgba(210, 103, 77, 0.42);
 }
 
 .hero-power-button {
