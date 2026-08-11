@@ -1603,6 +1603,16 @@ function useWebPvp(displayName: string) {
       url,
       message: "正在连接联机大厅…",
     }));
+    // The hosted Worker can route consecutive HTTP requests to different edge
+    // isolates. Use the D1-backed polling transport in production so room
+    // membership and messages are shared across browsers and devices. Keep
+    // WebSocket for local development where the in-memory server is stable.
+    if (canFallbackToPolling(parsed)) {
+      transportRef.current = null;
+      fallbackStartedRef.current = connectionId;
+      void startPolling(url, connectionId);
+      return;
+    }
     const socket = new WebSocket(parsed.toString());
     socketRef.current = socket;
     socket.onopen = () => {
