@@ -2436,6 +2436,16 @@ button.game-card:not(:disabled):hover .game-card__artwork,
   box-shadow: 0 0 10px var(--ember-bright);
 }
 
+.turn-indicator--mulligan {
+  color: #e7bd7a;
+  border-color: rgba(228, 164, 80, 0.28);
+}
+
+.turn-indicator--mulligan::before {
+  background: #e7bd7a;
+  box-shadow: 0 0 10px rgba(228, 164, 80, 0.48);
+}
+
 .turn-indicator--finished {
   color: #d7c8ad;
   border-color: rgba(218, 198, 159, 0.24);
@@ -3379,6 +3389,36 @@ button.hero-core {
   font-size: 9px;
 }
 
+.mulligan-prompt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(228, 164, 80, 0.2);
+  background: rgba(228, 164, 80, 0.07);
+}
+
+.mulligan-prompt strong {
+  color: #f0cf99;
+  font-size: 10px;
+}
+
+.mulligan-prompt p {
+  max-width: 260px;
+  margin: 4px 0 0;
+  color: #a99a83;
+  font-size: 8px;
+  line-height: 1.5;
+}
+
+.mulligan-prompt .button {
+  min-height: 34px;
+  padding: 0 10px;
+  white-space: nowrap;
+  font-size: 8px;
+}
+
 .target-prompt {
   margin-top: 9px;
   padding: 8px;
@@ -3500,6 +3540,10 @@ button.hero-core {
   gap: 6px;
 }
 
+.battle-actions--mulligan {
+  grid-template-columns: 1fr;
+}
+
 .button--end-turn {
   min-height: 58px;
   overflow: hidden;
@@ -3516,6 +3560,50 @@ button.hero-core {
   color: #b89b94;
   background: rgba(220, 109, 100, 0.06);
   font-size: 9px;
+}
+
+.coin-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 8px;
+  padding: 8px 9px;
+  border: 1px solid rgba(228, 164, 80, 0.32);
+  border-radius: 9px;
+  color: #f0cf99;
+  background: rgba(228, 164, 80, 0.08);
+  text-align: left;
+}
+
+.coin-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
+.coin-button__icon {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border: 1px solid rgba(228, 164, 80, 0.55);
+  border-radius: 50%;
+  color: #f2c878;
+  font-size: 12px;
+}
+
+.coin-button span:last-child {
+  display: grid;
+  gap: 2px;
+}
+
+.coin-button strong {
+  font-size: 9px;
+}
+
+.coin-button small {
+  color: #a99a83;
+  font-size: 7px;
 }
 
 .button--concede:not(:disabled):hover {

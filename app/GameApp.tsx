@@ -132,6 +132,7 @@ type BattleSide = {
   maxHealth: number;
   armor: number;
   heroPowerUsed: boolean;
+  coinAvailable: boolean;
   mana: number;
   maxMana: number;
   deckCount: number;
@@ -140,7 +141,8 @@ type BattleSide = {
 };
 
 type BattleView = {
-  status: "playing" | "finished";
+  status: "mulligan" | "playing" | "finished";
+  mulliganDone: boolean;
   winner: "player" | "ai" | null;
   currentPlayer: "player" | "ai";
   turn: number;
@@ -185,6 +187,7 @@ function orientPvpMatchForLocal(state: MatchState, role: PvpRole): MatchState {
   return {
     ...state,
     activePlayer: swap(state.activePlayer),
+    mulliganDone: [state.mulliganDone?.[1] ?? true, state.mulliganDone?.[0] ?? true],
     players: [players[1], players[0]],
     winner: state.winner === null ? null : swap(state.winner),
     result: state.result
@@ -761,6 +764,7 @@ function battleFromRaw(value: unknown): BattleView | null {
       0,
     ),
     heroPowerUsed: Boolean(side.heroPowerUsed),
+    coinAvailable: Boolean(side.coinAvailable),
     mana: asNumber(side.mana ?? side.energy ?? side.currentMana),
     maxMana: asNumber(side.maxMana ?? side.maxEnergy, 1),
     deckCount: Array.isArray(side.deck)
@@ -770,6 +774,7 @@ function battleFromRaw(value: unknown): BattleView | null {
     board: normalizeBoard(side.board ?? side.units, turn),
   });
   const statusRaw = asString(raw.status ?? raw.phase, "playing").toLowerCase();
+  const isMulligan = statusRaw === "mulligan";
   const winnerValue = raw.winner ?? raw.winnerId;
   const winnerRaw = asString(winnerValue).toLowerCase();
   const currentValue = raw.currentPlayer ?? raw.activePlayer ?? raw.activeSide;
@@ -791,7 +796,9 @@ function battleFromRaw(value: unknown): BattleView | null {
     : [];
   return {
     status:
-      statusRaw === "finished" ||
+      isMulligan
+        ? "mulligan"
+        : statusRaw === "finished" ||
       statusRaw === "ended" ||
       statusRaw === "game-over" ||
       winnerValue === 0 ||
@@ -799,6 +806,9 @@ function battleFromRaw(value: unknown): BattleView | null {
       Boolean(winnerRaw)
         ? "finished"
         : "playing",
+    mulliganDone: Array.isArray(raw.mulliganDone)
+      ? Boolean(raw.mulliganDone[0])
+      : !isMulligan,
     winner:
       winnerValue === 0 || winnerRaw === "player" || winnerRaw === "human"
         ? "player"
@@ -1872,6 +1882,7 @@ export function GameApp({
   const [battle, setBattle] = useState<unknown>(null);
   const [selectedAttacker, setSelectedAttacker] = useState<string | null>(null);
   const [pendingCard, setPendingCard] = useState<BattleSide["hand"][number] | null>(null);
+  const [mulliganSelection, setMulliganSelection] = useState<number[]>([]);
   const [battleMessage, setBattleMessage] = useState("准备部署你的战术卡组。");
   const [battleEffect, setBattleEffect] = useState<BattleVisualEffect | null>(null);
   const [battleEffectsLocked, setBattleEffectsLocked] = useState(false);
@@ -2359,7 +2370,17 @@ export function GameApp({
         aiTurnTimerRef.current = null;
       }
       unlockAudio();
-      const next = createMatch({ decks, startingPlayer, ...(seed === undefined ? {} : { seed }) });
+      let next = createMatch({ decks, startingPlayer, ...(seed === undefined ? {} : { seed }) });
+      // In a local match the AI confirms its opening hand immediately; the
+      // human player still gets a visible mulligan decision window.
+      if (!online) {
+        const aiMulligan = applyCommand(next, {
+          type: "mulligan",
+          player: 1,
+          cardIndexes: [],
+        });
+        if (aiMulligan.accepted) next = aiMulligan.state;
+      }
       setBattle(unwrapTransition(next));
       setOnlineMatch(online);
       setOnlineOpponent(online ? opponentName ?? "联机对手" : null);
@@ -2367,28 +2388,32 @@ export function GameApp({
       pendingPvpCommandRef.current = false;
       setSelectedAttacker(null);
       setPendingCard(null);
-      setBattleMessage(online ? "联机战术链路建立，等待行动窗口。" : "战术链路建立。由你先手，选择一张手牌部署。");
+      setMulliganSelection([]);
+      setBattleMessage(online ? "联机战术链路建立，请先确认起手牌。" : "战术链路建立。点击不想保留的手牌，再确认起手。");
       recordedBattleRef.current = null;
       sectionRef.current = "battle";
       setSection("battle");
       battleEffectSequenceRef.current += 1;
       const effectId = battleEffectSequenceRef.current;
+      const openingEffects: BattleVisualEffect[] = [
+        {
+          id: `start-${effectId}`,
+          kind: "start",
+          side: "player",
+          label: "战术链路建立",
+        },
+        ...(next.phase === "mulligan"
+          ? []
+          : [{
+              id: `turn-${effectId}`,
+              kind: "turn" as const,
+              side: "player" as const,
+              targetSide: "player" as const,
+              label: "你的回合",
+            }]),
+      ];
       showBattleEffects(
-        [
-          {
-            id: `start-${effectId}`,
-            kind: "start",
-            side: "player",
-            label: "战术链路建立",
-          },
-          {
-            id: `turn-${effectId}`,
-            kind: "turn",
-            side: "player",
-            targetSide: "player",
-            label: "你的回合",
-          },
-        ],
+        openingEffects,
         { reset: true },
       );
     } catch (error) {
@@ -2499,6 +2524,7 @@ export function GameApp({
       setOnlineOpponent(pvp.state.peerName ?? "联机对手");
       setSelectedAttacker(null);
       setPendingCard(null);
+      setMulliganSelection([]);
       setBattleMessage(oriented.phase === "game-over" ? "已恢复已结束的联机战报。" : "已恢复联机对局，等待行动窗口。");
       sectionRef.current = "battle";
       setSection("battle");
@@ -2519,6 +2545,7 @@ export function GameApp({
         setBattle(oriented);
         setSelectedAttacker(null);
         setPendingCard(null);
+        setMulliganSelection([]);
         if (previous) {
           showBattleEffects(battleEventsToEffects(oriented.events.slice(previous.events.length)), {
             lock: oriented.phase === "game-over",
@@ -2576,6 +2603,33 @@ export function GameApp({
       }
     }
   }, [battleView?.status, onlineMatch, pvp.state.roomCode, pvp.state.status]);
+
+  const toggleMulliganCard = (index: number) => {
+    if (!battleView || battleView.status !== "mulligan" || battleView.mulliganDone) return;
+    setMulliganSelection((current) =>
+      current.includes(index)
+        ? current.filter((item) => item !== index)
+        : [...current, index],
+    );
+    playSound("select");
+  };
+
+  const confirmMulligan = () => {
+    if (!battle || !battleView || battleView.status !== "mulligan" || battleView.mulliganDone) return;
+    const next = issueCommand({
+      type: "mulligan",
+      player: 0,
+      cardIndexes: [...mulliganSelection].sort((left, right) => left - right),
+    });
+    setMulliganSelection([]);
+    if (next) {
+      setBattleMessage(
+        (next as MatchState).phase === "mulligan"
+          ? "起手已确认，等待对手完成换牌…"
+          : "起手完成，第一回合行动窗口已开启。",
+      );
+    }
+  };
 
   const playCard = (handCard: BattleSide["hand"][number]) => {
     if (battleEffectLockRef.current) {
@@ -2659,6 +2713,12 @@ export function GameApp({
     if (next) {
       setBattleMessage("核心脉冲命中敌方核心。");
     }
+  };
+
+  const useCoin = () => {
+    if (battleEffectLockRef.current) return;
+    const next = issueCommand({ type: "use-coin", player: 0 });
+    if (next) setBattleMessage("已使用幸运币，获得 1 点临时能量。");
   };
 
   const endTurn = () => {
@@ -2953,11 +3013,14 @@ export function GameApp({
                   effect={battleEffect}
                   selectedAttacker={selectedAttacker}
                   pendingCard={pendingCard}
+                  mulliganSelection={mulliganSelection}
                   busy={apiBusy === "record_match"}
                   effectsLocked={battleEffectsLocked}
                   soundEnabled={soundEnabled}
                   onStart={startBattle}
                   onPlayCard={playCard}
+                  onToggleMulligan={toggleMulliganCard}
+                  onConfirmMulligan={confirmMulligan}
                   onSelectAttacker={(id) => {
                     setPendingCard(null);
                     setSelectedAttacker((current) => (current === id ? null : id));
@@ -2970,6 +3033,7 @@ export function GameApp({
                   }}
                   onAttack={attackTarget}
                   onHeroPower={useHeroPower}
+                  onUseCoin={useCoin}
                   onEndTurn={endTurn}
                   onConcede={concedeBattle}
                   onOpenDeck={() => switchSection("deck")}
@@ -3934,16 +3998,20 @@ function BattleSection({
   effect,
   selectedAttacker,
   pendingCard,
+  mulliganSelection,
   busy,
   effectsLocked,
   soundEnabled,
   onStart,
   onPlayCard,
+  onToggleMulligan,
+  onConfirmMulligan,
   onSelectAttacker,
   onCardTarget,
   onCancelTarget,
   onAttack,
   onHeroPower,
+  onUseCoin,
   onEndTurn,
   onConcede,
   onOpenDeck,
@@ -3966,16 +4034,20 @@ function BattleSection({
   effect: BattleVisualEffect | null;
   selectedAttacker: string | null;
   pendingCard: BattleSide["hand"][number] | null;
+  mulliganSelection: number[];
   busy: boolean;
   effectsLocked: boolean;
   soundEnabled: boolean;
   onStart: () => void;
   onPlayCard: (card: BattleSide["hand"][number]) => void;
+  onToggleMulligan: (index: number) => void;
+  onConfirmMulligan: () => void;
   onSelectAttacker: (id: string) => void;
   onCardTarget: (target: { kind: "unit" | "hero"; side: "player" | "ai"; id?: string }) => void;
   onCancelTarget: () => void;
   onAttack: (target: BattleTarget) => void;
   onHeroPower: () => void;
+  onUseCoin: () => void;
   onEndTurn: () => void;
   onConcede: () => void;
   onOpenDeck: () => void;
@@ -4047,6 +4119,8 @@ function BattleSection({
   }
 
   const playerTurn = battle.currentPlayer === "player" && battle.status === "playing";
+  const mulliganActive = battle.status === "mulligan";
+  const playerCanMulligan = mulliganActive && !battle.mulliganDone && !effectsLocked && (!online || pvp.status === "playing");
   const playerCanAct = playerTurn && !effectsLocked && (!online || pvp.status === "playing");
   const pendingDefinition = pendingCard ? CARD_BY_ID.get(pendingCard.cardId) : undefined;
   const targetRule = pendingDefinition?.target ?? "none";
@@ -4120,13 +4194,15 @@ function BattleSection({
             className={`turn-indicator ${
               battle.status === "finished"
                 ? "turn-indicator--finished"
+                : mulliganActive
+                  ? "turn-indicator--mulligan"
                 : playerTurn
                   ? "turn-indicator--player"
                   : "turn-indicator--ai"
             }`}
           >
             <span />
-            {battle.status === "finished" ? "演算结束" : playerTurn ? "你的回合" : "敌方回合"}
+            {battle.status === "finished" ? "演算结束" : mulliganActive ? "起手换牌" : playerTurn ? "你的回合" : "敌方回合"}
           </div>
         </div>
       </header>
@@ -4215,6 +4291,18 @@ function BattleSection({
                   {Array.from({ length: battle.player.maxMana }, (_, index) => <i className={index < battle.player.mana ? "is-filled" : ""} key={index} />)}
                 </div>
               </div>
+              {battle.player.coinAvailable && (
+                <button
+                  className="coin-button"
+                  type="button"
+                  disabled={!playerCanAct}
+                  onClick={onUseCoin}
+                  aria-label="使用幸运币，获得 1 点临时能量"
+                >
+                  <span className="coin-button__icon">◉</span>
+                  <span><strong>幸运币</strong><small>+1 临时能量</small></span>
+                </button>
+              )}
               <button
                 className={`hero-power-button ${battle.player.heroPowerUsed ? "hero-power-button--used" : ""}`}
                 type="button"
@@ -4227,20 +4315,23 @@ function BattleSection({
               </button>
             </div>
             <div className="player-hand">
-              {battle.player.hand.map((handCard) => {
+              {battle.player.hand.map((handCard, handIndex) => {
                 const card = CARD_BY_ID.get(handCard.cardId);
                 if (!card) return null;
-                const disabled = !playerCanAct || card.cost > battle.player.mana;
+                const selectedForMulligan = mulliganSelection.includes(handIndex);
+                const disabled = mulliganActive
+                  ? !playerCanMulligan
+                  : !playerCanAct || card.cost > battle.player.mana;
                 return (
                   <div
-                    className={`hand-card ${disabled ? "hand-card--disabled" : ""} ${pendingCard?.instanceId === handCard.instanceId ? "hand-card--selected" : ""}`}
+                    className={`hand-card ${disabled ? "hand-card--disabled" : ""} ${pendingCard?.instanceId === handCard.instanceId || selectedForMulligan ? "hand-card--selected" : ""}`}
                     key={handCard.instanceId}
                   >
                     <CardTile
                       card={card}
                       compact
-                      action={() => onPlayCard(handCard)}
-                      actionLabel={`使用${card.name}`}
+                      action={() => mulliganActive ? onToggleMulligan(handIndex) : onPlayCard(handCard)}
+                      actionLabel={mulliganActive ? `${selectedForMulligan ? "保留" : "更换"}${card.name}` : `使用${card.name}`}
                       disabled={disabled}
                     />
                   </div>
@@ -4257,6 +4348,17 @@ function BattleSection({
             <span><Icon name="radar" /></span>
             <p>{message}</p>
           </div>
+          {mulliganActive && (
+            <div className="mulligan-prompt" role="status">
+              <div>
+                <strong>起手换牌</strong>
+                <p>{battle.mulliganDone ? "已确认，等待对手完成起手。" : "点击不想保留的手牌，再确认起手。换掉的牌会回到牌库并抽取替代牌。"}</p>
+              </div>
+              <button className="button button--primary" type="button" disabled={!playerCanMulligan} onClick={onConfirmMulligan}>
+                {battle.mulliganDone ? "等待对手" : `确认起手${mulliganSelection.length > 0 ? `（换 ${mulliganSelection.length} 张）` : ""}`}
+              </button>
+            </div>
+          )}
           {(selectedAttacker || pendingCard) && (
             <div className="target-prompt">
               <Icon name="swords" />
@@ -4290,6 +4392,13 @@ function BattleSection({
               <h2>{battle.winner === "player" ? "演算胜利" : "核心失守"}</h2>
               <p>{busy ? "正在归档战报与奖励…" : battle.winner === "player" ? "获得 60 金币，任务进度已更新。" : "获得 20 金币，战术日志已保留。"}</p>
               <button className="button button--primary button--wide" type="button" onClick={onStart}>再次演算</button>
+            </div>
+          ) : mulliganActive ? (
+            <div className="battle-actions battle-actions--mulligan">
+              <button className="button button--end-turn" type="button" disabled={!playerCanMulligan} onClick={onConfirmMulligan}>
+                <span>{battle.mulliganDone ? "等待对手" : "确认起手"}</span>
+                <Icon name="check" />
+              </button>
             </div>
           ) : (
             <div className="battle-actions">
