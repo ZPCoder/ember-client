@@ -4542,6 +4542,7 @@ button.hero-core {
   font-style: normal;
   font-weight: 800;
   letter-spacing: 0.04em;
+  line-height: 1.35;
 }
 
 .target-prompt__preview {
@@ -4549,6 +4550,7 @@ button.hero-core {
   font-size: 7px;
   font-style: normal;
   font-weight: 800;
+  line-height: 1.35;
 }
 
 .target-prompt__cancel {

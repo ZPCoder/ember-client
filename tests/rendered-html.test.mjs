@@ -82,6 +82,11 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(game, /board-unit__target-preview/);
   assert.match(game, /hero-core__target-preview/);
   assert.match(game, /target-prompt__preview/);
+  assert.match(game, /targetPromptAttacker/);
+  assert.match(game, /有效攻击/);
+  assert.match(game, /武器有效攻击/);
+  assert.match(game, /targetPreviewForPendingUnit/);
+  assert.match(game, /预计冻结/);
   assert.match(game, /预计破甲/);
   assert.match(game, /先破护盾/);
   assert.match(game, /反击 −/);

@@ -425,6 +425,7 @@ function cardFromRaw(raw: Record<string, unknown>): CatalogCard {
 
 const CATALOG: CatalogCard[] = rawCatalog.map(cardFromRaw);
 const CARD_BY_ID = new Map(CATALOG.map((card) => [card.id, card]));
+const CARD_RULE_BY_ID = new Map(CARD_CATALOG.map((card) => [card.id, card]));
 
 function getStarterDeck(): string[] {
   const raw = DEFAULT_STARTER_DECK as unknown;
@@ -4967,7 +4968,13 @@ function BattleSection({
   };
   const playerSwiftTier = traitTierForBoard(battle.player.board, "swift");
   const playerBulwarkTier = traitTierForBoard(battle.player.board, "bulwark");
+  const playerArcaneTier = traitTierForBoard(battle.player.board, "arcane");
   const enemyBulwarkTier = traitTierForBoard(battle.ai.board, "bulwark");
+  const pendingRuleCard = pendingDefinition ? CARD_RULE_BY_ID.get(pendingDefinition.id) : undefined;
+  const pendingEffects = [
+    ...(pendingRuleCard?.effect ?? []),
+    ...(pendingRuleCard?.onPlay ?? []),
+  ];
   const selectedAttackerCard = selectedAttackerUnit
     ? CARD_BY_ID.get(selectedAttackerUnit.cardId)
     : undefined;
@@ -4989,43 +4996,137 @@ function BattleSection({
     }
     return cardCanTarget("ai", "unit") && !unit.stealthActive;
   };
-  const targetPreviewForUnit = (unit: BattleUnit): string | undefined => {
-    if (!selectedAttacker || pendingCard || pendingHeroPower || !enemyUnitTargetable(unit)) {
+  const targetPreviewForPendingUnit = (unit: BattleUnit, side: "player" | "ai"): string | undefined => {
+    if (!pendingCard && !pendingHeroPower) return undefined;
+    if (pendingHeroPower) {
+      const power = battle.player.heroPower.effect;
+      if (power.kind === "damage-enemy-unit" && side === "ai") {
+        return unit.keywords.includes("shield") ? "先破护盾" : `预计 −${Math.min(unit.health, power.amount)}`;
+      }
+      if (power.kind === "heal-friendly-unit" && side === "player") {
+        return `预计 +${Math.min(unit.maxHealth - unit.health, power.amount)} 生命`;
+      }
+      if (power.kind === "heal-friendly-character" && side === "player") {
+        return `预计 +${Math.min(unit.maxHealth - unit.health, power.amount)} 生命`;
+      }
       return undefined;
     }
-    const targetCard = CARD_BY_ID.get(unit.cardId);
-    const hasShield = unit.keywords.includes("shield");
-    const reduction = targetCard?.traits.includes("bulwark") ? enemyBulwarkTier : 0;
-    const resolvedDamage = hasShield
-      ? 0
-      : Math.min(unit.health, Math.max(1, selectedAttackValue - reduction));
-    const poisoned = selectedAttackerPoisonous && resolvedDamage > 0;
-    const remainingHealth = poisoned ? 0 : Math.max(0, unit.health - resolvedDamage);
-    const outcome = hasShield
-      ? "先破护盾"
-      : remainingHealth > 0
-        ? `预计剩 ${remainingHealth}`
-        : "预计击破";
-    const retaliation = remainingHealth > 0
-      ? selectedAttackerUnit
-        ? selectedAttackerUnit.keywords.includes("shield")
-          ? 0
-          : Math.min(
-              selectedAttackerUnit.health,
-              Math.max(1, unit.attack - (selectedAttackerHasBulwark ? playerBulwarkTier : 0)),
-            )
-        : Math.min(battle.player.health, Math.max(0, unit.attack - battle.player.armor))
-      : 0;
-    return retaliation > 0 ? `${outcome} · 反击 −${retaliation}` : outcome;
+    const damage = pendingEffects.reduce(
+      (total, effect) => total + (effect.kind === "damage" ? effect.amount : 0),
+      0,
+    ) + (pendingDefinition?.type === "spell" ? playerArcaneTier : 0);
+    const heal = pendingEffects.reduce(
+      (total, effect) => total + (effect.kind === "heal" ? effect.amount : 0),
+      0,
+    );
+    const buffAttack = pendingEffects.reduce(
+      (total, effect) => total + (effect.kind === "buff" || effect.kind === "temporary-buff" ? effect.attack : 0),
+      0,
+    );
+    const buffHealth = pendingEffects.reduce(
+      (total, effect) => total + (effect.kind === "buff" || effect.kind === "temporary-buff" ? effect.health : 0),
+      0,
+    );
+    const hasSilence = pendingEffects.some((effect) => effect.kind === "silence");
+    const hasFreeze = pendingEffects.some((effect) => effect.kind === "freeze" || effect.kind === "random-enemy-freeze");
+    const hasTransform = pendingEffects.some((effect) => effect.kind === "transform");
+    if (side === "ai" && damage > 0) {
+      return unit.keywords.includes("shield") ? "先破护盾" : `预计 −${Math.min(unit.health, damage)}`;
+    }
+    if (side === "player" && heal > 0) {
+      return `预计 +${Math.min(unit.maxHealth - unit.health, heal)} 生命`;
+    }
+    if (side === "player" && (buffAttack !== 0 || buffHealth !== 0)) {
+      return `预计 ${buffAttack >= 0 ? "+" : ""}${buffAttack}/${buffHealth >= 0 ? "+" : ""}${buffHealth}`;
+    }
+    if (side === "ai" && hasTransform) return "预计变形";
+    if (side === "ai" && hasSilence) return "预计沉默";
+    if (side === "ai" && hasFreeze) return "预计冻结";
+    return undefined;
   };
-  const targetPreviewForHero = selectedAttacker && !pendingCard && !pendingHeroPower && enemyHeroTargetable
-    ? (() => {
-        const armorAbsorbed = Math.min(battle.ai.armor, selectedAttackValue);
-        const healthDamage = Math.min(battle.ai.health, Math.max(0, selectedAttackValue - armorAbsorbed));
+  const targetPreviewForUnit = (unit: BattleUnit, side: "player" | "ai" = "ai"): string | undefined => {
+    if (selectedAttacker && side === "ai" && !pendingCard && !pendingHeroPower && enemyUnitTargetable(unit)) {
+      const targetCard = CARD_BY_ID.get(unit.cardId);
+      const hasShield = unit.keywords.includes("shield");
+      const reduction = targetCard?.traits.includes("bulwark") ? enemyBulwarkTier : 0;
+      const resolvedDamage = hasShield
+        ? 0
+        : Math.min(unit.health, Math.max(1, selectedAttackValue - reduction));
+      const poisoned = selectedAttackerPoisonous && resolvedDamage > 0;
+      const remainingHealth = poisoned ? 0 : Math.max(0, unit.health - resolvedDamage);
+      const outcome = hasShield
+        ? "先破护盾"
+        : remainingHealth > 0
+          ? `预计剩 ${remainingHealth}`
+          : "预计击破";
+      const retaliation = remainingHealth > 0
+        ? selectedAttackerUnit
+          ? selectedAttackerUnit.keywords.includes("shield")
+            ? 0
+            : Math.min(
+                selectedAttackerUnit.health,
+                Math.max(1, unit.attack - (selectedAttackerHasBulwark ? playerBulwarkTier : 0)),
+              )
+          : Math.min(battle.player.health, Math.max(0, unit.attack - battle.player.armor))
+        : 0;
+      return retaliation > 0 ? `${outcome} · 反击 −${retaliation}` : outcome;
+    }
+    if ((pendingCard || pendingHeroPower) && cardCanTarget(side, "unit")) {
+      return targetPreviewForPendingUnit(unit, side);
+    }
+    return undefined;
+  };
+  const targetPreviewForHero = (side: "player" | "ai"): string | undefined => {
+    if (selectedAttacker && side === "ai" && !pendingCard && !pendingHeroPower && enemyHeroTargetable) {
+      const armorAbsorbed = Math.min(battle.ai.armor, selectedAttackValue);
+      const healthDamage = Math.min(battle.ai.health, Math.max(0, selectedAttackValue - armorAbsorbed));
+      return armorAbsorbed > 0
+        ? `预计破甲 ${armorAbsorbed} · −${healthDamage}`
+        : `预计 −${healthDamage} 核心`;
+    }
+    if (!pendingCard && !pendingHeroPower || !cardCanTarget(side, "hero")) return undefined;
+    if (pendingHeroPower) {
+      const power = battle.player.heroPower.effect;
+      if (power.kind === "damage-enemy-hero" && side === "ai") {
+        const armorAbsorbed = Math.min(battle.ai.armor, power.amount);
         return armorAbsorbed > 0
-          ? `预计破甲 ${armorAbsorbed} · −${healthDamage}`
-          : `预计 −${healthDamage} 核心`;
-      })()
+          ? `预计破甲 ${armorAbsorbed} · −${Math.max(0, power.amount - armorAbsorbed)}`
+          : `预计 −${Math.min(battle.ai.health, power.amount)} 核心`;
+      }
+      if ((power.kind === "heal-friendly-hero" || power.kind === "heal-friendly-character") && side === "player") {
+        return `预计 +${Math.min(battle.player.maxHealth - battle.player.health, power.amount)} 生命`;
+      }
+      if (power.kind === "armor" && side === "player") return `预计 +${power.amount} 护甲`;
+      return undefined;
+    }
+    const damage = pendingEffects.reduce(
+      (total, effect) => total + (effect.kind === "damage" ? effect.amount : 0),
+      0,
+    ) + (pendingDefinition?.type === "spell" ? playerArcaneTier : 0);
+    if (damage > 0 && side === "ai") {
+      const armorAbsorbed = Math.min(battle.ai.armor, damage);
+      return armorAbsorbed > 0
+        ? `预计破甲 ${armorAbsorbed} · −${Math.max(0, damage - armorAbsorbed)}`
+        : `预计 −${Math.min(battle.ai.health, damage)} 核心`;
+    }
+    const heal = pendingEffects.reduce(
+      (total, effect) => total + (effect.kind === "heal" ? effect.amount : 0),
+      0,
+    );
+    if (heal > 0 && side === "player") {
+      return `预计 +${Math.min(battle.player.maxHealth - battle.player.health, heal)} 生命`;
+    }
+    return undefined;
+  };
+  const targetPromptAttacker = selectedAttackerUnit
+    ? `${selectedAttackerUnit.name} · ⚔ ${selectedAttackValue} · ◆ ${selectedAttackerUnit.health}`
+    : selectedAttacker
+      ? `${battle.player.weapon?.name ?? "英雄攻击"} · ⚔ ${selectedAttackValue} · ◈ ${battle.player.weapon?.durability ?? 0}`
+      : undefined;
+  const targetPromptPreview = selectedAttacker
+    ? selectedAttackerUnit
+      ? `有效攻击 ⚔ ${selectedAttackValue} · 目标卡片会显示破盾、击破与反击结果`
+      : `武器有效攻击 ⚔ ${selectedAttackValue} · 命中后耐久 −1`
     : undefined;
   return (
     <section className="screen screen--battle battle-room" aria-labelledby="battle-room-title">
@@ -5090,7 +5191,7 @@ function BattleSection({
                 canTarget={enemyHeroTargetable}
                 effect={effectForHero("ai")}
                 impact={impactForHero("ai")}
-                targetPreview={targetPreviewForHero}
+                targetPreview={targetPreviewForHero("ai")}
                 onTarget={() =>
                   pendingCard || pendingHeroPower
                     ? onCardTarget({ kind: "hero", side: "ai" })
@@ -5162,6 +5263,7 @@ function BattleSection({
                   targetable={cardCanTarget("player", "unit")}
                   effect={effectForUnit(unit.id)}
                   impact={impactForUnit(unit.id)}
+                  targetPreview={targetPreviewForUnit(unit, "player")}
                   onSelect={pendingCard || pendingHeroPower || !playerCanAct ? undefined : () => onSelectAttacker(unit.id)}
                   onTarget={() => onCardTarget({ kind: "unit", side: "player", id: unit.id })}
                   onInspect={() => {
@@ -5181,6 +5283,7 @@ function BattleSection({
                 canTarget={cardCanTarget("player", "hero")}
                 effect={effectForHero("player")}
                 impact={impactForHero("player")}
+                targetPreview={targetPreviewForHero("player")}
                 onTarget={() => onCardTarget({ kind: "hero", side: "player" })}
                 targetLabel={`以${pendingDefinition?.name ?? (pendingHeroPower ? battle.player.heroPowerName : "卡牌")}选择我方核心`}
               />
@@ -5445,14 +5548,14 @@ function BattleSection({
                         ? "嘲讽生效：必须优先攻击嘲讽单位"
                         : "选择敌方单位或核心"}
                 </small>
-                {selectedAttackerUnit && (
+                {targetPromptAttacker && (
                   <em className="target-prompt__attacker">
-                    {selectedAttackerUnit.name} · ⚔ {selectedAttackerUnit.attack} · ◆ {selectedAttackerUnit.health}
+                    {targetPromptAttacker}
                   </em>
                 )}
                 {selectedAttacker && (
                   <em className="target-prompt__preview">
-                    预计命中伤害 {selectedAttackerUnit?.attack ?? battle.player.weapon?.attack ?? 0} 点
+                    {targetPromptPreview}
                   </em>
                 )}
               </span>
