@@ -4574,8 +4574,12 @@ function BattleSection({
     (unit) => unit.keywords.includes("taunt") && !unit.stealthActive,
   );
   const attackBlockedByTaunt = Boolean(selectedAttacker && visibleEnemyTaunts.length > 0);
+  const selectedAttackerUnit = selectedAttacker
+    ? battle.player.board.find((unit) => unit.id === selectedAttacker)
+    : undefined;
+  const rushOnlyAttack = Boolean(selectedAttackerUnit?.rushOnly);
   const enemyHeroTargetable = selectedAttacker
-    ? !attackBlockedByTaunt
+    ? !attackBlockedByTaunt && !rushOnlyAttack
     : cardCanTarget("ai", "hero");
   const enemyUnitTargetable = (unit: BattleUnit) => {
     if (selectedAttacker) {
@@ -4947,7 +4951,20 @@ function BattleSection({
               <Icon name="swords" />
               <span>
                 <strong>{pendingCard ? `${pendingDefinition?.name ?? "卡牌"} · 选择目标` : "目标锁定模式"}</strong>
-                <small>{pendingCard ? "场上可用目标已高亮" : "选择敌方单位或核心"}</small>
+                <small>
+                  {pendingCard
+                    ? "场上可用目标已高亮"
+                    : rushOnlyAttack
+                      ? "突袭：本回合只能攻击敌方单位"
+                      : attackBlockedByTaunt
+                        ? "嘲讽生效：必须优先攻击嘲讽单位"
+                        : "选择敌方单位或核心"}
+                </small>
+                {selectedAttackerUnit && (
+                  <em className="target-prompt__attacker">
+                    {selectedAttackerUnit.name} · ⚔ {selectedAttackerUnit.attack} · ◆ {selectedAttackerUnit.health}
+                  </em>
+                )}
               </span>
               {pendingCard && (
                 <button type="button" onClick={onCancelTarget} aria-label="取消选择卡牌目标">

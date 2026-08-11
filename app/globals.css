@@ -4113,6 +4113,30 @@ button.hero-core {
   font-size: 8px;
 }
 
+.target-prompt > span {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  vertical-align: middle;
+}
+
+.target-prompt > span > strong {
+  color: #ffd5c4;
+}
+
+.target-prompt > span > small {
+  color: #c88872;
+  font-size: 7px;
+}
+
+.target-prompt__attacker {
+  color: #f7c476;
+  font-size: 7px;
+  font-style: normal;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
 .battle-synergies {
   display: grid;
   gap: 7px;
