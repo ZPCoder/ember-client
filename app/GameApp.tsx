@@ -2050,6 +2050,7 @@ export function GameApp({
   const [deckIds, setDeckIds] = useState<string[]>(() => [...STARTER_IDS]);
   const [editingDeckId, setEditingDeckId] = useState<string | null>(null);
   const [battle, setBattle] = useState<unknown>(null);
+  const [inspectedCard, setInspectedCard] = useState<CatalogCard | null>(null);
   const [selectedAttacker, setSelectedAttacker] = useState<string | null>(null);
   const [pendingCard, setPendingCard] = useState<BattleSide["hand"][number] | null>(null);
   const [mulliganSelection, setMulliganSelection] = useState<number[]>([]);
@@ -2571,6 +2572,7 @@ export function GameApp({
         if (aiMulligan.accepted) next = aiMulligan.state;
       }
       setBattle(unwrapTransition(next));
+      setInspectedCard(null);
       setOnlineMatch(online);
       setOnlineOpponent(online ? opponentName ?? "联机对手" : null);
       if (!online) pvpMatchTokenRef.current = null;
@@ -3314,6 +3316,9 @@ export function GameApp({
                   battle={battleView}
                   message={battleMessage}
                   effect={battleEffect}
+                  inspectedCard={inspectedCard}
+                  onInspectCard={setInspectedCard}
+                  onCloseInspector={() => setInspectedCard(null)}
                   selectedAttacker={selectedAttacker}
                   pendingCard={pendingCard}
                   mulliganSelection={mulliganSelection}
@@ -4373,6 +4378,9 @@ function BattleSection({
   battle,
   message,
   effect,
+  inspectedCard,
+  onInspectCard,
+  onCloseInspector,
   selectedAttacker,
   pendingCard,
   mulliganSelection,
@@ -4416,6 +4424,9 @@ function BattleSection({
   battle: BattleView | null;
   message: string;
   effect: BattleVisualEffect | null;
+  inspectedCard: CatalogCard | null;
+  onInspectCard: (card: CatalogCard) => void;
+  onCloseInspector: () => void;
   selectedAttacker: string | null;
   pendingCard: BattleSide["hand"][number] | null;
   mulliganSelection: number[];
@@ -4764,6 +4775,15 @@ function BattleSection({
                       actionLabel={mulliganActive ? `${selectedForMulligan ? "保留" : "更换"}${card.name}` : `使用${card.name}`}
                       disabled={disabled}
                     />
+                    <button
+                      className="hand-card__inspect"
+                      type="button"
+                      onClick={() => onInspectCard(card)}
+                      aria-label={`查看${card.name}详情`}
+                      title={`查看${card.name}详情`}
+                    >
+                      i
+                    </button>
                     {!mulliganActive && card.tradeable && (
                       <button
                         className="hand-card__trade"
@@ -4812,6 +4832,32 @@ function BattleSection({
             <span className="deck-counter"><Icon name="cards" size={16} /> 牌库 {battle.player.deckCount}</span>
           </div>
         </div>
+
+        {inspectedCard && (
+          <div className="card-inspector-backdrop" role="presentation" onClick={onCloseInspector}>
+            <section
+              className="card-inspector"
+              role="dialog"
+              aria-modal="true"
+              aria-label={`${inspectedCard.name}卡牌详情`}
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="card-inspector__heading">
+                <div>
+                  <span>TACTICAL ARCHIVE</span>
+                  <strong>卡牌详情</strong>
+                </div>
+                <button type="button" onClick={onCloseInspector} aria-label="关闭卡牌详情">
+                  <Icon name="close" size={18} />
+                </button>
+              </div>
+              <div className="card-inspector__card">
+                <CardTile card={inspectedCard} showDescription />
+              </div>
+              <p className="card-inspector__hint">点击空白处或关闭按钮返回战场。</p>
+            </section>
+          </div>
+        )}
 
         <aside className="battle-console">
           <div className="battle-console__message" role="status">

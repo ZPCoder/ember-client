@@ -3590,6 +3590,7 @@ button.hero-core {
 }
 
 .hand-card {
+  position: relative;
   width: min(118px, 12vw);
   animation: battle-hand-arrive 360ms ease-out backwards;
   transform-origin: bottom center;
@@ -3721,6 +3722,140 @@ button.hero-core {
 .hand-card__trade span {
   font-size: 10px;
   line-height: 1;
+}
+
+.hand-card__inspect {
+  position: absolute;
+  z-index: 7;
+  top: -7px;
+  right: -5px;
+  display: none;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border: 1px solid rgba(142, 209, 199, 0.44);
+  border-radius: 50%;
+  color: #d9f5eb;
+  background: rgba(6, 23, 20, 0.92);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.32);
+  font-family: Georgia, serif;
+  font-size: 13px;
+  font-style: italic;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.hand-card__inspect:hover,
+.hand-card__inspect:focus-visible {
+  border-color: var(--cyan);
+  color: #fff4d5;
+  background: rgba(23, 74, 65, 0.96);
+  outline: none;
+}
+
+.card-inspector-backdrop {
+  position: fixed;
+  z-index: 80;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(2, 8, 7, 0.72);
+  backdrop-filter: blur(8px);
+}
+
+.card-inspector {
+  width: min(390px, calc(100vw - 32px));
+  max-height: min(720px, calc(100dvh - 36px));
+  overflow: auto;
+  padding: 16px;
+  border: 1px solid rgba(125, 206, 192, 0.4);
+  border-radius: 16px;
+  background:
+    radial-gradient(circle at 50% 10%, rgba(85, 185, 173, 0.14), transparent 54%),
+    rgba(7, 22, 18, 0.96);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.58), 0 0 36px rgba(85, 185, 173, 0.12);
+  animation: battle-result-enter 180ms ease-out both;
+}
+
+.card-inspector__heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.card-inspector__heading span,
+.card-inspector__heading strong {
+  display: block;
+}
+
+.card-inspector__heading span {
+  color: var(--cyan);
+  font-size: 7px;
+  letter-spacing: 0.18em;
+}
+
+.card-inspector__heading strong {
+  margin-top: 3px;
+  color: var(--paper);
+  font-family: "Songti SC", serif;
+  font-size: 20px;
+}
+
+.card-inspector__heading > button {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 1px solid rgba(170, 205, 190, 0.22);
+  border-radius: 8px;
+  color: var(--paper-soft);
+  background: rgba(14, 35, 29, 0.86);
+  cursor: pointer;
+}
+
+.card-inspector__heading > button:hover,
+.card-inspector__heading > button:focus-visible {
+  border-color: var(--cyan);
+  color: var(--paper);
+  outline: none;
+}
+
+.card-inspector__card {
+  display: flex;
+  justify-content: center;
+}
+
+.card-inspector__card .game-card {
+  width: min(300px, 100%);
+  min-height: 430px;
+}
+
+.card-inspector__card .game-card__visual {
+  min-height: 180px;
+}
+
+.card-inspector__card .game-card__tags {
+  display: flex;
+  max-height: none;
+}
+
+.card-inspector__card .game-card__body > p {
+  display: block;
+  min-height: 0;
+  margin: 10px 0 14px;
+  color: #c1d2c9;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.card-inspector__hint {
+  margin: 12px 0 0;
+  color: #7d9a90;
+  font-size: 9px;
+  text-align: center;
 }
 
 .deck-counter {
@@ -5226,6 +5361,10 @@ button.hero-core {
     color: #edb09a;
     background: rgba(228, 109, 63, 0.1);
     font-size: 10px;
+  }
+
+  .hand-card__inspect {
+    display: grid;
   }
 }
 
