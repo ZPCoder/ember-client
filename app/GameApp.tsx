@@ -146,6 +146,10 @@ type BattleUnit = {
   canAttack: boolean;
   keywords: Keyword[];
   stealthActive: boolean;
+  frozenTurns: number;
+  summoningSick: boolean;
+  rushOnly: boolean;
+  furyStacks: number;
   spellDamage: number;
   temporaryAttackBonus: number;
   temporaryHealthBonus: number;
@@ -855,6 +859,10 @@ function normalizeBoard(value: unknown, turn: number): BattleUnit[] {
       ) as 1 | 2,
       keywords: keywords as Keyword[],
       stealthActive,
+      frozenTurns,
+      summoningSick,
+      rushOnly: Boolean(item.rushOnly),
+      furyStacks: asNumber(item.furyStacks, 0),
       spellDamage: asNumber(item.spellDamage, card?.spellDamage ?? 0),
       temporaryAttackBonus: asNumber(item.temporaryAttackBonus, 0),
       temporaryHealthBonus: asNumber(item.temporaryHealthBonus, 0),
@@ -4513,15 +4521,24 @@ function BoardUnit({
       stealthActive: false,
     };
   const impactText = battleImpactText(impact);
+  const statusText = unit.frozenTurns > 0
+    ? `❄ 冻结 ${unit.frozenTurns} 回合`
+    : unit.summoningSick
+      ? unit.rushOnly
+        ? "↗ 突袭窗口"
+        : "◌ 休眠"
+      : unit.furyStacks > 0
+        ? `↯ 激昂 ${unit.furyStacks}/2`
+        : undefined;
   return (
     <div className="board-unit-shell">
       <button
-        className={`board-unit ${unit.stars === 2 ? "board-unit--star-2" : ""} ${selected ? "board-unit--selected" : ""} ${targetable ? "board-unit--targetable" : ""} ${!unit.canAttack && onSelect ? "board-unit--exhausted" : ""} ${effect ? `board-unit--${effect}` : ""}`}
+        className={`board-unit ${unit.stars === 2 ? "board-unit--star-2" : ""} ${selected ? "board-unit--selected" : ""} ${targetable ? "board-unit--targetable" : ""} ${!unit.canAttack && onSelect ? "board-unit--exhausted" : ""} ${unit.frozenTurns > 0 ? "board-unit--frozen" : ""} ${unit.summoningSick ? "board-unit--summoning-sick" : ""} ${effect ? `board-unit--${effect}` : ""}`}
         type="button"
         onClick={targetable ? onTarget : onSelect}
         disabled={!targetable && (!onSelect || !unit.canAttack)}
         aria-pressed={onSelect ? selected : undefined}
-        aria-label={`${unit.name}，${unit.stars} 星，攻击 ${unit.attack}，生命 ${unit.health}${targetable ? "，设为攻击目标" : unit.canAttack ? "，选择攻击" : "，本回合无法攻击"}`}
+        aria-label={`${unit.name}，${unit.stars} 星，攻击 ${unit.attack}，生命 ${unit.health}${targetable ? "，设为攻击目标" : unit.canAttack ? "，选择攻击" : "，本回合无法攻击"}${statusText ? `，${statusText.replaceAll("❄ ", "").replaceAll("↗ ", "").replaceAll("◌ ", "").replaceAll("↯ ", "")}` : ""}`}
         title={visualCard.description || `${unit.name} · ${unit.attack}/${unit.health}`}
       >
       <div className="board-unit__art">
@@ -4539,6 +4556,7 @@ function BoardUnit({
           ))}
         </div>
       )}
+      {statusText && <span className="board-unit__status">{statusText}</span>}
       <div className="board-unit__stats"><span>⚔ {unit.attack}</span><span>◆ {unit.health}</span></div>
       {unit.spellDamage > 0 && <span className="board-unit__spell-damage" title="法术伤害加成">✦ 法术 +{unit.spellDamage}</span>}
       {(unit.temporaryAttackBonus !== 0 || unit.temporaryHealthBonus !== 0) && (
