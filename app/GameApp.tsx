@@ -53,7 +53,11 @@ function battleImpactText(effect?: BattleVisualEffect): string | undefined {
   if (!effect) return undefined;
   if (effect.kind === "damage") return effect.amount && effect.amount > 0 ? `−${effect.amount}` : undefined;
   if (effect.kind === "heal") return effect.amount && effect.amount > 0 ? `+${effect.amount}` : undefined;
-  if (effect.kind === "shield") return "护盾";
+  if (effect.kind === "shield") {
+    return effect.label.includes("吸收") && effect.amount && effect.amount > 0
+      ? `吸收 ${effect.amount}`
+      : "护盾";
+  }
   if (effect.kind === "buff") return "增幅";
   if (effect.kind === "transform") return "变形";
   if (effect.kind === "destroy") return "离线";
