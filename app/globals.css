@@ -3466,6 +3466,18 @@ button.hero-core {
   font-size: 8px;
 }
 
+.board-unit__spell-damage {
+  display: block;
+  overflow: hidden;
+  padding: 0 5px 2px;
+  color: #caa7ff;
+  font-size: 6px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .board-unit__ready {
   position: absolute;
   top: 4px;

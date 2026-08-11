@@ -59,6 +59,7 @@ type CatalogCard = {
   attack?: number;
   health?: number;
   durability?: number;
+  spellDamage?: number;
   target: CardTargetRule;
   keywords: Keyword[];
   traits: Trait[];
@@ -128,6 +129,7 @@ type BattleUnit = {
   canAttack: boolean;
   keywords: Keyword[];
   stealthActive: boolean;
+  spellDamage: number;
 };
 
 type BattleSide = {
@@ -365,6 +367,10 @@ function cardFromRaw(raw: Record<string, unknown>): CatalogCard {
     durability:
       typeof raw.durability === "number"
         ? asNumber(raw.durability)
+        : undefined,
+    spellDamage:
+      typeof raw.spellDamage === "number"
+        ? asNumber(raw.spellDamage)
         : undefined,
     target: asString(raw.target, "none") as CardTargetRule,
     keywords: Array.isArray(raw.keywords)
@@ -753,6 +759,7 @@ function normalizeBoard(value: unknown, turn: number): BattleUnit[] {
       ) as 1 | 2,
       keywords: keywords as Keyword[],
       stealthActive,
+      spellDamage: asNumber(item.spellDamage, card?.spellDamage ?? 0),
       canAttack:
         typeof item.canAttack === "boolean"
           ? item.canAttack
@@ -4069,6 +4076,7 @@ function BoardUnit({
         </div>
       )}
       <div className="board-unit__stats"><span>⚔ {unit.attack}</span><span>◆ {unit.health}</span></div>
+      {unit.spellDamage > 0 && <span className="board-unit__spell-damage" title="法术伤害加成">✦ 法术 +{unit.spellDamage}</span>}
       {unit.canAttack && onSelect && <span className="board-unit__ready">READY</span>}
     </button>
   );
