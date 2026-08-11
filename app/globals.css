@@ -3538,12 +3538,34 @@ button.hero-core {
 }
 
 .player-hand {
+  position: relative;
   display: flex;
   min-width: 0;
   grid-row: 3;
   align-items: end;
   justify-content: center;
   gap: 6px;
+  padding-top: 18px;
+}
+
+.player-hand__count {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  z-index: 2;
+  padding: 3px 6px;
+  border: 1px solid rgba(116, 179, 166, 0.18);
+  border-radius: 999px;
+  color: #81a69d;
+  background: rgba(5, 16, 13, 0.76);
+  font-size: 7px;
+  letter-spacing: 0.04em;
+}
+
+.player-hand__count--full {
+  color: #f0a080;
+  border-color: rgba(228, 109, 63, 0.45);
+  background: rgba(80, 30, 22, 0.64);
 }
 
 .hand-card {
@@ -5186,10 +5208,29 @@ button.hero-core {
 
   .hand-card {
     width: 78px;
+    flex: 0 0 78px;
   }
 
   .hand-card .game-card {
     min-height: 135px;
+  }
+
+  .player-hand {
+    justify-content: flex-start;
+    gap: 7px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    padding: 20px 8px 4px;
+    scroll-snap-type: x proximity;
+    scrollbar-width: thin;
+  }
+
+  .player-hand__count {
+    left: 8px;
+  }
+
+  .player-hand .hand-card {
+    scroll-snap-align: start;
   }
 
 }

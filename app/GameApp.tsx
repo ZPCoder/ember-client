@@ -4665,6 +4665,9 @@ function BattleSection({
             </div>
             <SecretTray secrets={battle.player.secrets} />
             <div className="player-hand">
+              <span className={`player-hand__count ${battle.player.hand.length >= 10 ? "player-hand__count--full" : ""}`}>
+                手牌 {battle.player.hand.length} / 10
+              </span>
               {battle.player.hand.map((handCard, handIndex) => {
                 const card = CARD_BY_ID.get(handCard.cardId);
                 if (!card) return null;
