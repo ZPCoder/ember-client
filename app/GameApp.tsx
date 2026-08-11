@@ -105,7 +105,7 @@ type PlayerSnapshot = {
 
 type GamePayload = {
   ok: true;
-  identity?: { email: string; displayName: string; isDemo: boolean };
+  identity?: { email: string; displayName: string; isDemo: boolean; isAnonymous?: boolean };
   player: PlayerSnapshot;
   openedCards?: Array<{ cardId: string; count: number }>;
   claimedTaskId?: string;
@@ -354,7 +354,7 @@ function makeId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
-type ProfileSource = "cloud" | "demo" | "cached";
+type ProfileSource = "cloud" | "device" | "demo" | "cached";
 
 const LOCAL_PROFILE_KEY_PREFIX = "astra-protocol:player:v2:";
 
@@ -491,6 +491,7 @@ function applyLocalAction(
     return { ok: true, player, localFallback: true };
   }
   if (action === "open_pack") {
+    if (current.packsAvailable < 1) throw new Error("没有可开启的卡包。");
     const seed = current.stats.matchesPlayed + current.packsAvailable + current.currencies.gold;
     const pulls = Array.from({ length: 5 }, (_, index) => {
       const card = CATALOG[(seed + index * 7) % Math.max(CATALOG.length, 1)];
@@ -530,7 +531,23 @@ function applyLocalAction(
       cardIds: Array.isArray(deckInput.cardIds) ? deckInput.cardIds.map(String) : [],
       updatedAt: now,
     };
+    const validation = validateDeck(savedDeck.cardIds);
+    if (!validation.valid) {
+      throw new Error(validation.errors[0]?.message ?? "卡组不符合组牌规则。");
+    }
+    const ownedCounts = new Map<string, number>();
+    savedDeck.cardIds.forEach((cardId) => {
+      ownedCounts.set(cardId, (ownedCounts.get(cardId) ?? 0) + 1);
+    });
+    for (const [cardId, count] of ownedCounts) {
+      if (count > (current.collection[cardId] ?? 0)) {
+        throw new Error(`收藏中没有足够的「${cardId}」。`);
+      }
+    }
     const existing = current.decks.findIndex((deck) => deck.id === id);
+    if (existing < 0 && current.decks.length >= 20) {
+      throw new Error("最多只能保存 20 套卡组。");
+    }
     const decks = [...current.decks];
     if (existing >= 0) decks[existing] = savedDeck;
     else decks.push(savedDeck);
@@ -541,7 +558,10 @@ function applyLocalAction(
   if (action === "claim_task") {
     const taskId = asString(body.taskId);
     const task = current.tasks.find((item) => item.id === taskId);
-    const rewardGold = task?.rewardGold ?? 0;
+    if (!task) throw new Error("任务不存在。");
+    if (task.claimed) throw new Error("该任务奖励已经领取。");
+    if (task.progress < task.target) throw new Error("任务尚未完成。");
+    const rewardGold = task.rewardGold;
     const tasks = current.tasks.map((item) =>
       item.id === taskId ? { ...item, claimed: true } : item,
     );
@@ -564,12 +584,14 @@ function applyLocalAction(
   }
 
   if (action === "record_match") {
-    const result = body.result === "win" ? "win" : "loss";
+    if (body.result !== "win" && body.result !== "loss") throw new Error("对局结果无效。");
+    if (body.mode !== "ai" && body.mode !== "pvp") throw new Error("对战模式无效。");
+    const result = body.result;
     const rewardGold = result === "win" ? 60 : 20;
     const match: RecentMatch = {
       id: makeId("local-match"),
       result,
-      mode: asString(body.mode, "ai"),
+      mode: body.mode,
       opponent: asString(body.opponent, "镜像演算体 K-7"),
       rewardGold,
       createdAt: now,
@@ -1330,6 +1352,8 @@ function useWebPvp(displayName: string) {
   const pollEndpointRef = useRef<string | null>(null);
   const pollTimerRef = useRef<number | null>(null);
   const pollInFlightRef = useRef(false);
+  const incomingQueueRef = useRef<PvpIncoming[]>([]);
+  const lastSequenceRef = useRef(0);
   const [state, setState] = useState<PvpState>({
     status: "offline",
     url: getDefaultPvpUrl(),
@@ -1343,6 +1367,23 @@ function useWebPvp(displayName: string) {
     message: "未连接联机大厅",
   });
   const [incoming, setIncoming] = useState<PvpIncoming | null>(null);
+
+  const enqueueIncoming = useCallback((event: PvpIncoming) => {
+    setIncoming((current) => {
+      if (current) {
+        incomingQueueRef.current.push(event);
+        return current;
+      }
+      return event;
+    });
+  }, []);
+
+  const acknowledgeIncoming = useCallback((eventId: number) => {
+    setIncoming((current) => {
+      if (!current || current.id !== eventId) return current;
+      return incomingQueueRef.current.shift() ?? null;
+    });
+  }, []);
 
   const handleMessage = useCallback((connectionId: number, raw: unknown) => {
     if (connectionIdRef.current !== connectionId) return;
@@ -1361,6 +1402,9 @@ function useWebPvp(displayName: string) {
     }
     if (type === "room_created" || type === "room_joined") {
       const roomCode = asString(message.room);
+      lastSequenceRef.current = 0;
+      incomingQueueRef.current = [];
+      setIncoming(null);
       setState((current) => ({
         ...current,
         status: "room",
@@ -1399,6 +1443,11 @@ function useWebPvp(displayName: string) {
       return;
     }
     if (type !== "action") return;
+    const sequence = Number(message.sequence);
+    if (Number.isFinite(sequence)) {
+      if (sequence <= lastSequenceRef.current) return;
+      lastSequenceRef.current = sequence;
+    }
     const action = asString(message.action);
     const payload = message.payload && typeof message.payload === "object" ? message.payload as Record<string, unknown> : {};
     if (action === "ready") {
@@ -1413,15 +1462,15 @@ function useWebPvp(displayName: string) {
       const seed = Number(payload.seed);
       if (!decks || !Number.isFinite(seed)) return;
       setState((current) => ({ ...current, status: "playing", message: "双方已准备，联机演算开始。" }));
-      setIncoming({ id: ++incomingIdRef.current, type: "match-start", payload: { seed, decks } });
+      enqueueIncoming({ id: ++incomingIdRef.current, type: "match-start", payload: { seed, decks } });
       return;
     }
     if (action === "command") {
       const command = payload.command;
       if (!command || typeof command !== "object" || typeof (command as Record<string, unknown>).type !== "string") return;
-      setIncoming({ id: ++incomingIdRef.current, type: "command", command: command as BattleCommand });
+      enqueueIncoming({ id: ++incomingIdRef.current, type: "command", command: command as BattleCommand });
     }
-  }, []);
+  }, [enqueueIncoming]);
 
   const stopPolling = useCallback(() => {
     if (pollTimerRef.current !== null) {
@@ -1437,6 +1486,8 @@ function useWebPvp(displayName: string) {
     if (clientId && endpoint) {
       void fetch(`${endpoint}?clientId=${encodeURIComponent(clientId)}`, { method: "DELETE", keepalive: true }).catch(() => undefined);
     }
+    incomingQueueRef.current = [];
+    lastSequenceRef.current = 0;
   }, []);
 
   const disconnect = useCallback((message = "已离开联机大厅。") => {
@@ -1652,7 +1703,7 @@ function useWebPvp(displayName: string) {
 
   useEffect(() => () => disconnect("联机大厅已关闭。"), [disconnect]);
 
-  return { state, incoming, connect, disconnect, createRoom, joinRoom, ready, sendMatchStart, sendCommand };
+  return { state, incoming, acknowledgeIncoming, connect, disconnect, createRoom, joinRoom, ready, sendMatchStart, sendCommand };
 }
 
 export function GameApp({
@@ -1674,12 +1725,16 @@ export function GameApp({
   const profileNodeLabel =
     profileSource === "cloud"
       ? "云端节点在线"
+      : profileSource === "device"
+        ? "本机节点在线"
       : profileSource === "cached"
         ? "本地缓存在线"
         : "演示节点在线";
   const profileStatusLabel =
     profileSource === "cloud"
       ? "已同步指挥官"
+      : profileSource === "device"
+        ? "访客档案已保存"
       : profileSource === "cached"
         ? "离线缓存档案"
         : "本地演示档案";
@@ -1832,7 +1887,11 @@ export function GameApp({
         if (!response.ok || !payload.ok) throw new Error("无法读取玩家档案");
         if (!active) return;
         setPlayer(payload.player);
-        const nextSource: ProfileSource = payload.identity?.isDemo ? "demo" : "cloud";
+        const nextSource: ProfileSource = payload.identity?.isDemo
+          ? "demo"
+          : payload.identity?.isAnonymous
+            ? "device"
+            : "cloud";
         setProfileSource(nextSource);
         if (nextSource !== "cloud") persistLocalPlayer(payload.player);
         const firstDeck =
@@ -2211,18 +2270,18 @@ export function GameApp({
   };
 
   // Commands must close over the latest reducer state before broadcasting.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const issueCommand = (command: BattleCommand, broadcast = true) => {
+  const issueCommand = useCallback((command: BattleCommand, broadcast = true) => {
     if (!battle) return null;
     try {
-      const preparedCommand = command.commandId
-        ? command
-        : ({ ...command, commandId: makeId("command") } as BattleCommand);
+      const previous = battle as MatchState;
+      const preparedCommand = {
+        ...(command.commandId ? command : { ...command, commandId: makeId("command") }),
+        expectedVersion: command.expectedVersion ?? previous.version,
+      } as BattleCommand;
       if (onlineMatch && pvp.state.status !== "playing") {
         setBattleMessage("联机连接已断开，无法继续发送指令。");
         return null;
       }
-      const previous = battle as MatchState;
       const previousEventCount = previous.events.length;
       const result = applyCommand(battle as MatchState, preparedCommand);
       if (!result.accepted) {
@@ -2242,7 +2301,7 @@ export function GameApp({
       playSound("error");
       return null;
     }
-  };
+  }, [battle, onlineMatch, playSound, pvp, showBattleEffects]);
 
   useEffect(() => {
     const event = pvp.incoming;
@@ -2250,7 +2309,10 @@ export function GameApp({
     pvpEventCursorRef.current = event.id;
     if (event.type === "match-start") {
       const role = pvp.state.role;
-      if (!role) return;
+      if (!role) {
+        pvp.acknowledgeIncoming(event.id);
+        return;
+      }
       const localIndex = role === "host" ? 0 : 1;
       const orderedDecks: [string[], string[]] = [
         [...event.payload.decks[localIndex]],
@@ -2259,6 +2321,7 @@ export function GameApp({
       // The reducer transition is intentionally driven by the external PVP event.
       // eslint-disable-next-line react-hooks/set-state-in-effect
       beginBattle(orderedDecks, role === "host" ? 0 : 1, true, pvp.state.peerName ?? "联机对手");
+      pvp.acknowledgeIncoming(event.id);
       return;
     }
     if (event.type === "command") {
@@ -2268,8 +2331,9 @@ export function GameApp({
         ? { ...target, player: target.player === 0 ? 1 : 0 }
         : target;
       issueCommand({ ...remote, player: 1, ...(mappedTarget ? { target: mappedTarget } : {}) } as BattleCommand, false);
+      pvp.acknowledgeIncoming(event.id);
     }
-  }, [beginBattle, issueCommand, onlineMatch, pvp.incoming, pvp.state.peerName, pvp.state.role]);
+  }, [beginBattle, issueCommand, onlineMatch, pvp]);
 
   useEffect(() => {
     if (
