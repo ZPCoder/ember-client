@@ -2459,6 +2459,42 @@ button.game-card:not(:disabled):hover .game-card__artwork,
   font-size: 10px;
 }
 
+.turn-clock {
+  display: grid;
+  min-width: 54px;
+  min-height: 34px;
+  place-items: center;
+  padding: 4px 8px;
+  border: 1px solid rgba(85, 185, 173, 0.28);
+  border-radius: 9px;
+  color: #a8e2d7;
+  background: rgba(85, 185, 173, 0.08);
+  line-height: 1;
+}
+
+.turn-clock strong {
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+
+.turn-clock small {
+  margin-top: 3px;
+  color: #729e95;
+  font-size: 7px;
+  letter-spacing: 0.04em;
+}
+
+.turn-clock--urgent {
+  border-color: rgba(228, 109, 63, 0.64);
+  color: #ffd0b7;
+  background: rgba(228, 109, 63, 0.16);
+  animation: battle-clock-pulse 900ms ease-in-out infinite;
+}
+
+.turn-clock--urgent small {
+  color: #e8a48a;
+}
+
 .turn-indicator {
   display: flex;
   align-items: center;
@@ -3321,6 +3357,38 @@ button.hero-core {
 
 .board-row--player {
   grid-column: 1 / -1;
+}
+
+.board-slot {
+  position: relative;
+  display: grid;
+  width: 92px;
+  min-width: 92px;
+  height: 122px;
+  place-items: center;
+  border: 1px dashed rgba(116, 179, 166, 0.12);
+  border-radius: 11px;
+  background: linear-gradient(145deg, rgba(85, 185, 173, 0.025), rgba(255, 255, 255, 0.008));
+  opacity: 0.72;
+}
+
+.board-slot i {
+  display: block;
+  width: 24px;
+  height: 24px;
+  border: 1px solid rgba(116, 179, 166, 0.13);
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 5px rgba(85, 185, 173, 0.018);
+}
+
+.board-slot::after {
+  position: absolute;
+  right: 6px;
+  bottom: 5px;
+  color: rgba(125, 154, 144, 0.52);
+  content: "OPEN";
+  font-size: 6px;
+  letter-spacing: 0.12em;
 }
 
 .board-row__empty,
@@ -5060,6 +5128,13 @@ button.hero-core {
   }
 }
 
+@keyframes battle-clock-pulse {
+  50% {
+    box-shadow: 0 0 18px rgba(228, 109, 63, 0.22);
+    transform: scale(1.025);
+  }
+}
+
 @keyframes battle-hit-shake {
   20% {
     transform: translateX(-4px) rotate(-0.7deg);
@@ -5613,6 +5688,17 @@ button.hero-core {
   .board-unit-shell {
     width: 66px;
     min-width: 66px;
+  }
+
+  .board-slot {
+    width: 66px;
+    min-width: 66px;
+    height: 96px;
+  }
+
+  .board-slot i {
+    width: 18px;
+    height: 18px;
   }
 
   .board-unit__art {

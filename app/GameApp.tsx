@@ -1257,6 +1257,12 @@ const BATTLE_EFFECT_STEP_MS = 1200;
 // frame on slower phones and makes the event stream match the board animation.
 const AI_TURN_DELAY_MS = 2200;
 const BATTLE_EFFECT_QUEUE_LIMIT = 40;
+// A visible action clock gives each turn a readable rhythm and prevents a
+// local match from feeling like an unbounded sandbox. PVP remains
+// server-authoritative; the active client submits an end-turn command when
+// its local clock expires.
+const TURN_TIME_LIMIT_SECONDS = 75;
+const BOARD_SLOT_COUNT = 7;
 
 function battleEffectPriority(kind: BattleEffectKind) {
   switch (kind) {
@@ -2064,6 +2070,7 @@ export function GameApp({
   const [battleEffect, setBattleEffect] = useState<BattleVisualEffect | null>(null);
   const [battleEffectCount, setBattleEffectCount] = useState(0);
   const [battleEffectsLocked, setBattleEffectsLocked] = useState(false);
+  const [battleTurnClockSeconds, setBattleTurnClockSeconds] = useState<number | null>(null);
   const recordedBattleRef = useRef<string | null>(null);
   const sectionRef = useRef<SectionKey>("overview");
   const battleEffectQueueRef = useRef<BattleVisualEffect[]>([]);
@@ -2072,6 +2079,8 @@ export function GameApp({
   const battleEffectLockRef = useRef(false);
   const battleEffectSequenceRef = useRef(0);
   const aiTurnTimerRef = useRef<number | null>(null);
+  const turnTimeoutHandledRef = useRef<number | null>(null);
+  const endTurnRef = useRef<() => void>(() => undefined);
   const { soundEnabled, unlockAudio, playSound, toggleSound } = useBattleAudio();
   const pvp = useWebPvp(player.displayName);
   const [pvpUrl, setPvpUrl] = useState(() => getDefaultPvpUrl());
@@ -2417,6 +2426,10 @@ export function GameApp({
   }, [factionFilter, keywordFilter, rarityFilter, search, traitFilter, typeFilter]);
 
   const battleView = useMemo(() => battleFromRaw(battle), [battle]);
+  const battleStatus = battleView?.status;
+  const battleCurrentPlayer = battleView?.currentPlayer;
+  const battleTurn = battleView?.turn;
+  const hasBattleTurnClock = battleTurnClockSeconds !== null;
 
   const switchSection = (next: SectionKey) => {
     sectionRef.current = next;
@@ -3099,6 +3112,56 @@ export function GameApp({
     }, AI_TURN_DELAY_MS);
   };
 
+  useEffect(() => {
+    endTurnRef.current = endTurn;
+  });
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      turnTimeoutHandledRef.current = null;
+      setBattleTurnClockSeconds(
+        battleStatus === "playing" && battleCurrentPlayer === "player"
+          ? TURN_TIME_LIMIT_SECONDS
+          : null,
+      );
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [battleStatus, battleCurrentPlayer, battleTurn]);
+
+  useEffect(() => {
+    if (
+      !hasBattleTurnClock ||
+      battleStatus !== "playing" ||
+      battleCurrentPlayer !== "player" ||
+      battleEffectsLocked
+    ) {
+      return;
+    }
+    const timer = window.setInterval(() => {
+      setBattleTurnClockSeconds((current) =>
+        current === null ? null : Math.max(0, current - 1),
+      );
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [hasBattleTurnClock, battleStatus, battleCurrentPlayer, battleEffectsLocked]);
+
+  useEffect(() => {
+    if (
+      battleTurnClockSeconds !== 0 ||
+      battleStatus !== "playing" ||
+      battleCurrentPlayer !== "player" ||
+      battleEffectsLocked ||
+      battleTurn === undefined ||
+      turnTimeoutHandledRef.current === battleTurn
+    ) {
+      return;
+    }
+    turnTimeoutHandledRef.current = battleTurn;
+    setBattleTurnClockSeconds(null);
+    setBattleMessage("行动时间耗尽，自动结束回合。");
+    endTurnRef.current();
+  }, [battleTurnClockSeconds, battleStatus, battleCurrentPlayer, battleEffectsLocked, battleTurn]);
+
   const concedeBattle = () => {
     if (battleEffectLockRef.current || !battle || battleView?.status !== "playing") return;
     const next = issueCommand({ type: "concede", player: 0 });
@@ -3368,6 +3431,7 @@ export function GameApp({
                   busy={apiBusy === "record_match"}
                   effectsLocked={battleEffectsLocked}
                   effectCount={battleEffectCount}
+                  turnClockSeconds={battleTurnClockSeconds}
                   soundEnabled={soundEnabled}
                   onStart={startBattle}
                   onRematch={requestOnlineRematch}
@@ -4452,6 +4516,7 @@ function BattleSection({
   busy,
   effectsLocked,
   effectCount,
+  turnClockSeconds,
   soundEnabled,
   onStart,
   onRematch,
@@ -4499,6 +4564,7 @@ function BattleSection({
   busy: boolean;
   effectsLocked: boolean;
   effectCount: number;
+  turnClockSeconds: number | null;
   soundEnabled: boolean;
   onStart: () => void;
   onRematch: () => void;
@@ -4663,8 +4729,8 @@ function BattleSection({
           <span className="section-heading__eyebrow">{online ? "LIVE PVP" : "LIVE SIMULATION"} · TURN {battle.turn}</span>
           <h1 id="battle-room-title">战术演算舱</h1>
         </div>
-        <div className="battle-room__status">
-          <button
+          <div className="battle-room__status">
+            <button
             className="sound-toggle sound-toggle--compact"
             type="button"
             onClick={onToggleSound}
@@ -4672,9 +4738,19 @@ function BattleSection({
             aria-label={soundEnabled ? "关闭战斗音效" : "开启战斗音效"}
           >
             <span aria-hidden="true">{soundEnabled ? "♪" : "×"}</span>
-            {soundEnabled ? "音效" : "静音"}
-          </button>
-          <div
+              {soundEnabled ? "音效" : "静音"}
+            </button>
+            {playerTurn && turnClockSeconds !== null && (
+              <div
+                className={`turn-clock ${turnClockSeconds <= 10 ? "turn-clock--urgent" : ""}`}
+                role="status"
+                aria-label={`本回合剩余 ${turnClockSeconds} 秒`}
+              >
+                <strong>{turnClockSeconds}</strong>
+                <small>行动秒数</small>
+              </div>
+            )}
+            <div
             className={`turn-indicator ${
               battle.status === "finished"
                 ? "turn-indicator--finished"
@@ -4731,7 +4807,10 @@ function BattleSection({
               <small>{battle.ai.deckCount} 张牌库</small>
             </div>
             <SecretTray secrets={battle.ai.secrets} enemy />
-            <div className="board-row board-row--enemy">
+            <div
+              className="board-row board-row--enemy"
+              aria-label={`敌方战场 ${battle.ai.board.length}/${BOARD_SLOT_COUNT}`}
+            >
               {battle.ai.board.length > 0 ? battle.ai.board.map((unit) => (
                 <BoardUnit
                   key={unit.id}
@@ -4749,6 +4828,9 @@ function BattleSection({
                   }}
                 />
               )) : <span className="board-row__empty">敌方阵地空置</span>}
+              {Array.from({ length: Math.max(0, BOARD_SLOT_COUNT - battle.ai.board.length) }, (_, index) => (
+                <span className="board-slot" key={`enemy-slot-${index}`} aria-hidden="true"><i /></span>
+              ))}
             </div>
           </div>
 
@@ -4759,7 +4841,10 @@ function BattleSection({
           </div>
 
           <div className="battlefield__player-zone">
-            <div className="board-row board-row--player">
+            <div
+              className="board-row board-row--player"
+              aria-label={`我方战场 ${battle.player.board.length}/${BOARD_SLOT_COUNT}`}
+            >
               {battle.player.board.length > 0 ? battle.player.board.map((unit) => (
                 <BoardUnit
                   key={unit.id}
@@ -4775,6 +4860,9 @@ function BattleSection({
                   }}
                 />
               )) : <span className="board-row__empty">选择手牌，部署你的首个单位</span>}
+              {Array.from({ length: Math.max(0, BOARD_SLOT_COUNT - battle.player.board.length) }, (_, index) => (
+                <span className="board-slot" key={`player-slot-${index}`} aria-hidden="true"><i /></span>
+              ))}
             </div>
             <div className="battlefield__side-info battlefield__side-info--player">
                 <HeroCore
