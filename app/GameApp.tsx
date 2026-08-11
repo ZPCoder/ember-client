@@ -4614,27 +4614,31 @@ function BattleSection({
             <div className="discover-prompt" role="dialog" aria-label="发现卡牌">
               <div className="discover-prompt__heading">
                 <div>
-                  <strong>发现一张卡牌</strong>
-                  <p>从三张候选档案中选择一张加入手牌。</p>
+                  <strong>{battle.discover.choices.length > 0 ? "发现一张卡牌" : "对手正在发现"}</strong>
+                  <p>{battle.discover.choices.length > 0 ? "从三张候选档案中选择一张加入手牌。" : "候选档案对你隐藏，等待对手完成选择。"}</p>
                 </div>
                 <span>DISCOVER</span>
               </div>
-              <div className="discover-prompt__cards">
-                {battle.discover.choices.map((cardId) => {
-                  const card = CARD_BY_ID.get(cardId);
-                  if (!card) return null;
-                  return (
-                    <CardTile
-                      key={cardId}
-                      card={card}
-                      compact
-                      action={() => onChooseDiscover(cardId)}
-                      actionLabel={`选择${card.name}`}
-                      disabled={!playerCanDiscover}
-                    />
-                  );
-                })}
-              </div>
+              {battle.discover.choices.length > 0 ? (
+                <div className="discover-prompt__cards">
+                  {battle.discover.choices.map((cardId) => {
+                    const card = CARD_BY_ID.get(cardId);
+                    if (!card) return null;
+                    return (
+                      <CardTile
+                        key={cardId}
+                        card={card}
+                        compact
+                        action={() => onChooseDiscover(cardId)}
+                        actionLabel={`选择${card.name}`}
+                        disabled={!playerCanDiscover}
+                      />
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="discover-prompt__waiting">等待对手锁定发现卡牌…</div>
+              )}
             </div>
           )}
           {(selectedAttacker || pendingCard) && (

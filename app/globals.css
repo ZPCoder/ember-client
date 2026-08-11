@@ -3677,6 +3677,17 @@ button.hero-core {
   font-size: 9px;
 }
 
+.discover-prompt__waiting {
+  display: grid;
+  min-height: 64px;
+  place-items: center;
+  margin-top: 10px;
+  border: 1px dashed rgba(109, 201, 188, 0.24);
+  border-radius: 8px;
+  color: #7fa49b;
+  font-size: 9px;
+}
+
 .battle-actions__waiting {
   display: grid;
   min-height: 58px;
