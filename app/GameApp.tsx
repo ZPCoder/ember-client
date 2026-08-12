@@ -186,6 +186,16 @@ type BattleSide = {
   board: BattleUnit[];
 };
 
+type BattleReport = {
+  reason: "hero-defeated" | "fatigue" | "concede" | "draw" | null;
+  cardsPlayed: [number, number];
+  attacks: [number, number];
+  damage: [number, number];
+  healing: [number, number];
+  unitsDied: [number, number];
+  cardsDrawn: [number, number];
+};
+
 type BattleView = {
   status: "mulligan" | "discover" | "choose-one" | "playing" | "finished";
   mulliganDone: boolean;
@@ -197,6 +207,7 @@ type BattleView = {
   log: string[];
   discover: { sourceCardId: string; choices: string[] } | null;
   chooseOne: { player: "player" | "ai"; sourceCardId: string; options: Array<{ label: string }> } | null;
+  report: BattleReport;
 };
 
 type PvpRole = "host" | "guest";
@@ -953,6 +964,47 @@ function battleFromRaw(value: unknown): BattleView | null {
     : null;
   const winnerValue = raw.winner ?? raw.winnerId;
   const winnerRaw = asString(winnerValue).toLowerCase();
+  const rawResult = raw.result && typeof raw.result === "object"
+    ? raw.result as Record<string, unknown>
+    : null;
+  const reasonValue = rawResult?.reason ?? raw.reason;
+  const reasonRaw = asString(reasonValue).toLowerCase();
+  const report: BattleReport = {
+    reason:
+      reasonRaw === "hero-defeated" ||
+      reasonRaw === "fatigue" ||
+      reasonRaw === "concede" ||
+      reasonRaw === "draw"
+        ? reasonRaw
+        : null,
+    cardsPlayed: [0, 0],
+    attacks: [0, 0],
+    damage: [0, 0],
+    healing: [0, 0],
+    unitsDied: [0, 0],
+    cardsDrawn: [0, 0],
+  };
+  const reportEvents = Array.isArray(raw.events) ? raw.events : [];
+  reportEvents.forEach((entry) => {
+    if (!entry || typeof entry !== "object") return;
+    const event = entry as Record<string, unknown>;
+    const player = event.player === 0 || event.player === 1 ? event.player : null;
+    const type = asString(event.type);
+    const data = event.data && typeof event.data === "object"
+      ? event.data as Record<string, unknown>
+      : {};
+    if (player !== null && type === "card-played") report.cardsPlayed[player] += 1;
+    if (player !== null && type === "attack") report.attacks[player] += 1;
+    if (player !== null && type === "card-drawn") report.cardsDrawn[player] += 1;
+    if (player !== null && type === "damage") report.damage[player] += asNumber(data.amount, 0);
+    if (player !== null && type === "healing") report.healing[player] += asNumber(data.amount, 0);
+    if (type === "unit-died") {
+      const owner = data.targetPlayer === 0 || data.targetPlayer === 1
+        ? data.targetPlayer
+        : player;
+      if (owner !== null) report.unitsDied[owner] += 1;
+    }
+  });
   const currentValue = raw.currentPlayer ?? raw.activePlayer ?? raw.activeSide;
   const currentRaw = asString(currentValue, "player").toLowerCase();
   const events = raw.log ?? raw.logs ?? raw.events;
@@ -1008,6 +1060,7 @@ function battleFromRaw(value: unknown): BattleView | null {
     log,
     discover,
     chooseOne,
+    report,
   };
 }
 
@@ -3341,6 +3394,19 @@ export function GameApp({
     }
   };
 
+  const returnToBattleLobby = () => {
+    stopBattleEffects();
+    if (onlineMatch) pvp.disconnect();
+    setBattle(null);
+    setOnlineMatch(false);
+    setOnlineOpponent(null);
+    setSelectedAttacker(null);
+    setPendingCard(null);
+    setPendingHeroPower(false);
+    setMulliganSelection([]);
+    setBattleMessage("已返回战术大厅，可重新选择演算对手或创建联机房间。");
+  };
+
   useEffect(() => {
     if (!battleView || battleView.status !== "finished" || !battleView.winner) return;
     const result = battleView.winner === "player" ? "win" : "loss";
@@ -3596,6 +3662,7 @@ export function GameApp({
                   replaySlow={battleReplaySlow}
                   onStart={startBattle}
                   onRematch={requestOnlineRematch}
+                  onReturnLobby={returnToBattleLobby}
                   onPlayCard={playCard}
                   onTradeCard={tradeCard}
                   onChooseDiscover={chooseDiscover}
@@ -4752,6 +4819,7 @@ function BattleSection({
   replaySlow,
   onStart,
   onRematch,
+  onReturnLobby,
   onPlayCard,
   onTradeCard,
   onChooseDiscover,
@@ -4805,6 +4873,7 @@ function BattleSection({
   replaySlow: boolean;
   onStart: () => void;
   onRematch: () => void;
+  onReturnLobby: () => void;
   onPlayCard: (card: BattleSide["hand"][number]) => void;
   onTradeCard: (card: BattleSide["hand"][number]) => void;
   onChooseDiscover: (cardId: string) => void;
@@ -5614,24 +5683,77 @@ function BattleSection({
             </ol>
           </div>
           {battle.status === "finished" ? (
-            <div className={`battle-result battle-result--${battle.winner === "player" ? "win" : "loss"}`}>
-              <span className="battle-result__sigil"><Icon name={battle.winner === "player" ? "spark" : "shield"} size={30} /></span>
-              <small>SIMULATION COMPLETE</small>
-              <h2>{battle.winner === "player" ? "演算胜利" : "核心失守"}</h2>
-              <p>{busy ? "正在归档战报与奖励…" : battle.winner === "player" ? "获得 60 金币，任务进度已更新。" : "获得 20 金币，战术日志已保留。"}</p>
-              {online ? (
-                <button
-                  className="button button--primary button--wide"
-                  type="button"
-                  disabled={pvp.role !== "host" || pvp.status === "connecting" || pvp.status === "offline"}
-                  onClick={onRematch}
-                >
-                  {pvp.role === "host" ? "再来一局" : "等待房主重新开始"}
-                </button>
-              ) : (
-                <button className="button button--primary button--wide" type="button" onClick={onStart}>再次演算</button>
-              )}
-            </div>
+            (() => {
+              const resultTone = battle.winner === "player" ? "win" : battle.winner === null ? "draw" : "loss";
+              const reasonLabel = battle.report.reason === "concede"
+                ? battle.winner === "player" ? "敌方已投降" : "你已投降"
+                : battle.report.reason === "fatigue"
+                  ? "疲劳损伤结束对局"
+                  : battle.report.reason === "draw"
+                    ? "双方核心同时失守"
+                    : battle.winner === "player"
+                      ? "敌方核心生命归零"
+                      : "我方核心生命归零";
+              const resultTitle = battle.winner === "player" ? "演算胜利" : battle.winner === null ? "战术平局" : "核心失守";
+              const resultMessage = busy
+                ? "正在归档战报与奖励…"
+                : battle.winner === "player"
+                  ? "获得 60 金币，任务进度已更新。"
+                  : battle.winner === null
+                    ? "本场没有胜负，战术日志已保留。"
+                    : "获得 20 金币，战术日志已保留。";
+              const coreLabel = (side: BattleSide) => `${side.health} / ${side.maxHealth}${side.armor > 0 ? ` · 护甲 ${side.armor}` : ""}`;
+              const statItems = [
+                { label: "使用卡牌", value: `${battle.report.cardsPlayed[0]} · ${battle.report.cardsPlayed[1]}` },
+                { label: "发动攻击", value: `${battle.report.attacks[0]} · ${battle.report.attacks[1]}` },
+                { label: "造成伤害", value: `${battle.report.damage[0]} · ${battle.report.damage[1]}` },
+                { label: "单位阵亡", value: `${battle.report.unitsDied[0]} · ${battle.report.unitsDied[1]}` },
+              ];
+              return (
+                <div className={`battle-result battle-result--${resultTone}`}>
+                  <span className="battle-result__sigil"><Icon name={battle.winner === "player" ? "spark" : "shield"} size={30} /></span>
+                  <small>SIMULATION COMPLETE · TURN {battle.turn}</small>
+                  <h2>{resultTitle}</h2>
+                  <p className="battle-result__reason">{reasonLabel}</p>
+                  <div className="battle-result__cores" aria-label="双方核心结算">
+                    <div>
+                      <span>我方核心</span>
+                      <strong>{coreLabel(battle.player)}</strong>
+                    </div>
+                    <i>VS</i>
+                    <div>
+                      <span>{opponentName ?? (online ? "联机对手" : "镜像演算体 K-7")}</span>
+                      <strong>{coreLabel(battle.ai)}</strong>
+                    </div>
+                  </div>
+                  <div className="battle-result__stats" aria-label="本场对局统计">
+                    <span className="battle-result__stats-caption">我方 · 敌方</span>
+                    {statItems.map((item) => (
+                      <div key={item.label}>
+                        <span>{item.label}</span>
+                        <strong>{item.value}</strong>
+                      </div>
+                    ))}
+                  </div>
+                  <p>{resultMessage}</p>
+                  <div className="battle-result__actions">
+                    {online ? (
+                      <button
+                        className="button button--primary button--wide"
+                        type="button"
+                        disabled={pvp.role !== "host" || pvp.status === "connecting" || pvp.status === "offline"}
+                        onClick={onRematch}
+                      >
+                        {pvp.role === "host" ? "再来一局" : "等待房主重新开始"}
+                      </button>
+                    ) : (
+                      <button className="button button--primary button--wide" type="button" onClick={onStart}>再次演算</button>
+                    )}
+                    <button className="button button--outline button--wide" type="button" onClick={onReturnLobby}>返回战术大厅</button>
+                  </div>
+                </div>
+              );
+            })()
           ) : effectsLocked ? (
             <div className="battle-actions battle-actions--replay">
               <span className="battle-actions__waiting">正在逐条播放战斗事件</span>

@@ -4846,6 +4846,11 @@ button.hero-core {
   background: rgba(220, 109, 100, 0.06);
 }
 
+.battle-result--draw {
+  border-color: rgba(228, 164, 80, 0.32);
+  background: rgba(228, 164, 80, 0.07);
+}
+
 .battle-result__sigil {
   display: grid;
   width: 54px;
@@ -4879,6 +4884,102 @@ button.hero-core {
 .battle-result p {
   color: var(--muted);
   font-size: 9px;
+}
+
+.battle-result__reason {
+  margin: 2px 0 12px;
+  color: #d5c3a0 !important;
+  font-size: 10px !important;
+}
+
+.battle-result__cores {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 7px;
+  margin: 0 0 10px;
+  padding: 9px 7px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 9px;
+  background: rgba(0, 0, 0, 0.16);
+}
+
+.battle-result__cores div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.battle-result__cores div:last-child {
+  text-align: right;
+}
+
+.battle-result__cores span {
+  overflow: hidden;
+  color: #76837c;
+  font-size: 8px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.battle-result__cores strong {
+  color: #e8dcc7;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.battle-result__cores i {
+  color: #7b8980;
+  font-size: 8px;
+  font-style: normal;
+  letter-spacing: 0.08em;
+}
+
+.battle-result__stats {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px;
+  margin: 0 0 11px;
+  padding: 12px 7px 7px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.battle-result__stats-caption {
+  position: absolute;
+  top: 3px;
+  right: 7px;
+  color: #69766f;
+  font-size: 7px;
+}
+
+.battle-result__stats div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px;
+  padding: 4px 5px;
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.13);
+}
+
+.battle-result__stats div span {
+  color: #829087;
+  font-size: 8px;
+}
+
+.battle-result__stats div strong {
+  color: #d9c8a7;
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+}
+
+.battle-result__actions {
+  display: grid;
+  gap: 6px;
+  margin-top: 10px;
 }
 
 .ops-metrics {
@@ -6044,6 +6145,20 @@ button.hero-core {
 
   .battle-room__top {
     align-items: flex-start;
+  }
+
+  .battle-result {
+    margin: 8px;
+    padding: 16px 10px;
+  }
+
+  .battle-result__cores {
+    gap: 4px;
+    padding-inline: 5px;
+  }
+
+  .battle-result__cores strong {
+    font-size: 9px;
   }
 
   .battle-room__status {
