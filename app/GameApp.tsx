@@ -264,6 +264,15 @@ function orientPvpMatchForLocal(state: MatchState, role: PvpRole): MatchState {
         return {
           ...event.data,
           ...(typeof event.data.winner === "number" ? { winner: swap(event.data.winner as 0 | 1) } : {}),
+          ...(event.data.attackerPlayer === 0 || event.data.attackerPlayer === 1
+            ? { attackerPlayer: swap(event.data.attackerPlayer) }
+            : {}),
+          ...(event.data.triggeringPlayer === 0 || event.data.triggeringPlayer === 1
+            ? { triggeringPlayer: swap(event.data.triggeringPlayer) }
+            : {}),
+          ...(event.data.sourcePlayer === 0 || event.data.sourcePlayer === 1
+            ? { sourcePlayer: swap(event.data.sourcePlayer) }
+            : {}),
           ...(event.data.targetPlayer === 0 || event.data.targetPlayer === 1
             ? { targetPlayer: swap(event.data.targetPlayer) }
             : {}),
