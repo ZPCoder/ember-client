@@ -63,6 +63,14 @@ const keywordLabels = <String, String>{
   'spell-damage': '法术伤害',
   'secret': '奥秘',
   'discover': '发现',
+  'combo': '连击',
+  'silence': '沉默',
+  'choose-one': '抉择',
+  'transform': '变形',
+  'temporary': '临时',
+  'end-of-turn': '回合结束',
+  'start-of-turn': '回合开始',
+  'spell-trigger': '法术触发',
 };
 
 const traitLabels = <String, String>{

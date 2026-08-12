@@ -1787,6 +1787,77 @@ class _BattleBoardState extends State<BattleBoard> {
               ),
             ),
           ],
+          if (state.phase == 'choose-one' &&
+              state.chooseOneOwner == 'player') ...[
+            const SizedBox(height: 12),
+            GlassPanel(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.alt_route,
+                        color: Color(0xFFA692D1),
+                        size: 19,
+                      ),
+                      const SizedBox(width: 8),
+                      const Expanded(
+                        child: Text(
+                          '抉择：选择一个战术分支',
+                          style: TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                      Text(
+                        '${state.chooseOneOptions.length} 选 1',
+                        style: const TextStyle(
+                          color: Color(0xFFA692D1),
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  for (
+                    var index = 0;
+                    index < state.chooseOneOptions.length;
+                    index++
+                  )
+                    Padding(
+                      padding: EdgeInsets.only(
+                        bottom: index == state.chooseOneOptions.length - 1
+                            ? 0
+                            : 8,
+                      ),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: () => controller.chooseOne(index),
+                          icon: CircleAvatar(
+                            radius: 11,
+                            backgroundColor: const Color(0xFFA692D1),
+                            child: Text(
+                              '${index + 1}',
+                              style: const TextStyle(
+                                color: Color(0xFF10211D),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                          label: Text(
+                            state.chooseOneOptions[index]['label']
+                                    ?.toString() ??
+                                '分支 ${index + 1}',
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 12),
           Stack(
             children: [

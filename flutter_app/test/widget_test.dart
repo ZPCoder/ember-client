@@ -1,12 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:astra_protocol/data/catalog.dart';
 import 'package:astra_protocol/game/game_controller.dart';
 import 'package:astra_protocol/main.dart';
 import 'package:astra_protocol/models/card_definition.dart';
 import 'package:astra_protocol/network/multiplayer_client.dart';
 
 void main() {
+  test(
+    'mobile catalog includes the complete Hearthstone-style rule fields',
+    () async {
+      final catalog = await loadCatalog();
+      expect(catalog, hasLength(210));
+      expect(catalog.where((card) => card.type == 'weapon'), hasLength(7));
+      expect(
+        catalog.where((card) => card.keywords.contains('secret')),
+        hasLength(7),
+      );
+      expect(
+        catalog.where((card) => card.keywords.contains('discover')),
+        hasLength(7),
+      );
+      expect(
+        catalog.where((card) => card.keywords.contains('choose-one')),
+        hasLength(1),
+      );
+      expect(catalog.any((card) => card.overload > 0), isTrue);
+      expect(catalog.any((card) => card.tradeable), isTrue);
+      expect(catalog.any((card) => card.onTurnStart.isNotEmpty), isTrue);
+      expect(catalog.any((card) => card.onSpellPlayed.isNotEmpty), isTrue);
+    },
+  );
+
   test('card definition parses the catalog schema', () {
     final card = CardDefinition.fromJson({
       'id': 'sun-test',
@@ -565,6 +591,83 @@ void main() {
       controller.dispose();
     },
   );
+
+  test('choose-one and start-of-turn triggers resolve on mobile', () async {
+    final branchCard = CardDefinition(
+      id: 'branch-card',
+      name: '分支战术',
+      description: '抉择：获得护甲或抽牌。',
+      faction: '曜光',
+      type: 'spell',
+      cost: 1,
+      rarity: '稀有',
+      effect: [
+        {
+          'kind': 'choose-one',
+          'options': [
+            {
+              'label': '护甲协议',
+              'effects': [
+                {'kind': 'armor', 'amount': 2},
+              ],
+            },
+            {
+              'label': '抽取协议',
+              'effects': [
+                {'kind': 'draw', 'count': 1},
+              ],
+            },
+          ],
+        },
+      ],
+    );
+    final triggerUnit = CardDefinition(
+      id: 'trigger-unit',
+      name: '回合守望者',
+      description: '回合开始时获得护甲。',
+      faction: '曜光',
+      type: 'unit',
+      cost: 1,
+      rarity: '普通',
+      attack: 1,
+      health: 3,
+      onTurnStart: [
+        {'kind': 'armor', 'amount': 1},
+      ],
+    );
+    final controller = GameController()
+      ..catalog = [branchCard, triggerUnit]
+      ..deckIds.addAll(List.filled(30, branchCard.id));
+    controller.startBattle();
+    controller.confirmMulligan();
+    final state = controller.battle!;
+    state.ai.hand.clear();
+    state.player.mana = 10;
+    state.player.hand
+      ..clear()
+      ..add(branchCard);
+    expect(controller.playCard(branchCard), isTrue);
+    expect(state.phase, 'choose-one');
+    expect(state.chooseOneOptions, hasLength(2));
+    expect(controller.chooseOne(0), isTrue);
+    expect(state.phase, 'main');
+    expect(state.player.armor, 2);
+
+    state.player.board.add(
+      BattleUnit(
+        instanceId: 'turn-trigger-1',
+        card: triggerUnit,
+        owner: 'player',
+        attack: 1,
+        health: 3,
+        maxHealth: 3,
+        summoningSick: false,
+      ),
+    );
+    await controller.endTurn();
+    expect(state.player.armor, greaterThanOrEqualTo(3));
+    controller.dispose();
+  });
 
   testWidgets('app shows the loading shell before catalog initialization', (
     tester,

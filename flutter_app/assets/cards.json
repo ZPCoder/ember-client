@@ -15,7 +15,9 @@
     "traits": [
       "swift",
       "hunt"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "sun-mirror-warden",
@@ -33,7 +35,9 @@
     "traits": [
       "bulwark",
       "craft"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "sun-banner-bearer",
@@ -46,7 +50,8 @@
     "attack": 3,
     "health": 3,
     "keywords": [
-      "fury"
+      "fury",
+      "battlecry"
     ],
     "traits": [
       "arcane"
@@ -56,7 +61,9 @@
         "kind": "draw",
         "count": 1
       }
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "sun-lion-guard",
@@ -74,7 +81,9 @@
     "traits": [
       "bulwark",
       "arcane"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "sun-skyfire-roc",
@@ -92,7 +101,9 @@
     "traits": [
       "swift",
       "hunt"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "sun-focused-ray",
@@ -109,7 +120,9 @@
         "kind": "damage",
         "amount": 2
       }
-    ]
+    ],
+    "keywords": [],
+    "onDeath": []
   },
   {
     "id": "sun-dew-blessing",
@@ -126,7 +139,9 @@
         "kind": "heal",
         "amount": 4
       }
-    ]
+    ],
+    "keywords": [],
+    "onDeath": []
   },
   {
     "id": "sun-daybreak-order",
@@ -144,7 +159,9 @@
         "attack": 2,
         "health": 2
       }
-    ]
+    ],
+    "keywords": [],
+    "onDeath": []
   },
   {
     "id": "void-mist-lurker",
@@ -162,7 +179,9 @@
     "traits": [
       "swift",
       "hunt"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "void-undertow-guard",
@@ -179,7 +198,9 @@
     ],
     "traits": [
       "bulwark"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "void-echo-mimic",
@@ -197,7 +218,9 @@
     "traits": [
       "arcane",
       "craft"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "void-nightfin-raider",
@@ -211,12 +234,15 @@
     "health": 3,
     "keywords": [
       "charge",
-      "fury"
+      "fury",
+      "windfury"
     ],
     "traits": [
       "swift",
       "hunt"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "void-abyss-whale",
@@ -234,7 +260,9 @@
     "traits": [
       "bulwark",
       "arcane"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "void-chill-needle",
@@ -251,7 +279,9 @@
         "kind": "damage",
         "amount": 2
       }
-    ]
+    ],
+    "keywords": [],
+    "onDeath": []
   },
   {
     "id": "void-moonless-surge",
@@ -268,12 +298,14 @@
         "kind": "draw",
         "count": 2
       }
-    ]
+    ],
+    "keywords": [],
+    "onDeath": []
   },
   {
     "id": "void-ink-storm",
     "name": "墨云震荡",
-    "description": "对一个随机敌方角色造成 3 点伤害。",
+    "description": "对所有敌方角色造成 1 点伤害，并随机冻结一个敌方单位。",
     "faction": "幽潮",
     "type": "spell",
     "cost": 4,
@@ -282,10 +314,18 @@
     "target": "none",
     "effect": [
       {
-        "kind": "random-enemy-damage",
-        "amount": 3
+        "kind": "damage-all-enemies",
+        "amount": 1
+      },
+      {
+        "kind": "random-enemy-freeze",
+        "amount": 1
       }
-    ]
+    ],
+    "keywords": [
+      "freeze"
+    ],
+    "onDeath": []
   },
   {
     "id": "neutral-moss-runner",
@@ -300,7 +340,10 @@
     "traits": [
       "swift",
       "hunt"
-    ]
+    ],
+    "keywords": [],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "neutral-clockwork-beetle",
@@ -315,7 +358,10 @@
     "traits": [
       "swift",
       "craft"
-    ]
+    ],
+    "keywords": [],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "neutral-caravan-guard",
@@ -333,7 +379,9 @@
     "traits": [
       "bulwark",
       "craft"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "neutral-stonehorn",
@@ -346,12 +394,15 @@
     "attack": 4,
     "health": 5,
     "keywords": [
-      "fury"
+      "fury",
+      "reborn"
     ],
     "traits": [
       "bulwark",
       "hunt"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "neutral-wandering-alchemist",
@@ -364,7 +415,8 @@
     "attack": 3,
     "health": 3,
     "keywords": [
-      "lifesteal"
+      "lifesteal",
+      "battlecry"
     ],
     "traits": [
       "arcane"
@@ -375,7 +427,9 @@
         "kind": "heal",
         "amount": 2
       }
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "neutral-tactical-map",
@@ -392,7 +446,9 @@
         "kind": "draw",
         "count": 1
       }
-    ]
+    ],
+    "keywords": [],
+    "onDeath": []
   },
   {
     "id": "neutral-repair-sprite",
@@ -413,7 +469,13 @@
         "kind": "draw",
         "count": 1
       }
-    ]
+    ],
+    "keywords": [
+      "poisonous",
+      "battlecry"
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "neutral-thunder-egg",
@@ -430,7 +492,9 @@
     ],
     "traits": [
       "craft"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "sun-lumen-page",
@@ -444,7 +508,10 @@
     "health": 3,
     "traits": [
       "arcane"
-    ]
+    ],
+    "keywords": [],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "sun-glasswing-courier",
@@ -462,7 +529,9 @@
     "traits": [
       "swift",
       "craft"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "sun-prism-squire",
@@ -480,7 +549,9 @@
     "traits": [
       "bulwark",
       "craft"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "sun-horizon-hunter",
@@ -494,7 +565,12 @@
     "health": 2,
     "traits": [
       "hunt"
-    ]
+    ],
+    "keywords": [
+      "rush"
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "sun-choir-acolyte",
@@ -515,7 +591,12 @@
         "kind": "heal",
         "amount": 2
       }
-    ]
+    ],
+    "keywords": [
+      "battlecry"
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "sun-gilded-lancer",
@@ -533,7 +614,9 @@
     "traits": [
       "swift",
       "hunt"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "sun-sunwell-artificer",
@@ -551,7 +634,9 @@
     "traits": [
       "arcane",
       "craft"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "sun-aurora-duelist",
@@ -568,7 +653,9 @@
     ],
     "traits": [
       "swift"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "sun-halo-captain",
@@ -585,7 +672,9 @@
     ],
     "traits": [
       "bulwark"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "sun-whitefire-priest",
@@ -602,7 +691,9 @@
     ],
     "traits": [
       "arcane"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "sun-prism-huntress",
@@ -617,7 +708,10 @@
     "traits": [
       "hunt",
       "craft"
-    ]
+    ],
+    "keywords": [],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "sun-zenith-golem",
@@ -631,12 +725,21 @@
     "health": 7,
     "keywords": [
       "taunt",
-      "shield"
+      "shield",
+      "deathrattle"
     ],
     "traits": [
       "bulwark",
       "craft"
-    ]
+    ],
+    "onDeath": [
+      {
+        "kind": "summon",
+        "cardId": "sun-dawn-scout",
+        "count": 1
+      }
+    ],
+    "effect": []
   },
   {
     "id": "sun-radiant-griffin",
@@ -654,7 +757,9 @@
     "traits": [
       "swift",
       "hunt"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "sun-corona-archon",
@@ -672,7 +777,9 @@
     "traits": [
       "arcane",
       "bulwark"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "sun-daystar-titan",
@@ -691,7 +798,9 @@
     "traits": [
       "bulwark",
       "craft"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "sun-flare-spark",
@@ -708,7 +817,9 @@
         "kind": "damage",
         "amount": 1
       }
-    ]
+    ],
+    "keywords": [],
+    "onDeath": []
   },
   {
     "id": "sun-refraction-aid",
@@ -720,12 +831,17 @@
     "rarity": "普通",
     "school": "radiance",
     "target": "friendly-character",
+    "tradeable": true,
     "effect": [
       {
         "kind": "heal",
         "amount": 3
       }
-    ]
+    ],
+    "keywords": [
+      "tradeable"
+    ],
+    "onDeath": []
   },
   {
     "id": "sun-mirror-tempering",
@@ -743,28 +859,34 @@
         "attack": 1,
         "health": 2
       }
-    ]
+    ],
+    "keywords": [],
+    "onDeath": []
   },
   {
     "id": "sun-orbit-insight",
     "name": "环日启示",
-    "description": "为一个友方角色恢复 1 点生命，并抽一张牌。",
+    "description": "发现一张曜光卡牌。",
     "faction": "曜光",
     "type": "spell",
     "cost": 2,
     "rarity": "稀有",
     "school": "radiance",
-    "target": "friendly-character",
+    "target": "none",
+    "keywords": [
+      "discover"
+    ],
     "effect": [
       {
-        "kind": "heal",
-        "amount": 1
-      },
-      {
-        "kind": "draw",
-        "count": 1
+        "kind": "discover",
+        "choices": [
+          "sun-dawn-scout",
+          "sun-mirror-warden",
+          "sun-focused-ray"
+        ]
       }
-    ]
+    ],
+    "onDeath": []
   },
   {
     "id": "sun-spear-descent",
@@ -781,46 +903,49 @@
         "kind": "damage",
         "amount": 4
       }
-    ]
+    ],
+    "keywords": [],
+    "onDeath": []
   },
   {
     "id": "sun-dawn-muster",
     "name": "晨阵集结",
-    "description": "使一个友方单位获得 +3/+3。",
+    "description": "奥秘：当敌方角色攻击你的核心时，对其造成 3 点伤害。",
     "faction": "曜光",
     "type": "spell",
     "cost": 4,
     "rarity": "史诗",
     "school": "radiance",
-    "target": "friendly-unit",
+    "target": "none",
+    "keywords": [
+      "secret"
+    ],
     "effect": [
       {
-        "kind": "buff",
-        "attack": 3,
-        "health": 3
+        "kind": "secret",
+        "secretId": "sun-dawn-muster",
+        "trigger": "opponent-attacks-hero",
+        "effect": {
+          "kind": "damage-attacker",
+          "amount": 3
+        }
       }
-    ]
+    ],
+    "onDeath": []
   },
   {
     "id": "sun-supernova-judgment",
-    "name": "新星裁决",
-    "description": "对一个随机敌方角色造成 6 点伤害，并抽一张牌。",
+    "name": "新星裁决刃",
+    "description": "武器：6 点攻击，2 点耐久。",
     "faction": "曜光",
-    "type": "spell",
+    "type": "weapon",
     "cost": 6,
-    "rarity": "传说",
-    "school": "radiance",
-    "target": "none",
-    "effect": [
-      {
-        "kind": "random-enemy-damage",
-        "amount": 6
-      },
-      {
-        "kind": "draw",
-        "count": 1
-      }
-    ]
+    "rarity": "史诗",
+    "attack": 6,
+    "durability": 2,
+    "keywords": [],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "void-brine-skulker",
@@ -834,7 +959,10 @@
     "health": 2,
     "traits": [
       "hunt"
-    ]
+    ],
+    "keywords": [],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "void-duskfin-darter",
@@ -851,7 +979,9 @@
     ],
     "traits": [
       "swift"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "void-shellback-sentinel",
@@ -868,7 +998,9 @@
     ],
     "traits": [
       "bulwark"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "void-inkveil-oracle",
@@ -888,7 +1020,12 @@
         "kind": "draw",
         "count": 1
       }
-    ]
+    ],
+    "keywords": [
+      "battlecry"
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "void-siphon-lamprey",
@@ -905,7 +1042,9 @@
     ],
     "traits": [
       "hunt"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "void-coral-mimic",
@@ -922,7 +1061,9 @@
     ],
     "traits": [
       "craft"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "void-riptide-duelist",
@@ -940,7 +1081,9 @@
     "traits": [
       "swift",
       "hunt"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "void-trench-mender",
@@ -962,7 +1105,12 @@
         "kind": "heal",
         "amount": 3
       }
-    ]
+    ],
+    "keywords": [
+      "battlecry"
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "void-razorfin-corsair",
@@ -980,7 +1128,9 @@
     "traits": [
       "swift",
       "hunt"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "void-murkplate-hermit",
@@ -999,12 +1149,14 @@
     "traits": [
       "bulwark",
       "craft"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "void-abyssal-chanter",
     "name": "深渊吟潮者",
-    "description": "汲取。低沉潮歌会从敌人身上带回生命。",
+    "description": "汲取。你的回合开始时，获得 1 点护甲。",
     "faction": "幽潮",
     "type": "unit",
     "cost": 4,
@@ -1012,11 +1164,20 @@
     "attack": 4,
     "health": 5,
     "keywords": [
-      "lifesteal"
+      "lifesteal",
+      "start-of-turn"
     ],
     "traits": [
       "arcane"
-    ]
+    ],
+    "onTurnStart": [
+      {
+        "kind": "armor",
+        "amount": 1
+      }
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "void-moonjaw-shark",
@@ -1033,7 +1194,9 @@
     ],
     "traits": [
       "hunt"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "void-drowned-leviathan",
@@ -1051,7 +1214,9 @@
     "traits": [
       "bulwark",
       "arcane"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "void-tempest-manta",
@@ -1070,7 +1235,9 @@
     "traits": [
       "swift",
       "craft"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "void-thalassic-sovereign",
@@ -1089,7 +1256,9 @@
     "traits": [
       "arcane",
       "hunt"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "void-saltbite",
@@ -1106,7 +1275,9 @@
         "kind": "damage",
         "amount": 1
       }
-    ]
+    ],
+    "keywords": [],
+    "onDeath": []
   },
   {
     "id": "void-deepwater-draught",
@@ -1123,12 +1294,14 @@
         "kind": "heal",
         "amount": 3
       }
-    ]
+    ],
+    "keywords": [],
+    "onDeath": []
   },
   {
     "id": "void-pressure-spike",
     "name": "压潮尖刺",
-    "description": "对一个敌方单位造成 3 点伤害。",
+    "description": "对一个敌方单位造成 3 点伤害并沉默它。",
     "faction": "幽潮",
     "type": "spell",
     "cost": 2,
@@ -1139,47 +1312,67 @@
       {
         "kind": "damage",
         "amount": 3
+      },
+      {
+        "kind": "silence"
       }
-    ]
+    ],
+    "keywords": [
+      "silence"
+    ],
+    "onDeath": []
   },
   {
     "id": "void-echoing-current",
     "name": "回响暗流",
-    "description": "抽一张牌，并为一个友方角色恢复 1 点生命。",
+    "description": "奥秘：当敌方施放战术时，使其无效。",
     "faction": "幽潮",
     "type": "spell",
     "cost": 2,
     "rarity": "稀有",
     "school": "tide",
-    "target": "friendly-character",
+    "target": "none",
+    "tradeable": true,
+    "keywords": [
+      "secret",
+      "tradeable"
+    ],
     "effect": [
       {
-        "kind": "draw",
-        "count": 1
-      },
-      {
-        "kind": "heal",
-        "amount": 1
+        "kind": "secret",
+        "secretId": "void-echoing-current",
+        "trigger": "opponent-plays-spell",
+        "effect": {
+          "kind": "counterspell"
+        }
       }
-    ]
+    ],
+    "onDeath": []
   },
   {
     "id": "void-moonpool-mutation",
     "name": "月池异变",
-    "description": "使一个友方单位获得 +2/+3。",
+    "description": "发现一张幽潮卡牌。",
     "faction": "幽潮",
     "type": "spell",
     "cost": 3,
     "rarity": "稀有",
     "school": "tide",
-    "target": "friendly-unit",
+    "target": "none",
+    "keywords": [
+      "discover"
+    ],
     "effect": [
       {
-        "kind": "buff",
-        "attack": 2,
-        "health": 3
+        "kind": "discover",
+        "choices": [
+          "void-mist-lurker",
+          "void-undertow-guard",
+          "void-chill-needle"
+        ]
       }
-    ]
+    ],
+    "onDeath": []
   },
   {
     "id": "void-blackwake-torpedo",
@@ -1196,28 +1389,23 @@
         "kind": "damage",
         "amount": 5
       }
-    ]
+    ],
+    "keywords": [],
+    "onDeath": []
   },
   {
     "id": "void-maelstrom-memory",
-    "name": "漩涡旧梦",
-    "description": "对一个随机敌方角色造成 5 点伤害，并抽两张牌。",
+    "name": "漩涡钩镰",
+    "description": "武器：5 点攻击，3 点耐久。",
     "faction": "幽潮",
-    "type": "spell",
+    "type": "weapon",
     "cost": 7,
-    "rarity": "传说",
-    "school": "tide",
-    "target": "none",
-    "effect": [
-      {
-        "kind": "random-enemy-damage",
-        "amount": 5
-      },
-      {
-        "kind": "draw",
-        "count": 2
-      }
-    ]
+    "rarity": "史诗",
+    "attack": 5,
+    "durability": 3,
+    "keywords": [],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "neutral-lantern-mouse",
@@ -1234,7 +1422,9 @@
         "kind": "draw",
         "count": 1
       }
-    ]
+    ],
+    "keywords": [],
+    "onDeath": []
   },
   {
     "id": "neutral-windstep-messenger",
@@ -1251,7 +1441,9 @@
     ],
     "traits": [
       "swift"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "neutral-ironpot-cook",
@@ -1272,7 +1464,12 @@
         "kind": "heal",
         "amount": 2
       }
-    ]
+    ],
+    "keywords": [
+      "battlecry"
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "neutral-brassback-badger",
@@ -1289,12 +1486,14 @@
     ],
     "traits": [
       "bulwark"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "neutral-relic-appraiser",
     "name": "遗物估价师",
-    "description": "登场时抽一张牌。真品的故事往往比价格更高。",
+    "description": "法术伤害 +1。登场时抽一张牌。真品的故事往往比价格更高。",
     "faction": "中立",
     "type": "unit",
     "cost": 2,
@@ -1304,12 +1503,19 @@
     "traits": [
       "arcane"
     ],
+    "spellDamage": 1,
     "onPlay": [
       {
         "kind": "draw",
         "count": 1
       }
-    ]
+    ],
+    "keywords": [
+      "battlecry",
+      "spell-damage"
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "neutral-riveted-ram",
@@ -1327,12 +1533,14 @@
     "traits": [
       "craft",
       "bulwark"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "neutral-crossroad-duelist",
     "name": "岔路决斗客",
-    "description": "激昂。他在每一个路口都能找到新的对手。",
+    "description": "激昂。每当你施放战术时，获得 +1 攻击。",
     "faction": "中立",
     "type": "unit",
     "cost": 3,
@@ -1340,11 +1548,21 @@
     "attack": 3,
     "health": 4,
     "keywords": [
-      "fury"
+      "fury",
+      "spell-trigger"
     ],
     "traits": [
       "swift"
-    ]
+    ],
+    "onSpellPlayed": [
+      {
+        "kind": "buff",
+        "attack": 1,
+        "health": 0
+      }
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "neutral-dune-tracker",
@@ -1362,7 +1580,9 @@
     "traits": [
       "swift",
       "hunt"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "neutral-aether-peddler",
@@ -1379,7 +1599,9 @@
     ],
     "traits": [
       "arcane"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "neutral-bastion-tortoise",
@@ -1396,7 +1618,9 @@
     ],
     "traits": [
       "bulwark"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "neutral-gearhawk-handler",
@@ -1414,12 +1638,14 @@
     "traits": [
       "hunt",
       "craft"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "neutral-ruin-stag",
     "name": "遗迹冠鹿",
-    "description": "激昂。古代符文会回应它踏碎石板的轰鸣。",
+    "description": "激昂。回合结束时获得 +1 攻击。",
     "faction": "中立",
     "type": "unit",
     "cost": 5,
@@ -1427,17 +1653,27 @@
     "attack": 5,
     "health": 6,
     "keywords": [
-      "fury"
+      "fury",
+      "end-of-turn"
     ],
     "traits": [
       "arcane",
       "hunt"
-    ]
+    ],
+    "onTurnEnd": [
+      {
+        "kind": "buff",
+        "attack": 1,
+        "health": 0
+      }
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "neutral-mobile-forge",
     "name": "自走熔铸炉",
-    "description": "嘲讽，护盾。四条机械腿让整座工坊随军前进。",
+    "description": "嘲讽，护盾。战吼：使所有友方单位获得 +1/+1。",
     "faction": "中立",
     "type": "unit",
     "cost": 6,
@@ -1446,12 +1682,22 @@
     "health": 8,
     "keywords": [
       "taunt",
-      "shield"
+      "shield",
+      "battlecry"
     ],
     "traits": [
       "bulwark",
       "craft"
-    ]
+    ],
+    "onPlay": [
+      {
+        "kind": "buff-all-friendly",
+        "attack": 1,
+        "health": 1
+      }
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "neutral-cloudrail-behemoth",
@@ -1468,7 +1714,9 @@
         "kind": "damage",
         "amount": 7
       }
-    ]
+    ],
+    "keywords": [],
+    "onDeath": []
   },
   {
     "id": "neutral-worldroad-colossus",
@@ -1487,7 +1735,9 @@
     "traits": [
       "bulwark",
       "arcane"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "neutral-pocket-remedy",
@@ -1504,68 +1754,111 @@
         "kind": "heal",
         "amount": 2
       }
-    ]
+    ],
+    "keywords": [],
+    "onDeath": []
   },
   {
     "id": "neutral-springtrap",
     "name": "便携弹簧阱",
-    "description": "对一个敌方单位造成 2 点伤害。",
+    "description": "奥秘：当敌方角色攻击你的核心时，对其造成 2 点伤害。",
     "faction": "中立",
     "type": "spell",
     "cost": 1,
     "rarity": "普通",
     "school": "construct",
-    "target": "enemy-unit",
+    "target": "none",
+    "keywords": [
+      "secret"
+    ],
     "effect": [
       {
-        "kind": "damage",
-        "amount": 2
+        "kind": "secret",
+        "secretId": "neutral-springtrap",
+        "trigger": "opponent-attacks-hero",
+        "effect": {
+          "kind": "damage-attacker",
+          "amount": 2
+        }
       }
-    ]
+    ],
+    "onDeath": []
   },
   {
     "id": "neutral-field-reinforcement",
     "name": "野战加固",
-    "description": "使一个友方单位获得 +1/+3。",
+    "description": "抉择：使一个友方单位获得 +1/+3；或 +3/+1。",
     "faction": "中立",
     "type": "spell",
     "cost": 2,
     "rarity": "普通",
     "school": "construct",
     "target": "friendly-unit",
+    "keywords": [
+      "choose-one"
+    ],
     "effect": [
       {
-        "kind": "buff",
-        "attack": 1,
-        "health": 3
+        "kind": "choose-one",
+        "options": [
+          {
+            "label": "坚守阵线（+1/+3）",
+            "effects": [
+              {
+                "kind": "buff",
+                "attack": 1,
+                "health": 3
+              }
+            ]
+          },
+          {
+            "label": "锋线突击（+3/+1）",
+            "effects": [
+              {
+                "kind": "buff",
+                "attack": 3,
+                "health": 1
+              }
+            ]
+          }
+        ]
       }
-    ]
+    ],
+    "onDeath": []
   },
   {
     "id": "neutral-route-ledger",
     "name": "通途账册",
-    "description": "为一个友方角色恢复 1 点生命，并抽一张牌。账册记得每处补给站。",
+    "description": "发现一张中立卡牌。账册记得每处补给站。",
     "faction": "中立",
     "type": "spell",
     "cost": 2,
     "rarity": "稀有",
     "school": "construct",
-    "target": "friendly-character",
+    "target": "none",
+    "tradeable": true,
+    "keywords": [
+      "discover",
+      "tradeable"
+    ],
     "effect": [
       {
-        "kind": "draw",
-        "count": 1
-      },
-      {
-        "kind": "heal",
-        "amount": 1
+        "kind": "discover",
+        "choices": [
+          "neutral-moss-runner",
+          "neutral-clockwork-beetle",
+          "neutral-tactical-map",
+          "neutral-field-reinforcement",
+          "neutral-pocket-remedy"
+        ]
       }
-    ]
+    ],
+    "onDeath": []
   },
   {
     "id": "neutral-calibrated-bolt",
     "name": "校准弩炮",
-    "description": "对一个敌方角色造成 4 点伤害。",
+    "description": "对一个敌方角色造成 4 点伤害。连击：额外造成 2 点伤害。",
     "faction": "中立",
     "type": "spell",
     "cost": 3,
@@ -1577,7 +1870,17 @@
         "kind": "damage",
         "amount": 4
       }
-    ]
+    ],
+    "combo": [
+      {
+        "kind": "damage",
+        "amount": 2
+      }
+    ],
+    "keywords": [
+      "combo"
+    ],
+    "onDeath": []
   },
   {
     "id": "neutral-masterwork-plating",
@@ -1595,28 +1898,23 @@
         "attack": 3,
         "health": 4
       }
-    ]
+    ],
+    "keywords": [],
+    "onDeath": []
   },
   {
     "id": "neutral-grand-expedition",
-    "name": "万里远征令",
-    "description": "抽三张牌，并为一个友方角色恢复 3 点生命。",
+    "name": "远征合金刃",
+    "description": "武器：3 点攻击，3 点耐久。",
     "faction": "中立",
-    "type": "spell",
+    "type": "weapon",
     "cost": 7,
-    "rarity": "传说",
-    "school": "construct",
-    "target": "friendly-character",
-    "effect": [
-      {
-        "kind": "draw",
-        "count": 3
-      },
-      {
-        "kind": "heal",
-        "amount": 3
-      }
-    ]
+    "rarity": "史诗",
+    "attack": 3,
+    "durability": 3,
+    "keywords": [],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "ember-cinder-scout",
@@ -1634,7 +1932,9 @@
     "traits": [
       "swift",
       "hunt"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "ember-coalfang-pup",
@@ -1651,7 +1951,9 @@
     ],
     "traits": [
       "hunt"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "ember-ash-forager",
@@ -1672,7 +1974,12 @@
         "kind": "random-enemy-damage",
         "amount": 1
       }
-    ]
+    ],
+    "keywords": [
+      "battlecry"
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "ember-blade-acolyte",
@@ -1689,7 +1996,9 @@
     ],
     "traits": [
       "swift"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "ember-charrock-guard",
@@ -1706,7 +2015,9 @@
     ],
     "traits": [
       "bulwark"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "ember-flamespine-vanguard",
@@ -1724,7 +2035,9 @@
     "traits": [
       "swift",
       "hunt"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "ember-forge-smith",
@@ -1746,7 +2059,12 @@
         "attack": 1,
         "health": 1
       }
-    ]
+    ],
+    "keywords": [
+      "battlecry"
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "ember-heart-drinker",
@@ -1764,7 +2082,9 @@
     "traits": [
       "arcane",
       "hunt"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "ember-slag-sentinel",
@@ -1783,7 +2103,9 @@
     "traits": [
       "bulwark",
       "craft"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "ember-crimson-duelist",
@@ -1796,11 +2118,14 @@
     "attack": 5,
     "health": 4,
     "keywords": [
-      "fury"
+      "fury",
+      "windfury"
     ],
     "traits": [
       "swift"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "ember-magma-hornbeast",
@@ -1821,7 +2146,12 @@
         "kind": "random-enemy-damage",
         "amount": 1
       }
-    ]
+    ],
+    "keywords": [
+      "battlecry"
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "ember-oath-pyromancer",
@@ -1842,7 +2172,12 @@
         "kind": "damage",
         "amount": 2
       }
-    ]
+    ],
+    "keywords": [
+      "battlecry"
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "ember-volcanic-ram",
@@ -1860,7 +2195,9 @@
     "traits": [
       "swift",
       "hunt"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "ember-heatbound-colossus",
@@ -1878,7 +2215,9 @@
     "traits": [
       "bulwark",
       "craft"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "ember-ashwing-phoenix",
@@ -1892,12 +2231,21 @@
     "health": 5,
     "keywords": [
       "charge",
-      "shield"
+      "shield",
+      "reborn",
+      "deathrattle"
     ],
     "traits": [
       "swift",
       "arcane"
-    ]
+    ],
+    "onDeath": [
+      {
+        "kind": "armor",
+        "amount": 1
+      }
+    ],
+    "effect": []
   },
   {
     "id": "ember-war-drummer",
@@ -1920,7 +2268,12 @@
         "attack": 2,
         "health": 0
       }
-    ]
+    ],
+    "keywords": [
+      "battlecry"
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "ember-scorchland-hydra",
@@ -1933,7 +2286,8 @@
     "attack": 7,
     "health": 7,
     "keywords": [
-      "fury"
+      "fury",
+      "battlecry"
     ],
     "traits": [
       "hunt"
@@ -1943,7 +2297,9 @@
         "kind": "random-enemy-damage",
         "amount": 3
       }
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "ember-forgecrown-general",
@@ -1957,7 +2313,8 @@
     "health": 8,
     "keywords": [
       "charge",
-      "fury"
+      "fury",
+      "battlecry"
     ],
     "traits": [
       "swift",
@@ -1968,7 +2325,9 @@
         "kind": "draw",
         "count": 1
       }
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "ember-caldera-core",
@@ -1982,7 +2341,8 @@
     "health": 10,
     "keywords": [
       "taunt",
-      "shield"
+      "shield",
+      "battlecry"
     ],
     "traits": [
       "bulwark",
@@ -1993,7 +2353,9 @@
         "kind": "random-enemy-damage",
         "amount": 4
       }
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "ember-spark-artificer",
@@ -2014,7 +2376,12 @@
         "kind": "draw",
         "count": 1
       }
-    ]
+    ],
+    "keywords": [
+      "battlecry"
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "ember-leaping-spark",
@@ -2031,7 +2398,9 @@
         "kind": "damage",
         "amount": 1
       }
-    ]
+    ],
+    "keywords": [],
+    "onDeath": []
   },
   {
     "id": "ember-flame-pierce",
@@ -2048,25 +2417,32 @@
         "kind": "damage",
         "amount": 2
       }
-    ]
+    ],
+    "keywords": [],
+    "onDeath": []
   },
   {
     "id": "ember-ignite-morale",
     "name": "战意点燃",
-    "description": "使一个友方单位获得 +2/+1。",
+    "description": "使一个友方单位在本回合获得 +2/+1。",
     "faction": "烬火",
     "type": "spell",
     "cost": 2,
     "rarity": "普通",
     "school": "ember",
     "target": "friendly-unit",
+    "keywords": [
+      "temporary"
+    ],
     "effect": [
       {
-        "kind": "buff",
+        "kind": "temporary-buff",
         "attack": 2,
-        "health": 1
+        "health": 1,
+        "duration": "end-of-turn"
       }
-    ]
+    ],
+    "onDeath": []
   },
   {
     "id": "ember-cinder-dispatch",
@@ -2078,6 +2454,7 @@
     "rarity": "稀有",
     "school": "ember",
     "target": "none",
+    "tradeable": true,
     "effect": [
       {
         "kind": "draw",
@@ -2087,24 +2464,37 @@
         "kind": "random-enemy-damage",
         "amount": 1
       }
-    ]
+    ],
+    "keywords": [
+      "tradeable"
+    ],
+    "onDeath": []
   },
   {
     "id": "ember-fireline-lockdown",
     "name": "火线封锁",
-    "description": "对一个随机敌方角色造成 3 点伤害。燃烧边界正在迅速收拢。",
+    "description": "奥秘：当敌方召唤单位时，对敌方核心造成 2 点伤害。",
     "faction": "烬火",
     "type": "spell",
     "cost": 3,
     "rarity": "普通",
     "school": "ember",
     "target": "none",
+    "keywords": [
+      "secret"
+    ],
     "effect": [
       {
-        "kind": "random-enemy-damage",
-        "amount": 3
+        "kind": "secret",
+        "secretId": "ember-fireline-lockdown",
+        "trigger": "opponent-summons-unit",
+        "effect": {
+          "kind": "damage-enemy-hero",
+          "amount": 2
+        }
       }
-    ]
+    ],
+    "onDeath": []
   },
   {
     "id": "ember-ash-rekindling",
@@ -2122,42 +2512,57 @@
         "cardId": "ember-cinder-scout",
         "count": 2
       }
-    ]
+    ],
+    "keywords": [],
+    "onDeath": []
   },
   {
     "id": "ember-molten-core-overload",
     "name": "熔芯过载",
-    "description": "使一个友方单位获得 +3/+3。稳定运转从来不是它的设计目标。",
+    "description": "过载（1）：使一个友方单位获得 +3/+3。稳定运转从来不是它的设计目标。",
     "faction": "烬火",
     "type": "spell",
     "cost": 4,
     "rarity": "稀有",
     "school": "ember",
     "target": "friendly-unit",
+    "overload": 1,
     "effect": [
       {
         "kind": "buff",
         "attack": 3,
         "health": 3
       }
-    ]
+    ],
+    "keywords": [
+      "overload"
+    ],
+    "onDeath": []
   },
   {
     "id": "ember-cinder-rain",
     "name": "烬雨齐射",
-    "description": "对一个随机敌方角色造成 5 点伤害。",
+    "description": "发现一张烬火卡牌。",
     "faction": "烬火",
     "type": "spell",
     "cost": 5,
     "rarity": "史诗",
     "school": "ember",
     "target": "none",
+    "keywords": [
+      "discover"
+    ],
     "effect": [
       {
-        "kind": "random-enemy-damage",
-        "amount": 5
+        "kind": "discover",
+        "choices": [
+          "ember-leaping-spark",
+          "ember-flame-pierce",
+          "ember-ignite-morale"
+        ]
       }
-    ]
+    ],
+    "onDeath": []
   },
   {
     "id": "ember-calamity-verdict",
@@ -2174,24 +2579,23 @@
         "kind": "damage",
         "amount": 6
       }
-    ]
+    ],
+    "keywords": [],
+    "onDeath": []
   },
   {
     "id": "ember-red-lotus-finale",
-    "name": "红莲终式",
-    "description": "对一个敌方角色造成 8 点伤害。",
+    "name": "红莲焚刃",
+    "description": "武器：8 点攻击，2 点耐久。",
     "faction": "烬火",
-    "type": "spell",
+    "type": "weapon",
     "cost": 8,
     "rarity": "史诗",
-    "school": "ember",
-    "target": "enemy-character",
-    "effect": [
-      {
-        "kind": "damage",
-        "amount": 8
-      }
-    ]
+    "attack": 8,
+    "durability": 2,
+    "keywords": [],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "astral-stardust-familiar",
@@ -2208,7 +2612,9 @@
     ],
     "traits": [
       "arcane"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "astral-skychart-apprentice",
@@ -2228,7 +2634,12 @@
         "kind": "draw",
         "count": 1
       }
-    ]
+    ],
+    "keywords": [
+      "battlecry"
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "astral-prism-guard",
@@ -2245,7 +2656,9 @@
     ],
     "traits": [
       "bulwark"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "astral-comet-scribe",
@@ -2265,7 +2678,12 @@
         "kind": "draw",
         "count": 1
       }
-    ]
+    ],
+    "keywords": [
+      "battlecry"
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "astral-orbit-moonhare",
@@ -2282,7 +2700,9 @@
     ],
     "traits": [
       "swift"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "astral-veil-seer",
@@ -2299,7 +2719,9 @@
     ],
     "traits": [
       "arcane"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "astral-mirror-adept",
@@ -2316,7 +2738,9 @@
     ],
     "traits": [
       "craft"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "astral-constellation-gardener",
@@ -2338,7 +2762,12 @@
         "kind": "heal",
         "amount": 2
       }
-    ]
+    ],
+    "keywords": [
+      "battlecry"
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "astral-nebula-knight",
@@ -2355,7 +2784,9 @@
     ],
     "traits": [
       "bulwark"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "astral-archive-stargazer",
@@ -2376,7 +2807,12 @@
         "kind": "draw",
         "count": 1
       }
-    ]
+    ],
+    "keywords": [
+      "battlecry"
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "astral-eclipse-stalker",
@@ -2389,11 +2825,14 @@
     "attack": 4,
     "health": 4,
     "keywords": [
-      "lifesteal"
+      "lifesteal",
+      "stealth"
     ],
     "traits": [
       "hunt"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "astral-prismatic-stag",
@@ -2411,7 +2850,9 @@
     ],
     "traits": [
       "bulwark"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "astral-comet-rider",
@@ -2429,7 +2870,9 @@
     ],
     "traits": [
       "swift"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "astral-galaxy-weaver",
@@ -2451,7 +2894,12 @@
         "attack": 2,
         "health": 2
       }
-    ]
+    ],
+    "keywords": [
+      "battlecry"
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "astral-lunar-vessel",
@@ -2469,7 +2917,9 @@
     "traits": [
       "bulwark",
       "craft"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "astral-deepspace-oracle",
@@ -2489,7 +2939,12 @@
         "kind": "draw",
         "count": 2
       }
-    ]
+    ],
+    "keywords": [
+      "battlecry"
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "astral-zenith-dragon",
@@ -2506,7 +2961,9 @@
     ],
     "traits": [
       "hunt"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "astral-horizon-guardian",
@@ -2519,7 +2976,8 @@
     "attack": 6,
     "health": 9,
     "keywords": [
-      "taunt"
+      "taunt",
+      "battlecry"
     ],
     "traits": [
       "bulwark",
@@ -2531,7 +2989,9 @@
         "kind": "heal",
         "amount": 4
       }
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "astral-cosmos-sovereign",
@@ -2544,7 +3004,8 @@
     "attack": 7,
     "health": 10,
     "keywords": [
-      "shield"
+      "shield",
+      "battlecry"
     ],
     "traits": [
       "arcane",
@@ -2555,7 +3016,9 @@
         "kind": "draw",
         "count": 2
       }
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "astral-infinite-observer",
@@ -2569,7 +3032,8 @@
     "health": 8,
     "keywords": [
       "taunt",
-      "shield"
+      "shield",
+      "battlecry"
     ],
     "traits": [
       "bulwark",
@@ -2580,7 +3044,9 @@
         "kind": "draw",
         "count": 1
       }
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "astral-glimmer-echo",
@@ -2597,42 +3063,55 @@
         "kind": "heal",
         "amount": 1
       }
-    ]
+    ],
+    "keywords": [],
+    "onDeath": []
   },
   {
     "id": "astral-chart-revelation",
     "name": "星图启示",
-    "description": "抽一张牌。星轨交会之处，答案自行显现。",
+    "description": "发现一张星穹卡牌。星轨交会之处，答案自行显现。",
     "faction": "星穹",
     "type": "spell",
     "cost": 1,
     "rarity": "普通",
     "school": "astral",
     "target": "none",
+    "keywords": [
+      "discover"
+    ],
     "effect": [
       {
-        "kind": "draw",
-        "count": 1
+        "kind": "discover",
+        "choices": [
+          "astral-stardust-familiar",
+          "astral-chart-revelation",
+          "astral-phase-shift"
+        ]
       }
-    ]
+    ],
+    "onDeath": []
   },
   {
     "id": "astral-phase-shift",
-    "name": "相位跃迁",
-    "description": "使一个友方单位获得 +2 生命。",
+    "name": "相位变形",
+    "description": "将一个敌方单位变形为苔径奔行兽。",
     "faction": "星穹",
     "type": "spell",
-    "cost": 1,
-    "rarity": "普通",
+    "cost": 4,
+    "rarity": "史诗",
     "school": "astral",
-    "target": "friendly-unit",
+    "target": "enemy-unit",
+    "keywords": [
+      "transform"
+    ],
     "effect": [
       {
-        "kind": "buff",
-        "attack": 0,
-        "health": 2
+        "kind": "transform",
+        "cardId": "neutral-moss-runner"
       }
-    ]
+    ],
+    "onDeath": []
   },
   {
     "id": "astral-gentle-orbit",
@@ -2649,7 +3128,9 @@
         "kind": "heal",
         "amount": 4
       }
-    ]
+    ],
+    "keywords": [],
+    "onDeath": []
   },
   {
     "id": "astral-lucid-script",
@@ -2661,6 +3142,7 @@
     "rarity": "稀有",
     "school": "astral",
     "target": "friendly-character",
+    "tradeable": true,
     "effect": [
       {
         "kind": "draw",
@@ -2670,7 +3152,11 @@
         "kind": "heal",
         "amount": 2
       }
-    ]
+    ],
+    "keywords": [
+      "tradeable"
+    ],
+    "onDeath": []
   },
   {
     "id": "astral-mirror-lesson",
@@ -2688,25 +3174,35 @@
         "attack": 1,
         "health": 3
       }
-    ]
+    ],
+    "keywords": [],
+    "onDeath": []
   },
   {
     "id": "astral-constellation-call",
     "name": "星群呼唤",
-    "description": "召唤两个星尘伴灵。",
+    "description": "奥秘：当敌方召唤单位时，为你的核心恢复 3 点生命。",
     "faction": "星穹",
     "type": "spell",
     "cost": 3,
     "rarity": "稀有",
     "school": "astral",
     "target": "none",
+    "keywords": [
+      "secret"
+    ],
     "effect": [
       {
-        "kind": "summon",
-        "cardId": "astral-stardust-familiar",
-        "count": 2
+        "kind": "secret",
+        "secretId": "astral-constellation-call",
+        "trigger": "opponent-summons-unit",
+        "effect": {
+          "kind": "heal-friendly-hero",
+          "amount": 3
+        }
       }
-    ]
+    ],
+    "onDeath": []
   },
   {
     "id": "astral-meteor-pin",
@@ -2723,7 +3219,9 @@
         "kind": "damage",
         "amount": 4
       }
-    ]
+    ],
+    "keywords": [],
+    "onDeath": []
   },
   {
     "id": "astral-deep-divination",
@@ -2740,28 +3238,23 @@
         "kind": "draw",
         "count": 3
       }
-    ]
+    ],
+    "keywords": [],
+    "onDeath": []
   },
   {
     "id": "astral-supernova-ripple",
-    "name": "超新星涟漪",
-    "description": "对一个随机敌方角色造成 5 点伤害，并抽两张牌。毁灭的闪光也会照亮知识。",
+    "name": "超新星权杖",
+    "description": "武器：4 点攻击，3 点耐久。",
     "faction": "星穹",
-    "type": "spell",
+    "type": "weapon",
     "cost": 7,
     "rarity": "史诗",
-    "school": "astral",
-    "target": "none",
-    "effect": [
-      {
-        "kind": "random-enemy-damage",
-        "amount": 5
-      },
-      {
-        "kind": "draw",
-        "count": 2
-      }
-    ]
+    "attack": 4,
+    "durability": 3,
+    "keywords": [],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "verdant-spore-scout",
@@ -2775,7 +3268,10 @@
     "health": 1,
     "traits": [
       "hunt"
-    ]
+    ],
+    "keywords": [],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "verdant-dewleaf-apprentice",
@@ -2788,7 +3284,8 @@
     "attack": 1,
     "health": 2,
     "keywords": [
-      "lifesteal"
+      "lifesteal",
+      "battlecry"
     ],
     "traits": [
       "arcane"
@@ -2799,7 +3296,9 @@
         "kind": "heal",
         "amount": 1
       }
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "verdant-mossback-keeper",
@@ -2816,7 +3315,9 @@
     ],
     "traits": [
       "bulwark"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "verdant-thornstep-runner",
@@ -2834,7 +3335,9 @@
     "traits": [
       "swift",
       "hunt"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "verdant-seedsong-sprite",
@@ -2854,7 +3357,12 @@
         "kind": "draw",
         "count": 1
       }
-    ]
+    ],
+    "keywords": [
+      "battlecry"
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "verdant-antler-pathfinder",
@@ -2869,7 +3377,10 @@
     "traits": [
       "hunt",
       "craft"
-    ]
+    ],
+    "keywords": [],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "verdant-barkshield-sentinel",
@@ -2886,7 +3397,9 @@
     ],
     "traits": [
       "bulwark"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "verdant-nectar-mender",
@@ -2899,7 +3412,8 @@
     "attack": 2,
     "health": 3,
     "keywords": [
-      "lifesteal"
+      "lifesteal",
+      "battlecry"
     ],
     "traits": [
       "arcane"
@@ -2910,7 +3424,9 @@
         "kind": "heal",
         "amount": 2
       }
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "verdant-vinewhip-duelist",
@@ -2927,7 +3443,9 @@
     ],
     "traits": [
       "swift"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "verdant-canopy-archer",
@@ -2948,7 +3466,12 @@
         "kind": "damage",
         "amount": 1
       }
-    ]
+    ],
+    "keywords": [
+      "battlecry"
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "verdant-rootweave-artisan",
@@ -2966,7 +3489,9 @@
     "traits": [
       "craft",
       "bulwark"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "verdant-bloom-banner",
@@ -2989,7 +3514,12 @@
         "attack": 1,
         "health": 1
       }
-    ]
+    ],
+    "keywords": [
+      "battlecry"
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "verdant-moonfern-stalker",
@@ -3007,7 +3537,9 @@
     "traits": [
       "hunt",
       "swift"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "verdant-grovebond-shaman",
@@ -3028,7 +3560,12 @@
         "kind": "heal",
         "amount": 3
       }
-    ]
+    ],
+    "keywords": [
+      "battlecry"
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "verdant-briarhide-boar",
@@ -3047,7 +3584,9 @@
     "traits": [
       "bulwark",
       "hunt"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "verdant-ancient-bough-guardian",
@@ -3061,11 +3600,20 @@
     "health": 7,
     "keywords": [
       "taunt",
-      "shield"
+      "shield",
+      "deathrattle"
     ],
     "traits": [
       "bulwark"
-    ]
+    ],
+    "onDeath": [
+      {
+        "kind": "summon",
+        "cardId": "verdant-seedsong-sprite",
+        "count": 1
+      }
+    ],
+    "effect": []
   },
   {
     "id": "verdant-dawnpetal-stag",
@@ -3083,7 +3631,9 @@
     "traits": [
       "hunt",
       "arcane"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "verdant-seedvault-engineer",
@@ -3096,12 +3646,15 @@
     "attack": 4,
     "health": 6,
     "keywords": [
-      "shield"
+      "shield",
+      "reborn"
     ],
     "traits": [
       "craft",
       "bulwark"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "verdant-thousandleaf-titan",
@@ -3119,7 +3672,9 @@
     "traits": [
       "bulwark",
       "arcane"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "verdant-worldroot-matriarch",
@@ -3133,7 +3688,8 @@
     "health": 10,
     "keywords": [
       "taunt",
-      "lifesteal"
+      "lifesteal",
+      "battlecry"
     ],
     "traits": [
       "bulwark",
@@ -3145,7 +3701,9 @@
         "kind": "heal",
         "amount": 5
       }
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "verdant-sprout-pact",
@@ -3163,7 +3721,9 @@
         "attack": 0,
         "health": 1
       }
-    ]
+    ],
+    "keywords": [],
+    "onDeath": []
   },
   {
     "id": "verdant-morning-dew",
@@ -3180,7 +3740,9 @@
         "kind": "heal",
         "amount": 3
       }
-    ]
+    ],
+    "keywords": [],
+    "onDeath": []
   },
   {
     "id": "verdant-thorn-lash",
@@ -3197,7 +3759,9 @@
         "kind": "damage",
         "amount": 2
       }
-    ]
+    ],
+    "keywords": [],
+    "onDeath": []
   },
   {
     "id": "verdant-rooting-rite",
@@ -3215,41 +3779,62 @@
         "attack": 1,
         "health": 3
       }
-    ]
+    ],
+    "keywords": [],
+    "onDeath": []
   },
   {
     "id": "verdant-pathfinder-call",
     "name": "寻径者号角",
-    "description": "抽两张牌。",
+    "description": "发现一张苍林卡牌。",
     "faction": "苍林",
     "type": "spell",
     "cost": 3,
     "rarity": "稀有",
     "school": "verdant",
     "target": "none",
+    "tradeable": true,
+    "keywords": [
+      "discover",
+      "tradeable"
+    ],
     "effect": [
       {
-        "kind": "draw",
-        "count": 2
+        "kind": "discover",
+        "choices": [
+          "verdant-sprout-pact",
+          "verdant-morning-dew",
+          "verdant-thorn-lash"
+        ]
       }
-    ]
+    ],
+    "onDeath": []
   },
   {
     "id": "verdant-canopy-ambush",
     "name": "冠林伏击",
-    "description": "对一个随机敌方角色造成 3 点伤害。",
+    "description": "奥秘：当敌方施放战术时，为你的核心获得 2 点护甲。",
     "faction": "苍林",
     "type": "spell",
     "cost": 3,
     "rarity": "稀有",
     "school": "verdant",
     "target": "none",
+    "keywords": [
+      "secret"
+    ],
     "effect": [
       {
-        "kind": "random-enemy-damage",
-        "amount": 3
+        "kind": "secret",
+        "secretId": "verdant-canopy-ambush",
+        "trigger": "opponent-plays-spell",
+        "effect": {
+          "kind": "armor",
+          "amount": 2
+        }
       }
-    ]
+    ],
+    "onDeath": []
   },
   {
     "id": "verdant-seedburst",
@@ -3267,7 +3852,9 @@
         "cardId": "verdant-spore-scout",
         "count": 2
       }
-    ]
+    ],
+    "keywords": [],
+    "onDeath": []
   },
   {
     "id": "verdant-wild-regrowth",
@@ -3284,7 +3871,9 @@
         "kind": "heal",
         "amount": 7
       }
-    ]
+    ],
+    "keywords": [],
+    "onDeath": []
   },
   {
     "id": "verdant-flourishing-chorus",
@@ -3302,33 +3891,23 @@
         "attack": 3,
         "health": 4
       }
-    ]
+    ],
+    "keywords": [],
+    "onDeath": []
   },
   {
     "id": "verdant-all-roots-as-one",
-    "name": "万根归一",
-    "description": "为一个友方角色恢复 10 点生命，抽两张牌，并召唤两个孢芽斥候。",
+    "name": "万根藤鞭",
+    "description": "武器：3 点攻击，4 点耐久。",
     "faction": "苍林",
-    "type": "spell",
+    "type": "weapon",
     "cost": 8,
     "rarity": "传说",
-    "school": "verdant",
-    "target": "friendly-character",
-    "effect": [
-      {
-        "kind": "heal",
-        "amount": 10
-      },
-      {
-        "kind": "draw",
-        "count": 2
-      },
-      {
-        "kind": "summon",
-        "cardId": "verdant-spore-scout",
-        "count": 2
-      }
-    ]
+    "attack": 3,
+    "durability": 4,
+    "keywords": [],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "storm-spark-mite",
@@ -3342,7 +3921,10 @@
     "health": 1,
     "traits": [
       "craft"
-    ]
+    ],
+    "keywords": [],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "storm-coppercoil-cadet",
@@ -3360,7 +3942,9 @@
     "traits": [
       "craft",
       "swift"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "storm-lightning-courier",
@@ -3377,12 +3961,14 @@
     ],
     "traits": [
       "swift"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "storm-capacitor-sentry",
     "name": "蓄能哨机",
-    "description": "护盾。待机时会默默收集空气里的电荷。",
+    "description": "护盾。每当你施放战术时，你的核心获得 1 点护甲。",
     "faction": "雷铸",
     "type": "unit",
     "cost": 1,
@@ -3390,12 +3976,21 @@
     "attack": 1,
     "health": 3,
     "keywords": [
-      "shield"
+      "shield",
+      "spell-trigger"
     ],
     "traits": [
       "craft",
       "bulwark"
-    ]
+    ],
+    "onSpellPlayed": [
+      {
+        "kind": "armor",
+        "amount": 1
+      }
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "storm-ironcloud-scavenger",
@@ -3416,7 +4011,12 @@
         "kind": "draw",
         "count": 1
       }
-    ]
+    ],
+    "keywords": [
+      "battlecry"
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "storm-voltedge-duelist",
@@ -3433,7 +4033,9 @@
     ],
     "traits": [
       "swift"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "storm-relay-shieldguard",
@@ -3452,7 +4054,9 @@
     "traits": [
       "bulwark",
       "craft"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "storm-coil-sage",
@@ -3473,7 +4077,12 @@
         "kind": "random-enemy-damage",
         "amount": 1
       }
-    ]
+    ],
+    "keywords": [
+      "battlecry"
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "storm-thundertrack-hound",
@@ -3491,7 +4100,9 @@
     "traits": [
       "hunt",
       "swift"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "storm-magnetic-salvager",
@@ -3508,7 +4119,9 @@
     ],
     "traits": [
       "craft"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "storm-forge-armorer",
@@ -3531,7 +4144,12 @@
         "attack": 1,
         "health": 1
       }
-    ]
+    ],
+    "keywords": [
+      "battlecry"
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "storm-arcspark-marksman",
@@ -3551,7 +4169,12 @@
         "kind": "random-enemy-damage",
         "amount": 1
       }
-    ]
+    ],
+    "keywords": [
+      "battlecry"
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "storm-turbine-lancer",
@@ -3570,7 +4193,9 @@
     "traits": [
       "swift",
       "craft"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "storm-overcharge-golem",
@@ -3587,7 +4212,9 @@
     ],
     "traits": [
       "craft"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "storm-cloudbreaker-captain",
@@ -3600,7 +4227,8 @@
     "attack": 3,
     "health": 5,
     "keywords": [
-      "shield"
+      "shield",
+      "battlecry"
     ],
     "traits": [
       "arcane",
@@ -3611,7 +4239,9 @@
         "kind": "draw",
         "count": 1
       }
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "storm-tempest-bulwark",
@@ -3630,7 +4260,9 @@
     "traits": [
       "bulwark",
       "craft"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "storm-chainbolt-colossus",
@@ -3651,7 +4283,12 @@
         "kind": "random-enemy-damage",
         "amount": 2
       }
-    ]
+    ],
+    "keywords": [
+      "battlecry"
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "storm-skyrail-ace",
@@ -3669,7 +4306,9 @@
     "traits": [
       "hunt",
       "swift"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "storm-living-dynamo",
@@ -3688,7 +4327,9 @@
     "traits": [
       "craft",
       "arcane"
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "storm-skyforge-thunderking",
@@ -3702,7 +4343,8 @@
     "health": 8,
     "keywords": [
       "shield",
-      "fury"
+      "fury",
+      "battlecry"
     ],
     "traits": [
       "craft",
@@ -3713,7 +4355,9 @@
         "kind": "random-enemy-damage",
         "amount": 4
       }
-    ]
+    ],
+    "onDeath": [],
+    "effect": []
   },
   {
     "id": "storm-static-spark",
@@ -3730,7 +4374,9 @@
         "kind": "random-enemy-damage",
         "amount": 1
       }
-    ]
+    ],
+    "keywords": [],
+    "onDeath": []
   },
   {
     "id": "storm-bolt-calibration",
@@ -3747,7 +4393,9 @@
         "kind": "damage",
         "amount": 2
       }
-    ]
+    ],
+    "keywords": [],
+    "onDeath": []
   },
   {
     "id": "storm-emergency-plating",
@@ -3765,41 +4413,58 @@
         "attack": 0,
         "health": 2
       }
-    ]
+    ],
+    "keywords": [],
+    "onDeath": []
   },
   {
     "id": "storm-capacitor-draw",
     "name": "电容抽载",
-    "description": "抽一张牌。",
+    "description": "发现一张雷铸卡牌。",
     "faction": "雷铸",
     "type": "spell",
     "cost": 2,
     "rarity": "普通",
     "school": "storm",
     "target": "none",
+    "tradeable": true,
+    "keywords": [
+      "discover",
+      "tradeable"
+    ],
     "effect": [
       {
-        "kind": "draw",
-        "count": 1
+        "kind": "discover",
+        "choices": [
+          "storm-static-spark",
+          "storm-bolt-calibration",
+          "storm-emergency-plating"
+        ]
       }
-    ]
+    ],
+    "onDeath": []
   },
   {
     "id": "storm-chain-discharge",
     "name": "链式放电",
-    "description": "对一个随机敌方角色造成 3 点伤害。",
+    "description": "过载（1）：对一个随机敌方角色造成 3 点伤害。",
     "faction": "雷铸",
     "type": "spell",
     "cost": 3,
     "rarity": "稀有",
     "school": "storm",
     "target": "none",
+    "overload": 1,
     "effect": [
       {
         "kind": "random-enemy-damage",
         "amount": 3
       }
-    ]
+    ],
+    "keywords": [
+      "overload"
+    ],
+    "onDeath": []
   },
   {
     "id": "storm-forge-temper",
@@ -3817,7 +4482,9 @@
         "attack": 2,
         "health": 2
       }
-    ]
+    ],
+    "keywords": [],
+    "onDeath": []
   },
   {
     "id": "storm-drone-deployment",
@@ -3835,7 +4502,9 @@
         "cardId": "storm-spark-mite",
         "count": 2
       }
-    ]
+    ],
+    "keywords": [],
+    "onDeath": []
   },
   {
     "id": "storm-thunder-salvo",
@@ -3852,56 +4521,48 @@
         "kind": "random-enemy-damage",
         "amount": 4
       }
-    ]
+    ],
+    "keywords": [],
+    "onDeath": []
   },
   {
     "id": "storm-overload-reactor",
     "name": "过载反应炉",
-    "description": "对一个敌方角色造成 5 点伤害，并抽一张牌。",
+    "description": "奥秘：当敌方角色攻击你的核心时，对敌方核心造成 2 点伤害。",
     "faction": "雷铸",
     "type": "spell",
     "cost": 5,
     "rarity": "史诗",
     "school": "storm",
-    "target": "enemy-character",
+    "target": "none",
+    "keywords": [
+      "secret"
+    ],
     "effect": [
       {
-        "kind": "damage",
-        "amount": 5
-      },
-      {
-        "kind": "draw",
-        "count": 1
+        "kind": "secret",
+        "secretId": "storm-overload-reactor",
+        "trigger": "opponent-attacks-hero",
+        "effect": {
+          "kind": "damage-enemy-hero",
+          "amount": 2
+        }
       }
-    ]
+    ],
+    "onDeath": []
   },
   {
     "id": "storm-ninefold-tempest",
-    "name": "九霄雷暴",
-    "description": "三次对随机敌方角色造成 3 点伤害，然后抽一张牌。",
+    "name": "九霄雷锤",
+    "description": "武器：7 点攻击，2 点耐久。",
     "faction": "雷铸",
-    "type": "spell",
+    "type": "weapon",
     "cost": 8,
     "rarity": "传说",
-    "school": "storm",
-    "target": "none",
-    "effect": [
-      {
-        "kind": "random-enemy-damage",
-        "amount": 3
-      },
-      {
-        "kind": "random-enemy-damage",
-        "amount": 3
-      },
-      {
-        "kind": "random-enemy-damage",
-        "amount": 3
-      },
-      {
-        "kind": "draw",
-        "count": 1
-      }
-    ]
+    "attack": 7,
+    "durability": 2,
+    "keywords": [],
+    "onDeath": [],
+    "effect": []
   }
 ]

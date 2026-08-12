@@ -17,6 +17,10 @@ class CardDefinition {
     this.traits = const [],
     this.school,
     this.target,
+    this.combo = const [],
+    this.onTurnStart = const [],
+    this.onTurnEnd = const [],
+    this.onSpellPlayed = const [],
     this.onPlay = const [],
     this.onDeath = const [],
     this.effect = const [],
@@ -39,6 +43,10 @@ class CardDefinition {
   final List<String> traits;
   final String? school;
   final String? target;
+  final List<Map<String, dynamic>> combo;
+  final List<Map<String, dynamic>> onTurnStart;
+  final List<Map<String, dynamic>> onTurnEnd;
+  final List<Map<String, dynamic>> onSpellPlayed;
   final List<Map<String, dynamic>> onPlay;
   final List<Map<String, dynamic>> onDeath;
   final List<Map<String, dynamic>> effect;
@@ -52,6 +60,10 @@ class CardDefinition {
     String? description,
     List<String>? keywords,
     String? target,
+    List<Map<String, dynamic>>? combo,
+    List<Map<String, dynamic>>? onTurnStart,
+    List<Map<String, dynamic>>? onTurnEnd,
+    List<Map<String, dynamic>>? onSpellPlayed,
     List<Map<String, dynamic>>? onPlay,
     List<Map<String, dynamic>>? onDeath,
     List<Map<String, dynamic>>? effect,
@@ -74,6 +86,10 @@ class CardDefinition {
       traits: traits,
       school: school,
       target: target ?? this.target,
+      combo: combo ?? this.combo,
+      onTurnStart: onTurnStart ?? this.onTurnStart,
+      onTurnEnd: onTurnEnd ?? this.onTurnEnd,
+      onSpellPlayed: onSpellPlayed ?? this.onSpellPlayed,
       onPlay: onPlay ?? this.onPlay,
       onDeath: onDeath ?? this.onDeath,
       effect: effect ?? this.effect,
@@ -109,6 +125,10 @@ class CardDefinition {
       traits: strings(json['traits']),
       school: json['school'] as String?,
       target: json['target'] as String?,
+      combo: effects(json['combo']),
+      onTurnStart: effects(json['onTurnStart']),
+      onTurnEnd: effects(json['onTurnEnd']),
+      onSpellPlayed: effects(json['onSpellPlayed']),
       onPlay: effects(json['onPlay']),
       onDeath: effects(json['onDeath']),
       effect: effects(json['effect']),
@@ -134,6 +154,11 @@ class BattleUnit {
     this.stealthActive = false,
     this.frozenTurns = 0,
     this.rebornUsed = false,
+    this.permanentAttackBonus = 0,
+    this.permanentHealthBonus = 0,
+    this.temporaryAttackBonus = 0,
+    this.temporaryHealthBonus = 0,
+    this.silenced = false,
   });
 
   final String instanceId;
@@ -152,16 +177,21 @@ class BattleUnit {
   bool stealthActive;
   int frozenTurns;
   bool rebornUsed;
+  int permanentAttackBonus;
+  int permanentHealthBonus;
+  int temporaryAttackBonus;
+  int temporaryHealthBonus;
+  bool silenced;
 
-  bool get hasTaunt => card.keywords.contains('taunt');
-  bool get hasLifesteal => card.keywords.contains('lifesteal');
-  bool get hasFury => card.keywords.contains('fury');
-  bool get hasCharge => card.keywords.contains('charge');
-  bool get hasRush => card.keywords.contains('rush');
-  bool get hasWindfury => card.keywords.contains('windfury');
-  bool get hasPoisonous => card.keywords.contains('poisonous');
-  bool get hasStealth => card.keywords.contains('stealth');
-  bool get hasReborn => card.keywords.contains('reborn');
+  bool get hasTaunt => !silenced && card.keywords.contains('taunt');
+  bool get hasLifesteal => !silenced && card.keywords.contains('lifesteal');
+  bool get hasFury => !silenced && card.keywords.contains('fury');
+  bool get hasCharge => !silenced && card.keywords.contains('charge');
+  bool get hasRush => !silenced && card.keywords.contains('rush');
+  bool get hasWindfury => !silenced && card.keywords.contains('windfury');
+  bool get hasPoisonous => !silenced && card.keywords.contains('poisonous');
+  bool get hasStealth => !silenced && card.keywords.contains('stealth');
+  bool get hasReborn => !silenced && card.keywords.contains('reborn');
   bool get isFrozen => frozenTurns > 0;
   int get attackLimit => hasWindfury ? 2 : 1;
   bool get canAttack =>
@@ -197,6 +227,7 @@ class BattleSide {
   bool coinAvailable;
   BattleWeapon? weapon;
   int overloadLocked;
+  int cardsPlayedThisTurn = 0;
   bool heroHasAttacked = false;
   final List<BattleSecret> secrets;
 }
@@ -244,8 +275,10 @@ class BattleState {
     this.aiFaction = '幽潮',
     Set<int>? mulliganSelected,
     List<String>? discoverChoices,
+    List<Map<String, dynamic>>? chooseOneOptions,
   }) : mulliganSelected = mulliganSelected ?? <int>{},
-       discoverChoices = discoverChoices ?? <String>[];
+       discoverChoices = discoverChoices ?? <String>[],
+       chooseOneOptions = chooseOneOptions ?? <Map<String, dynamic>>[];
 
   final BattleSide player;
   final BattleSide ai;
@@ -263,6 +296,10 @@ class BattleState {
   List<String> discoverChoices;
   String? discoverSource;
   String discoverOwner = 'player';
+  List<Map<String, dynamic>> chooseOneOptions;
+  String? chooseOneSource;
+  String chooseOneOwner = 'player';
+  BattleUnit? chooseOneTarget;
   BattleFxEvent? fx;
   int fxSequence = 0;
 }
