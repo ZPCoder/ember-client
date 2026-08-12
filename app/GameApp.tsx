@@ -1367,39 +1367,16 @@ const BATTLE_EFFECT_SLOW_STEP_MS = 2400;
 // transition is revealed. This keeps a full AI turn from collapsing into one
 // frame on slower phones and makes the event stream match the board animation.
 const AI_TURN_DELAY_MS = 2200;
-const BATTLE_EFFECT_QUEUE_LIMIT = 40;
+// Keep the full event stream for long deathrattle / secret / AoE chains. The
+// skip button remains available, so a long replay is inspectable without
+// forcing the player to watch every beat.
+const BATTLE_EFFECT_QUEUE_LIMIT = 96;
 // A visible action clock gives each turn a readable rhythm and prevents a
 // local match from feeling like an unbounded sandbox. PVP remains
 // server-authoritative; the active client submits an end-turn command when
 // its local clock expires.
 const TURN_TIME_LIMIT_SECONDS = 75;
 const BOARD_SLOT_COUNT = 7;
-
-function battleEffectPriority(kind: BattleEffectKind) {
-  switch (kind) {
-    case "win":
-    case "loss":
-    case "start":
-      return 100;
-    case "damage":
-    case "heal":
-    case "shield":
-    case "destroy":
-      return 90;
-    case "attack":
-      return 85;
-    case "summon":
-    case "buff":
-      return 75;
-    case "turn":
-      return 70;
-    case "card":
-      return 60;
-    case "trade":
-    case "draw":
-      return 50;
-  }
-}
 
 type BattleTone = {
   frequency: number;
@@ -2288,24 +2265,18 @@ export function GameApp({
       if (options.reset) {
         stopBattleEffects();
       }
-      const maxEffects = options.maxEffects ?? 20;
-      const playlist =
-        effects.length <= maxEffects
-          ? [...effects]
-          : effects
-              .map((effect, index) => ({
-                effect,
-                index,
-                priority: battleEffectPriority(effect.kind),
-              }))
-              .sort((first, second) =>
-                second.priority === first.priority
-                  ? first.index - second.index
-                  : second.priority - first.priority,
-              )
-              .slice(0, maxEffects)
-              .sort((first, second) => first.index - second.index)
-              .map(({ effect }) => effect);
+      const maxEffects = options.maxEffects ?? BATTLE_EFFECT_QUEUE_LIMIT;
+      // Event order is part of the rules. Never reorder a deathrattle or
+      // secret chain merely to surface a visually important effect first.
+      // Normal reducer transitions fit well below this cap; the final event is
+      // retained for pathological snapshots so a terminal result is never
+      // hidden behind a truncated middle section.
+      const playlist = effects.length <= maxEffects
+        ? [...effects]
+        : [
+            ...effects.slice(0, Math.max(0, maxEffects - 1)),
+            ...(effects.at(-1) ? [effects.at(-1)!] : []),
+          ];
       const capacity = Math.max(0, BATTLE_EFFECT_QUEUE_LIMIT - battleEffectQueueRef.current.length);
       const incoming = playlist.slice(0, capacity);
       const terminalEffect = playlist.at(-1);
@@ -2953,7 +2924,7 @@ export function GameApp({
         if (previous) {
           showBattleEffects(battleEventsToEffects(oriented.events.slice(previous.events.length)), {
             lock: oriented.phase === "game-over",
-            maxEffects: oriented.phase === "game-over" ? 6 : 8,
+            maxEffects: BATTLE_EFFECT_QUEUE_LIMIT,
           });
         }
         setBattleMessage(
