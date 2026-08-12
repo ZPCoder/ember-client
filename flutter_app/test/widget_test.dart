@@ -792,6 +792,118 @@ void main() {
   );
 
   test(
+    'fury only reacts to combat damage and random effects can hit stealth',
+    () {
+      CardDefinition unit(
+        String id,
+        String name,
+        List<String> keywords, {
+        int attack = 2,
+        int health = 6,
+      }) {
+        return CardDefinition(
+          id: id,
+          name: name,
+          description: keywords.join('、'),
+          faction: '中立',
+          type: 'unit',
+          cost: 1,
+          rarity: '普通',
+          attack: attack,
+          health: health,
+          keywords: keywords,
+        );
+      }
+
+      final fury = unit('fury-test', '激昂守卫', ['fury'], attack: 2, health: 8);
+      final attacker = unit('combat-test', '交战者', [], attack: 1, health: 5);
+      final stealth = unit('stealth-test', '隐匿目标', ['stealth']);
+      final spell = CardDefinition(
+        id: 'fury-spell-test',
+        name: '远程脉冲',
+        description: '对一个敌方单位造成 1 点伤害。',
+        faction: '中立',
+        type: 'spell',
+        cost: 1,
+        rarity: '普通',
+        target: 'enemy-unit',
+        effect: [
+          {'kind': 'damage', 'amount': 1},
+        ],
+      );
+      final randomFreeze = CardDefinition(
+        id: 'random-freeze-test',
+        name: '随机寒潮',
+        description: '随机冻结一个敌方单位。',
+        faction: '中立',
+        type: 'spell',
+        cost: 1,
+        rarity: '普通',
+        effect: [
+          {'kind': 'random-enemy-freeze', 'amount': 1},
+        ],
+      );
+
+      final controller = GameController()
+        ..catalog = [fury, attacker, stealth, spell, randomFreeze]
+        ..deckIds.addAll(List.filled(30, fury.id));
+      controller.startBattle();
+      controller.confirmMulligan();
+      final state = controller.battle!;
+      state.player.mana = 10;
+      state.player.hand
+        ..clear()
+        ..add(randomFreeze);
+      final stealthTarget = BattleUnit(
+        instanceId: 'stealth-target',
+        card: stealth,
+        owner: 'ai',
+        attack: 1,
+        health: 4,
+        maxHealth: 4,
+      );
+      stealthTarget.stealthActive = true;
+      state.ai.board
+        ..clear()
+        ..add(stealthTarget);
+      expect(controller.playCard(randomFreeze), isTrue);
+      expect(stealthTarget.frozenTurns, 1);
+
+      final furyTarget = BattleUnit(
+        instanceId: 'fury-target',
+        card: fury,
+        owner: 'ai',
+        attack: 2,
+        health: 8,
+        maxHealth: 8,
+      );
+      final combatAttacker = BattleUnit(
+        instanceId: 'combat-attacker',
+        card: attacker,
+        owner: 'player',
+        attack: 1,
+        health: 5,
+        maxHealth: 5,
+        summoningSick: false,
+      );
+      state.ai.board
+        ..clear()
+        ..add(furyTarget);
+      state.player.board.add(combatAttacker);
+      state.player.hand.add(spell);
+      expect(controller.playCard(spell, target: furyTarget), isTrue);
+      expect(furyTarget.health, 7);
+      expect(furyTarget.furyTriggered, isFalse);
+      expect(furyTarget.attack, 2);
+
+      expect(controller.attack(combatAttacker, target: furyTarget), isTrue);
+      expect(furyTarget.furyTriggered, isTrue);
+      expect(furyTarget.attack, 3);
+      controller.dispose();
+    },
+  );
+
+  test(
     'discover pauses the match and secret counters an enemy spell',
     () async {
       final choice = CardDefinition(

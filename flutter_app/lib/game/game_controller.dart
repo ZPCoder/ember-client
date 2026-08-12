@@ -583,7 +583,7 @@ class GameController extends ChangeNotifier {
     }
     final dealt = target == null
         ? _damageHero(state.ai, weapon.attack)
-        : _damageUnit(target, weapon.attack);
+        : _damageUnit(target, weapon.attack, combat: true);
     state.player.heroHasAttacked = true;
     weapon.durability--;
     state.logs.insert(
@@ -1121,7 +1121,9 @@ class GameController extends ChangeNotifier {
           break;
         case 'random-enemy-freeze':
           final candidates = enemy.board
-              .where((unit) => !unit.stealthActive)
+              // Hearthstone random effects may hit Stealth units. Stealth
+              // only prevents explicit targeting and attacks.
+              .where((unit) => unit.health > 0)
               .toList();
           if (candidates.isNotEmpty) {
             final frozen = candidates[_random.nextInt(candidates.length)];
@@ -1477,7 +1479,7 @@ class GameController extends ChangeNotifier {
     final defenderName = target?.card.name ?? '敌方核心';
     final outgoing = target == null
         ? _damageHero(defender, attacker.attack)
-        : _damageUnit(target, attacker.attack, source: attacker);
+        : _damageUnit(target, attacker.attack, source: attacker, combat: true);
     if (attacker.hasLifesteal && outgoing > 0) {
       final before = _sideFor(attacker).heroHealth;
       final side = _sideFor(attacker);
@@ -1494,7 +1496,12 @@ class GameController extends ChangeNotifier {
       }
     }
     if (target != null && target.health > 0) {
-      final reflected = _damageUnit(attacker, target.attack, source: target);
+      final reflected = _damageUnit(
+        attacker,
+        target.attack,
+        source: target,
+        combat: true,
+      );
       if (target.hasLifesteal && reflected > 0) {
         final side = _sideFor(target);
         side.heroHealth = min(side.maxHeroHealth, side.heroHealth + reflected);
@@ -1526,7 +1533,12 @@ class GameController extends ChangeNotifier {
     return healthDamage;
   }
 
-  int _damageUnit(BattleUnit unit, int amount, {BattleUnit? source}) {
+  int _damageUnit(
+    BattleUnit unit,
+    int amount, {
+    BattleUnit? source,
+    bool combat = false,
+  }) {
     if (amount <= 0 || unit.health <= 0) return 0;
     if (unit.divineShield) {
       unit.divineShield = false;
@@ -1556,7 +1568,7 @@ class GameController extends ChangeNotifier {
         targetId: unit.instanceId,
       );
     }
-    if (unit.hasFury && !unit.furyTriggered && unit.health > 0) {
+    if (combat && unit.hasFury && !unit.furyTriggered && unit.health > 0) {
       unit.furyTriggered = true;
       unit.attack += 1;
       stateLog('${unit.card.name}：', '激昂触发，攻击力 +1');
@@ -1835,7 +1847,7 @@ class GameController extends ChangeNotifier {
     }
     final dealt = target == null
         ? _damageHero(state.player, weapon.attack)
-        : _damageUnit(target, weapon.attack);
+        : _damageUnit(target, weapon.attack, combat: true);
     state.ai.heroHasAttacked = true;
     weapon.durability--;
     state.logs.insert(
