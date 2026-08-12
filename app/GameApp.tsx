@@ -878,13 +878,17 @@ function normalizeBoard(value: unknown, turn: number): BattleUnit[] {
       spellDamage: asNumber(item.spellDamage, card?.spellDamage ?? 0),
       temporaryAttackBonus: asNumber(item.temporaryAttackBonus, 0),
       temporaryHealthBonus: asNumber(item.temporaryHealthBonus, 0),
-      canAttack:
+      // A stale snapshot can carry a previously computed `canAttack` flag
+      // even after the unit has reached zero health.  The death window always
+      // wins over derived UI state, so never surface a dead unit as READY.
+      canAttack: health > 0 && (
         typeof item.canAttack === "boolean"
           ? item.canAttack
           : attack > 0 &&
             !summoningSick &&
             frozenTurns <= 0 &&
-            attacksMade < (keywords.includes("windfury") ? 2 : 1),
+            attacksMade < (keywords.includes("windfury") ? 2 : 1)
+      ),
       attacksMade,
     };
   });
