@@ -3180,6 +3180,7 @@ class _MultiplayerPageState extends State<MultiplayerPage> {
       onlineBattle ??= OnlineBattleController(
         catalog: widget.controller.catalog,
         client: client,
+        preferredDeckIds: widget.controller.deckIds,
       );
     });
   }
@@ -3539,16 +3540,14 @@ class OnlineBattlePanel extends StatelessWidget {
 
   final OnlineBattleController controller;
 
-  Future<void> _playCard(BuildContext context, CardDefinition card) async {
-    final targetType = card.target ?? 'none';
-    if (targetType == 'none') {
-      controller.playCard(card);
-      return;
-    }
-    final friendly = targetType.startsWith('friendly');
-    final units = friendly ? controller.localBoard : controller.remoteBoard;
-    final allowHero = targetType.contains('character');
-    final choice = await showModalBottomSheet<_OnlineTargetChoice>(
+  Future<_OnlineTargetChoice?> _pickTarget(
+    BuildContext context, {
+    required String title,
+    required List<OnlineUnit> units,
+    required bool allowHero,
+    required bool friendly,
+  }) {
+    return showModalBottomSheet<_OnlineTargetChoice>(
       context: context,
       backgroundColor: const Color(0xFF10211D),
       showDragHandle: true,
@@ -3559,7 +3558,7 @@ class OnlineBattlePanel extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('选择「${card.name}」的目标'),
+              Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
               const SizedBox(height: 10),
               if (allowHero)
                 ListTile(
@@ -3574,7 +3573,12 @@ class OnlineBattlePanel extends StatelessWidget {
                 ),
               for (final unit in units)
                 ListTile(
-                  leading: const Icon(Icons.blur_on, color: Color(0xFFE7BD7A)),
+                  leading: Icon(
+                    unit.card.keywords.contains('taunt')
+                        ? Icons.shield
+                        : Icons.blur_on,
+                    color: const Color(0xFFE7BD7A),
+                  ),
                   title: Text(unit.card.name),
                   subtitle: Text('${unit.attack} 攻击 · ${unit.health} 生命'),
                   onTap: () => Navigator.of(
@@ -3586,8 +3590,78 @@ class OnlineBattlePanel extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _playCard(BuildContext context, CardDefinition card) async {
+    final targetType = card.target ?? 'none';
+    if (targetType == 'none') {
+      controller.playCard(card);
+      return;
+    }
+    final friendly = targetType.startsWith('friendly');
+    final units = friendly ? controller.localBoard : controller.remoteBoard;
+    final allowHero = targetType.contains('character');
+    final choice = await _pickTarget(
+      context,
+      title: '选择「${card.name}」的目标',
+      units: units,
+      allowHero: allowHero,
+      friendly: friendly,
+    );
     if (!context.mounted || choice == null) return;
     controller.playCard(card, target: choice.unit, targetHero: choice.isHero);
+  }
+
+  Future<void> _attack(BuildContext context, OnlineUnit attacker) async {
+    if (!controller.canAct || attacker.hasAttacked) return;
+    final choice = await _pickTarget(
+      context,
+      title: '选择 ${attacker.card.name} 的攻击目标',
+      units: controller.remoteBoard,
+      allowHero: true,
+      friendly: false,
+    );
+    if (!context.mounted || choice == null) return;
+    if (choice.isHero) {
+      controller.attack(attacker);
+    } else if (choice.unit != null) {
+      controller.attackUnit(attacker, choice.unit!);
+    }
+  }
+
+  Future<void> _heroAttack(BuildContext context) async {
+    if (!controller.canAct || controller.localWeaponCard == null) return;
+    final choice = await _pickTarget(
+      context,
+      title: '选择英雄攻击目标',
+      units: controller.remoteBoard,
+      allowHero: true,
+      friendly: false,
+    );
+    if (!context.mounted || choice == null) return;
+    controller.heroAttack(target: choice.unit, targetHero: choice.isHero);
+  }
+
+  Future<void> _heroPower(BuildContext context) async {
+    final power = controller.localHeroPower;
+    if (power == null || !controller.canAct) return;
+    final targetType = power.target ?? 'none';
+    _OnlineTargetChoice? choice;
+    if (targetType != 'none') {
+      final friendly = targetType.startsWith('friendly');
+      choice = await _pickTarget(
+        context,
+        title: '选择「${power.name}」的目标',
+        units: friendly ? controller.localBoard : controller.remoteBoard,
+        allowHero: targetType.contains('character'),
+        friendly: friendly,
+      );
+      if (!context.mounted || choice == null) return;
+    }
+    controller.useHeroPower(
+      target: choice?.unit,
+      targetHero: choice?.isHero ?? false,
+    );
   }
 
   @override
@@ -3653,6 +3727,86 @@ class OnlineBattlePanel extends StatelessWidget {
                 ),
               ],
             ),
+            if (controller.started) ...[
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 11,
+                  vertical: 9,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0D1D19),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: const Color(0xFF29403A)),
+                ),
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 7,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Text(
+                      '法力 ${controller.localMana}/${controller.localMaxMana}',
+                      style: const TextStyle(
+                        color: Color(0xFF65CDDA),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    if (controller.localOverloadLocked > 0)
+                      Text(
+                        '过载锁定 ${controller.localOverloadLocked}',
+                        style: const TextStyle(
+                          color: Color(0xFFE46D3F),
+                          fontSize: 10,
+                        ),
+                      ),
+                    if (controller.localArmor > 0)
+                      Text(
+                        '护甲 ${controller.localArmor}',
+                        style: const TextStyle(
+                          color: Color(0xFFE7BD7A),
+                          fontSize: 10,
+                        ),
+                      ),
+                    if (controller.localCoinAvailable)
+                      OutlinedButton.icon(
+                        onPressed: controller.canAct
+                            ? controller.useCoin
+                            : null,
+                        icon: const Icon(Icons.monetization_on, size: 14),
+                        label: const Text('幸运币'),
+                      ),
+                    if (controller.localWeaponCard != null)
+                      OutlinedButton.icon(
+                        onPressed:
+                            controller.canAct &&
+                                !controller.localHeroHasAttacked
+                            ? () => _heroAttack(context)
+                            : null,
+                        icon: const Icon(Icons.gavel, size: 14),
+                        label: Text(
+                          '英雄攻击 ${controller.localWeaponAttack}/${controller.localWeaponDurability}',
+                        ),
+                      ),
+                    if (controller.localHeroPower != null)
+                      OutlinedButton(
+                        onPressed:
+                            controller.canAct &&
+                                !controller.localHeroPowerUsed &&
+                                controller.localMana >=
+                                    controller.localHeroPower!.cost
+                            ? () => _heroPower(context)
+                            : null,
+                        child: Text(
+                          controller.localHeroPowerUsed
+                              ? '技能已用'
+                              : '${controller.localHeroPower!.name} · ${controller.localHeroPower!.cost}',
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 14),
             if (!controller.started)
               Container(
@@ -3687,6 +3841,10 @@ class OnlineBattlePanel extends StatelessWidget {
                 ),
               )
             else ...[
+              if (controller.phase == 'discover')
+                _OnlineDiscoverPanel(controller: controller),
+              if (controller.phase == 'choose-one')
+                _OnlineChooseOnePanel(controller: controller),
               _OnlineBoardRow(
                 title: '对手战场',
                 units: controller.remoteBoard,
@@ -3696,7 +3854,9 @@ class OnlineBattlePanel extends StatelessWidget {
               _OnlineBoardRow(
                 title: '你的战场',
                 units: controller.localBoard,
-                onAttack: controller.canAct ? controller.attack : null,
+                onAttack: controller.canAct
+                    ? (unit) => _attack(context, unit)
+                    : null,
               ),
               const SizedBox(height: 13),
               Row(
@@ -3733,6 +3893,26 @@ class OnlineBattlePanel extends StatelessWidget {
                   ),
                 ),
               ),
+              if (controller.canAct &&
+                  controller.hand.any((card) => card.tradeable)) ...[
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 7,
+                  runSpacing: 5,
+                  children: [
+                    for (final card in controller.hand.where(
+                      (item) => item.tradeable,
+                    ))
+                      OutlinedButton.icon(
+                        onPressed: controller.localMana >= 1
+                            ? () => controller.tradeCard(card)
+                            : null,
+                        icon: const Icon(Icons.swap_horiz, size: 14),
+                        label: Text('交易 ${card.name}'),
+                      ),
+                  ],
+                ),
+              ],
             ],
             if (controller.finished)
               Padding(
@@ -3772,6 +3952,115 @@ class OnlineBattlePanel extends StatelessWidget {
       ),
     );
   }
+}
+
+class _OnlineDiscoverPanel extends StatelessWidget {
+  const _OnlineDiscoverPanel({required this.controller});
+
+  final OnlineBattleController controller;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    margin: const EdgeInsets.only(bottom: 10),
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      color: const Color(0xFF231B32),
+      borderRadius: BorderRadius.circular(10),
+      border: Border.all(color: const Color(0xFFA692D1)),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          '发现一张卡牌',
+          style: TextStyle(
+            color: Color(0xFFE7D9FF),
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          controller.canChooseDiscover ? '从候选档案中选择一张加入手牌。' : '等待对手完成发现选择。',
+          style: const TextStyle(color: Color(0xFFB9A8D5), fontSize: 10),
+        ),
+        if (controller.canChooseDiscover) ...[
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 7,
+            runSpacing: 7,
+            children: [
+              for (final id in controller.discoverChoices)
+                Builder(
+                  builder: (context) {
+                    final card = controller.card(id);
+                    if (card == null) return const SizedBox.shrink();
+                    return OutlinedButton(
+                      onPressed: () => controller.chooseDiscover(id),
+                      child: Text(card.name),
+                    );
+                  },
+                ),
+            ],
+          ),
+        ],
+      ],
+    ),
+  );
+}
+
+class _OnlineChooseOnePanel extends StatelessWidget {
+  const _OnlineChooseOnePanel({required this.controller});
+
+  final OnlineBattleController controller;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    margin: const EdgeInsets.only(bottom: 10),
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      color: const Color(0xFF231B32),
+      borderRadius: BorderRadius.circular(10),
+      border: Border.all(color: const Color(0xFFA692D1)),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          '抉择分支',
+          style: TextStyle(
+            color: Color(0xFFE7D9FF),
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          controller.canChooseOne ? '选择一个分支结算。' : '等待对手完成抉择。',
+          style: const TextStyle(color: Color(0xFFB9A8D5), fontSize: 10),
+        ),
+        if (controller.canChooseOne) ...[
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 7,
+            runSpacing: 7,
+            children: [
+              for (
+                var index = 0;
+                index < controller.chooseOneOptions.length;
+                index++
+              )
+                OutlinedButton(
+                  onPressed: () => controller.chooseOne(index),
+                  child: Text(
+                    controller.chooseOneOptions[index]['label']?.toString() ??
+                        '分支 ${index + 1}',
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ],
+    ),
+  );
 }
 
 class _OnlineHealth extends StatelessWidget {

@@ -25,8 +25,15 @@ class OnlineUnit {
 /// only renders the redacted snapshot and sends typed BattleCommand payloads;
 /// it deliberately does not maintain a second optimistic rules engine.
 class OnlineBattleController extends ChangeNotifier {
-  OnlineBattleController({required this.catalog, required this.client}) {
-    deckIds = _buildDeck();
+  OnlineBattleController({
+    required this.catalog,
+    required this.client,
+    List<String>? preferredDeckIds,
+  }) {
+    final preferred = preferredDeckIds ?? const <String>[];
+    deckIds = _isValidDeck(preferred)
+        ? List<String>.from(preferred)
+        : _buildDeck();
     client.addListener(_handleClientEvent);
   }
 
@@ -39,6 +46,21 @@ class OnlineBattleController extends ChangeNotifier {
   final List<String> logs = <String>[];
   int localHealth = 30;
   int remoteHealth = 30;
+  int localArmor = 0;
+  int remoteArmor = 0;
+  int localMana = 0;
+  int localMaxMana = 0;
+  int remoteMana = 0;
+  int remoteMaxMana = 0;
+  int localOverloadLocked = 0;
+  bool localCoinAvailable = false;
+  bool localHeroPowerUsed = false;
+  bool localHeroHasAttacked = false;
+  HeroPowerDefinition? localHeroPower;
+  CardDefinition? localWeaponCard;
+  int localWeaponAttack = 0;
+  int localWeaponDurability = 0;
+  int localWeaponMaxDurability = 0;
   int turn = 1;
   bool localReady = false;
   bool remoteReady = false;
@@ -46,13 +68,30 @@ class OnlineBattleController extends ChangeNotifier {
   bool finished = false;
   bool localTurn = false;
   String? winner;
+  String phase = 'mulligan';
+  List<String> discoverChoices = <String>[];
+  String? discoverSourceCardId;
+  List<Map<String, dynamic>> chooseOneOptions = <Map<String, dynamic>>[];
+  String? chooseOneSourceCardId;
   int _lastSequence = 0;
   int _commandSequence = 0;
   int? _viewer;
   int _lastStateVersion = -1;
   bool _mulliganSent = false;
 
-  bool get canAct => started && !finished && localTurn;
+  bool get canAct => started && !finished && localTurn && phase == 'main';
+  bool get canChooseDiscover =>
+      started &&
+      !finished &&
+      localTurn &&
+      phase == 'discover' &&
+      discoverChoices.isNotEmpty;
+  bool get canChooseOne =>
+      started &&
+      !finished &&
+      localTurn &&
+      phase == 'choose-one' &&
+      chooseOneOptions.isNotEmpty;
 
   CardDefinition? card(String id) {
     for (final item in catalog) {
@@ -75,6 +114,24 @@ class OnlineBattleController extends ChangeNotifier {
       30,
       (index) => fallback[index % fallback.length],
     );
+  }
+
+  bool _isValidDeck(List<String> ids) {
+    if (ids.length != 30) return false;
+    final cards = ids.map(card).whereType<CardDefinition>().toList();
+    if (cards.length != ids.length) return false;
+    final factions = cards
+        .map((item) => item.faction)
+        .where((faction) => faction != '中立')
+        .toSet();
+    if (factions.length > 1) return false;
+    final counts = <String, int>{};
+    for (final item in cards) {
+      counts[item.id] = (counts[item.id] ?? 0) + 1;
+      final limit = item.rarity == '传说' ? 1 : 2;
+      if (counts[item.id]! > limit) return false;
+    }
+    return true;
   }
 
   void ready() {
@@ -126,7 +183,93 @@ class OnlineBattleController extends ChangeNotifier {
       'type': 'attack',
       'attackerId': unit.instanceId,
       // The worker canonicalizes hero targets for the guest role.
-      'target': <String, dynamic>{'kind': 'hero', 'player': 0},
+      'target': <String, dynamic>{'kind': 'hero', 'player': 1},
+    });
+  }
+
+  void attackUnit(OnlineUnit attacker, OnlineUnit target) {
+    if (!canAct ||
+        attacker.hasAttacked ||
+        !localBoard.contains(attacker) ||
+        !remoteBoard.contains(target)) {
+      return;
+    }
+    _sendCommand(<String, dynamic>{
+      'type': 'attack',
+      'attackerId': attacker.instanceId,
+      'target': <String, dynamic>{
+        'kind': 'unit',
+        'entityId': target.instanceId,
+      },
+    });
+  }
+
+  void heroAttack({OnlineUnit? target, bool targetHero = false}) {
+    if (!canAct ||
+        localWeaponCard == null ||
+        localWeaponDurability <= 0 ||
+        localHeroHasAttacked) {
+      return;
+    }
+    final command = <String, dynamic>{'type': 'hero-attack'};
+    command['target'] = targetHero
+        ? <String, dynamic>{'kind': 'hero', 'player': 1}
+        : target == null
+        ? <String, dynamic>{'kind': 'hero', 'player': 1}
+        : <String, dynamic>{'kind': 'unit', 'entityId': target.instanceId};
+    _sendCommand(command);
+  }
+
+  void useCoin() {
+    if (!canAct || !localCoinAvailable) return;
+    _sendCommand(<String, dynamic>{'type': 'use-coin'});
+  }
+
+  void tradeCard(CardDefinition card) {
+    if (!canAct || !card.tradeable || !hand.any((item) => item.id == card.id)) {
+      return;
+    }
+    _sendCommand(<String, dynamic>{'type': 'trade-card', 'cardId': card.id});
+  }
+
+  void useHeroPower({OnlineUnit? target, bool targetHero = false}) {
+    final power = localHeroPower;
+    if (!canAct ||
+        power == null ||
+        localHeroPowerUsed ||
+        localMana < power.cost) {
+      return;
+    }
+    final command = <String, dynamic>{'type': 'hero-power'};
+    final targetType = power.target ?? 'none';
+    if (targetType.contains('character') && targetHero) {
+      command['target'] = <String, dynamic>{'kind': 'hero', 'player': 0};
+    } else if (target != null) {
+      command['target'] = <String, dynamic>{
+        'kind': 'unit',
+        'entityId': target.instanceId,
+      };
+    }
+    _sendCommand(command);
+  }
+
+  void chooseDiscover(String cardId) {
+    if (!canChooseDiscover || !discoverChoices.contains(cardId)) return;
+    _sendCommand(<String, dynamic>{
+      'type': 'choose-discover',
+      'cardId': cardId,
+    });
+  }
+
+  void chooseOne(int optionIndex) {
+    if (!canChooseOne ||
+        optionIndex < 0 ||
+        optionIndex >= chooseOneOptions.length) {
+      return;
+    }
+    _sendCommand(<String, dynamic>{
+      'type': 'choose-one',
+      'optionIndex': optionIndex,
     });
   }
 
@@ -242,16 +385,44 @@ class OnlineBattleController extends ChangeNotifier {
     final viewer = _viewer ?? (client.isHost ? 0 : 1);
     final local = players[viewer];
     final remote = players[viewer == 0 ? 1 : 0];
-    final phase = snapshot['phase']?.toString() ?? 'mulligan';
+    phase = snapshot['phase']?.toString() ?? 'mulligan';
     turn = (snapshot['turn'] as num?)?.toInt() ?? turn;
-    localTurn = phase == 'main' && snapshot['activePlayer'] == viewer;
+    localTurn = snapshot['activePlayer'] == viewer && phase != 'game-over';
     started = true;
     finished = phase == 'game-over';
     localHealth = _heroHealth(local);
     remoteHealth = _heroHealth(remote);
+    _parseSide(local, localSide: true);
+    _parseSide(remote, localSide: false);
     hand = _parseHand(local['hand']);
     localBoard = _parseBoard(local['board']);
     remoteBoard = _parseBoard(remote['board']);
+    final discover = snapshot['discover'];
+    if (discover is Map && discover['player'] == viewer) {
+      discoverChoices = (discover['choices'] is List)
+          ? (discover['choices'] as List)
+                .map((item) => item.toString())
+                .where((id) => card(id) != null)
+                .toList()
+          : <String>[];
+      discoverSourceCardId = discover['sourceCardId']?.toString();
+    } else {
+      discoverChoices = <String>[];
+      discoverSourceCardId = null;
+    }
+    final chooseOne = snapshot['chooseOne'];
+    if (chooseOne is Map && chooseOne['player'] == viewer) {
+      chooseOneOptions = (chooseOne['options'] is List)
+          ? (chooseOne['options'] as List)
+                .whereType<Map>()
+                .map((item) => Map<String, dynamic>.from(item))
+                .toList()
+          : <Map<String, dynamic>>[];
+      chooseOneSourceCardId = chooseOne['sourceCardId']?.toString();
+    } else {
+      chooseOneOptions = <Map<String, dynamic>>[];
+      chooseOneSourceCardId = null;
+    }
     final result = snapshot['result'];
     if (result is Map) {
       final resultWinner = result['winner'];
@@ -273,6 +444,54 @@ class OnlineBattleController extends ChangeNotifier {
   int _heroHealth(Map<String, dynamic> player) {
     final hero = player['hero'];
     return hero is Map ? (hero['health'] as num?)?.toInt() ?? 0 : 0;
+  }
+
+  void _parseSide(Map<String, dynamic> side, {required bool localSide}) {
+    final hero = side['hero'];
+    final mana = (side['mana'] as num?)?.toInt() ?? 0;
+    final maxMana = (side['maxMana'] as num?)?.toInt() ?? 0;
+    final armor = (hero is Map ? (hero['armor'] as num?)?.toInt() : null) ?? 0;
+    if (localSide) {
+      localMana = mana;
+      localMaxMana = maxMana;
+      localArmor = armor;
+      localOverloadLocked = (side['overloadLocked'] as num?)?.toInt() ?? 0;
+      localCoinAvailable = side['coinAvailable'] == true;
+      localHeroPowerUsed = side['heroPowerUsed'] == true;
+      localHeroHasAttacked = side['heroHasAttacked'] == true;
+      final rawPower = side['heroPower'];
+      if (rawPower is Map) {
+        localHeroPower = HeroPowerDefinition(
+          id: rawPower['id']?.toString() ?? 'core-pulse',
+          faction: rawPower['faction']?.toString() ?? '中立',
+          name: rawPower['name']?.toString() ?? '核心脉冲',
+          description: rawPower['description']?.toString() ?? '',
+          cost: (rawPower['cost'] as num?)?.toInt() ?? 2,
+          target: rawPower['target']?.toString(),
+          effect: rawPower['effect'] is Map
+              ? Map<String, dynamic>.from(rawPower['effect'] as Map)
+              : const <String, dynamic>{},
+        );
+      }
+      final rawWeapon = side['weapon'];
+      if (rawWeapon is Map) {
+        localWeaponCard = card(rawWeapon['cardId']?.toString() ?? '');
+        localWeaponAttack = (rawWeapon['attack'] as num?)?.toInt() ?? 0;
+        localWeaponDurability = (rawWeapon['durability'] as num?)?.toInt() ?? 0;
+        localWeaponMaxDurability =
+            (rawWeapon['maxDurability'] as num?)?.toInt() ??
+            localWeaponDurability;
+      } else {
+        localWeaponCard = null;
+        localWeaponAttack = 0;
+        localWeaponDurability = 0;
+        localWeaponMaxDurability = 0;
+      }
+    } else {
+      remoteMana = mana;
+      remoteMaxMana = maxMana;
+      remoteArmor = armor;
+    }
   }
 
   List<CardDefinition> _parseHand(Object? raw) {

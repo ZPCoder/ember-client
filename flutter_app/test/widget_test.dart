@@ -311,10 +311,20 @@ void main() {
 
   test('online controller renders a redacted authoritative snapshot', () async {
     final catalog = await loadCatalog();
+    final preferredDeck = catalog
+        .where((card) => card.faction == '曜光')
+        .take(15)
+        .expand((card) => [card.id, card.id])
+        .toList();
     final client = MultiplayerClient()
       ..playerId = 'p-local'
       ..isHost = true;
-    final controller = OnlineBattleController(catalog: catalog, client: client);
+    final controller = OnlineBattleController(
+      catalog: catalog,
+      client: client,
+      preferredDeckIds: preferredDeck,
+    );
+    expect(controller.deckIds, preferredDeck);
     client.lastEvent = MultiplayerEvent(
       type: 'action',
       playerId: 'p-local',
@@ -356,6 +366,83 @@ void main() {
     expect(controller.hand.single.id, 'sun-dawn-scout');
     expect(controller.localBoard.single.instanceId, 'u1');
     expect(controller.canAct, isTrue);
+
+    client.lastEvent = MultiplayerEvent(
+      type: 'action',
+      playerId: 'p-local',
+      action: 'command',
+      payload: {
+        'state': {
+          'version': 5,
+          'turn': 2,
+          'phase': 'discover',
+          'activePlayer': 0,
+          'result': null,
+          'discover': {
+            'player': 0,
+            'sourceCardId': 'discover-card',
+            'choices': ['sun-dawn-scout'],
+          },
+          'players': [
+            {
+              'hero': {'health': 28, 'armor': 1},
+              'hand': ['sun-dawn-scout'],
+              'board': [],
+            },
+            {
+              'hero': {'health': 24, 'armor': 0},
+              'hand': ['__hidden-card__'],
+              'board': [],
+            },
+          ],
+        },
+      },
+    );
+    client.eventSequence = 2;
+    client.notifyListeners();
+    expect(controller.phase, 'discover');
+    expect(controller.canChooseDiscover, isTrue);
+    expect(controller.discoverChoices, ['sun-dawn-scout']);
+
+    client.lastEvent = MultiplayerEvent(
+      type: 'action',
+      playerId: 'p-local',
+      action: 'command',
+      payload: {
+        'state': {
+          'version': 6,
+          'turn': 2,
+          'phase': 'choose-one',
+          'activePlayer': 0,
+          'result': null,
+          'chooseOne': {
+            'player': 0,
+            'sourceCardId': 'neutral-field-reinforcement',
+            'options': [
+              {'label': '护甲协议', 'effects': []},
+              {'label': '抽取协议', 'effects': []},
+            ],
+          },
+          'players': [
+            {
+              'hero': {'health': 28, 'armor': 1},
+              'hand': ['sun-dawn-scout'],
+              'board': [],
+            },
+            {
+              'hero': {'health': 24, 'armor': 0},
+              'hand': ['__hidden-card__'],
+              'board': [],
+            },
+          ],
+        },
+      },
+    );
+    client.eventSequence = 3;
+    client.notifyListeners();
+    expect(controller.phase, 'choose-one');
+    expect(controller.canChooseOne, isTrue);
+    expect(controller.chooseOneOptions, hasLength(2));
     controller.dispose();
     client.dispose();
   });
