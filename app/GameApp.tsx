@@ -2063,7 +2063,7 @@ function useWebPvp(displayName: string) {
     }
   }, [send]);
 
-  const sendMatchStart = useCallback((payload: { seed: number; decks: [string[], string[]] }) => {
+  const sendMatchStart = useCallback((payload: { decks: [string[], string[]] }) => {
     if (send({ type: "action", action: "match_start", payload })) {
       setState((current) => ({ ...current, status: "ready", message: "已提交开局请求，等待服务器确认。" }));
     }
@@ -2959,7 +2959,6 @@ export function GameApp({
       return;
     }
     const payload = {
-      seed: Math.floor(Date.now() / 1000),
       decks: [[...deckIds], [...pvp.state.remoteReadyDeck]] as [string[], string[]],
     };
     pvp.sendMatchStart(payload);
