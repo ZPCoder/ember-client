@@ -3016,15 +3016,38 @@ export function GameApp({
       setBattleMessage(`能量不足：部署「${card.name}」需要 ${card.cost} 点能量。`);
       return;
     }
-    if (card && card.target !== "none") {
+    const targetRule = card?.target ?? "none";
+    const hasAvailableTarget = (() => {
+      switch (targetRule) {
+        case "enemy-unit":
+          return battleView.ai.board.some((unit) => unit.health > 0 && !unit.stealthActive);
+        case "friendly-unit":
+          return battleView.player.board.some((unit) => unit.health > 0);
+        case "enemy-character":
+        case "friendly-character":
+        case "any-character":
+          return true;
+        default:
+          return false;
+      }
+    })();
+    if (card && targetRule !== "none" && card.type !== "unit" && !hasAvailableTarget) {
+      setBattleMessage(`当前没有「${card.name}」可用的合法目标。`);
+      return;
+    }
+    // Targeted Battlecry minions are legal to deploy without a target when
+    // their target pool is empty; the reducer then skips only the Battlecry.
+    // Keep the card playable instead of opening a selection state with no
+    // clickable target to finish it.
+    if (card && targetRule !== "none" && (card.type !== "unit" || hasAvailableTarget)) {
       setPendingCard(handCard);
       setPendingHeroPower(false);
       setSelectedAttacker(null);
       playSound("select");
       setBattleMessage(
-        card.target.startsWith("enemy")
+        targetRule.startsWith("enemy")
           ? `请选择「${card.name}」的敌方目标。`
-          : card.target.startsWith("friendly")
+          : targetRule.startsWith("friendly")
             ? `请选择「${card.name}」的友方目标。`
             : `请选择「${card.name}」的目标。`,
       );
