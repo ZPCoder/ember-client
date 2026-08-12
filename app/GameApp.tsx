@@ -3025,16 +3025,25 @@ export function GameApp({
       return;
     }
     const targetRule = card?.target ?? "none";
+    const ruleCard = card ? CARD_RULE_BY_ID.get(card.id) : undefined;
+    const cardEffects = [
+      ...(ruleCard?.effect ?? []),
+      ...(ruleCard?.onPlay ?? []),
+      ...(ruleCard?.combo ?? []),
+    ];
+    const needsWoundedTarget = cardEffects.some((effect) => effect.kind === "heal");
     const hasAvailableTarget = (() => {
       switch (targetRule) {
         case "enemy-unit":
-          return battleView.ai.board.some((unit) => unit.health > 0 && !unit.stealthActive);
+          return battleView.ai.board.some((unit) => unit.health > 0 && !unit.stealthActive && (!needsWoundedTarget || unit.health < unit.maxHealth));
         case "friendly-unit":
-          return battleView.player.board.some((unit) => unit.health > 0);
+          return battleView.player.board.some((unit) => unit.health > 0 && (!needsWoundedTarget || unit.health < unit.maxHealth));
         case "enemy-character":
+          return !needsWoundedTarget || battleView.ai.hero.health < battleView.ai.hero.maxHealth || battleView.ai.board.some((unit) => unit.health > 0 && !unit.stealthActive && unit.health < unit.maxHealth);
         case "friendly-character":
+          return !needsWoundedTarget || battleView.player.hero.health < battleView.player.hero.maxHealth || battleView.player.board.some((unit) => unit.health > 0 && unit.health < unit.maxHealth);
         case "any-character":
-          return true;
+          return !needsWoundedTarget || battleView.player.hero.health < battleView.player.hero.maxHealth || battleView.ai.hero.health < battleView.ai.hero.maxHealth || battleView.player.board.some((unit) => unit.health > 0 && unit.health < unit.maxHealth) || battleView.ai.board.some((unit) => unit.health > 0 && !unit.stealthActive && unit.health < unit.maxHealth);
         default:
           return false;
       }
@@ -4990,11 +4999,25 @@ function BattleSection({
   const playerCanDiscover = discoverActive && battle.currentPlayer === "player" && !effectsLocked && onlineTransportReady;
   const playerCanChooseOne = chooseOneActive && battle.currentPlayer === "player" && !effectsLocked && onlineTransportReady;
   const pendingDefinition = pendingCard ? CARD_BY_ID.get(pendingCard.cardId) : undefined;
+  const pendingRuleCard = pendingDefinition ? CARD_RULE_BY_ID.get(pendingDefinition.id) : undefined;
   const targetRule = pendingHeroPower
     ? battle.player.heroPowerTarget
     : pendingDefinition?.target ?? "none";
-  const cardCanTarget = (side: "player" | "ai", kind: "unit" | "hero") => {
+  const pendingEffectsForTarget = [
+    ...(pendingRuleCard?.effect ?? []),
+    ...(pendingRuleCard?.onPlay ?? []),
+    ...(pendingRuleCard?.combo ?? []),
+  ];
+  const pendingNeedsWoundedTarget = pendingHeroPower
+    ? ["heal-friendly-hero", "heal-friendly-character", "heal-friendly-unit"].includes(battle.player.heroPower.effect.kind)
+    : pendingEffectsForTarget.some((effect) => effect.kind === "heal");
+  const cardCanTarget = (side: "player" | "ai", kind: "unit" | "hero", unit?: BattleUnit) => {
     if (!pendingDefinition && !pendingHeroPower) return false;
+    const sideState = side === "player" ? battle.player : battle.ai;
+    const wounded = kind === "hero"
+      ? sideState.health > 0 && sideState.health < sideState.maxHealth
+      : Boolean(unit && unit.health > 0 && unit.health < unit.maxHealth);
+    if (pendingNeedsWoundedTarget && !wounded) return false;
     if (targetRule === "any-character") return true;
     if (targetRule === "enemy-character") return side === "ai";
     if (targetRule === "friendly-character") return side === "player";
@@ -5056,11 +5079,7 @@ function BattleSection({
   const playerBulwarkTier = traitTierForBoard(battle.player.board, "bulwark");
   const playerArcaneTier = traitTierForBoard(battle.player.board, "arcane");
   const enemyBulwarkTier = traitTierForBoard(battle.ai.board, "bulwark");
-  const pendingRuleCard = pendingDefinition ? CARD_RULE_BY_ID.get(pendingDefinition.id) : undefined;
-  const pendingEffects = [
-    ...(pendingRuleCard?.effect ?? []),
-    ...(pendingRuleCard?.onPlay ?? []),
-  ];
+  const pendingEffects = pendingEffectsForTarget;
   const selectedAttackerCard = selectedAttackerUnit
     ? CARD_BY_ID.get(selectedAttackerUnit.cardId)
     : undefined;
@@ -5081,7 +5100,7 @@ function BattleSection({
       if (unit.stealthActive) return false;
       return !attackBlockedByTaunt || unit.keywords.includes("taunt");
     }
-    return cardCanTarget("ai", "unit") && !unit.stealthActive;
+      return cardCanTarget("ai", "unit", unit) && !unit.stealthActive;
   };
   const targetPreviewForPendingUnit = (unit: BattleUnit, side: "player" | "ai"): string | undefined => {
     if (!pendingCard && !pendingHeroPower) return undefined;
@@ -5360,7 +5379,7 @@ function BattleSection({
                   key={unit.id}
                   unit={unit}
                   selected={selectedAttacker === unit.id}
-                  targetable={cardCanTarget("player", "unit") && unit.health > 0}
+                  targetable={cardCanTarget("player", "unit", unit) && unit.health > 0}
                   effect={effectForUnit(unit.id)}
                   impact={impactForUnit(unit.id)}
                   targetPreview={targetPreviewForUnit(unit, "player")}
