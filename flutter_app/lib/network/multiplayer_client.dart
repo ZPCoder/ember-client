@@ -138,6 +138,10 @@ class MultiplayerClient extends ChangeNotifier {
     });
   }
 
+  void sync() {
+    _send(<String, dynamic>{'type': 'sync'});
+  }
+
   void _send(Map<String, dynamic> value) {
     final channel = _channel;
     if (channel == null) return;

@@ -136,6 +136,26 @@ class CardDefinition {
   }
 }
 
+class HeroPowerDefinition {
+  const HeroPowerDefinition({
+    required this.id,
+    required this.faction,
+    required this.name,
+    required this.description,
+    required this.cost,
+    this.target,
+    required this.effect,
+  });
+
+  final String id;
+  final String faction;
+  final String name;
+  final String description;
+  final int cost;
+  final String? target;
+  final Map<String, dynamic> effect;
+}
+
 class BattleUnit {
   BattleUnit({
     required this.instanceId,
@@ -264,6 +284,8 @@ class BattleState {
   BattleState({
     required this.player,
     required this.ai,
+    required this.playerHeroPower,
+    required this.aiHeroPower,
     required this.turn,
     required this.activePlayer,
     required this.logs,
@@ -282,10 +304,13 @@ class BattleState {
 
   final BattleSide player;
   final BattleSide ai;
+  final HeroPowerDefinition playerHeroPower;
+  final HeroPowerDefinition aiHeroPower;
   int turn;
   String activePlayer;
   String phase;
   bool heroPowerUsed;
+  bool aiHeroPowerUsed = false;
   int turnSecondsLeft;
   final List<String> logs;
   bool finished;

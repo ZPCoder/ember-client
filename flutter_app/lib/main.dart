@@ -1615,6 +1615,38 @@ class _BattleBoardState extends State<BattleBoard> {
     }
   }
 
+  Future<void> _useHeroPower(BuildContext context) async {
+    final power = state.playerHeroPower;
+    final targetType = power.target ?? 'none';
+    _BattleTargetChoice? choice;
+    if (targetType.contains('unit') || targetType.contains('character')) {
+      final friendly = targetType.startsWith('friendly');
+      final targetUnits = (friendly ? state.player.board : state.ai.board)
+          .where((unit) => friendly || !unit.stealthActive)
+          .toList();
+      choice = await _pickBattleTarget(
+        context,
+        null,
+        targetUnits,
+        allowHero: targetType.contains('character'),
+        enemy: !friendly,
+      );
+      if (!context.mounted || choice == null) return;
+    }
+    final used = controller.useHeroPower(
+      target: choice?.unit,
+      targetHero: choice?.isHero ?? false,
+    );
+    if (!used && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('当前无法使用${power.name}：法力或目标条件不满足'),
+          duration: const Duration(milliseconds: 850),
+        ),
+      );
+    }
+  }
+
   Future<_BattleTargetChoice?> _pickBattleTarget(
     BuildContext context,
     CardDefinition? card,
@@ -1913,58 +1945,75 @@ class _BattleBoardState extends State<BattleBoard> {
                         ai: false,
                       ),
                       const SizedBox(height: 12),
-                      Row(
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          const Icon(
-                            Icons.auto_awesome,
-                            size: 16,
-                            color: Color(0xFF65CDDA),
-                          ),
-                          const SizedBox(width: 7),
-                          const Expanded(
-                            child: Text(
-                              '星骇脉冲 · 2 法力 · 对敌方核心造成 2 点伤害',
-                              style: TextStyle(
-                                color: Color(0xFF84938A),
-                                fontSize: 10,
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.auto_awesome,
+                                size: 16,
+                                color: Color(0xFF65CDDA),
                               ),
-                            ),
-                          ),
-                          if (state.player.coinAvailable) ...[
-                            OutlinedButton.icon(
-                              onPressed: controller.useCoin,
-                              icon: const Icon(Icons.monetization_on, size: 15),
-                              label: const Text('幸运币'),
-                            ),
-                            const SizedBox(width: 7),
-                          ],
-                          if (state.player.weapon != null) ...[
-                            OutlinedButton.icon(
-                              onPressed:
-                                  state.player.heroHasAttacked ||
-                                      state.activePlayer != 'player' ||
-                                      state.finished ||
-                                      state.phase != 'main'
-                                  ? null
-                                  : () => _heroAttack(context),
-                              icon: const Icon(Icons.gavel, size: 15),
-                              label: Text(
-                                state.player.heroHasAttacked ? '已攻击' : '英雄攻击',
+                              const SizedBox(width: 7),
+                              Expanded(
+                                child: Text(
+                                  '${state.playerHeroPower.name} · ${state.playerHeroPower.cost} 法力 · ${state.playerHeroPower.description}',
+                                  style: const TextStyle(
+                                    color: Color(0xFF84938A),
+                                    fontSize: 10,
+                                  ),
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 7),
-                          ],
-                          OutlinedButton(
-                            onPressed:
-                                state.heroPowerUsed ||
-                                    state.player.mana < 2 ||
-                                    state.activePlayer != 'player' ||
-                                    state.finished
-                                ? null
-                                : () {
-                                    controller.useHeroPower();
-                                  },
-                            child: Text(state.heroPowerUsed ? '已使用' : '使用'),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 7,
+                            runSpacing: 7,
+                            alignment: WrapAlignment.end,
+                            children: [
+                              if (state.player.coinAvailable)
+                                OutlinedButton.icon(
+                                  onPressed: controller.useCoin,
+                                  icon: const Icon(
+                                    Icons.monetization_on,
+                                    size: 15,
+                                  ),
+                                  label: const Text('幸运币'),
+                                ),
+                              if (state.player.weapon != null)
+                                OutlinedButton.icon(
+                                  onPressed:
+                                      state.player.heroHasAttacked ||
+                                          state.activePlayer != 'player' ||
+                                          state.finished ||
+                                          state.phase != 'main'
+                                      ? null
+                                      : () => _heroAttack(context),
+                                  icon: const Icon(Icons.gavel, size: 15),
+                                  label: Text(
+                                    state.player.heroHasAttacked
+                                        ? '已攻击'
+                                        : '英雄攻击',
+                                  ),
+                                ),
+                              OutlinedButton(
+                                onPressed:
+                                    state.heroPowerUsed ||
+                                        state.player.mana <
+                                            state.playerHeroPower.cost ||
+                                        state.activePlayer != 'player' ||
+                                        state.finished
+                                    ? null
+                                    : () => _useHeroPower(context),
+                                child: Text(
+                                  state.heroPowerUsed
+                                      ? '已使用'
+                                      : '使用 ${state.playerHeroPower.name}',
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -3096,7 +3145,9 @@ class MultiplayerPage extends StatefulWidget {
 class _MultiplayerPageState extends State<MultiplayerPage> {
   final MultiplayerClient client = MultiplayerClient();
   OnlineBattleController? onlineBattle;
-  final endpointController = TextEditingController(text: 'ws://127.0.0.1:8787');
+  final endpointController = TextEditingController(
+    text: 'wss://ember-protocol-beta.harriettvgyfi43.chatgpt.site/api/pvp',
+  );
   final playerController = TextEditingController(text: '旅者 071');
   final roomController = TextEditingController();
 
@@ -3150,7 +3201,7 @@ class _MultiplayerPageState extends State<MultiplayerPage> {
               PageHeader(
                 eyebrow: 'MULTIPLAYER / ROOM RELAY',
                 title: '联机大厅',
-                description: '创建或加入 1v1 房间，客户端通过 WebSocket 同步对战动作。',
+                description: '创建或加入 1v1 房间，服务器权威校验每一条卡牌、攻击与回合指令。',
                 action: _ConnectionPill(
                   status: client.status,
                   connected: connected,
@@ -3172,7 +3223,7 @@ class _MultiplayerPageState extends State<MultiplayerPage> {
                         ),
                         const SizedBox(height: 6),
                         const Text(
-                          '本地测试可运行 dart run server/multiplayer_server.dart 8787；部署后填入 wss:// 地址。',
+                          '默认连接生产权威 PVP；本地调试可填入兼容的 wss:// 或 ws:// WebSocket 地址。',
                           style: TextStyle(
                             color: Color(0xFF84938A),
                             fontSize: 11,
@@ -3469,7 +3520,7 @@ class _MultiplayerPageState extends State<MultiplayerPage> {
     keyboardType: TextInputType.url,
     decoration: const InputDecoration(
       labelText: 'WebSocket 地址',
-      hintText: 'ws://127.0.0.1:8787',
+      hintText: 'wss://当前站点/api/pvp',
       prefixIcon: Icon(Icons.dns_outlined),
     ),
   );
@@ -3487,6 +3538,57 @@ class OnlineBattlePanel extends StatelessWidget {
   const OnlineBattlePanel({super.key, required this.controller});
 
   final OnlineBattleController controller;
+
+  Future<void> _playCard(BuildContext context, CardDefinition card) async {
+    final targetType = card.target ?? 'none';
+    if (targetType == 'none') {
+      controller.playCard(card);
+      return;
+    }
+    final friendly = targetType.startsWith('friendly');
+    final units = friendly ? controller.localBoard : controller.remoteBoard;
+    final allowHero = targetType.contains('character');
+    final choice = await showModalBottomSheet<_OnlineTargetChoice>(
+      context: context,
+      backgroundColor: const Color(0xFF10211D),
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(18, 4, 18, 18),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('选择「${card.name}」的目标'),
+              const SizedBox(height: 10),
+              if (allowHero)
+                ListTile(
+                  leading: Icon(
+                    friendly ? Icons.person : Icons.crisis_alert,
+                    color: const Color(0xFF69CFC3),
+                  ),
+                  title: Text(friendly ? '你的指挥核心' : '敌方指挥核心'),
+                  onTap: () => Navigator.of(
+                    sheetContext,
+                  ).pop(const _OnlineTargetChoice.hero()),
+                ),
+              for (final unit in units)
+                ListTile(
+                  leading: const Icon(Icons.blur_on, color: Color(0xFFE7BD7A)),
+                  title: Text(unit.card.name),
+                  subtitle: Text('${unit.attack} 攻击 · ${unit.health} 生命'),
+                  onTap: () => Navigator.of(
+                    sheetContext,
+                  ).pop(_OnlineTargetChoice.unit(unit)),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (!context.mounted || choice == null) return;
+    controller.playCard(card, target: choice.unit, targetHero: choice.isHero);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -3516,6 +3618,20 @@ class OnlineBattlePanel extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              controller.finished
+                  ? '本局已结束'
+                  : controller.localTurn
+                  ? '你的行动窗口 · 服务器实时校验中'
+                  : '等待对手行动 · 服务器保持牌局同步',
+              style: TextStyle(
+                color: controller.localTurn
+                    ? const Color(0xFF69CFC3)
+                    : const Color(0xFF84938A),
+                fontSize: 11,
+              ),
             ),
             const SizedBox(height: 14),
             Row(
@@ -3580,7 +3696,7 @@ class OnlineBattlePanel extends StatelessWidget {
               _OnlineBoardRow(
                 title: '你的战场',
                 units: controller.localBoard,
-                onAttack: controller.attack,
+                onAttack: controller.canAct ? controller.attack : null,
               ),
               const SizedBox(height: 13),
               Row(
@@ -3592,7 +3708,7 @@ class OnlineBattlePanel extends StatelessWidget {
                     ),
                   ),
                   OutlinedButton.icon(
-                    onPressed: controller.finished ? null : controller.endTurn,
+                    onPressed: controller.canAct ? controller.endTurn : null,
                     icon: const Icon(Icons.skip_next, size: 16),
                     label: const Text('结束回合'),
                   ),
@@ -3610,9 +3726,9 @@ class OnlineBattlePanel extends StatelessWidget {
                     child: CardTile(
                       card: controller.hand[index],
                       compact: true,
-                      onTap: controller.finished
+                      onTap: !controller.canAct
                           ? null
-                          : () => controller.playCard(controller.hand[index]),
+                          : () => _playCard(context, controller.hand[index]),
                     ),
                   ),
                 ),
@@ -3701,6 +3817,14 @@ class _OnlineHealth extends StatelessWidget {
       ),
     ],
   );
+}
+
+class _OnlineTargetChoice {
+  const _OnlineTargetChoice.hero() : unit = null, isHero = true;
+  const _OnlineTargetChoice.unit(this.unit) : isHero = false;
+
+  final OnlineUnit? unit;
+  final bool isHero;
 }
 
 class _OnlineBoardRow extends StatelessWidget {

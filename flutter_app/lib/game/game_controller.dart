@@ -184,6 +184,84 @@ class GameController extends ChangeNotifier {
 
   int _copyLimit(CardDefinition card) => card.rarity == '传说' ? 1 : 2;
 
+  HeroPowerDefinition _heroPowerForFaction(String faction) {
+    switch (faction) {
+      case '曜光':
+        return const HeroPowerDefinition(
+          id: 'radiance-mend',
+          faction: '曜光',
+          name: '日耀修复',
+          description: '为一个友方角色恢复 2 点生命。',
+          cost: 2,
+          target: 'friendly-character',
+          effect: {'kind': 'heal-friendly-character', 'amount': 2},
+        );
+      case '幽潮':
+        return const HeroPowerDefinition(
+          id: 'tide-pulse',
+          faction: '幽潮',
+          name: '潮汐脉冲',
+          description: '对敌方核心造成 1 点伤害。',
+          cost: 2,
+          effect: {'kind': 'damage-enemy-hero', 'amount': 1},
+        );
+      case '烬火':
+        return const HeroPowerDefinition(
+          id: 'ember-scorch',
+          faction: '烬火',
+          name: '熔火灼痕',
+          description: '对一个敌方单位造成 2 点伤害。',
+          cost: 2,
+          target: 'enemy-unit',
+          effect: {'kind': 'damage-enemy-unit', 'amount': 2},
+        );
+      case '星穹':
+        return const HeroPowerDefinition(
+          id: 'astral-insight',
+          faction: '星穹',
+          name: '星穹洞见',
+          description: '抽一张牌。',
+          cost: 2,
+          effect: {'kind': 'draw', 'count': 1},
+        );
+      case '苍林':
+        return const HeroPowerDefinition(
+          id: 'verdant-growth',
+          faction: '苍林',
+          name: '苍林生长',
+          description: '召唤一个 1/2 的苔径奔行兽。',
+          cost: 2,
+          effect: {
+            'kind': 'summon',
+            'cardId': 'neutral-moss-runner',
+            'count': 1,
+          },
+        );
+      case '雷铸':
+        return const HeroPowerDefinition(
+          id: 'storm-plating',
+          faction: '雷铸',
+          name: '雷铸装甲',
+          description: '为你的核心获得 2 点护甲。',
+          cost: 2,
+          effect: {'kind': 'armor', 'amount': 2},
+        );
+      default:
+        return const HeroPowerDefinition(
+          id: 'core-pulse',
+          faction: '中立',
+          name: '核心脉冲',
+          description: '对敌方核心造成 1 点伤害。',
+          cost: 2,
+          effect: {'kind': 'damage-enemy-hero', 'amount': 1},
+        );
+    }
+  }
+
+  String _factionForCards(List<CardDefinition> cards) => cards
+      .map((item) => item.faction)
+      .firstWhere((faction) => faction != '中立', orElse: () => '中立');
+
   void _persistCollection() {
     _prefs?.setString('collection', jsonEncode(collection));
   }
@@ -199,6 +277,7 @@ class GameController extends ChangeNotifier {
               .expand((card) => [card.id, card.id])
               .toList();
     final playerDeck = deck.map((id) => card(id)!).toList()..shuffle(_random);
+    final playerFaction = _factionForCards(playerDeck);
     final availableAiFactions = catalog
         .map((card) => card.faction)
         .where((faction) => faction != '中立')
@@ -237,6 +316,8 @@ class GameController extends ChangeNotifier {
     battle = BattleState(
       player: player,
       ai: ai,
+      playerHeroPower: _heroPowerForFaction(playerFaction),
+      aiHeroPower: _heroPowerForFaction(aiFaction),
       turn: 1,
       activePlayer: 'player',
       phase: 'mulligan',
@@ -370,11 +451,41 @@ class GameController extends ChangeNotifier {
   }
 
   void _draw(BattleSide side) {
-    if (side.deck.isNotEmpty && side.hand.length < 10) {
-      side.hand.add(side.deck.removeLast());
-    } else if (side.deck.isEmpty) {
+    if (side.deck.isNotEmpty) {
+      final drawn = side.deck.removeLast();
+      if (side.hand.length < 10) {
+        side.hand.add(drawn);
+        return;
+      }
+      stateLog(
+        _ownerOf(side) == 'player' ? '手牌已满' : '敌方手牌已满',
+        ' ${drawn.name} 被燃毁。',
+      );
+      _emitFx(
+        'burn',
+        '手牌燃毁',
+        '${drawn.name} 因手牌已满被销毁',
+        Icons.local_fire_department,
+        0xFFE46D3F,
+        sourceId: drawn.id,
+      );
+      return;
+    }
+    if (side.deck.isEmpty) {
       side.fatigue++;
       _damageHero(side, side.fatigue);
+      stateLog(
+        _ownerOf(side) == 'player' ? '疲劳伤害' : '敌方疲劳伤害',
+        '受到 ${side.fatigue} 点疲劳伤害。',
+      );
+      _emitFx(
+        'fatigue',
+        '疲劳伤害',
+        '牌库为空，受到 ${side.fatigue} 点伤害',
+        Icons.hourglass_disabled,
+        0xFFE46D3F,
+        amount: side.fatigue,
+      );
     }
   }
 
@@ -463,6 +574,12 @@ class GameController extends ChangeNotifier {
         'opponent-attacks-hero',
         triggeringSide: state.player,
       );
+      if (state.player.heroHealth <= 0) {
+        _processDeaths();
+        _checkFinished();
+        notifyListeners();
+        return false;
+      }
     }
     final dealt = target == null
         ? _damageHero(state.ai, weapon.attack)
@@ -501,32 +618,190 @@ class GameController extends ChangeNotifier {
     return true;
   }
 
-  bool useHeroPower() {
+  bool useHeroPower({BattleUnit? target, bool targetHero = false}) {
     final state = battle;
     if (state == null ||
         state.finished ||
         state.activePlayer != 'player' ||
         state.phase != 'main' ||
         state.heroPowerUsed ||
-        state.player.mana < 2) {
+        !_canResolveHeroPower(
+          state.playerHeroPower,
+          source: state.player,
+          enemy: state.ai,
+          target: target,
+          targetHero: targetHero,
+        )) {
       return false;
     }
-    state.player.mana -= 2;
-    state.heroPowerUsed = true;
-    final dealt = _damageHero(state.ai, 2);
-    state.logs.insert(0, '星骇脉冲命中敌方核心，造成 $dealt 点伤害。');
-    _emitFx(
-      'hero-power',
-      '星骇脉冲',
-      '英雄技能造成 $dealt 点伤害',
-      Icons.bolt,
-      0xFF65CDDA,
-      sourceId: 'hero-power',
-      targetId: 'ai-hero',
-      amount: dealt,
+    final resolved = _resolveHeroPower(
+      state.playerHeroPower,
+      source: state.player,
+      enemy: state.ai,
+      owner: 'player',
+      target: target,
+      targetHero: targetHero,
     );
+    if (!resolved) return false;
     _checkFinished();
     notifyListeners();
+    return true;
+  }
+
+  bool _canResolveHeroPower(
+    HeroPowerDefinition power, {
+    required BattleSide source,
+    required BattleSide enemy,
+    BattleUnit? target,
+    required bool targetHero,
+  }) {
+    if (source.mana < power.cost) return false;
+    final targetType = power.target ?? 'none';
+    if (targetType == 'enemy-unit') {
+      return target != null &&
+          enemy.board.contains(target) &&
+          !target.stealthActive;
+    }
+    if (targetType == 'friendly-unit') {
+      return target != null && source.board.contains(target);
+    }
+    if (targetType == 'friendly-character') {
+      return targetHero || (target != null && source.board.contains(target));
+    }
+    return true;
+  }
+
+  bool _resolveHeroPower(
+    HeroPowerDefinition power, {
+    required BattleSide source,
+    required BattleSide enemy,
+    required String owner,
+    BattleUnit? target,
+    required bool targetHero,
+  }) {
+    final state = battle;
+    if (state == null ||
+        !_canResolveHeroPower(
+          power,
+          source: source,
+          enemy: enemy,
+          target: target,
+          targetHero: targetHero,
+        )) {
+      return false;
+    }
+    source.mana -= power.cost;
+    if (owner == 'player') {
+      state.heroPowerUsed = true;
+    } else {
+      state.aiHeroPowerUsed = true;
+    }
+    final effect = power.effect;
+    final kind = effect['kind']?.toString();
+    final amount = (effect['amount'] as num?)?.toInt() ?? 0;
+    final sourceId = owner == 'player' ? 'player-hero-power' : 'ai-hero-power';
+    switch (kind) {
+      case 'damage-enemy-hero':
+        final dealt = _damageHero(enemy, amount);
+        stateLog(power.name, '对敌方核心造成 $dealt 点伤害。');
+        _emitFx(
+          'hero-power',
+          power.name,
+          '英雄技能造成 $dealt 点核心伤害',
+          Icons.bolt,
+          0xFF65CDDA,
+          sourceId: sourceId,
+          targetId: owner == 'player' ? 'ai-hero' : 'player-hero',
+          amount: dealt,
+        );
+        break;
+      case 'damage-enemy-unit':
+        if (target == null || !enemy.board.contains(target)) return false;
+        final dealt = _damageUnit(target, amount);
+        stateLog(power.name, '对 ${target.card.name} 造成 $dealt 点伤害。');
+        _emitFx(
+          'hero-power',
+          power.name,
+          '英雄技能命中 ${target.card.name}',
+          Icons.bolt,
+          0xFFE46D3F,
+          sourceId: sourceId,
+          targetId: target.instanceId,
+          amount: dealt,
+        );
+        break;
+      case 'heal-friendly-character':
+        if (targetHero) {
+          final before = source.heroHealth;
+          source.heroHealth = min(
+            source.maxHeroHealth,
+            source.heroHealth + amount,
+          );
+          stateLog(power.name, '核心恢复 ${source.heroHealth - before} 点生命。');
+        } else if (target != null && source.board.contains(target)) {
+          target.health = min(target.maxHealth, target.health + amount);
+          stateLog(power.name, '${target.card.name} 恢复 $amount 点生命。');
+        } else {
+          return false;
+        }
+        _emitFx(
+          'hero-power',
+          power.name,
+          power.description,
+          Icons.favorite,
+          0xFF79B980,
+          sourceId: sourceId,
+          targetId: targetHero ? '$owner-hero' : target?.instanceId,
+          amount: amount,
+        );
+        break;
+      case 'heal-friendly-unit':
+        if (target == null || !source.board.contains(target)) return false;
+        target.health = min(target.maxHealth, target.health + amount);
+        stateLog(power.name, '${target.card.name} 恢复 $amount 点生命。');
+        break;
+      case 'draw':
+        final count = (effect['count'] as num?)?.toInt() ?? 1;
+        for (var i = 0; i < count; i++) {
+          _draw(source);
+        }
+        stateLog(power.name, '抽取 $count 张牌。');
+        break;
+      case 'summon':
+        final cardId = effect['cardId']?.toString();
+        final summonCard = cardId == null ? null : card(cardId);
+        final count = (effect['count'] as num?)?.toInt() ?? 1;
+        if (summonCard == null || !summonCard.isUnit) return false;
+        for (var i = 0; i < count && source.board.length < 7; i++) {
+          final unit = _summonUnit(summonCard, owner: owner);
+          source.board.add(unit);
+          _emitFx(
+            'summon',
+            '${power.name} · ${summonCard.name}',
+            '英雄技能召唤一个新的战场单位',
+            Icons.auto_awesome,
+            factionColors[summonCard.faction] ?? 0xFF69CFC3,
+            sourceId: sourceId,
+          );
+        }
+        break;
+      case 'armor':
+        source.armor += amount;
+        stateLog(power.name, '核心获得 $amount 点护甲。');
+        _emitFx(
+          'armor',
+          power.name,
+          '核心获得 $amount 点护甲',
+          Icons.shield,
+          0xFFE7BD7A,
+          sourceId: sourceId,
+          amount: amount,
+        );
+        break;
+      default:
+        return false;
+    }
+    _processDeaths();
     return true;
   }
 
@@ -540,12 +815,19 @@ class GameController extends ChangeNotifier {
       return false;
     }
     state.player.coinAvailable = false;
-    state.player.mana += 1;
-    state.logs.insert(0, '你使用幸运币，获得 1 点临时法力。');
+    final absorbsOverloadDebt =
+        state.player.overloadLocked > state.player.maxMana;
+    if (absorbsOverloadDebt) {
+      state.player.overloadLocked -= 1;
+      state.logs.insert(0, '你使用幸运币，抵消 1 点过载锁定。');
+    } else {
+      state.player.mana += 1;
+      state.logs.insert(0, '你使用幸运币，获得 1 点临时法力。');
+    }
     _emitFx(
       'coin',
       '幸运币',
-      '获得 1 点临时法力',
+      absorbsOverloadDebt ? '抵消 1 点过载锁定' : '获得 1 点临时法力',
       Icons.monetization_on,
       0xFFE7BD7A,
       amount: 1,
@@ -1176,9 +1458,6 @@ class GameController extends ChangeNotifier {
     BattleSide defender,
     BattleUnit? target,
   ) {
-    attacker.stealthActive = false;
-    attacker.attacksMade++;
-    attacker.hasAttacked = true;
     if (target == null) {
       _triggerSecrets(
         defender,
@@ -1186,7 +1465,15 @@ class GameController extends ChangeNotifier {
         triggeringSide: _sideFor(attacker),
         attackingUnit: attacker,
       );
+      if (attacker.health <= 0 ||
+          !_sideFor(attacker).board.contains(attacker)) {
+        _processDeaths();
+        return;
+      }
     }
+    attacker.stealthActive = false;
+    attacker.attacksMade++;
+    attacker.hasAttacked = true;
     final defenderName = target?.card.name ?? '敌方核心';
     final outgoing = target == null
         ? _damageHero(defender, attacker.attack)
@@ -1425,6 +1712,32 @@ class GameController extends ChangeNotifier {
       notifyListeners();
       await Future<void>.delayed(const Duration(milliseconds: 900));
     }
+    state.aiHeroPowerUsed = false;
+    final aiPowerTarget = _aiHeroPowerTarget(state);
+    final aiPowerTargetsHero =
+        aiPowerTarget == null &&
+        state.aiHeroPower.target == 'friendly-character' &&
+        state.ai.heroHealth < state.ai.maxHeroHealth;
+    if (!state.aiHeroPowerUsed &&
+        _canResolveHeroPower(
+          state.aiHeroPower,
+          source: state.ai,
+          enemy: state.player,
+          target: aiPowerTarget,
+          targetHero: aiPowerTargetsHero,
+        ) &&
+        _resolveHeroPower(
+          state.aiHeroPower,
+          source: state.ai,
+          enemy: state.player,
+          owner: 'ai',
+          target: aiPowerTarget,
+          targetHero: aiPowerTargetsHero,
+        )) {
+      _checkFinished();
+      notifyListeners();
+      await Future<void>.delayed(const Duration(milliseconds: 1050));
+    }
     final playable = [...state.ai.hand]
       ..sort((a, b) => a.cost.compareTo(b.cost));
     for (final card in playable) {
@@ -1514,6 +1827,11 @@ class GameController extends ChangeNotifier {
         'opponent-attacks-hero',
         triggeringSide: state.ai,
       );
+      if (state.ai.heroHealth <= 0) {
+        _processDeaths();
+        _checkFinished();
+        return;
+      }
     }
     final dealt = target == null
         ? _damageHero(state.player, weapon.attack)
@@ -1623,6 +1941,34 @@ class GameController extends ChangeNotifier {
       return state.player.board.isEmpty ? null : state.player.board.first;
     }
     return null;
+  }
+
+  BattleUnit? _aiHeroPowerTarget(BattleState state) {
+    switch (state.aiHeroPower.target) {
+      case 'enemy-unit':
+        final visible =
+            state.player.board
+                .where((unit) => !unit.stealthActive && unit.health > 0)
+                .toList()
+              ..sort((left, right) => left.health.compareTo(right.health));
+        return visible.isEmpty ? null : visible.first;
+      case 'friendly-unit':
+      case 'friendly-character':
+        final damaged =
+            state.ai.board
+                .where(
+                  (unit) => unit.health > 0 && unit.health < unit.maxHealth,
+                )
+                .toList()
+              ..sort(
+                (left, right) => (left.maxHealth - left.health).compareTo(
+                  right.maxHealth - right.health,
+                ),
+              );
+        return damaged.isEmpty ? null : damaged.first;
+      default:
+        return null;
+    }
   }
 
   void _checkFinished() {

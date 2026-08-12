@@ -6,6 +6,7 @@ import 'package:astra_protocol/game/game_controller.dart';
 import 'package:astra_protocol/main.dart';
 import 'package:astra_protocol/models/card_definition.dart';
 import 'package:astra_protocol/network/multiplayer_client.dart';
+import 'package:astra_protocol/network/online_battle_controller.dart';
 
 void main() {
   test(
@@ -233,6 +234,132 @@ void main() {
     },
   );
 
+  test('Coin pays excess overload debt before creating temporary mana', () {
+    final card = CardDefinition(
+      id: 'coin-filler',
+      name: '资源测试单位',
+      description: '测试资源循环。',
+      faction: '雷铸',
+      type: 'unit',
+      cost: 1,
+      rarity: '普通',
+      attack: 1,
+      health: 1,
+    );
+    final controller = GameController()
+      ..catalog = [card]
+      ..deckIds.addAll(List.filled(30, card.id));
+    controller.startBattle();
+    controller.confirmMulligan();
+    final state = controller.battle!;
+    state.player.maxMana = 3;
+    state.player.mana = 3;
+    state.player.overloadLocked = 4;
+    state.player.coinAvailable = true;
+    expect(controller.useCoin(), isTrue);
+    expect(state.player.overloadLocked, 3);
+    expect(state.player.mana, 3);
+    controller.dispose();
+  });
+
+  test(
+    'drawing with a full hand burns the drawn card instead of hiding it',
+    () {
+      final drawCard = CardDefinition(
+        id: 'astral-draw',
+        name: '洞见测试单位',
+        description: '星穹阵营测试。',
+        faction: '星穹',
+        type: 'unit',
+        cost: 1,
+        rarity: '普通',
+        attack: 1,
+        health: 1,
+      );
+      final filler = CardDefinition(
+        id: 'draw-filler',
+        name: '被燃毁的档案',
+        description: '测试燃毁。',
+        faction: '中立',
+        type: 'unit',
+        cost: 1,
+        rarity: '普通',
+        attack: 1,
+        health: 1,
+      );
+      final controller = GameController()
+        ..catalog = [drawCard, filler]
+        ..deckIds.addAll(List.filled(30, drawCard.id));
+      controller.startBattle();
+      controller.confirmMulligan();
+      final state = controller.battle!;
+      state.ai.hand.clear();
+      state.player.mana = 10;
+      state.player.hand
+        ..clear()
+        ..addAll(List.filled(10, drawCard));
+      state.player.deck
+        ..clear()
+        ..add(filler);
+      expect(controller.useHeroPower(), isTrue);
+      expect(state.player.hand, hasLength(10));
+      expect(state.player.deck, isEmpty);
+      expect(state.logs.any((log) => log.contains('燃毁')), isTrue);
+      controller.dispose();
+    },
+  );
+
+  test('online controller renders a redacted authoritative snapshot', () async {
+    final catalog = await loadCatalog();
+    final client = MultiplayerClient()
+      ..playerId = 'p-local'
+      ..isHost = true;
+    final controller = OnlineBattleController(catalog: catalog, client: client);
+    client.lastEvent = MultiplayerEvent(
+      type: 'action',
+      playerId: 'p-local',
+      action: 'command',
+      payload: {
+        'state': {
+          'version': 4,
+          'turn': 2,
+          'phase': 'main',
+          'activePlayer': 0,
+          'result': null,
+          'players': [
+            {
+              'hero': {'health': 28},
+              'hand': ['sun-dawn-scout'],
+              'board': [
+                {
+                  'entityId': 'u1',
+                  'cardId': 'sun-dawn-scout',
+                  'attack': 2,
+                  'health': 3,
+                  'hasAttacked': false,
+                },
+              ],
+            },
+            {
+              'hero': {'health': 24},
+              'hand': ['__hidden-card__', '__hidden-card__'],
+              'board': [],
+            },
+          ],
+        },
+      },
+    );
+    client.eventSequence = 1;
+    client.notifyListeners();
+    expect(controller.localHealth, 28);
+    expect(controller.remoteHealth, 24);
+    expect(controller.hand.single.id, 'sun-dawn-scout');
+    expect(controller.localBoard.single.instanceId, 'u1');
+    expect(controller.canAct, isTrue);
+    controller.dispose();
+    client.dispose();
+  });
+
   test('battle rules enforce taunt, shield and hero power', () {
     CardDefinition unit(
       String id,
@@ -298,9 +425,89 @@ void main() {
     expect(controller.attack(attacker, target: state.ai.board.first), isTrue);
     expect(state.ai.board.first.divineShield, isFalse);
     expect(state.ai.board.first.health, 5);
-    expect(controller.useHeroPower(), isTrue);
-    expect(state.ai.heroHealth, 28);
+    expect(controller.useHeroPower(targetHero: true), isTrue);
+    expect(state.player.heroHealth, 30);
     controller.dispose();
+  });
+
+  test('mobile hero powers follow their faction and target rules', () {
+    CardDefinition factionCard(String id, String faction) => CardDefinition(
+      id: id,
+      name: id,
+      description: '阵营测试单位',
+      faction: faction,
+      type: 'unit',
+      cost: 1,
+      rarity: '普通',
+      attack: 2,
+      health: 4,
+    );
+    final moss = factionCard('neutral-moss-runner', '中立');
+
+    GameController launch(String faction) {
+      final card = factionCard('hero-$faction', faction);
+      final controller = GameController()
+        ..catalog = [card, moss]
+        ..deckIds.addAll(List.filled(30, card.id));
+      controller.startBattle();
+      controller.confirmMulligan();
+      controller.battle!.player.mana = 10;
+      controller.battle!.ai.hand.clear();
+      return controller;
+    }
+
+    final radiance = launch('曜光');
+    final radianceState = radiance.battle!;
+    radianceState.player.heroHealth = 25;
+    expect(radianceState.playerHeroPower.name, '日耀修复');
+    expect(radiance.useHeroPower(targetHero: true), isTrue);
+    expect(radianceState.player.heroHealth, 27);
+    radiance.dispose();
+
+    final tide = launch('幽潮');
+    final tideState = tide.battle!;
+    expect(tideState.playerHeroPower.name, '潮汐脉冲');
+    expect(tide.useHeroPower(), isTrue);
+    expect(tideState.ai.heroHealth, 29);
+    tide.dispose();
+
+    final ember = launch('烬火');
+    final emberState = ember.battle!;
+    final emberTarget = BattleUnit(
+      instanceId: 'ember-target',
+      card: moss,
+      owner: 'ai',
+      attack: 1,
+      health: 4,
+      maxHealth: 4,
+    );
+    emberState.ai.board.add(emberTarget);
+    expect(ember.useHeroPower(target: emberTarget), isTrue);
+    expect(emberTarget.health, 2);
+    ember.dispose();
+
+    final astral = launch('星穹');
+    final astralState = astral.battle!;
+    astralState.player.hand.clear();
+    astralState.player.deck
+      ..clear()
+      ..add(moss);
+    expect(astral.useHeroPower(), isTrue);
+    expect(astralState.player.hand, hasLength(1));
+    astral.dispose();
+
+    final verdant = launch('苍林');
+    final verdantState = verdant.battle!;
+    verdantState.player.board.clear();
+    expect(verdant.useHeroPower(), isTrue);
+    expect(verdantState.player.board.single.card.id, 'neutral-moss-runner');
+    verdant.dispose();
+
+    final storm = launch('雷铸');
+    final stormState = storm.battle!;
+    expect(storm.useHeroPower(), isTrue);
+    expect(stormState.player.armor, 2);
+    storm.dispose();
   });
 
   test(
