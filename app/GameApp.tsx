@@ -5049,7 +5049,7 @@ function BattleSection({
     return effect;
   };
   const visibleEnemyTaunts = battle.ai.board.filter(
-    (unit) => unit.keywords.includes("taunt") && !unit.stealthActive,
+    (unit) => unit.health > 0 && unit.keywords.includes("taunt") && !unit.stealthActive,
   );
   const attackBlockedByTaunt = Boolean(selectedAttacker && visibleEnemyTaunts.length > 0);
   const selectedAttackerUnit = selectedAttacker
@@ -5085,6 +5085,7 @@ function BattleSection({
     ? !attackBlockedByTaunt && !rushOnlyAttack
     : cardCanTarget("ai", "hero");
   const enemyUnitTargetable = (unit: BattleUnit) => {
+    if (unit.health <= 0) return false;
     if (selectedAttacker) {
       if (unit.stealthActive) return false;
       return !attackBlockedByTaunt || unit.keywords.includes("taunt");
@@ -5368,7 +5369,7 @@ function BattleSection({
                   key={unit.id}
                   unit={unit}
                   selected={selectedAttacker === unit.id}
-                  targetable={cardCanTarget("player", "unit")}
+                  targetable={cardCanTarget("player", "unit") && unit.health > 0}
                   effect={effectForUnit(unit.id)}
                   impact={impactForUnit(unit.id)}
                   targetPreview={targetPreviewForUnit(unit, "player")}
