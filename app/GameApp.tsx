@@ -144,6 +144,7 @@ type BattleUnit = {
   maxHealth: number;
   stars: 1 | 2;
   canAttack: boolean;
+  attacksMade: number;
   keywords: Keyword[];
   stealthActive: boolean;
   frozenTurns: number;
@@ -213,7 +214,7 @@ type PvpState = {
 };
 
 type PvpIncoming =
-  | { id: number; type: "match-start"; payload: { seed: number; deck?: string[]; decks?: [string[], string[]]; matchToken?: string } }
+  | { id: number; type: "match-start"; payload: { seed: number; startingPlayer?: 0 | 1; deck?: string[]; decks?: [string[], string[]]; matchToken?: string } }
   | { id: number; type: "match-sync"; payload: { state: MatchState; matchToken?: string } }
   | { id: number; type: "command"; command: BattleCommand; state?: MatchState; matchToken?: string }
   | { id: number; type: "room-reset" }
@@ -849,6 +850,7 @@ function normalizeBoard(value: unknown, turn: number): BattleUnit[] {
     const hasAttacked = Boolean(item.hasAttacked);
     const summonedTurn = asNumber(item.summonedTurn, -1);
     const attacksMade = asNumber(item.attacksMade, hasAttacked ? 1 : 0);
+    const attack = asNumber(item.attack ?? item.power, card?.attack ?? 0);
     const frozenTurns = asNumber(item.frozenTurns, 0);
     const summoningSick =
       typeof item.summoningSick === "boolean"
@@ -860,7 +862,7 @@ function normalizeBoard(value: unknown, turn: number): BattleUnit[] {
       id: asString(item.entityId ?? item.instanceId ?? item.uid ?? item.id, `unit-${index}`),
       cardId,
       name: asString(item.name, card?.name ?? "未知单位"),
-      attack: asNumber(item.attack ?? item.power, card?.attack ?? 0),
+      attack,
       health,
       maxHealth: asNumber(item.maxHealth, card?.health ?? health),
       stars: Math.min(
@@ -879,9 +881,11 @@ function normalizeBoard(value: unknown, turn: number): BattleUnit[] {
       canAttack:
         typeof item.canAttack === "boolean"
           ? item.canAttack
-          : !summoningSick &&
+          : attack > 0 &&
+            !summoningSick &&
             frozenTurns <= 0 &&
             attacksMade < (keywords.includes("windfury") ? 2 : 1),
+      attacksMade,
     };
   });
 }
@@ -1791,6 +1795,7 @@ function useWebPvp(displayName: string) {
         : null;
       const seed = Number(payload.seed);
       if ((!deck && !decks) || !Number.isFinite(seed)) return;
+      const startingPlayer: 0 | 1 = payload.startingPlayer === 1 ? 1 : 0;
       setState((current) => ({ ...current, status: "playing", message: "双方已准备，联机演算开始。" }));
       const matchToken = asString(payload.matchToken);
       enqueueIncoming({
@@ -1798,6 +1803,7 @@ function useWebPvp(displayName: string) {
         type: "match-start",
         payload: {
           seed,
+          startingPlayer,
           ...(deck ? { deck } : { decks: decks as [string[], string[]] }),
           ...(matchToken ? { matchToken } : {}),
         },
@@ -2894,7 +2900,11 @@ export function GameApp({
       // opens the local mulligan shell without exposing the real deck list.
       const orderedDecks: [string[], string[]] = [[...localDeck], [...DEFAULT_OPPONENT_DECK]];
       pvpMatchTokenRef.current = event.payload.matchToken ?? null;
-      beginBattle(orderedDecks, role === "host" ? 0 : 1, true, pvp.state.peerName ?? "联机对手", event.payload.seed);
+      const canonicalStartingPlayer = event.payload.startingPlayer ?? 0;
+      const localStartingPlayer = role === "host"
+        ? canonicalStartingPlayer
+        : canonicalStartingPlayer === 0 ? 1 : 0;
+      beginBattle(orderedDecks, localStartingPlayer, true, pvp.state.peerName ?? "联机对手", event.payload.seed);
       pvp.acknowledgeIncoming(event.id);
       return;
     }
@@ -4577,9 +4587,13 @@ function BoardUnit({
       ? unit.rushOnly
         ? "↗ 突袭窗口"
         : "◌ 休眠"
-      : unit.furyStacks > 0
-        ? `↯ 激昂 ${unit.furyStacks}/2`
-        : undefined;
+      : unit.rushOnly
+        ? "↗ 突袭：仅可攻击单位"
+        : unit.keywords.includes("windfury") && unit.attacksMade > 0
+          ? `⚔ 风怒 ${unit.attacksMade}/2`
+          : unit.furyStacks > 0
+            ? `↯ 激昂 ${unit.furyStacks}/2`
+            : undefined;
   return (
     <div className="board-unit-shell">
       <button
@@ -4769,7 +4783,7 @@ function PvpLobby({
         </div>
         <span className={`pvp-lobby__status pvp-lobby__status--${state.status}`}><i />{state.status === "offline" ? "未连接" : state.status === "connecting" ? "连接中" : state.status === "error" ? "连接异常" : state.status === "playing" ? "对战中" : "大厅在线"}</span>
       </div>
-      <p>{state.message} 两端使用同一套战斗规则同步出牌、攻击和回合。</p>
+      <p>{state.message} 两端使用同一套战斗规则同步出牌、攻击和回合，首手由服务器随机决定。</p>
       {(state.status === "offline" || state.status === "error" || state.status === "connecting") && (
         <div className="pvp-lobby__connect">
           <label><span>房间服务器</span><input value={url} onChange={(event) => onUrl(event.target.value)} placeholder="wss://当前站点/api/pvp" /></label>
