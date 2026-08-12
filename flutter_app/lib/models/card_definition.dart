@@ -173,6 +173,7 @@ class BattleUnit {
     this.rushOnly = false,
     this.stealthActive = false,
     this.frozenTurns = 0,
+    this.freezeBlocked = false,
     this.rebornUsed = false,
     this.permanentAttackBonus = 0,
     this.permanentHealthBonus = 0,
@@ -196,6 +197,8 @@ class BattleUnit {
   bool rushOnly;
   bool stealthActive;
   int frozenTurns;
+  /// True when Freeze has consumed this unit's current-turn attack.
+  bool freezeBlocked;
   bool rebornUsed;
   int permanentAttackBonus;
   int permanentHealthBonus;

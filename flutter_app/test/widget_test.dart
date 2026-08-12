@@ -903,6 +903,55 @@ void main() {
     },
   );
 
+  test('mobile freeze remains through an already-used attack', () async {
+    final card = CardDefinition(
+      id: 'freeze-rule-unit',
+      name: '冻结规则单位',
+      description: '测试冻结时序',
+      faction: '中立',
+      type: 'unit',
+      cost: 1,
+      rarity: '普通',
+      attack: 2,
+      health: 4,
+    );
+    final controller = GameController()
+      ..catalog = [card]
+      ..deckIds.addAll(List.filled(30, card.id));
+    controller.startBattle();
+    controller.confirmMulligan();
+    final state = controller.battle!;
+    state.ai.hand.clear();
+    state.ai.board.clear();
+    state.ai.deck.clear();
+    final frozen = BattleUnit(
+      instanceId: 'freeze-rule-target',
+      card: card,
+      owner: 'player',
+      attack: 2,
+      health: 4,
+      maxHealth: 4,
+      summoningSick: false,
+      attacksMade: 1,
+      hasAttacked: true,
+      frozenTurns: 1,
+    );
+    state.player.board
+      ..clear()
+      ..add(frozen);
+
+    await controller.endTurn();
+    expect(frozen.frozenTurns, 1);
+    expect(frozen.freezeBlocked, isTrue);
+    expect(frozen.canAttack, isFalse);
+
+    await controller.endTurn();
+    expect(frozen.frozenTurns, 0);
+    expect(frozen.freezeBlocked, isFalse);
+    expect(frozen.canAttack, isTrue);
+    controller.dispose();
+  });
+
   test(
     'discover pauses the match and secret counters an enemy spell',
     () async {

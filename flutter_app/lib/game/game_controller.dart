@@ -1229,6 +1229,7 @@ class GameController extends ChangeNotifier {
           target.divineShield = false;
           target.stealthActive = false;
           target.frozenTurns = 0;
+          target.freezeBlocked = false;
           target.rushOnly = false;
           target.rebornUsed = true;
           stateLog(sourceName, '${target.card.name} 被沉默。');
@@ -1656,6 +1657,7 @@ class GameController extends ChangeNotifier {
     _turnTimer?.cancel();
     _resolveTurnTriggers(state.player, start: false);
     _clearTemporaryBuffs(state.player);
+    _settleFreezeAtEndOfTurn(state.player);
     _processDeaths();
     _checkFinished();
     if (state.finished) {
@@ -1825,6 +1827,7 @@ class GameController extends ChangeNotifier {
     }
     _resolveTurnTriggers(state.ai, start: false);
     _clearTemporaryBuffs(state.ai);
+    _settleFreezeAtEndOfTurn(state.ai);
     _processDeaths();
     _draw(state.ai);
     _checkFinished();
@@ -1875,13 +1878,33 @@ class GameController extends ChangeNotifier {
     for (final unit in side.board) {
       unit.attacksMade = 0;
       if (unit.frozenTurns > 0) {
-        unit.frozenTurns--;
+        unit.attacksMade = unit.attackLimit;
         unit.hasAttacked = true;
-        unit.summoningSick = true;
+        unit.summoningSick = false;
+        unit.freezeBlocked = true;
       } else {
         unit.hasAttacked = false;
         unit.summoningSick = false;
         unit.rushOnly = false;
+        unit.freezeBlocked = false;
+      }
+    }
+  }
+
+  /// Consume Freeze after the character has actually lost its next attack.
+  /// A character frozen after attacking carries the lock into its next turn;
+  /// a character frozen before it could attack thaws at this turn's end.
+  void _settleFreezeAtEndOfTurn(BattleSide side) {
+    for (final unit in side.board) {
+      if (unit.frozenTurns <= 0) {
+        unit.freezeBlocked = false;
+        continue;
+      }
+      final missedCurrentTurnAttack =
+          !unit.summoningSick && unit.attack > 0 && unit.attacksMade == 0;
+      if (unit.freezeBlocked || missedCurrentTurnAttack) {
+        unit.frozenTurns = max(0, unit.frozenTurns - 1);
+        unit.freezeBlocked = false;
       }
     }
   }
