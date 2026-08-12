@@ -1339,8 +1339,13 @@ function SectionHeading({
 type BattleSoundCue = BattleEffectKind | "select" | "error";
 // Keep each combat beat readable on a phone. The reducer still emits every
 // event; the client now replays a longer, ordered queue instead of collapsing
-// an AI turn into one frame.
+// an AI turn into one frame. Players can opt into an even slower cadence from
+// the battle header when they want to inspect every beat.
+// Keep the original baseline symbol for compatibility with cached clients;
+// the standard live cadence intentionally adds 300 ms for readability.
 const BATTLE_EFFECT_STEP_MS = 1200;
+const BATTLE_EFFECT_STANDARD_STEP_MS = BATTLE_EFFECT_STEP_MS + 300;
+const BATTLE_EFFECT_SLOW_STEP_MS = 2400;
 // Give the opponent a readable planning window before its complete reducer
 // transition is revealed. This keeps a full AI turn from collapsing into one
 // frame on slower phones and makes the event stream match the board animation.
@@ -2159,6 +2164,7 @@ export function GameApp({
   const [battleEffect, setBattleEffect] = useState<BattleVisualEffect | null>(null);
   const [battleEffectCount, setBattleEffectCount] = useState(0);
   const [battleEffectsLocked, setBattleEffectsLocked] = useState(false);
+  const [battleReplaySlow, setBattleReplaySlow] = useState(false);
   const [battleTurnClockSeconds, setBattleTurnClockSeconds] = useState<number | null>(null);
   const recordedBattleRef = useRef<string | null>(null);
   const sectionRef = useRef<SectionKey>("overview");
@@ -2169,6 +2175,7 @@ export function GameApp({
   const aiReplayActiveRef = useRef(false);
   const aiReplayCompletionMessageRef = useRef<string | null>(null);
   const battleEffectSequenceRef = useRef(0);
+  const battleReplaySlowRef = useRef(false);
   const aiReplayFinalStateRef = useRef<MatchState | null>(null);
   const aiTurnTimerRef = useRef<number | null>(null);
   const turnTimeoutHandledRef = useRef<number | null>(null);
@@ -2247,7 +2254,7 @@ export function GameApp({
       playSound(next.kind);
       battleEffectTimerRef.current = window.setTimeout(
         playNext,
-        BATTLE_EFFECT_STEP_MS,
+        battleReplaySlowRef.current ? BATTLE_EFFECT_SLOW_STEP_MS : BATTLE_EFFECT_STANDARD_STEP_MS,
       );
     };
 
@@ -2302,6 +2309,13 @@ export function GameApp({
     },
     [drainBattleEffects, stopBattleEffects],
   );
+
+  const toggleBattleReplaySpeed = useCallback(() => {
+    const next = !battleReplaySlowRef.current;
+    battleReplaySlowRef.current = next;
+    setBattleReplaySlow(next);
+    setBattleMessage(next ? "已切换为慢速回放，每个战斗事件停留更久。" : "已切换为标准回放。");
+  }, []);
 
   useEffect(
     () => () => {
@@ -3299,12 +3313,12 @@ export function GameApp({
             replayIndex += 1;
             aiTurnTimerRef.current = window.setTimeout(
               revealNext,
-              BATTLE_EFFECT_STEP_MS,
+              battleReplaySlowRef.current ? BATTLE_EFFECT_SLOW_STEP_MS : BATTLE_EFFECT_STANDARD_STEP_MS,
             );
           };
           aiTurnTimerRef.current = window.setTimeout(
             revealNext,
-            BATTLE_EFFECT_STEP_MS,
+            battleReplaySlowRef.current ? BATTLE_EFFECT_SLOW_STEP_MS : BATTLE_EFFECT_STANDARD_STEP_MS,
           );
         } else {
           setBattle(next);
@@ -3638,6 +3652,7 @@ export function GameApp({
                   effectCount={battleEffectCount}
                   turnClockSeconds={battleTurnClockSeconds}
                   soundEnabled={soundEnabled}
+                  replaySlow={battleReplaySlow}
                   onStart={startBattle}
                   onRematch={requestOnlineRematch}
                   onPlayCard={playCard}
@@ -3668,6 +3683,7 @@ export function GameApp({
                   onConcede={concedeBattle}
                   onOpenDeck={() => switchSection("deck")}
                   onToggleSound={toggleSound}
+                  onToggleReplaySpeed={toggleBattleReplaySpeed}
                   pvp={pvp.state}
                   aiArchetypes={AI_ARCHETYPES}
                   aiArchetypeId={aiArchetypeId}
@@ -4788,6 +4804,7 @@ function BattleSection({
   effectCount,
   turnClockSeconds,
   soundEnabled,
+  replaySlow,
   onStart,
   onRematch,
   onPlayCard,
@@ -4808,6 +4825,7 @@ function BattleSection({
   onConcede,
   onOpenDeck,
   onToggleSound,
+  onToggleReplaySpeed,
   pvp,
   aiArchetypes,
   aiArchetypeId,
@@ -4839,6 +4857,7 @@ function BattleSection({
   effectCount: number;
   turnClockSeconds: number | null;
   soundEnabled: boolean;
+  replaySlow: boolean;
   onStart: () => void;
   onRematch: () => void;
   onPlayCard: (card: BattleSide["hand"][number]) => void;
@@ -4859,6 +4878,7 @@ function BattleSection({
   onConcede: () => void;
   onOpenDeck: () => void;
   onToggleSound: () => void;
+  onToggleReplaySpeed: () => void;
   pvp: PvpState;
   aiArchetypes: readonly AiArchetype[];
   aiArchetypeId: string;
@@ -5190,14 +5210,25 @@ function BattleSection({
         </div>
           <div className="battle-room__status">
             <button
-            className="sound-toggle sound-toggle--compact"
-            type="button"
-            onClick={onToggleSound}
-            aria-pressed={soundEnabled}
-            aria-label={soundEnabled ? "关闭战斗音效" : "开启战斗音效"}
-          >
-            <span aria-hidden="true">{soundEnabled ? "♪" : "×"}</span>
+              className="sound-toggle sound-toggle--compact"
+              type="button"
+              onClick={onToggleSound}
+              aria-pressed={soundEnabled}
+              aria-label={soundEnabled ? "关闭战斗音效" : "开启战斗音效"}
+            >
+              <span aria-hidden="true">{soundEnabled ? "♪" : "×"}</span>
               {soundEnabled ? "音效" : "静音"}
+            </button>
+            <button
+              className="sound-toggle sound-toggle--compact battle-speed-toggle"
+              type="button"
+              onClick={onToggleReplaySpeed}
+              aria-pressed={replaySlow}
+              aria-label={replaySlow ? "切换为标准战斗回放" : "切换为慢速战斗回放"}
+              title={replaySlow ? "当前为慢速回放" : "当前为标准回放"}
+            >
+              <span aria-hidden="true">{replaySlow ? "◷" : "›"}</span>
+              {replaySlow ? "慢速" : "标准"}
             </button>
             {playerTurn && turnClockSeconds !== null && (
               <div
