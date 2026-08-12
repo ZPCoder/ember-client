@@ -163,6 +163,7 @@ class BattleSide {
     required this.deck,
     required this.hand,
     required this.board,
+    this.coinAvailable = false,
   });
 
   int heroHealth;
@@ -174,6 +175,7 @@ class BattleSide {
   final List<CardDefinition> deck;
   final List<CardDefinition> hand;
   final List<BattleUnit> board;
+  bool coinAvailable;
 }
 
 class BattleState {
@@ -188,7 +190,9 @@ class BattleState {
     this.turnSecondsLeft = 75,
     this.finished = false,
     this.winner,
-  });
+    this.aiFaction = '幽潮',
+    Set<int>? mulliganSelected,
+  }) : mulliganSelected = mulliganSelected ?? <int>{};
 
   final BattleSide player;
   final BattleSide ai;
@@ -200,6 +204,9 @@ class BattleState {
   final List<String> logs;
   bool finished;
   String? winner;
+  String aiFaction;
+  bool mulliganDone = false;
+  final Set<int> mulliganSelected;
   BattleFxEvent? fx;
   int fxSequence = 0;
 }

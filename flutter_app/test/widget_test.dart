@@ -41,6 +41,75 @@ void main() {
     expect(event.payload['turn'], 3);
   });
 
+  test('opening hand supports mulligan and temporary Coin mana', () {
+    CardDefinition card(String id, int cost, String rarity) => CardDefinition(
+      id: id,
+      name: id,
+      description: '测试卡牌',
+      faction: '曜光',
+      type: 'unit',
+      cost: cost,
+      rarity: rarity,
+      attack: 1,
+      health: 1,
+    );
+
+    final cheap = card('cheap', 1, '普通');
+    final expensive = card('expensive', 8, '史诗');
+    final controller = GameController()
+      ..catalog = [cheap, expensive]
+      ..deckIds.addAll(List.filled(30, cheap.id));
+
+    controller.startBattle();
+    final state = controller.battle!;
+    expect(state.phase, 'mulligan');
+    state.player.hand
+      ..clear()
+      ..addAll([expensive, cheap, cheap]);
+    state.player.deck
+      ..clear()
+      ..addAll(List.filled(10, cheap));
+    controller.toggleMulligan(0);
+    expect(state.mulliganSelected, contains(0));
+    controller.confirmMulligan();
+    expect(state.phase, 'main');
+    expect(state.mulliganDone, isTrue);
+    expect(state.player.hand.length, 4);
+    expect(state.player.mana, 1);
+
+    state.player.coinAvailable = true;
+    expect(controller.useCoin(), isTrue);
+    expect(state.player.coinAvailable, isFalse);
+    expect(state.player.mana, 2);
+    controller.dispose();
+  });
+
+  test('pack opening protects the first slot with a rare-or-better card', () {
+    CardDefinition card(String id, String rarity) => CardDefinition(
+      id: id,
+      name: id,
+      description: '测试卡牌',
+      faction: '曜光',
+      type: 'unit',
+      cost: 1,
+      rarity: rarity,
+      attack: 1,
+      health: 1,
+    );
+    final common = card('common', '普通');
+    final rare = card('rare', '稀有');
+    final controller = GameController()
+      ..catalog = [common, rare]
+      ..packs = 1
+      ..collection[common.id] = 2
+      ..collection[rare.id] = 0;
+
+    controller.openPack();
+    expect(controller.packs, 0);
+    expect(controller.owned(rare.id), greaterThan(0));
+    controller.dispose();
+  });
+
   test('battle rules enforce taunt, shield and hero power', () {
     CardDefinition unit(
       String id,
@@ -74,6 +143,7 @@ void main() {
       ..catalog = [charge, taunt]
       ..deckIds.addAll(List.filled(30, charge.id));
     controller.startBattle();
+    controller.confirmMulligan();
     final state = controller.battle!;
     state.ai.heroHealth = 30;
     state.player.mana = 10;
@@ -176,6 +246,7 @@ void main() {
         ]
         ..deckIds.addAll(List.filled(30, rush.id));
       controller.startBattle();
+      controller.confirmMulligan();
       final state = controller.battle!;
       state.player.mana = 10;
       state.ai.board.clear();

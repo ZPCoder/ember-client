@@ -151,8 +151,28 @@ class GameController extends ChangeNotifier {
   void openPack() {
     if (packs <= 0 || catalog.isEmpty) return;
     packs--;
+    final eligible = catalog
+        .where((card) => (collection[card.id] ?? 0) < _copyLimit(card))
+        .toList();
+    final normalPool = eligible.isNotEmpty ? eligible : catalog;
+    final rarePool = normalPool.where((card) => card.rarity != '普通').toList();
+    final guaranteedRarePool = rarePool.isNotEmpty
+        ? rarePool
+        : catalog.where((card) => card.rarity != '普通').toList();
+    final drawn = <String, int>{};
     for (var i = 0; i < 5; i++) {
-      final picked = catalog[_random.nextInt(catalog.length)];
+      final available = normalPool
+          .where(
+            (card) =>
+                (collection[card.id] ?? 0) + (drawn[card.id] ?? 0) <
+                _copyLimit(card),
+          )
+          .toList();
+      final pool = i == 0
+          ? guaranteedRarePool
+          : (available.isNotEmpty ? available : normalPool);
+      final picked = pool[_random.nextInt(pool.length)];
+      drawn[picked.id] = (drawn[picked.id] ?? 0) + 1;
       collection[picked.id] = (collection[picked.id] ?? 0) + 1;
     }
     gold += 50;
@@ -161,6 +181,8 @@ class GameController extends ChangeNotifier {
     _persistCollection();
     notifyListeners();
   }
+
+  int _copyLimit(CardDefinition card) => card.rarity == '传说' ? 1 : 2;
 
   void _persistCollection() {
     _prefs?.setString('collection', jsonEncode(collection));
@@ -177,13 +199,22 @@ class GameController extends ChangeNotifier {
               .expand((card) => [card.id, card.id])
               .toList();
     final playerDeck = deck.map((id) => card(id)!).toList()..shuffle(_random);
-    final aiDeck =
+    final availableAiFactions = catalog
+        .map((card) => card.faction)
+        .where((faction) => faction != '中立')
+        .toSet()
+        .toList();
+    final aiFaction = availableAiFactions.isEmpty
+        ? '幽潮'
+        : availableAiFactions[_random.nextInt(availableAiFactions.length)];
+    final aiCandidates =
         catalog
-            .where((card) => card.faction == '幽潮' || card.faction == '中立')
-            .take(15)
-            .expand((card) => [card, card])
+            .where((card) => card.faction == aiFaction || card.faction == '中立')
             .toList()
-          ..shuffle(_random);
+          ..sort((left, right) => left.cost.compareTo(right.cost));
+    final aiSingles = aiCandidates.take(15).toList();
+    final aiDeck = aiSingles.expand((card) => [card, card]).toList()
+      ..shuffle(_random);
     final player = BattleSide(
       heroHealth: 30,
       maxHeroHealth: 30,
@@ -201,18 +232,25 @@ class GameController extends ChangeNotifier {
       deck: aiDeck,
       hand: [],
       board: [],
+      coinAvailable: true,
     );
     battle = BattleState(
       player: player,
       ai: ai,
       turn: 1,
       activePlayer: 'player',
-      logs: ['第 1 回合开始，获得 1 点法力。'],
+      phase: 'mulligan',
+      aiFaction: aiFaction,
+      logs: ['对局开始：请选择要替换的起手牌。'],
     );
     for (var i = 0; i < 3; i++) {
       _draw(player);
       _draw(ai);
     }
+    // The second player sees one extra card and receives the Coin. The local
+    // client keeps the human on the first-player seat, so the AI owns it.
+    _draw(ai);
+    _autoMulligan(ai);
     _emitFx(
       'start',
       '战斗开始',
@@ -220,8 +258,91 @@ class GameController extends ChangeNotifier {
       Icons.sports_kabaddi,
       0xFF69CFC3,
     );
+    notifyListeners();
+  }
+
+  void toggleMulligan(int index) {
+    final state = battle;
+    if (state == null || state.phase != 'mulligan' || state.mulliganDone) {
+      return;
+    }
+    if (index < 0 || index >= state.player.hand.length) return;
+    if (!state.mulliganSelected.add(index)) {
+      state.mulliganSelected.remove(index);
+    }
+    notifyListeners();
+  }
+
+  void confirmMulligan() {
+    final state = battle;
+    if (state == null || state.phase != 'mulligan' || state.mulliganDone) {
+      return;
+    }
+    final selected = state.mulliganSelected.toList()..sort();
+    final returned = <CardDefinition>[];
+    for (final index in selected.reversed) {
+      if (index >= 0 && index < state.player.hand.length) {
+        returned.add(state.player.hand.removeAt(index));
+      }
+    }
+    for (var i = 0; i < returned.length; i++) {
+      _draw(state.player);
+    }
+    if (returned.isNotEmpty) {
+      state.player.deck.addAll(returned);
+      state.player.deck.shuffle(_random);
+    }
+    state.mulliganSelected.clear();
+    state.mulliganDone = true;
+    state.phase = 'main';
+    state.player.maxMana = 1;
+    state.player.mana = 1;
+    state.heroPowerUsed = false;
+    state.logs.insert(
+      0,
+      returned.isEmpty ? '起手牌已确认。' : '起手换牌完成，替换 ${returned.length} 张牌。',
+    );
+    _emitFx(
+      'turn',
+      '第一回合开始',
+      '获得 1 点法力，部署你的战术。',
+      Icons.hourglass_top,
+      0xFF69CFC3,
+    );
+    _draw(state.player);
     _startTurnTimer();
     notifyListeners();
+  }
+
+  void _autoMulligan(BattleSide side) {
+    final indexed = side.hand.asMap().entries.toList()
+      ..sort((left, right) => left.value.cost.compareTo(right.value.cost));
+    final keep = <int>{};
+    final keptIds = <String>{};
+    for (final entry in indexed) {
+      if (keep.length >= 2 ||
+          entry.value.cost > 2 ||
+          !keptIds.add(entry.value.id)) {
+        continue;
+      }
+      keep.add(entry.key);
+    }
+    if (keep.isEmpty && indexed.isNotEmpty) keep.add(indexed.first.key);
+    final returned = <CardDefinition>[];
+    for (final index
+        in side.hand
+            .asMap()
+            .keys
+            .where((index) => !keep.contains(index))
+            .toList()
+            .reversed) {
+      returned.add(side.hand.removeAt(index));
+    }
+    for (var i = 0; i < returned.length; i++) {
+      if (side.deck.isNotEmpty) side.hand.add(side.deck.removeLast());
+    }
+    side.deck.addAll(returned);
+    side.deck.shuffle(_random);
   }
 
   void _startTurnTimer() {
@@ -313,6 +434,30 @@ class GameController extends ChangeNotifier {
       amount: dealt,
     );
     _checkFinished();
+    notifyListeners();
+    return true;
+  }
+
+  bool useCoin() {
+    final state = battle;
+    if (state == null ||
+        state.finished ||
+        state.phase != 'main' ||
+        state.activePlayer != 'player' ||
+        !state.player.coinAvailable) {
+      return false;
+    }
+    state.player.coinAvailable = false;
+    state.player.mana += 1;
+    state.logs.insert(0, '你使用幸运币，获得 1 点临时法力。');
+    _emitFx(
+      'coin',
+      '幸运币',
+      '获得 1 点临时法力',
+      Icons.monetization_on,
+      0xFFE7BD7A,
+      amount: 1,
+    );
     notifyListeners();
     return true;
   }
@@ -723,7 +868,10 @@ class GameController extends ChangeNotifier {
 
   Future<void> endTurn() async {
     final state = battle;
-    if (state == null || state.finished || state.activePlayer != 'player') {
+    if (state == null ||
+        state.finished ||
+        state.phase != 'main' ||
+        state.activePlayer != 'player') {
       return;
     }
     if (isResolvingTurn) return;
@@ -765,6 +913,24 @@ class GameController extends ChangeNotifier {
     _refreshSideForTurn(state.ai);
     state.ai.maxMana = min(10, state.ai.maxMana + 1);
     state.ai.mana = state.ai.maxMana;
+    if (state.ai.coinAvailable &&
+        state.ai.hand.any(
+          (card) => card.cost > state.ai.mana && card.cost <= state.ai.mana + 1,
+        )) {
+      state.ai.coinAvailable = false;
+      state.ai.mana += 1;
+      state.logs.insert(0, '敌方演算体使用幸运币，获得 1 点临时法力。');
+      _emitFx(
+        'coin',
+        '敌方使用幸运币',
+        '演算体获得 1 点临时法力',
+        Icons.monetization_on,
+        0xFFE7BD7A,
+        amount: 1,
+      );
+      notifyListeners();
+      await Future<void>.delayed(const Duration(milliseconds: 900));
+    }
     final playable = [...state.ai.hand]
       ..sort((a, b) => a.cost.compareTo(b.cost));
     for (final card in playable) {

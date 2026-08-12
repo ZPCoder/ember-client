@@ -1647,7 +1647,10 @@ class _BattleBoardState extends State<BattleBoard> {
                 style: const TextStyle(color: Color(0xFF84938A), fontSize: 12),
               ),
               const SizedBox(width: 10),
-              _TurnTimer(seconds: state.turnSecondsLeft),
+              if (state.phase == 'mulligan')
+                const _BattlePhasePill(icon: Icons.swap_horiz, label: '起手换牌')
+              else
+                _TurnTimer(seconds: state.turnSecondsLeft),
               const SizedBox(width: 12),
               OutlinedButton.icon(
                 onPressed: controller.startBattle,
@@ -1656,6 +1659,36 @@ class _BattleBoardState extends State<BattleBoard> {
               ),
             ],
           ),
+          if (state.phase == 'mulligan') ...[
+            const SizedBox(height: 12),
+            GlassPanel(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.style_outlined,
+                    color: Color(0xFFE7BD7A),
+                    size: 19,
+                  ),
+                  const SizedBox(width: 9),
+                  const Expanded(
+                    child: Text(
+                      '起手换牌：点击不想保留的卡牌，确认后会从牌库抽取替换牌。',
+                      style: TextStyle(color: Color(0xFFB9C2B9), fontSize: 11),
+                    ),
+                  ),
+                  FilledButton(
+                    onPressed: controller.confirmMulligan,
+                    child: Text(
+                      state.mulliganSelected.isEmpty
+                          ? '保留全部'
+                          : '替换 ${state.mulliganSelected.length} 张',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 12),
           Stack(
             children: [
@@ -1669,11 +1702,12 @@ class _BattleBoardState extends State<BattleBoard> {
                         const SizedBox(height: 12),
                       ],
                       _HeroBar(
-                        name: '镜像演算体 K-7',
+                        name: '镜像演算体 K-7 · ${state.aiFaction}',
                         health: state.ai.heroHealth,
                         maxHealth: state.ai.maxHeroHealth,
                         mana: state.ai.mana,
                         armor: state.ai.armor,
+                        coinAvailable: state.ai.coinAvailable,
                         ai: true,
                       ),
                       const SizedBox(height: 13),
@@ -1689,7 +1723,9 @@ class _BattleBoardState extends State<BattleBoard> {
                       _BoardRow(
                         units: state.player.board,
                         enemy: false,
-                        onAttack: (unit) => _attack(context, unit),
+                        onAttack: state.phase == 'main'
+                            ? (unit) => _attack(context, unit)
+                            : null,
                       ),
                       const SizedBox(height: 13),
                       _HeroBar(
@@ -1698,6 +1734,7 @@ class _BattleBoardState extends State<BattleBoard> {
                         maxHealth: state.player.maxHeroHealth,
                         mana: state.player.mana,
                         armor: state.player.armor,
+                        coinAvailable: state.player.coinAvailable,
                         ai: false,
                       ),
                       const SizedBox(height: 12),
@@ -1718,6 +1755,14 @@ class _BattleBoardState extends State<BattleBoard> {
                               ),
                             ),
                           ),
+                          if (state.player.coinAvailable) ...[
+                            OutlinedButton.icon(
+                              onPressed: controller.useCoin,
+                              icon: const Icon(Icons.monetization_on, size: 15),
+                              label: const Text('幸运币'),
+                            ),
+                            const SizedBox(width: 7),
+                          ],
                           OutlinedButton(
                             onPressed:
                                 state.heroPowerUsed ||
@@ -1750,7 +1795,9 @@ class _BattleBoardState extends State<BattleBoard> {
                 style: const TextStyle(color: Color(0xFF84938A), fontSize: 11),
               ),
               const Spacer(),
-              if (state.activePlayer == 'player' && !state.finished)
+              if (state.phase == 'main' &&
+                  state.activePlayer == 'player' &&
+                  !state.finished)
                 FilledButton.icon(
                   onPressed: controller.isResolvingTurn
                       ? null
@@ -1769,18 +1816,44 @@ class _BattleBoardState extends State<BattleBoard> {
               scrollDirection: Axis.horizontal,
               itemCount: state.player.hand.length,
               separatorBuilder: (_, _) => const SizedBox(width: 9),
-              itemBuilder: (_, index) => SizedBox(
-                width: 145,
-                child: CardTile(
-                  card: state.player.hand[index],
-                  compact: true,
-                  onTap:
-                      state.activePlayer != 'player' ||
-                          state.player.mana < state.player.hand[index].cost
-                      ? null
-                      : () => _playCard(context, state.player.hand[index]),
-                ),
-              ),
+              itemBuilder: (_, index) {
+                final selected = state.mulliganSelected.contains(index);
+                return SizedBox(
+                  width: 145,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(17),
+                      border: Border.all(
+                        color: selected
+                            ? const Color(0xFFE46D3F)
+                            : Colors.transparent,
+                        width: 2,
+                      ),
+                      boxShadow: selected
+                          ? const [
+                              BoxShadow(
+                                color: Color(0x66E46D3F),
+                                blurRadius: 14,
+                              ),
+                            ]
+                          : const [],
+                    ),
+                    child: CardTile(
+                      card: state.player.hand[index],
+                      compact: true,
+                      onTap: state.phase == 'mulligan'
+                          ? () => controller.toggleMulligan(index)
+                          : state.activePlayer != 'player' ||
+                                state.player.mana <
+                                    state.player.hand[index].cost
+                          ? null
+                          : () => _playCard(context, state.player.hand[index]),
+                    ),
+                  ),
+                );
+              },
             ),
           ),
           const SizedBox(height: 13),
@@ -1944,6 +2017,38 @@ class _TurnTimer extends StatelessWidget {
       ),
     );
   }
+}
+
+class _BattlePhasePill extends StatelessWidget {
+  const _BattlePhasePill({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+    decoration: BoxDecoration(
+      color: const Color(0xFF4A3020),
+      borderRadius: BorderRadius.circular(9),
+      border: Border.all(color: const Color(0xFFE7BD7A)),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 14, color: const Color(0xFFE7BD7A)),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: const TextStyle(
+            color: Color(0xFFF1E6C8),
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 class _BattleImpactFrame extends StatelessWidget {
@@ -2485,6 +2590,7 @@ class _HeroBar extends StatelessWidget {
     required this.maxHealth,
     required this.mana,
     required this.armor,
+    required this.coinAvailable,
     required this.ai,
   });
 
@@ -2493,6 +2599,7 @@ class _HeroBar extends StatelessWidget {
   final int maxHealth;
   final int mana;
   final int armor;
+  final bool coinAvailable;
   final bool ai;
 
   @override
@@ -2560,6 +2667,14 @@ class _HeroBar extends StatelessWidget {
               padding: EdgeInsets.only(left: 3),
               child: Icon(Icons.circle, size: 9, color: Color(0xFF69CFC3)),
             ),
+          if (coinAvailable) ...[
+            const SizedBox(width: 6),
+            const Icon(
+              Icons.monetization_on,
+              size: 14,
+              color: Color(0xFFE7BD7A),
+            ),
+          ],
         ],
       ),
     ],

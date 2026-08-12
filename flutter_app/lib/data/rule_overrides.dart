@@ -16,7 +16,6 @@ const _extraKeywords = <String, List<String>>{
   'astral-eclipse-stalker': ['stealth'],
   'verdant-ancient-bough-guardian': ['deathrattle'],
   'verdant-seedvault-engineer': ['reborn'],
-  'storm-overload-reactor': ['freeze'],
 };
 
 const _deathEffects = <String, List<Map<String, dynamic>>>{
@@ -42,7 +41,7 @@ CardDefinition enrichCardRules(CardDefinition card) {
   if (onDeath.isNotEmpty) keywords.add('deathrattle');
 
   var effects = card.effect;
-  if (card.id == 'void-ink-storm' || card.id == 'storm-overload-reactor') {
+  if (card.id == 'void-ink-storm') {
     effects = [
       ...effects,
       {'kind': 'random-enemy-freeze', 'amount': 1},
