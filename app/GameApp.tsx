@@ -12,6 +12,7 @@ import {
 } from "react";
 import {
   CARD_CATALOG,
+  AI_ARCHETYPES,
   DEFAULT_OPPONENT_DECK,
   DEFAULT_STARTER_DECK,
   KEYWORD_DEFINITIONS,
@@ -36,6 +37,7 @@ import {
   type SpellSchool,
   type Trait,
   type BattleVisualEffect,
+  type AiArchetype,
 } from "@/lib/game";
 
 type SectionKey = "overview" | "collection" | "deck" | "battle" | "operations";
@@ -463,60 +465,6 @@ function getStarterDeck(): string[] {
 }
 
 const STARTER_IDS = getStarterDeck();
-
-type AiArchetype = {
-  id: string;
-  name: string;
-  faction: Faction;
-  description: string;
-  deck: readonly string[];
-};
-
-function buildAiArchetypeDeck(faction: Faction): readonly string[] {
-  const factionCards = CATALOG.filter((card) => card.faction === faction);
-  const units = factionCards
-    .filter((card) => card.type === "unit")
-    .sort((left, right) => left.cost - right.cost || left.id.localeCompare(right.id, "en"))
-    .slice(0, 10);
-  const spells = factionCards
-    .filter((card) => card.type === "spell")
-    .sort((left, right) => left.cost - right.cost || left.id.localeCompare(right.id, "en"))
-    .slice(0, 4);
-  const weapon = factionCards.find((card) => card.type === "weapon");
-  const uniqueCards = [...units, ...spells, ...(weapon ? [weapon] : [])].slice(0, 15);
-  return Object.freeze(uniqueCards.flatMap((card) => [card.id, card.id]));
-}
-
-const AI_ARCHETYPES: readonly AiArchetype[] = Object.freeze([
-  {
-    id: "tide-control",
-    name: "幽潮 · 逆流控场",
-    faction: "幽潮",
-    description: "嘲讽、冻结与汲取，擅长拖长战局。",
-    deck: DEFAULT_OPPONENT_DECK,
-  },
-  {
-    id: "ember-rush",
-    name: "烬火 · 熔线突袭",
-    faction: "烬火",
-    description: "低费冲锋与直伤，前期压力更强。",
-    deck: buildAiArchetypeDeck("烬火"),
-  },
-  {
-    id: "astral-value",
-    name: "星穹 · 观测增值",
-    faction: "星穹",
-    description: "发现、抽牌与高费单位，后期资源更厚。",
-    deck: buildAiArchetypeDeck("星穹"),
-  },
-  {
-    id: "storm-overload",
-    name: "雷铸 · 过载炮台",
-    faction: "雷铸",
-    description: "过载、武器与范围伤害，压制宽战场。",
-    deck: buildAiArchetypeDeck("雷铸"),
-  },
-]);
 
 function formatTime(value: string) {
   const date = new Date(value);
