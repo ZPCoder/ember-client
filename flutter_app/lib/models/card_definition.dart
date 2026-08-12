@@ -9,6 +9,10 @@ class CardDefinition {
     required this.rarity,
     this.attack,
     this.health,
+    this.durability,
+    this.overload = 0,
+    this.tradeable = false,
+    this.spellDamage = 0,
     this.keywords = const [],
     this.traits = const [],
     this.school,
@@ -27,6 +31,10 @@ class CardDefinition {
   final String rarity;
   final int? attack;
   final int? health;
+  final int? durability;
+  final int overload;
+  final bool tradeable;
+  final int spellDamage;
   final List<String> keywords;
   final List<String> traits;
   final String? school;
@@ -58,6 +66,10 @@ class CardDefinition {
       rarity: rarity,
       attack: attack,
       health: health,
+      durability: durability,
+      overload: overload,
+      tradeable: tradeable,
+      spellDamage: spellDamage,
       keywords: keywords ?? this.keywords,
       traits: traits,
       school: school,
@@ -89,6 +101,10 @@ class CardDefinition {
       rarity: json['rarity'] as String? ?? '普通',
       attack: (json['attack'] as num?)?.toInt(),
       health: (json['health'] as num?)?.toInt(),
+      durability: (json['durability'] as num?)?.toInt(),
+      overload: (json['overload'] as num?)?.toInt() ?? 0,
+      tradeable: json['tradeable'] == true,
+      spellDamage: (json['spellDamage'] as num?)?.toInt() ?? 0,
       keywords: strings(json['keywords']),
       traits: strings(json['traits']),
       school: json['school'] as String?,
@@ -164,7 +180,10 @@ class BattleSide {
     required this.hand,
     required this.board,
     this.coinAvailable = false,
-  });
+    this.weapon,
+    this.overloadLocked = 0,
+    List<BattleSecret>? secrets,
+  }) : secrets = secrets ?? <BattleSecret>[];
 
   int heroHealth;
   final int maxHeroHealth;
@@ -176,6 +195,38 @@ class BattleSide {
   final List<CardDefinition> hand;
   final List<BattleUnit> board;
   bool coinAvailable;
+  BattleWeapon? weapon;
+  int overloadLocked;
+  bool heroHasAttacked = false;
+  final List<BattleSecret> secrets;
+}
+
+class BattleWeapon {
+  BattleWeapon({
+    required this.card,
+    required this.attack,
+    required this.durability,
+    required this.maxDurability,
+  });
+
+  final CardDefinition card;
+  int attack;
+  int durability;
+  final int maxDurability;
+}
+
+class BattleSecret {
+  BattleSecret({
+    required this.card,
+    required this.secretId,
+    required this.trigger,
+    required this.effect,
+  });
+
+  final CardDefinition card;
+  final String secretId;
+  final String trigger;
+  final Map<String, dynamic> effect;
 }
 
 class BattleState {
@@ -192,7 +243,9 @@ class BattleState {
     this.winner,
     this.aiFaction = '幽潮',
     Set<int>? mulliganSelected,
-  }) : mulliganSelected = mulliganSelected ?? <int>{};
+    List<String>? discoverChoices,
+  }) : mulliganSelected = mulliganSelected ?? <int>{},
+       discoverChoices = discoverChoices ?? <String>[];
 
   final BattleSide player;
   final BattleSide ai;
@@ -207,6 +260,9 @@ class BattleState {
   String aiFaction;
   bool mulliganDone = false;
   final Set<int> mulliganSelected;
+  List<String> discoverChoices;
+  String? discoverSource;
+  String discoverOwner = 'player';
   BattleFxEvent? fx;
   int fxSequence = 0;
 }

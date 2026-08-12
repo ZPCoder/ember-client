@@ -409,6 +409,98 @@ class GameController extends ChangeNotifier {
     return true;
   }
 
+  bool tradeCard(CardDefinition card) {
+    final state = battle;
+    if (state == null ||
+        state.finished ||
+        state.activePlayer != 'player' ||
+        state.phase != 'main' ||
+        !card.tradeable ||
+        state.player.mana < 1) {
+      return false;
+    }
+    final index = state.player.hand.indexWhere((item) => item.id == card.id);
+    if (index < 0) return false;
+    state.player.hand.removeAt(index);
+    state.player.mana--;
+    state.player.deck.add(card);
+    state.player.deck.shuffle(_random);
+    _draw(state.player);
+    state.logs.insert(0, '${card.name} 已交易，抽取一张替代档案。');
+    _emitFx(
+      'trade',
+      '可交易',
+      '${card.name} 回到牌库并抽取替代牌',
+      Icons.swap_horiz,
+      0xFF65CDDA,
+      sourceId: card.id,
+    );
+    notifyListeners();
+    return true;
+  }
+
+  bool heroAttack({BattleUnit? target, bool targetHero = false}) {
+    final state = battle;
+    final weapon = state?.player.weapon;
+    if (state == null ||
+        state.finished ||
+        state.phase != 'main' ||
+        state.activePlayer != 'player' ||
+        weapon == null ||
+        weapon.durability <= 0 ||
+        state.player.heroHasAttacked) {
+      return false;
+    }
+    final taunts = state.ai.board
+        .where((unit) => unit.hasTaunt && !unit.stealthActive)
+        .toList();
+    if (taunts.isNotEmpty && (target == null || !target.hasTaunt)) return false;
+    if (target != null && !state.ai.board.contains(target)) return false;
+    if (target?.stealthActive ?? false) return false;
+    if (target == null) {
+      _triggerSecrets(
+        state.ai,
+        'opponent-attacks-hero',
+        triggeringSide: state.player,
+      );
+    }
+    final dealt = target == null
+        ? _damageHero(state.ai, weapon.attack)
+        : _damageUnit(target, weapon.attack);
+    state.player.heroHasAttacked = true;
+    weapon.durability--;
+    state.logs.insert(
+      0,
+      target == null
+          ? '英雄使用 ${weapon.card.name} 攻击敌方核心，造成 $dealt 点伤害。'
+          : '英雄使用 ${weapon.card.name} 攻击 ${target.card.name}。',
+    );
+    _emitFx(
+      'attack',
+      '英雄发起攻击',
+      target == null ? '对敌方核心造成 $dealt 点伤害' : '与 ${target.card.name} 交战',
+      Icons.flash_on,
+      0xFFE46D3F,
+      sourceId: 'player-hero',
+      targetId: target?.instanceId ?? 'ai-hero',
+      amount: dealt,
+    );
+    if (weapon.durability <= 0) {
+      state.logs.insert(0, '${weapon.card.name} 耐久耗尽。');
+      state.player.weapon = null;
+      _emitFx(
+        'death',
+        '${weapon.card.name} 损毁',
+        '武器耐久耗尽，已离开装备区',
+        Icons.broken_image_outlined,
+        0xFF9D7567,
+      );
+    }
+    _checkFinished();
+    notifyListeners();
+    return true;
+  }
+
   bool useHeroPower() {
     final state = battle;
     if (state == null ||
@@ -499,9 +591,41 @@ class GameController extends ChangeNotifier {
     if (handIndex < 0) return;
     source.hand.removeAt(handIndex);
     source.mana -= card.cost;
-    if (card.isUnit) {
+    source.overloadLocked += card.overload;
+    if (card.type == 'spell' &&
+        _triggerSecrets(
+          enemy,
+          'opponent-plays-spell',
+          triggeringSide: source,
+        )) {
+      stateLog(
+        owner == 'player' ? '${card.name} 被奥秘反制。' : '敌方的 ${card.name} 被奥秘反制。',
+      );
+      _processDeaths();
+      return;
+    }
+    if (card.type == 'weapon') {
+      final maxDurability = max(1, card.durability ?? card.health ?? 1);
+      source.weapon = BattleWeapon(
+        card: card,
+        attack: card.attack ?? 0,
+        durability: maxDurability,
+        maxDurability: maxDurability,
+      );
+      source.heroHasAttacked = false;
+      stateLog(owner == 'player' ? '${card.name} 已装备。' : '敌方装备 ${card.name}。');
+      _emitFx(
+        'weapon',
+        '${card.name} 装备',
+        '${card.attack ?? 0} 攻击 · $maxDurability 耐久',
+        Icons.shield_moon,
+        factionColors[card.faction] ?? 0xFFE7BD7A,
+        sourceId: card.id,
+      );
+    } else if (card.isUnit) {
       final unit = _summonUnit(card, owner: owner);
       source.board.add(unit);
+      _triggerSecrets(enemy, 'opponent-summons-unit', triggeringSide: source);
       source.board.length == 1 && owner == 'player'
           ? _emitFx(
               'summon',
@@ -527,6 +651,7 @@ class GameController extends ChangeNotifier {
         target: target ?? (card.target == null ? unit : null),
         targetHero: targetHero,
         sourceName: card.name,
+        sourceCard: card,
       );
     } else {
       _emitFx(
@@ -545,6 +670,7 @@ class GameController extends ChangeNotifier {
         target: target,
         targetHero: targetHero,
         sourceName: card.name,
+        sourceCard: card,
       );
       stateLog(card.name, card.description);
     }
@@ -579,11 +705,62 @@ class GameController extends ChangeNotifier {
     BattleUnit? target,
     bool targetHero = false,
     required String sourceName,
+    CardDefinition? sourceCard,
   }) {
     for (final effect in effects) {
       final kind = effect['kind']?.toString();
       final amount = (effect['amount'] as num?)?.toInt() ?? 0;
       switch (kind) {
+        case 'secret':
+          final secretId = effect['secretId']?.toString();
+          final trigger = effect['trigger']?.toString();
+          final secretEffect = effect['effect'];
+          if (secretId != null &&
+              trigger != null &&
+              secretEffect is Map &&
+              source.secrets.length < 5 &&
+              !source.secrets.any((secret) => secret.secretId == secretId)) {
+            source.secrets.add(
+              BattleSecret(
+                card:
+                    sourceCard ??
+                    catalog.firstWhere(
+                      (item) => sourceName.startsWith(item.name),
+                      orElse: () => catalog.first,
+                    ),
+                secretId: secretId,
+                trigger: trigger,
+                effect: Map<String, dynamic>.from(secretEffect),
+              ),
+            );
+            stateLog(sourceName, '已暗置奥秘。');
+          }
+          break;
+        case 'discover':
+          final choices = effect['choices'];
+          final state = battle;
+          if (state != null && choices is List) {
+            final validChoices = choices
+                .map((item) => item.toString())
+                .where((id) => card(id) != null)
+                .toList();
+            if (validChoices.isNotEmpty) {
+              state.phase = 'discover';
+              state.discoverChoices = validChoices;
+              state.discoverSource = sourceName;
+              state.discoverOwner = _ownerOf(source);
+              stateLog(sourceName, '从候选档案中发现一张卡牌。');
+              _emitFx(
+                'discover',
+                '发现选择',
+                '从 ${validChoices.length} 张候选卡牌中选择一张',
+                Icons.travel_explore,
+                0xFFA692D1,
+              );
+              return;
+            }
+          }
+          break;
         case 'damage':
           if (target != null && enemy.board.contains(target)) {
             _damageUnit(target, amount);
@@ -677,6 +854,93 @@ class GameController extends ChangeNotifier {
     }
   }
 
+  bool _triggerSecrets(
+    BattleSide owner,
+    String trigger, {
+    required BattleSide triggeringSide,
+    BattleUnit? attackingUnit,
+  }) {
+    final pending = owner.secrets
+        .where((secret) => secret.trigger == trigger)
+        .toList();
+    if (pending.isEmpty) return false;
+    var countered = false;
+    for (final secret in pending) {
+      owner.secrets.remove(secret);
+      final kind = secret.effect['kind']?.toString();
+      final amount = (secret.effect['amount'] as num?)?.toInt() ?? 0;
+      switch (kind) {
+        case 'counterspell':
+          countered = true;
+          stateLog('奥秘触发', '${secret.card.name} 反制了这张战术。');
+          break;
+        case 'damage-enemy-hero':
+          final dealt = _damageHero(triggeringSide, amount);
+          stateLog('奥秘触发', '${secret.card.name} 造成 $dealt 点核心伤害。');
+          _emitFx(
+            'secret',
+            '${secret.card.name} 触发',
+            '对敌方核心造成 $dealt 点伤害',
+            Icons.auto_awesome,
+            0xFFE46D3F,
+            amount: dealt,
+          );
+          break;
+        case 'damage-attacker':
+          if (attackingUnit != null) {
+            final dealt = _damageUnit(attackingUnit, amount);
+            stateLog('奥秘触发', '${secret.card.name} 对攻击者造成 $dealt 点伤害。');
+          } else {
+            final dealt = _damageHero(triggeringSide, amount);
+            stateLog('奥秘触发', '${secret.card.name} 对英雄造成 $dealt 点伤害。');
+          }
+          break;
+        case 'armor':
+          owner.armor += amount;
+          stateLog('奥秘触发', '${secret.card.name} 让核心获得 $amount 点护甲。');
+          break;
+        case 'draw':
+          final count = (secret.effect['count'] as num?)?.toInt() ?? 1;
+          for (var i = 0; i < count; i++) {
+            _draw(owner);
+          }
+          break;
+      }
+    }
+    return countered;
+  }
+
+  bool chooseDiscover(String cardId) {
+    final state = battle;
+    if (state == null ||
+        state.phase != 'discover' ||
+        !state.discoverChoices.contains(cardId)) {
+      return false;
+    }
+    final discovered = card(cardId);
+    if (discovered == null) return false;
+    final owner = state.discoverOwner == 'ai' ? state.ai : state.player;
+    if (owner.hand.length < 10) {
+      owner.hand.add(discovered);
+    } else {
+      stateLog('发现失败', '${discovered.name} 因手牌已满被燃毁。');
+    }
+    state.phase = 'main';
+    state.discoverChoices = <String>[];
+    state.discoverSource = null;
+    state.discoverOwner = 'player';
+    stateLog('发现完成', '${discovered.name} 已加入手牌。');
+    _emitFx(
+      'discover',
+      '发现完成',
+      '${discovered.name} 已加入手牌',
+      Icons.check_circle_outline,
+      0xFFA692D1,
+    );
+    notifyListeners();
+    return true;
+  }
+
   bool attack(BattleUnit attacker, {BattleUnit? target}) {
     final state = battle;
     if (state == null ||
@@ -710,6 +974,14 @@ class GameController extends ChangeNotifier {
     attacker.stealthActive = false;
     attacker.attacksMade++;
     attacker.hasAttacked = true;
+    if (target == null) {
+      _triggerSecrets(
+        defender,
+        'opponent-attacks-hero',
+        triggeringSide: _sideFor(attacker),
+        attackingUnit: attacker,
+      );
+    }
     final defenderName = target?.card.name ?? '敌方核心';
     final outgoing = target == null
         ? _damageHero(defender, attacker.attack)
@@ -843,6 +1115,7 @@ class GameController extends ChangeNotifier {
             source: side,
             enemy: enemy,
             sourceName: '${unit.card.name} 的亡语',
+            sourceCard: unit.card,
           );
         }
         if (unit.hasReborn && !unit.rebornUsed && side.board.length < 7) {
@@ -890,8 +1163,7 @@ class GameController extends ChangeNotifier {
       state.activePlayer = 'player';
       state.phase = 'main';
       state.heroPowerUsed = false;
-      state.player.maxMana = min(10, state.player.maxMana + 1);
-      state.player.mana = state.player.maxMana;
+      _refillMana(state.player);
       _refreshSideForTurn(state.player);
       _draw(state.player);
       state.logs.insert(0, '第 ${state.turn} 回合开始，法力恢复至 ${state.player.mana}。');
@@ -911,8 +1183,11 @@ class GameController extends ChangeNotifier {
   Future<void> _aiTurn(BattleState state) async {
     state.phase = 'main';
     _refreshSideForTurn(state.ai);
-    state.ai.maxMana = min(10, state.ai.maxMana + 1);
-    state.ai.mana = state.ai.maxMana;
+    if (state.turn > 1) {
+      _refillMana(state.ai);
+    } else {
+      state.ai.mana = state.ai.maxMana;
+    }
     if (state.ai.coinAvailable &&
         state.ai.hand.any(
           (card) => card.cost > state.ai.mana && card.cost <= state.ai.mana + 1,
@@ -945,6 +1220,11 @@ class GameController extends ChangeNotifier {
         owner: 'ai',
         target: target,
       );
+      if (state.phase == 'discover' &&
+          state.discoverOwner == 'ai' &&
+          state.discoverChoices.isNotEmpty) {
+        chooseDiscover(state.discoverChoices.first);
+      }
       _checkFinished();
       notifyListeners();
       // Leave enough room for the client-side cast, card flight and impact
@@ -975,11 +1255,65 @@ class GameController extends ChangeNotifier {
       notifyListeners();
       await Future<void>.delayed(const Duration(milliseconds: 1380));
     }
+    if (!state.finished &&
+        state.ai.weapon != null &&
+        !state.ai.heroHasAttacked &&
+        state.ai.weapon!.durability > 0) {
+      final taunts = state.player.board
+          .where((unit) => unit.hasTaunt && !unit.stealthActive)
+          .toList();
+      final visible = state.player.board
+          .where((unit) => !unit.stealthActive)
+          .toList();
+      final targetPool = taunts.isNotEmpty ? taunts : visible;
+      final target = targetPool.isEmpty
+          ? null
+          : targetPool[_random.nextInt(targetPool.length)];
+      _aiHeroAttack(state, target);
+      _checkFinished();
+      notifyListeners();
+      await Future<void>.delayed(const Duration(milliseconds: 1380));
+    }
     _draw(state.ai);
     _checkFinished();
   }
 
+  void _aiHeroAttack(BattleState state, BattleUnit? target) {
+    final weapon = state.ai.weapon;
+    if (weapon == null || weapon.durability <= 0) return;
+    if (target == null) {
+      _triggerSecrets(
+        state.player,
+        'opponent-attacks-hero',
+        triggeringSide: state.ai,
+      );
+    }
+    final dealt = target == null
+        ? _damageHero(state.player, weapon.attack)
+        : _damageUnit(target, weapon.attack);
+    state.ai.heroHasAttacked = true;
+    weapon.durability--;
+    state.logs.insert(
+      0,
+      target == null
+          ? '敌方英雄使用 ${weapon.card.name} 攻击核心，造成 $dealt 点伤害。'
+          : '敌方英雄使用 ${weapon.card.name} 攻击 ${target.card.name}。',
+    );
+    _emitFx(
+      'attack',
+      '敌方英雄攻击',
+      target == null ? '你的核心受到 $dealt 点伤害' : '英雄与 ${target.card.name} 交战',
+      Icons.flash_on,
+      0xFFE46D3F,
+      sourceId: 'ai-hero',
+      targetId: target?.instanceId ?? 'player-hero',
+      amount: dealt,
+    );
+    if (weapon.durability <= 0) state.ai.weapon = null;
+  }
+
   void _refreshSideForTurn(BattleSide side) {
+    side.heroHasAttacked = false;
     for (final unit in side.board) {
       unit.attacksMade = 0;
       if (unit.frozenTurns > 0) {
@@ -991,6 +1325,27 @@ class GameController extends ChangeNotifier {
         unit.summoningSick = false;
         unit.rushOnly = false;
       }
+    }
+  }
+
+  void _refillMana(BattleSide side) {
+    side.maxMana = min(10, side.maxMana + 1);
+    final locked = min(side.maxMana, side.overloadLocked);
+    side.overloadLocked = 0;
+    side.mana = side.maxMana - locked;
+    if (locked > 0) {
+      stateLog(
+        identical(battle?.player, side) ? '过载' : '敌方过载',
+        '下回合锁定 $locked 个法力水晶。',
+      );
+      _emitFx(
+        'overload',
+        '过载锁定',
+        '本回合可用法力减少 $locked',
+        Icons.lock_clock,
+        0xFFE46D3F,
+        amount: locked,
+      );
     }
   }
 

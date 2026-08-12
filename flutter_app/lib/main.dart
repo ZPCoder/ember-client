@@ -913,6 +913,7 @@ class _CollectionPageState extends State<CollectionPage> {
                         DropdownMenuItem(value: '全部', child: Text('全部')),
                         DropdownMenuItem(value: 'unit', child: Text('单位')),
                         DropdownMenuItem(value: 'spell', child: Text('战术')),
+                        DropdownMenuItem(value: 'weapon', child: Text('武器')),
                       ],
                       onChanged: (value) => setState(() {
                         type = value ?? '全部';
@@ -1006,12 +1007,14 @@ class CardTile extends StatelessWidget {
     required this.card,
     this.owned,
     this.onTap,
+    this.onLongPress,
     this.compact = false,
   });
 
   final CardDefinition card;
   final int? owned;
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
   final bool compact;
 
   @override
@@ -1128,7 +1131,11 @@ class CardTile extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    card.isUnit ? '单位' : '战术',
+                    card.isUnit
+                        ? '单位'
+                        : card.type == 'weapon'
+                        ? '武器'
+                        : '战术',
                     style: const TextStyle(
                       color: Color(0xFF84938A),
                       fontSize: 9,
@@ -1173,10 +1180,12 @@ class CardTile extends StatelessWidget {
                       label: keywordLabels[keyword] ?? keyword,
                       color: const Color(0xFFE7BD7A),
                     ),
-                  if (card.isUnit) ...[
+                  if (card.isUnit || card.type == 'weapon') ...[
                     const Spacer(),
                     Text(
-                      '${card.attack} / ${card.health}',
+                      card.type == 'weapon'
+                          ? '${card.attack ?? 0} / ${card.durability ?? card.health ?? 0}'
+                          : '${card.attack} / ${card.health}',
                       style: const TextStyle(
                         color: Color(0xFFE7BD7A),
                         fontSize: 9,
@@ -1193,7 +1202,7 @@ class CardTile extends StatelessWidget {
     );
     return Card(
       clipBehavior: Clip.antiAlias,
-      child: InkWell(onTap: onTap, child: content),
+      child: InkWell(onTap: onTap, onLongPress: onLongPress, child: content),
     );
   }
 }
@@ -1575,6 +1584,37 @@ class _BattleBoardState extends State<BattleBoard> {
     }
   }
 
+  Future<void> _heroAttack(BuildContext context) async {
+    final weapon = state.player.weapon;
+    if (weapon == null) return;
+    final taunts = state.ai.board
+        .where((unit) => unit.hasTaunt && !unit.stealthActive)
+        .toList();
+    final visibleUnits = state.ai.board
+        .where((unit) => !unit.stealthActive)
+        .toList();
+    final choice = await _pickBattleTarget(
+      context,
+      null,
+      taunts.isNotEmpty ? taunts : visibleUnits,
+      allowHero: taunts.isEmpty,
+      enemy: true,
+    );
+    if (!context.mounted || choice == null) return;
+    final attacked = controller.heroAttack(
+      target: choice.unit,
+      targetHero: choice.isHero,
+    );
+    if (!attacked && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(taunts.isNotEmpty ? '必须先处理敌方嘲讽单位' : '英雄本回合已经攻击过'),
+          duration: const Duration(milliseconds: 850),
+        ),
+      );
+    }
+  }
+
   Future<_BattleTargetChoice?> _pickBattleTarget(
     BuildContext context,
     CardDefinition? card,
@@ -1689,6 +1729,64 @@ class _BattleBoardState extends State<BattleBoard> {
               ),
             ),
           ],
+          if (state.phase == 'discover' && state.discoverOwner == 'player') ...[
+            const SizedBox(height: 12),
+            GlassPanel(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.travel_explore,
+                        color: Color(0xFFA692D1),
+                        size: 19,
+                      ),
+                      const SizedBox(width: 8),
+                      const Expanded(
+                        child: Text(
+                          '发现：从候选档案中选择一张加入手牌',
+                          style: TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                      Text(
+                        '${state.discoverChoices.length} 选 1',
+                        style: const TextStyle(
+                          color: Color(0xFFA692D1),
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    height: 205,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: state.discoverChoices.length,
+                      separatorBuilder: (_, _) => const SizedBox(width: 9),
+                      itemBuilder: (_, index) {
+                        final discovered = controller.card(
+                          state.discoverChoices[index],
+                        );
+                        if (discovered == null) return const SizedBox.shrink();
+                        return SizedBox(
+                          width: 145,
+                          child: CardTile(
+                            card: discovered,
+                            compact: true,
+                            onTap: () =>
+                                controller.chooseDiscover(discovered.id),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 12),
           Stack(
             children: [
@@ -1708,6 +1806,9 @@ class _BattleBoardState extends State<BattleBoard> {
                         mana: state.ai.mana,
                         armor: state.ai.armor,
                         coinAvailable: state.ai.coinAvailable,
+                        weapon: state.ai.weapon,
+                        overloadLocked: state.ai.overloadLocked,
+                        secretCount: state.ai.secrets.length,
                         ai: true,
                       ),
                       const SizedBox(height: 13),
@@ -1735,6 +1836,9 @@ class _BattleBoardState extends State<BattleBoard> {
                         mana: state.player.mana,
                         armor: state.player.armor,
                         coinAvailable: state.player.coinAvailable,
+                        weapon: state.player.weapon,
+                        overloadLocked: state.player.overloadLocked,
+                        secretCount: state.player.secrets.length,
                         ai: false,
                       ),
                       const SizedBox(height: 12),
@@ -1760,6 +1864,22 @@ class _BattleBoardState extends State<BattleBoard> {
                               onPressed: controller.useCoin,
                               icon: const Icon(Icons.monetization_on, size: 15),
                               label: const Text('幸运币'),
+                            ),
+                            const SizedBox(width: 7),
+                          ],
+                          if (state.player.weapon != null) ...[
+                            OutlinedButton.icon(
+                              onPressed:
+                                  state.player.heroHasAttacked ||
+                                      state.activePlayer != 'player' ||
+                                      state.finished ||
+                                      state.phase != 'main'
+                                  ? null
+                                  : () => _heroAttack(context),
+                              icon: const Icon(Icons.gavel, size: 15),
+                              label: Text(
+                                state.player.heroHasAttacked ? '已攻击' : '英雄攻击',
+                              ),
                             ),
                             const SizedBox(width: 7),
                           ],
@@ -1817,6 +1937,7 @@ class _BattleBoardState extends State<BattleBoard> {
               itemCount: state.player.hand.length,
               separatorBuilder: (_, _) => const SizedBox(width: 9),
               itemBuilder: (_, index) {
+                final handCard = state.player.hand[index];
                 final selected = state.mulliganSelected.contains(index);
                 return SizedBox(
                   width: 145,
@@ -1841,15 +1962,27 @@ class _BattleBoardState extends State<BattleBoard> {
                           : const [],
                     ),
                     child: CardTile(
-                      card: state.player.hand[index],
+                      card: handCard,
                       compact: true,
                       onTap: state.phase == 'mulligan'
                           ? () => controller.toggleMulligan(index)
                           : state.activePlayer != 'player' ||
-                                state.player.mana <
-                                    state.player.hand[index].cost
+                                state.player.mana < handCard.cost
                           ? null
-                          : () => _playCard(context, state.player.hand[index]),
+                          : () => _playCard(context, handCard),
+                      onLongPress: state.phase == 'main' && handCard.tradeable
+                          ? () {
+                              final traded = controller.tradeCard(handCard);
+                              if (traded && context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('已交易：消耗 1 法力并抽取替代牌'),
+                                    duration: Duration(milliseconds: 750),
+                                  ),
+                                );
+                              }
+                            }
+                          : null,
                     ),
                   ),
                 );
@@ -2591,6 +2724,9 @@ class _HeroBar extends StatelessWidget {
     required this.mana,
     required this.armor,
     required this.coinAvailable,
+    required this.weapon,
+    required this.overloadLocked,
+    required this.secretCount,
     required this.ai,
   });
 
@@ -2600,6 +2736,9 @@ class _HeroBar extends StatelessWidget {
   final int mana;
   final int armor;
   final bool coinAvailable;
+  final BattleWeapon? weapon;
+  final int overloadLocked;
+  final int secretCount;
   final bool ai;
 
   @override
@@ -2656,6 +2795,21 @@ class _HeroBar extends StatelessWidget {
             Text(
               '◆ $armor',
               style: const TextStyle(color: Color(0xFFE7BD7A), fontSize: 10),
+            ),
+          if (weapon != null)
+            Text(
+              '⚔ ${weapon!.card.name} · ${weapon!.attack}/${weapon!.durability}',
+              style: const TextStyle(color: Color(0xFFE7BD7A), fontSize: 9),
+            ),
+          if (secretCount > 0)
+            Text(
+              ai ? '◇ 敌方奥秘 ×$secretCount' : '◇ 奥秘 ×$secretCount',
+              style: const TextStyle(color: Color(0xFFA692D1), fontSize: 9),
+            ),
+          if (overloadLocked > 0)
+            Text(
+              '🔒 过载 $overloadLocked',
+              style: const TextStyle(color: Color(0xFFE46D3F), fontSize: 9),
             ),
         ],
       ),

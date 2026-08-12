@@ -110,6 +110,103 @@ void main() {
     controller.dispose();
   });
 
+  test('weapon cards equip and allow one hero attack per turn', () {
+    final weapon = CardDefinition(
+      id: 'weapon',
+      name: '测试刃',
+      description: '测试武器',
+      faction: '曜光',
+      type: 'weapon',
+      cost: 1,
+      rarity: '稀有',
+      attack: 3,
+      durability: 2,
+    );
+    final controller = GameController()
+      ..catalog = [weapon]
+      ..deckIds.addAll(List.filled(30, weapon.id));
+    controller.startBattle();
+    controller.confirmMulligan();
+    final state = controller.battle!;
+    state.ai.heroHealth = 30;
+    state.player.mana = 10;
+    state.player.hand
+      ..clear()
+      ..add(weapon);
+    expect(controller.playCard(weapon), isTrue);
+    expect(state.player.weapon?.durability, 2);
+    expect(controller.heroAttack(targetHero: true), isTrue);
+    expect(state.ai.heroHealth, 27);
+    expect(state.player.weapon?.durability, 1);
+    expect(controller.heroAttack(targetHero: true), isFalse);
+    controller.dispose();
+  });
+
+  test(
+    'overload locks next-turn crystals and tradeable cards cycle the deck',
+    () async {
+      final filler = CardDefinition(
+        id: 'filler',
+        name: '替代档案',
+        description: '抽取用',
+        faction: '曜光',
+        type: 'unit',
+        cost: 1,
+        rarity: '普通',
+        attack: 1,
+        health: 1,
+      );
+      final overload = CardDefinition(
+        id: 'overload',
+        name: '过载脉冲',
+        description: '造成伤害并过载。',
+        faction: '雷铸',
+        type: 'spell',
+        cost: 1,
+        rarity: '稀有',
+        overload: 2,
+        effect: [
+          {'kind': 'damage', 'amount': 1},
+        ],
+      );
+      final tradeCard = CardDefinition(
+        id: 'trade',
+        name: '可交易档案',
+        description: '可交易。',
+        faction: '曜光',
+        type: 'spell',
+        cost: 4,
+        rarity: '普通',
+        tradeable: true,
+      );
+      final controller = GameController()
+        ..catalog = [filler, overload, tradeCard]
+        ..deckIds.addAll(List.filled(30, filler.id));
+      controller.startBattle();
+      controller.confirmMulligan();
+      final state = controller.battle!;
+      state.ai.hand.clear();
+      state.player.maxMana = 3;
+      state.player.mana = 10;
+      state.player.hand
+        ..clear()
+        ..add(overload);
+      expect(controller.playCard(overload), isTrue);
+      expect(state.player.overloadLocked, 2);
+      await controller.endTurn();
+      expect(state.player.mana, 2);
+
+      state.player.hand
+        ..clear()
+        ..add(tradeCard);
+      state.player.mana = 2;
+      expect(controller.tradeCard(tradeCard), isTrue);
+      expect(state.player.mana, 1);
+      expect(state.player.hand, isNotEmpty);
+      controller.dispose();
+    },
+  );
+
   test('battle rules enforce taunt, shield and hero power', () {
     CardDefinition unit(
       String id,
@@ -370,6 +467,101 @@ void main() {
         state.ai.board.where((unit) => unit.card.id == reborn.id).single.health,
         1,
       );
+      controller.dispose();
+    },
+  );
+
+  test(
+    'discover pauses the match and secret counters an enemy spell',
+    () async {
+      final choice = CardDefinition(
+        id: 'discover-choice',
+        name: '发现候选',
+        description: '候选卡牌',
+        faction: '曜光',
+        type: 'unit',
+        cost: 1,
+        rarity: '普通',
+        attack: 1,
+        health: 1,
+      );
+      final discover = CardDefinition(
+        id: 'discover-card',
+        name: '星图勘探',
+        description: '发现一张卡牌。',
+        faction: '曜光',
+        type: 'spell',
+        cost: 1,
+        rarity: '稀有',
+        keywords: ['discover'],
+        effect: [
+          {
+            'kind': 'discover',
+            'choices': [choice.id],
+          },
+        ],
+      );
+      final secret = CardDefinition(
+        id: 'counter-secret',
+        name: '虚空反制',
+        description: '奥秘：反制敌方战术。',
+        faction: '幽潮',
+        type: 'spell',
+        cost: 1,
+        rarity: '史诗',
+        keywords: ['secret'],
+        effect: [
+          {
+            'kind': 'secret',
+            'secretId': 'counter-secret',
+            'trigger': 'opponent-plays-spell',
+            'effect': {'kind': 'counterspell'},
+          },
+        ],
+      );
+      final enemySpell = CardDefinition(
+        id: 'enemy-spell',
+        name: '敌方战术',
+        description: '造成伤害。',
+        faction: '幽潮',
+        type: 'spell',
+        cost: 1,
+        rarity: '普通',
+        effect: [
+          {'kind': 'damage', 'amount': 4},
+        ],
+      );
+      final controller = GameController()
+        ..catalog = [choice, discover, secret, enemySpell]
+        ..deckIds.addAll(List.filled(30, discover.id));
+      controller.startBattle();
+      controller.confirmMulligan();
+      final state = controller.battle!;
+      state.player.mana = 10;
+      state.player.hand
+        ..clear()
+        ..add(discover);
+      expect(controller.playCard(discover), isTrue);
+      expect(state.phase, 'discover');
+      expect(state.discoverChoices, [choice.id]);
+      expect(controller.chooseDiscover(choice.id), isTrue);
+      expect(state.phase, 'main');
+      expect(state.player.hand.any((card) => card.id == choice.id), isTrue);
+
+      state.player.hand
+        ..clear()
+        ..add(secret);
+      expect(controller.playCard(secret), isTrue);
+      expect(state.player.secrets.single.secretId, 'counter-secret');
+      state.ai.hand
+        ..clear()
+        ..add(enemySpell);
+      state.ai.mana = 10;
+      final beforeHealth = state.player.heroHealth;
+      await controller.endTurn();
+      expect(state.player.heroHealth, beforeHealth);
+      expect(state.player.secrets, isEmpty);
+      expect(state.logs.any((log) => log.contains('反制')), isTrue);
       controller.dispose();
     },
   );

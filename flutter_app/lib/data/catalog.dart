@@ -58,6 +58,11 @@ const keywordLabels = <String, String>{
   'stealth': '潜行',
   'reborn': '复生',
   'freeze': '冻结',
+  'overload': '过载',
+  'tradeable': '可交易',
+  'spell-damage': '法术伤害',
+  'secret': '奥秘',
+  'discover': '发现',
 };
 
 const traitLabels = <String, String>{
