@@ -138,6 +138,8 @@ type PlayerSnapshot = {
   progression?: { xp: number; level: number };
   ladder?: { seasonKey?: string; rating: number; tier: string; stars: number; wins: number; losses: number; highestRating?: number };
   friends?: Array<{ id: string; displayName: string; status: "pending" | "accepted"; direction: "incoming" | "outgoing" }>;
+  chatMessages?: Array<{ id: string; senderId: string; recipientId: string; text: string; createdAt: string }>;
+  blockedPlayerIds?: string[];
   rewardTrack?: { claimedLevels: number[] };
   recentMatches: RecentMatch[];
   stats: { wins: number; losses: number; matchesPlayed: number };
@@ -157,6 +159,8 @@ type GamePayload = {
   reward?: { title: string; kind: "gold" | "pack" | "dust"; amount: number };
   displayName?: string;
   friendId?: string;
+  message?: { id: string; senderId: string; recipientId: string; text: string; createdAt: string };
+  targetId?: string;
   cardId?: string;
   amount?: number;
   kind?: "craft" | "disenchant";
@@ -247,7 +251,7 @@ type BattleView = {
 
 type PvpRole = "host" | "guest";
 type PvpFormat = "ranked" | "casual";
-type PvpStatus = "offline" | "connecting" | "connected" | "room" | "ready" | "playing" | "error";
+type PvpStatus = "offline" | "connecting" | "connected" | "queue" | "room" | "ready" | "playing" | "error";
 
 type PvpState = {
   status: PvpStatus;
@@ -706,6 +710,34 @@ function applyLocalAction(
       ? friends.map((friend) => friend.id === friendId ? { ...friend, status: "accepted" as const, direction: "outgoing" as const } : friend)
       : [...friends, { id: friendId, displayName: "等待确认的指挥官", status: "pending" as const, direction: "outgoing" as const }];
     return { ok: true, player: { ...current, friends: nextFriends, updatedAt: now }, friendId, localFallback: true };
+  }
+  if (action === "send_chat") {
+    const friendId = asString(body.friendId).trim();
+    const text = asString(body.text).trim().replace(/\s+/g, " ");
+    const friend = (current.friends ?? []).find((item) => item.id === friendId && item.status === "accepted");
+    if (!friend) throw new Error("只有已接受的好友才能聊天。");
+    if ((current.blockedPlayerIds ?? []).includes(friendId)) throw new Error("该玩家已被屏蔽。");
+    if (!text || text.length > 240) throw new Error("聊天消息必须为 1–240 个字符。");
+    const message = { id: makeId("chat"), senderId: current.id, recipientId: friendId, text, createdAt: now };
+    return { ok: true, player: { ...current, chatMessages: [message, ...(current.chatMessages ?? [])].slice(0, 100), updatedAt: now }, message, localFallback: true };
+  }
+  if (action === "block_player" || action === "unblock_player") {
+    const targetId = asString(body.targetId).trim();
+    const blocked = new Set(current.blockedPlayerIds ?? []);
+    if (action === "block_player") {
+      if (blocked.has(targetId)) throw new Error("该玩家已经被屏蔽。");
+      blocked.add(targetId);
+    } else {
+      if (!blocked.has(targetId)) throw new Error("该玩家当前没有被屏蔽。");
+      blocked.delete(targetId);
+    }
+    return { ok: true, player: { ...current, blockedPlayerIds: [...blocked], updatedAt: now }, targetId, localFallback: true };
+  }
+  if (action === "report_player") {
+    const targetId = asString(body.targetId).trim();
+    const reason = asString(body.reason).trim();
+    if (!targetId || reason.length < 2) throw new Error("举报信息不完整。");
+    return { ok: true, player: { ...current, updatedAt: now }, targetId, localFallback: true };
   }
   if (action === "open_pack") {
     if (current.packsAvailable < 1) throw new Error("没有可开启的卡包。");
@@ -1887,6 +1919,15 @@ function useWebPvp(displayName: string) {
       setState((current) => ({ ...current, playerId: asString(message.playerId), message: "大厅已连接，创建或加入房间。" }));
       return;
     }
+    if (type === "queue_joined") {
+      const format: PvpFormat = message.format === "casual" ? "casual" : "ranked";
+      setState((current) => ({ ...current, status: "queue", roomCode: null, role: null, format, peerName: null, localReady: false, remoteReady: false, remoteReadyDeck: null, message: asString(message.message, "正在寻找同模式对手…") }));
+      return;
+    }
+    if (type === "queue_left") {
+      setState((current) => ({ ...current, status: "connected", roomCode: null, role: null, peerName: null, message: asString(message.message, "已取消匹配。") }));
+      return;
+    }
     if (type === "room_created" || type === "room_joined") {
       const roomCode = asString(message.room);
       const format: PvpFormat = message.format === "casual" ? "casual" : "ranked";
@@ -2250,6 +2291,14 @@ function useWebPvp(displayName: string) {
     send({ type: "create_room", format });
   }, [send]);
 
+  const queue = useCallback((format: PvpFormat = "ranked") => {
+    send({ type: "queue_join", format });
+  }, [send]);
+
+  const leaveQueue = useCallback(() => {
+    send({ type: "queue_leave" });
+  }, [send]);
+
   const joinRoom = useCallback((roomCode: string) => {
     const room = roomCode.trim().toUpperCase();
     if (!/^[A-Z]{4}$/.test(room)) {
@@ -2302,7 +2351,7 @@ function useWebPvp(displayName: string) {
 
   useEffect(() => () => dispose(), [dispose]);
 
-  return { state, incoming, acknowledgeIncoming, connect, disconnect, createRoom, joinRoom, ready, sendMatchStart, sendCommand, requestRematch, syncRoom };
+  return { state, incoming, acknowledgeIncoming, connect, disconnect, createRoom, queue, leaveQueue, joinRoom, ready, sendMatchStart, sendCommand, requestRematch, syncRoom };
 }
 
 export function GameApp({
@@ -3016,6 +3065,40 @@ export function GameApp({
       friendId,
     });
     if (payload) setNotice({ tone: payload.localFallback ? "info" : "success", text: payload.localFallback ? "好友已加入本机社交列表。" : "好友请求已接受。" });
+  };
+
+  const sendChatMessage = async (friendId: string, text: string) => {
+    const payload = await postAction("send_chat", {
+      idempotencyKey: makeId("chat"),
+      friendId,
+      text,
+    });
+    if (payload) setNotice({ tone: payload.localFallback ? "info" : "success", text: payload.localFallback ? "消息已记录在本机档案。" : "消息已发送。" });
+  };
+
+  const blockPlayer = async (targetId: string) => {
+    const payload = await postAction("block_player", {
+      idempotencyKey: makeId("block"),
+      targetId,
+    });
+    if (payload) setNotice({ tone: payload.localFallback ? "info" : "success", text: payload.localFallback ? "已在本机屏蔽该玩家。" : "已屏蔽该玩家，聊天和好友邀请将被拦截。" });
+  };
+
+  const unblockPlayer = async (targetId: string) => {
+    const payload = await postAction("unblock_player", {
+      idempotencyKey: makeId("unblock"),
+      targetId,
+    });
+    if (payload) setNotice({ tone: payload.localFallback ? "info" : "success", text: payload.localFallback ? "已解除本机屏蔽。" : "已解除屏蔽。" });
+  };
+
+  const reportPlayer = async (targetId: string, reason: string) => {
+    const payload = await postAction("report_player", {
+      idempotencyKey: makeId("report"),
+      targetId,
+      reason,
+    });
+    if (payload) setNotice({ tone: payload.localFallback ? "info" : "success", text: payload.localFallback ? "举报已记录在本机档案。" : "举报已提交，运营台会按规则复核。" });
   };
 
   // This transition is shared by AI and transport-driven PVP starts.
@@ -4102,6 +4185,8 @@ export function GameApp({
                   onPvpRoomInput={setPvpRoomInput}
                   onPvpConnect={() => pvp.connect(pvpUrl)}
                   onPvpCreate={(format) => pvp.createRoom(format)}
+                  onPvpQueue={(format) => pvp.queue(format)}
+                  onPvpLeaveQueue={() => pvp.leaveQueue()}
                   onPvpJoin={() => pvp.joinRoom(pvpRoomInput)}
                   onPvpReady={() => pvp.ready(deckIds)}
                   onPvpDisconnect={() => pvp.disconnect()}
@@ -4125,7 +4210,11 @@ export function GameApp({
                   profileBusy={apiBusy === "update_profile"}
                   onSendFriendRequest={(friendId) => void sendFriendRequest(friendId)}
                   onAcceptFriendRequest={(friendId) => void acceptFriendRequest(friendId)}
-                  socialBusy={apiBusy === "send_friend_request" || apiBusy === "accept_friend_request"}
+                  onSendChat={(friendId, text) => void sendChatMessage(friendId, text)}
+                  onBlockPlayer={(targetId) => void blockPlayer(targetId)}
+                  onUnblockPlayer={(targetId) => void unblockPlayer(targetId)}
+                  onReportPlayer={(targetId, reason) => void reportPlayer(targetId, reason)}
+                  socialBusy={apiBusy === "send_friend_request" || apiBusy === "accept_friend_request" || apiBusy === "send_chat" || apiBusy === "block_player" || apiBusy === "unblock_player" || apiBusy === "report_player"}
                 />
               )}
             </>
@@ -5254,6 +5343,8 @@ function PvpLobby({
   onRoomInput,
   onConnect,
   onCreate,
+  onQueue,
+  onLeaveQueue,
   onJoin,
   onReady,
   onDisconnect,
@@ -5265,6 +5356,8 @@ function PvpLobby({
   onRoomInput: (value: string) => void;
   onConnect: () => void;
   onCreate: (format: PvpFormat) => void;
+  onQueue: (format: PvpFormat) => void;
+  onLeaveQueue: () => void;
   onJoin: () => void;
   onReady: () => void;
   onDisconnect: () => void;
@@ -5278,7 +5371,7 @@ function PvpLobby({
           <span className="panel__eyebrow">LIVE PVP / ROOM LINK</span>
           <h3>基础联机对战</h3>
         </div>
-        <span className={`pvp-lobby__status pvp-lobby__status--${state.status}`}><i />{state.status === "offline" ? "未连接" : state.status === "connecting" ? "连接中" : state.status === "error" ? "连接异常" : state.status === "playing" ? "对战中" : "大厅在线"}</span>
+        <span className={`pvp-lobby__status pvp-lobby__status--${state.status}`}><i />{state.status === "offline" ? "未连接" : state.status === "connecting" ? "连接中" : state.status === "error" ? "连接异常" : state.status === "queue" ? "匹配中" : state.status === "playing" ? "对战中" : "大厅在线"}</span>
       </div>
       <p>{state.message} 两端使用同一套战斗规则同步出牌、攻击和回合，首手由服务器随机决定。</p>
       {(state.status === "offline" || state.status === "error" || state.status === "connecting") && (
@@ -5289,9 +5382,12 @@ function PvpLobby({
       )}
       {connected && (
         <div className="pvp-lobby__room">
-      {!state.roomCode ? (
+      {state.status === "queue" ? (
+            <div className="pvp-lobby__queue"><div><span className="panel__eyebrow">SERVER MATCHMAKING</span><strong>{state.format === "casual" ? "休闲匹配" : "天梯匹配"}</strong><small>只会匹配同模式玩家；匹配成功后自动建立房间。</small></div><button className="button button--outline" type="button" onClick={onLeaveQueue}>取消匹配</button></div>
+          ) : !state.roomCode ? (
             <>
               <label><span>匹配模式</span><select value={selectedFormat} onChange={(event) => setSelectedFormat(event.target.value === "casual" ? "casual" : "ranked")} aria-label="选择联机模式"><option value="ranked">Ranked 天梯</option><option value="casual">Casual 休闲</option></select></label>
+              <button className="button button--primary" type="button" onClick={() => onQueue(selectedFormat)}>快速匹配</button>
               <button className="button button--primary" type="button" onClick={() => onCreate(selectedFormat)}>创建 {selectedFormat === "casual" ? "休闲" : "天梯"} 房间</button>
               <label><span>房间码</span><input value={roomInput} maxLength={4} onChange={(event) => onRoomInput(event.target.value.toUpperCase())} placeholder="A7KQ" /></label>
               <button className="button button--outline" type="button" onClick={onJoin}>加入房间</button>
@@ -5358,6 +5454,8 @@ function BattleSection({
   onPvpRoomInput,
   onPvpConnect,
   onPvpCreate,
+  onPvpQueue,
+  onPvpLeaveQueue,
   onPvpJoin,
   onPvpReady,
   onPvpDisconnect,
@@ -5412,6 +5510,8 @@ function BattleSection({
   onPvpRoomInput: (value: string) => void;
   onPvpConnect: () => void;
   onPvpCreate: (format: PvpFormat) => void;
+  onPvpQueue: (format: PvpFormat) => void;
+  onPvpLeaveQueue: () => void;
   onPvpJoin: () => void;
   onPvpReady: () => void;
   onPvpDisconnect: () => void;
@@ -5475,6 +5575,8 @@ function BattleSection({
             onRoomInput={onPvpRoomInput}
             onConnect={onPvpConnect}
             onCreate={onPvpCreate}
+            onQueue={onPvpQueue}
+            onLeaveQueue={onPvpLeaveQueue}
             onJoin={onPvpJoin}
             onReady={onPvpReady}
             onDisconnect={onPvpDisconnect}
@@ -6318,6 +6420,10 @@ function OperationsSection({
   profileBusy,
   onSendFriendRequest,
   onAcceptFriendRequest,
+  onSendChat,
+  onBlockPlayer,
+  onUnblockPlayer,
+  onReportPlayer,
   socialBusy,
 }: {
   player: PlayerSnapshot;
@@ -6333,10 +6439,25 @@ function OperationsSection({
   profileBusy: boolean;
   onSendFriendRequest: (friendId: string) => void;
   onAcceptFriendRequest: (friendId: string) => void;
+  onSendChat: (friendId: string, text: string) => void;
+  onBlockPlayer: (targetId: string) => void;
+  onUnblockPlayer: (targetId: string) => void;
+  onReportPlayer: (targetId: string, reason: string) => void;
   socialBusy: boolean;
 }) {
   const [profileName, setProfileName] = useState(player.displayName);
   const [friendId, setFriendId] = useState("");
+  const [selectedFriendId, setSelectedFriendId] = useState<string | null>(null);
+  const [chatText, setChatText] = useState("");
+  const [reportReason, setReportReason] = useState("");
+  const acceptedFriends = (player.friends ?? []).filter((friend) => friend.status === "accepted");
+  const selectedFriend = acceptedFriends.find((friend) => friend.id === selectedFriendId) ?? null;
+  const selectedBlocked = Boolean(selectedFriend && (player.blockedPlayerIds ?? []).includes(selectedFriend.id));
+  const selectedMessages = selectedFriend
+    ? (player.chatMessages ?? [])
+      .filter((message) => (message.senderId === player.id && message.recipientId === selectedFriend.id) || (message.senderId === selectedFriend.id && message.recipientId === player.id))
+      .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+    : [];
   const metrics = [
     { label: "内测活跃指挥官", value: "486", delta: "+12.4%", icon: "user" as IconName },
     { label: "今日完成对局", value: "1,284", delta: "+8.1%", icon: "swords" as IconName },
@@ -6438,13 +6559,36 @@ function OperationsSection({
         </div>
         <div className="social-list">
           {(player.friends ?? []).length > 0 ? (player.friends ?? []).map((friend) => (
-            <div className="social-row" key={friend.id}>
+            <div className={`social-row ${friend.id === selectedFriendId ? "social-row--selected" : ""}`} key={friend.id}>
               <span className="social-row__avatar">{friend.displayName.slice(0, 1)}</span>
               <div><strong>{friend.displayName}</strong><small>{friend.id}</small></div>
-              {friend.status === "accepted" ? <span className="status-pill">在线档案</span> : friend.direction === "incoming" ? <button className="button button--tiny button--accent" type="button" disabled={socialBusy} onClick={() => onAcceptFriendRequest(friend.id)}>接受</button> : <span className="status-pill status-pill--watch">待确认</span>}
+              {friend.status === "accepted" ? <button className="button button--tiny button--outline social-row__open" type="button" aria-pressed={friend.id === selectedFriendId} onClick={() => setSelectedFriendId(friend.id)}>{friend.id === selectedFriendId ? "聊天中" : "聊天"}</button> : friend.direction === "incoming" ? <button className="button button--tiny button--accent" type="button" disabled={socialBusy} onClick={() => onAcceptFriendRequest(friend.id)}>接受</button> : <span className="status-pill status-pill--watch">待确认</span>}
             </div>
           )) : <p className="social-empty">还没有好友。把你的玩家 UID 分享给队友，即可发送请求。</p>}
         </div>
+        {selectedFriend && (
+          <div className="social-chat" aria-label={`与 ${selectedFriend.displayName} 的聊天`}>
+            <div className="social-chat__header">
+              <div><span className="panel__eyebrow">PRIVATE CHANNEL</span><strong>{selectedFriend.displayName}</strong><small>{selectedBlocked ? "已屏蔽：消息不会发送" : "仅限互为好友的玩家"}</small></div>
+              <button className="button button--tiny button--outline" type="button" onClick={() => setSelectedFriendId(null)}>关闭</button>
+            </div>
+            <div className="social-chat__messages" aria-live="polite">
+              {selectedMessages.length > 0 ? selectedMessages.map((message) => (
+                <div className={`social-message ${message.senderId === player.id ? "social-message--self" : ""}`} key={message.id}>
+                  <span>{message.text}</span><small>{formatTime(message.createdAt)}</small>
+                </div>
+              )) : <p className="social-empty">还没有消息。用一句话打个招呼吧。</p>}
+            </div>
+            <div className="social-chat__composer">
+              <input value={chatText} maxLength={240} disabled={socialBusy || selectedBlocked} onChange={(event) => setChatText(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && chatText.trim() && !selectedBlocked && !socialBusy) { onSendChat(selectedFriend.id, chatText.trim()); setChatText(""); } }} placeholder={selectedBlocked ? "解除屏蔽后才能发送" : "输入消息，回车发送"} aria-label="聊天消息" />
+              <button className="button button--accent" type="button" disabled={socialBusy || selectedBlocked || !chatText.trim()} onClick={() => { onSendChat(selectedFriend.id, chatText.trim()); setChatText(""); }}>发送</button>
+            </div>
+            <div className="social-chat__tools">
+              <button className="button button--tiny button--outline" type="button" disabled={socialBusy} onClick={() => selectedBlocked ? onUnblockPlayer(selectedFriend.id) : onBlockPlayer(selectedFriend.id)}>{selectedBlocked ? "解除屏蔽" : "屏蔽玩家"}</button>
+              <label className="social-report"><span>举报原因</span><input value={reportReason} maxLength={200} disabled={socialBusy} onChange={(event) => setReportReason(event.target.value)} placeholder="辱骂、广告或作弊" /><button className="button button--tiny button--danger" type="button" disabled={socialBusy || reportReason.trim().length < 2} onClick={() => { onReportPlayer(selectedFriend.id, reportReason.trim()); setReportReason(""); }}>提交举报</button></label>
+            </div>
+          </div>
+        )}
       </section>
 
       <div className="ops-grid">
