@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:flutter/services.dart';
 
 import '../models/card_definition.dart';
-import 'rule_overrides.dart';
 
 const factionOrder = <String>['曜光', '幽潮', '中立', '烬火', '星穹', '苍林', '雷铸'];
 
@@ -87,6 +86,5 @@ Future<List<CardDefinition>> loadCatalog() async {
   return decoded
       .whereType<Map>()
       .map((item) => CardDefinition.fromJson(Map<String, dynamic>.from(item)))
-      .map(enrichCardRules)
       .toList(growable: false);
 }

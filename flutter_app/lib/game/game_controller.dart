@@ -527,6 +527,7 @@ class GameController extends ChangeNotifier {
         state.activePlayer != 'player' ||
         state.phase != 'main' ||
         !card.tradeable ||
+        state.player.deck.isEmpty ||
         state.player.mana < 1) {
       return false;
     }
@@ -534,9 +535,14 @@ class GameController extends ChangeNotifier {
     if (index < 0) return false;
     state.player.hand.removeAt(index);
     state.player.mana--;
-    state.player.deck.add(card);
-    state.player.deck.shuffle(_random);
+    // Tradeable draws from the original deck before the physical card is
+    // inserted, so a trade can never immediately redraw itself. Preserve the
+    // remaining deck order and choose only the insertion position at random.
     _draw(state.player);
+    state.player.deck.insert(
+      _random.nextInt(state.player.deck.length + 1),
+      card,
+    );
     state.logs.insert(0, '${card.name} 已交易，抽取一张替代档案。');
     _emitFx(
       'trade',
@@ -1901,7 +1907,9 @@ class GameController extends ChangeNotifier {
         continue;
       }
       final missedCurrentTurnAttack =
-          !unit.summoningSick && unit.attack > 0 && unit.attacksMade == 0;
+          !unit.summoningSick &&
+          unit.attack > 0 &&
+          unit.attacksMade < unit.attackLimit;
       if (unit.freezeBlocked || missedCurrentTurnAttack) {
         unit.frozenTurns = max(0, unit.frozenTurns - 1);
         unit.freezeBlocked = false;

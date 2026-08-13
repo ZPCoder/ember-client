@@ -3025,25 +3025,18 @@ export function GameApp({
       return;
     }
     const targetRule = card?.target ?? "none";
-    const ruleCard = card ? CARD_RULE_BY_ID.get(card.id) : undefined;
-    const cardEffects = [
-      ...(ruleCard?.effect ?? []),
-      ...(ruleCard?.onPlay ?? []),
-      ...(ruleCard?.combo ?? []),
-    ];
-    const needsWoundedTarget = cardEffects.some((effect) => effect.kind === "heal");
     const hasAvailableTarget = (() => {
       switch (targetRule) {
         case "enemy-unit":
-          return battleView.ai.board.some((unit) => unit.health > 0 && !unit.stealthActive && (!needsWoundedTarget || unit.health < unit.maxHealth));
+          return battleView.ai.board.some((unit) => unit.health > 0 && !unit.stealthActive);
         case "friendly-unit":
-          return battleView.player.board.some((unit) => unit.health > 0 && (!needsWoundedTarget || unit.health < unit.maxHealth));
+          return battleView.player.board.some((unit) => unit.health > 0);
         case "enemy-character":
-          return !needsWoundedTarget || battleView.ai.hero.health < battleView.ai.hero.maxHealth || battleView.ai.board.some((unit) => unit.health > 0 && !unit.stealthActive && unit.health < unit.maxHealth);
+          return true;
         case "friendly-character":
-          return !needsWoundedTarget || battleView.player.hero.health < battleView.player.hero.maxHealth || battleView.player.board.some((unit) => unit.health > 0 && unit.health < unit.maxHealth);
+          return true;
         case "any-character":
-          return !needsWoundedTarget || battleView.player.hero.health < battleView.player.hero.maxHealth || battleView.ai.hero.health < battleView.ai.hero.maxHealth || battleView.player.board.some((unit) => unit.health > 0 && unit.health < unit.maxHealth) || battleView.ai.board.some((unit) => unit.health > 0 && !unit.stealthActive && unit.health < unit.maxHealth);
+          return true;
         default:
           return false;
       }
@@ -3253,18 +3246,41 @@ export function GameApp({
       aiTurnTimerRef.current = null;
       try {
         const beforeAiEvents = (ended as MatchState).events.length;
-        const replaySteps: Array<{ state: MatchState; eventCount: number }> = [];
+        const replaySteps: Array<{
+          state: MatchState;
+          eventCount: number;
+          visualEffectCount: number;
+        }> = [];
         const result = runAiTurn(
           ended as MatchState,
           1,
           (stepState) => {
-            replaySteps.push({ state: stepState, eventCount: stepState.events.length });
+            const previousEventCount = replaySteps.at(-1)?.eventCount ?? beforeAiEvents;
+            const visualEffectCount = battleEventsToEffects(
+              stepState.events.slice(previousEventCount),
+            ).length;
+            replaySteps.push({
+              state: stepState,
+              eventCount: stepState.events.length,
+              visualEffectCount,
+            });
           },
         );
         const next = unwrapTransition(result) as MatchState;
         const states = replaySteps.length > 0
           ? replaySteps
-          : [{ state: next, eventCount: next.events.length }];
+          : [{
+              state: next,
+              eventCount: next.events.length,
+              visualEffectCount: battleEventsToEffects(
+                next.events.slice(beforeAiEvents),
+              ).length,
+            }];
+        const replayFrames = [{
+          state: ended as MatchState,
+          eventCount: beforeAiEvents,
+          visualEffectCount: 0,
+        }, ...states];
         const replayEffects = battleEventsToEffects(
           states.flatMap((step, index) => {
             const previousEventCount = index === 0
@@ -3284,14 +3300,24 @@ export function GameApp({
           aiReplayCompletionMessageRef.current = next.phase === "game-over"
             ? "敌方行动完成，正在结算演算结果。"
             : "敌方行动已结束，新的能量窗口已开启。";
-          setBattle(states[0]?.state ?? next);
+          // Start from the pre-command board. Each post-command snapshot is
+          // revealed only after that command's effects have had their full
+          // playback window, so damage/death animation never trails a board
+          // that has already jumped to the result.
+          setBattle(replayFrames[0]?.state ?? next);
           showBattleEffects(replayEffects, {
             lock: true,
             maxEffects: BATTLE_EFFECT_QUEUE_LIMIT,
           });
           let replayIndex = 1;
+          const replayStepDuration = (frame: (typeof replayFrames)[number]) => {
+            const beat = battleReplaySlowRef.current
+              ? BATTLE_EFFECT_SLOW_STEP_MS
+              : BATTLE_EFFECT_STANDARD_STEP_MS;
+            return Math.max(1, frame.visualEffectCount) * beat;
+          };
           const revealNext = () => {
-            const step = states[replayIndex];
+            const step = replayFrames[replayIndex];
             if (!step) {
               aiTurnTimerRef.current = null;
               aiReplayFinalStateRef.current = null;
@@ -3312,17 +3338,16 @@ export function GameApp({
               }
               return;
             }
-            setBattle(step.state);
             replayIndex += 1;
             aiTurnTimerRef.current = window.setTimeout(
-              revealNext,
-              battleReplaySlowRef.current ? BATTLE_EFFECT_SLOW_STEP_MS : BATTLE_EFFECT_STANDARD_STEP_MS,
+              () => {
+                setBattle(step.state);
+                revealNext();
+              },
+              replayStepDuration(step),
             );
           };
-          aiTurnTimerRef.current = window.setTimeout(
-            revealNext,
-            battleReplaySlowRef.current ? BATTLE_EFFECT_SLOW_STEP_MS : BATTLE_EFFECT_STANDARD_STEP_MS,
-          );
+          revealNext();
         } else {
           setBattle(next);
         }
@@ -5008,16 +5033,8 @@ function BattleSection({
     ...(pendingRuleCard?.onPlay ?? []),
     ...(pendingRuleCard?.combo ?? []),
   ];
-  const pendingNeedsWoundedTarget = pendingHeroPower
-    ? ["heal-friendly-hero", "heal-friendly-character", "heal-friendly-unit"].includes(battle.player.heroPower.effect.kind)
-    : pendingEffectsForTarget.some((effect) => effect.kind === "heal");
-  const cardCanTarget = (side: "player" | "ai", kind: "unit" | "hero", unit?: BattleUnit) => {
+  const cardCanTarget = (side: "player" | "ai", kind: "unit" | "hero") => {
     if (!pendingDefinition && !pendingHeroPower) return false;
-    const sideState = side === "player" ? battle.player : battle.ai;
-    const wounded = kind === "hero"
-      ? sideState.health > 0 && sideState.health < sideState.maxHealth
-      : Boolean(unit && unit.health > 0 && unit.health < unit.maxHealth);
-    if (pendingNeedsWoundedTarget && !wounded) return false;
     if (targetRule === "any-character") return true;
     if (targetRule === "enemy-character") return side === "ai";
     if (targetRule === "friendly-character") return side === "player";

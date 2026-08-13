@@ -9,14 +9,40 @@ class OnlineUnit {
     required this.card,
     required this.attack,
     required this.health,
+    required this.maxHealth,
+    this.keywords = const <String>[],
     this.hasAttacked = false,
+    this.attacksMade = 0,
+    this.summoningSick = false,
+    this.rushOnly = false,
+    this.stealthActive = false,
+    this.frozenTurns = 0,
+    this.stars = 1,
+    this.silenced = false,
   });
 
   final String instanceId;
   final CardDefinition card;
   final int attack;
+  final int maxHealth;
   int health;
-  bool hasAttacked;
+  final List<String> keywords;
+  final bool hasAttacked;
+  final int attacksMade;
+  final bool summoningSick;
+  final bool rushOnly;
+  final bool stealthActive;
+  final int frozenTurns;
+  final int stars;
+  final bool silenced;
+
+  bool get hasTaunt => keywords.contains('taunt');
+  bool get hasWindfury => keywords.contains('windfury');
+  bool get hasDivineShield => keywords.contains('shield');
+  bool get isFrozen => frozenTurns > 0;
+  int get attackLimit => hasWindfury ? 2 : 1;
+  bool get canAttack =>
+      attack > 0 && !summoningSick && !isFrozen && attacksMade < attackLimit;
 }
 
 /// Thin Flutter projection of the authoritative web-worker match.
@@ -157,6 +183,10 @@ class OnlineBattleController extends ChangeNotifier {
           target != null &&
           ((friendly ? localBoard : remoteBoard).contains(target));
       final heroIsValid = targetHero && targetType.contains('character');
+      if (unitIsValid && !friendly && target.stealthActive) {
+        _log('${card.name} 不能直接选择潜行单位。');
+        return;
+      }
       if ((needsUnit && !unitIsValid) ||
           (!needsUnit && !unitIsValid && !heroIsValid)) {
         _log('${card.name} 的目标不满足服务器规则。');
@@ -168,7 +198,10 @@ class OnlineBattleController extends ChangeNotifier {
       }
     }
     final wireTarget = targetHero
-        ? <String, dynamic>{'kind': 'hero', 'player': 0}
+        ? <String, dynamic>{
+            'kind': 'hero',
+            'player': targetType.startsWith('friendly') ? 0 : 1,
+          }
         : target == null
         ? null
         : <String, dynamic>{'kind': 'unit', 'entityId': target.instanceId};
@@ -178,7 +211,13 @@ class OnlineBattleController extends ChangeNotifier {
   }
 
   void attack(OnlineUnit unit) {
-    if (!canAct || unit.hasAttacked || !localBoard.contains(unit)) return;
+    if (!canAct ||
+        !unit.canAttack ||
+        unit.rushOnly ||
+        !localBoard.contains(unit) ||
+        _visibleRemoteTaunts.isNotEmpty) {
+      return;
+    }
     _sendCommand(<String, dynamic>{
       'type': 'attack',
       'attackerId': unit.instanceId,
@@ -189,9 +228,11 @@ class OnlineBattleController extends ChangeNotifier {
 
   void attackUnit(OnlineUnit attacker, OnlineUnit target) {
     if (!canAct ||
-        attacker.hasAttacked ||
+        !attacker.canAttack ||
         !localBoard.contains(attacker) ||
-        !remoteBoard.contains(target)) {
+        !remoteBoard.contains(target) ||
+        target.stealthActive ||
+        (_visibleRemoteTaunts.isNotEmpty && !target.hasTaunt)) {
       return;
     }
     _sendCommand(<String, dynamic>{
@@ -209,6 +250,14 @@ class OnlineBattleController extends ChangeNotifier {
         localWeaponCard == null ||
         localWeaponDurability <= 0 ||
         localHeroHasAttacked) {
+      return;
+    }
+    final taunts = _visibleRemoteTaunts;
+    if (target == null) {
+      if (taunts.isNotEmpty) return;
+    } else if (!remoteBoard.contains(target) ||
+        target.stealthActive ||
+        (taunts.isNotEmpty && !target.hasTaunt)) {
       return;
     }
     final command = <String, dynamic>{'type': 'hero-attack'};
@@ -242,8 +291,18 @@ class OnlineBattleController extends ChangeNotifier {
     }
     final command = <String, dynamic>{'type': 'hero-power'};
     final targetType = power.target ?? 'none';
+    if (target != null) {
+      final friendly = targetType.startsWith('friendly');
+      final board = friendly ? localBoard : remoteBoard;
+      if (!board.contains(target) || (!friendly && target.stealthActive)) {
+        return;
+      }
+    }
     if (targetType.contains('character') && targetHero) {
-      command['target'] = <String, dynamic>{'kind': 'hero', 'player': 0};
+      command['target'] = <String, dynamic>{
+        'kind': 'hero',
+        'player': targetType.startsWith('friendly') ? 0 : 1,
+      };
     } else if (target != null) {
       command['target'] = <String, dynamic>{
         'kind': 'unit',
@@ -511,17 +570,80 @@ class OnlineBattleController extends ChangeNotifier {
           final cardId = unit['cardId']?.toString();
           final definition = cardId == null ? null : card(cardId);
           if (definition == null) return null;
+          final hasAttacked = unit['hasAttacked'] == true;
+          final silenced = unit['silenced'] == true;
+          final rawKeywords = unit['keywords'];
+          final keywords = rawKeywords is List
+              ? rawKeywords.map((item) => item.toString()).toList()
+              : silenced
+              ? <String>[]
+              : List<String>.from(definition.keywords);
           return OnlineUnit(
             instanceId: unit['entityId']?.toString() ?? definition.id,
             card: definition,
             attack: (unit['attack'] as num?)?.toInt() ?? definition.attack ?? 0,
             health: (unit['health'] as num?)?.toInt() ?? definition.health ?? 1,
-            hasAttacked: unit['hasAttacked'] == true,
+            maxHealth:
+                (unit['maxHealth'] as num?)?.toInt() ?? definition.health ?? 1,
+            keywords: keywords,
+            hasAttacked: hasAttacked,
+            attacksMade:
+                (unit['attacksMade'] as num?)?.toInt() ?? (hasAttacked ? 1 : 0),
+            summoningSick: unit['summoningSick'] == true,
+            rushOnly: unit['rushOnly'] == true,
+            stealthActive: unit['stealthActive'] == true,
+            frozenTurns: (unit['frozenTurns'] as num?)?.toInt() ?? 0,
+            stars: (unit['stars'] as num?)?.toInt() ?? 1,
+            silenced: silenced,
           );
         })
         .whereType<OnlineUnit>()
         .toList();
   }
+
+  List<OnlineUnit> get _visibleRemoteTaunts => remoteBoard
+      .where((unit) => unit.health > 0 && !unit.stealthActive && unit.hasTaunt)
+      .toList(growable: false);
+
+  List<OnlineUnit> attackTargetsFor(OnlineUnit attacker) {
+    if (!localBoard.contains(attacker) || !attacker.canAttack) {
+      return const <OnlineUnit>[];
+    }
+    final visible = remoteBoard
+        .where((unit) => unit.health > 0 && !unit.stealthActive)
+        .toList(growable: false);
+    final taunts = visible
+        .where((unit) => unit.hasTaunt)
+        .toList(growable: false);
+    return taunts.isNotEmpty ? taunts : visible;
+  }
+
+  bool canAttackHeroWith(OnlineUnit attacker) =>
+      canAct &&
+      localBoard.contains(attacker) &&
+      attacker.canAttack &&
+      !attacker.rushOnly &&
+      _visibleRemoteTaunts.isEmpty;
+
+  bool hasLegalAttackTarget(OnlineUnit attacker) =>
+      attackTargetsFor(attacker).isNotEmpty || canAttackHeroWith(attacker);
+
+  List<OnlineUnit> get heroAttackTargets {
+    final visible = remoteBoard
+        .where((unit) => unit.health > 0 && !unit.stealthActive)
+        .toList(growable: false);
+    final taunts = visible
+        .where((unit) => unit.hasTaunt)
+        .toList(growable: false);
+    return taunts.isNotEmpty ? taunts : visible;
+  }
+
+  bool get canHeroAttackEnemyHero =>
+      canAct &&
+      localWeaponCard != null &&
+      localWeaponDurability > 0 &&
+      !localHeroHasAttacked &&
+      _visibleRemoteTaunts.isEmpty;
 
   void _log(String message) {
     logs.insert(0, message);

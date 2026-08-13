@@ -31,6 +31,20 @@ void main() {
       expect(catalog.any((card) => card.tradeable), isTrue);
       expect(catalog.any((card) => card.onTurnStart.isNotEmpty), isTrue);
       expect(catalog.any((card) => card.onSpellPlayed.isNotEmpty), isTrue);
+      expect(
+        catalog
+            .singleWhere((card) => card.id == 'sun-zenith-golem')
+            .onDeath
+            .where((effect) => effect['kind'] == 'summon'),
+        hasLength(1),
+      );
+      expect(
+        catalog
+            .singleWhere((card) => card.id == 'void-ink-storm')
+            .effect
+            .where((effect) => effect['kind'] == 'random-enemy-freeze'),
+        hasLength(1),
+      );
     },
   );
 
@@ -226,10 +240,23 @@ void main() {
       state.player.hand
         ..clear()
         ..add(tradeCard);
+      state.player.deck
+        ..clear()
+        ..add(filler);
       state.player.mana = 2;
       expect(controller.tradeCard(tradeCard), isTrue);
       expect(state.player.mana, 1);
-      expect(state.player.hand, isNotEmpty);
+      expect(state.player.hand.map((card) => card.id), [filler.id]);
+      expect(state.player.deck.map((card) => card.id), [tradeCard.id]);
+
+      state.player.hand
+        ..clear()
+        ..add(tradeCard);
+      state.player.deck.clear();
+      state.player.mana = 2;
+      expect(controller.tradeCard(tradeCard), isFalse);
+      expect(state.player.mana, 2);
+      expect(state.player.hand.map((card) => card.id), [tradeCard.id]);
       controller.dispose();
     },
   );
@@ -446,6 +473,167 @@ void main() {
     controller.dispose();
     client.dispose();
   });
+
+  test(
+    'online units project authoritative combat state and legal attacks',
+    () async {
+      final catalog = await loadCatalog();
+      final preferredDeck = catalog
+          .where((card) => card.faction == '曜光')
+          .take(15)
+          .expand((card) => [card.id, card.id])
+          .toList();
+      final client = _RecordingMultiplayerClient()
+        ..playerId = 'p-local'
+        ..isHost = true;
+      final controller = OnlineBattleController(
+        catalog: catalog,
+        client: client,
+        preferredDeckIds: preferredDeck,
+      );
+      client.lastEvent = MultiplayerEvent(
+        type: 'action',
+        playerId: 'p-local',
+        action: 'command',
+        payload: {
+          'state': {
+            'version': 8,
+            'turn': 4,
+            'phase': 'main',
+            'activePlayer': 0,
+            'result': null,
+            'players': [
+              {
+                'hero': {'health': 30, 'armor': 0},
+                'hand': ['sun-dawn-scout'],
+                'board': [
+                  {
+                    'entityId': 'windfury-ready',
+                    'cardId': 'void-nightfin-raider',
+                    'attack': 3,
+                    'health': 4,
+                    'maxHealth': 5,
+                    'keywords': ['windfury'],
+                    'hasAttacked': true,
+                    'attacksMade': 1,
+                    'summoningSick': false,
+                    'rushOnly': false,
+                    'frozenTurns': 0,
+                    'stars': 2,
+                  },
+                  {
+                    'entityId': 'frozen-unit',
+                    'cardId': 'sun-dawn-scout',
+                    'attack': 2,
+                    'health': 1,
+                    'maxHealth': 1,
+                    'keywords': ['charge'],
+                    'hasAttacked': false,
+                    'attacksMade': 0,
+                    'summoningSick': false,
+                    'frozenTurns': 1,
+                  },
+                  {
+                    'entityId': 'rush-unit',
+                    'cardId': 'sun-horizon-hunter',
+                    'attack': 3,
+                    'health': 2,
+                    'maxHealth': 2,
+                    'keywords': ['rush'],
+                    'hasAttacked': false,
+                    'attacksMade': 0,
+                    'summoningSick': false,
+                    'rushOnly': true,
+                    'frozenTurns': 0,
+                  },
+                ],
+                'mana': 5,
+                'maxMana': 5,
+              },
+              {
+                'hero': {'health': 30, 'armor': 0},
+                'hand': ['__hidden-card__'],
+                'board': [
+                  {
+                    'entityId': 'stealth-target',
+                    'cardId': 'astral-eclipse-stalker',
+                    'attack': 2,
+                    'health': 3,
+                    'maxHealth': 3,
+                    'keywords': ['stealth'],
+                    'stealthActive': true,
+                  },
+                  {
+                    'entityId': 'taunt-target',
+                    'cardId': 'neutral-caravan-guard',
+                    'attack': 1,
+                    'health': 4,
+                    'maxHealth': 4,
+                    'keywords': ['taunt'],
+                  },
+                ],
+                'mana': 4,
+                'maxMana': 4,
+              },
+            ],
+          },
+        },
+      );
+      client.eventSequence = 1;
+      client.notifyListeners();
+
+      final windfury = controller.localBoard[0];
+      final frozen = controller.localBoard[1];
+      final rush = controller.localBoard[2];
+      final stealth = controller.remoteBoard[0];
+      final taunt = controller.remoteBoard[1];
+      expect(windfury.hasAttacked, isTrue);
+      expect(windfury.attacksMade, 1);
+      expect(windfury.hasWindfury, isTrue);
+      expect(windfury.maxHealth, 5);
+      expect(windfury.stars, 2);
+      expect(windfury.canAttack, isTrue);
+      expect(frozen.canAttack, isFalse);
+      expect(stealth.stealthActive, isTrue);
+      expect(controller.attackTargetsFor(windfury), [taunt]);
+      expect(controller.canAttackHeroWith(windfury), isFalse);
+      expect(controller.hasLegalAttackTarget(rush), isTrue);
+
+      controller.attack(windfury);
+      controller.attackUnit(windfury, stealth);
+      controller.attack(rush);
+      expect(client.actions, isEmpty);
+
+      controller.attackUnit(windfury, taunt);
+      expect(client.actions, hasLength(1));
+      final payload = client.actions.single['payload'] as Map<String, dynamic>;
+      final command = payload['command'] as Map<String, dynamic>;
+      expect(command['type'], 'attack');
+      expect(command['attackerId'], 'windfury-ready');
+      expect(
+        (command['target'] as Map<String, dynamic>)['entityId'],
+        'taunt-target',
+      );
+
+      client.actions.clear();
+      final directDamage = catalog.singleWhere(
+        (card) => card.id == 'sun-focused-ray',
+      );
+      controller.hand = [directDamage];
+      controller.playCard(directDamage, targetHero: true);
+      final damagePayload =
+          client.actions.single['payload'] as Map<String, dynamic>;
+      final damageCommand = damagePayload['command'] as Map<String, dynamic>;
+      expect(damageCommand['type'], 'play-card');
+      expect((damageCommand['target'] as Map<String, dynamic>)['player'], 1);
+
+      client.actions.clear();
+      controller.remoteBoard = [];
+      expect(controller.hasLegalAttackTarget(rush), isFalse);
+      controller.dispose();
+      client.dispose();
+    },
+  );
 
   test('battle rules enforce taunt, shield and hero power', () {
     CardDefinition unit(
@@ -953,6 +1141,55 @@ void main() {
   });
 
   test(
+    'mobile Windfury freeze consumes the remaining attack this turn',
+    () async {
+      final card = CardDefinition(
+        id: 'windfury-freeze-rule-unit',
+        name: '风怒冻结规则单位',
+        description: '测试风怒冻结时序',
+        faction: '中立',
+        type: 'unit',
+        cost: 1,
+        rarity: '普通',
+        attack: 2,
+        health: 4,
+        keywords: ['windfury'],
+      );
+      final controller = GameController()
+        ..catalog = [card]
+        ..deckIds.addAll(List.filled(30, card.id));
+      controller.startBattle();
+      controller.confirmMulligan();
+      final state = controller.battle!;
+      state.ai.hand.clear();
+      state.ai.board.clear();
+      state.ai.deck.clear();
+      final frozen = BattleUnit(
+        instanceId: 'windfury-freeze-target',
+        card: card,
+        owner: 'player',
+        attack: 2,
+        health: 4,
+        maxHealth: 4,
+        summoningSick: false,
+        attacksMade: 1,
+        hasAttacked: true,
+        frozenTurns: 1,
+      );
+      state.player.board
+        ..clear()
+        ..add(frozen);
+
+      await controller.endTurn();
+      expect(frozen.frozenTurns, 0);
+      expect(frozen.freezeBlocked, isFalse);
+      expect(frozen.attacksMade, 0);
+      expect(frozen.canAttack, isTrue);
+      controller.dispose();
+    },
+  );
+
+  test(
     'discover pauses the match and secret counters an enemy spell',
     () async {
       final choice = CardDefinition(
@@ -1130,4 +1367,16 @@ void main() {
     await tester.pumpWidget(AstraProtocolApp(controller: GameController()));
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
   });
+}
+
+class _RecordingMultiplayerClient extends MultiplayerClient {
+  final List<Map<String, Object?>> actions = <Map<String, Object?>>[];
+
+  @override
+  void sendAction(String action, [Map<String, dynamic>? payload]) {
+    actions.add(<String, Object?>{
+      'action': action,
+      'payload': payload ?? <String, dynamic>{},
+    });
+  }
 }

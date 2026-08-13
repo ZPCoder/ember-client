@@ -3574,9 +3574,7 @@ class OnlineBattlePanel extends StatelessWidget {
               for (final unit in units)
                 ListTile(
                   leading: Icon(
-                    unit.card.keywords.contains('taunt')
-                        ? Icons.shield
-                        : Icons.blur_on,
+                    unit.hasTaunt ? Icons.shield : Icons.blur_on,
                     color: const Color(0xFFE7BD7A),
                   ),
                   title: Text(unit.card.name),
@@ -3599,7 +3597,11 @@ class OnlineBattlePanel extends StatelessWidget {
       return;
     }
     final friendly = targetType.startsWith('friendly');
-    final units = friendly ? controller.localBoard : controller.remoteBoard;
+    final units = friendly
+        ? controller.localBoard
+        : controller.remoteBoard
+              .where((unit) => !unit.stealthActive)
+              .toList(growable: false);
     final allowHero = targetType.contains('character');
     final choice = await _pickTarget(
       context,
@@ -3613,12 +3615,14 @@ class OnlineBattlePanel extends StatelessWidget {
   }
 
   Future<void> _attack(BuildContext context, OnlineUnit attacker) async {
-    if (!controller.canAct || attacker.hasAttacked) return;
+    if (!controller.canAct || !controller.hasLegalAttackTarget(attacker)) {
+      return;
+    }
     final choice = await _pickTarget(
       context,
       title: '选择 ${attacker.card.name} 的攻击目标',
-      units: controller.remoteBoard,
-      allowHero: true,
+      units: controller.attackTargetsFor(attacker),
+      allowHero: controller.canAttackHeroWith(attacker),
       friendly: false,
     );
     if (!context.mounted || choice == null) return;
@@ -3634,8 +3638,8 @@ class OnlineBattlePanel extends StatelessWidget {
     final choice = await _pickTarget(
       context,
       title: '选择英雄攻击目标',
-      units: controller.remoteBoard,
-      allowHero: true,
+      units: controller.heroAttackTargets,
+      allowHero: controller.canHeroAttackEnemyHero,
       friendly: false,
     );
     if (!context.mounted || choice == null) return;
@@ -3652,7 +3656,11 @@ class OnlineBattlePanel extends StatelessWidget {
       choice = await _pickTarget(
         context,
         title: '选择「${power.name}」的目标',
-        units: friendly ? controller.localBoard : controller.remoteBoard,
+        units: friendly
+            ? controller.localBoard
+            : controller.remoteBoard
+                  .where((unit) => !unit.stealthActive)
+                  .toList(growable: false),
         allowHero: targetType.contains('character'),
         friendly: friendly,
       );
@@ -3854,6 +3862,7 @@ class OnlineBattlePanel extends StatelessWidget {
               _OnlineBoardRow(
                 title: '你的战场',
                 units: controller.localBoard,
+                controller: controller,
                 onAttack: controller.canAct
                     ? (unit) => _attack(context, unit)
                     : null,
@@ -4121,12 +4130,14 @@ class _OnlineBoardRow extends StatelessWidget {
     required this.title,
     required this.units,
     this.enemy = false,
+    this.controller,
     this.onAttack,
   });
 
   final String title;
   final List<OnlineUnit> units;
   final bool enemy;
+  final OnlineBattleController? controller;
   final ValueChanged<OnlineUnit>? onAttack;
 
   @override
@@ -4162,8 +4173,12 @@ class _OnlineBoardRow extends StatelessWidget {
                 separatorBuilder: (_, _) => const SizedBox(width: 8),
                 itemBuilder: (context, index) {
                   final unit = units[index];
+                  final canAttack =
+                      onAttack != null &&
+                      unit.canAttack &&
+                      (controller?.hasLegalAttackTarget(unit) ?? false);
                   return GestureDetector(
-                    onTap: onAttack == null ? null : () => onAttack!(unit),
+                    onTap: canAttack ? () => onAttack!(unit) : null,
                     child: Container(
                       width: 136,
                       padding: const EdgeInsets.all(8),
@@ -4171,9 +4186,9 @@ class _OnlineBoardRow extends StatelessWidget {
                         color: const Color(0xFF162A24),
                         borderRadius: BorderRadius.circular(9),
                         border: Border.all(
-                          color: unit.hasAttacked
-                              ? const Color(0xFF29403A)
-                              : const Color(0xFF69CFC3),
+                          color: canAttack
+                              ? const Color(0xFF69CFC3)
+                              : const Color(0xFF29403A),
                         ),
                       ),
                       child: Column(
@@ -4189,8 +4204,16 @@ class _OnlineBoardRow extends StatelessWidget {
                             ),
                           ),
                           const Spacer(),
+                          if (unit.isFrozen || unit.summoningSick)
+                            Text(
+                              unit.isFrozen ? '冻结中' : '等待下回合',
+                              style: const TextStyle(
+                                color: Color(0xFF65746D),
+                                fontSize: 9,
+                              ),
+                            ),
                           Text(
-                            '${unit.attack} ⚔   ${unit.health} ◆',
+                            '${unit.attack} ⚔   ${unit.health}/${unit.maxHealth} ◆',
                             style: const TextStyle(
                               color: Color(0xFFE7BD7A),
                               fontSize: 10,
