@@ -155,6 +155,8 @@ type GamePayload = {
   task?: PlayerTask;
   level?: number;
   reward?: { title: string; kind: "gold" | "pack" | "dust"; amount: number };
+  displayName?: string;
+  friendId?: string;
   cardId?: string;
   amount?: number;
   kind?: "craft" | "disenchant";
