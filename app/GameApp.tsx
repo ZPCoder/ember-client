@@ -16,6 +16,9 @@ import {
   DEFAULT_OPPONENT_DECK,
   DEFAULT_STARTER_DECK,
   KEYWORD_DEFINITIONS,
+  REWARD_TRACK,
+  craftCost,
+  disenchantValue,
   TRAIT_DEFINITIONS,
   TRAIT_ORDER,
   applyCommand,
@@ -128,9 +131,11 @@ type PlayerSnapshot = {
     weekKey: string;
     dailyRerollsRemaining: number;
     packsBoughtToday: number;
+    aiRewardsToday?: number;
   };
   progression?: { xp: number; level: number };
   ladder?: { rating: number; tier: string; stars: number; wins: number; losses: number };
+  rewardTrack?: { claimedLevels: number[] };
   recentMatches: RecentMatch[];
   stats: { wins: number; losses: number; matchesPlayed: number };
   updatedAt: string;
@@ -145,6 +150,11 @@ type GamePayload = {
   rewardGold?: number;
   costGold?: number;
   task?: PlayerTask;
+  level?: number;
+  reward?: { title: string; kind: "gold" | "pack" | "dust"; amount: number };
+  cardId?: string;
+  amount?: number;
+  kind?: "craft" | "disenchant";
   savedDeck?: SavedDeck;
   localFallback?: boolean;
 };
@@ -624,8 +634,9 @@ function makeDemoPlayer(identity?: {
         claimed: false,
       },
     ],
-    taskCycle: { dayKey: new Date().toISOString().slice(0, 10), weekKey: "demo", dailyRerollsRemaining: 1, packsBoughtToday: 0 },
+    taskCycle: { dayKey: new Date().toISOString().slice(0, 10), weekKey: "demo", dailyRerollsRemaining: 1, packsBoughtToday: 0, aiRewardsToday: 0 },
     progression: { xp: 850, level: 1 },
+    rewardTrack: { claimedLevels: [] },
     ladder: { rating: 1000, tier: "白银", stars: 0, wins: 7, losses: 3 },
     recentMatches: [
       {
@@ -730,6 +741,55 @@ function applyLocalAction(
     return { ok: true, player, task: tasks[taskIndex], localFallback: true };
   }
 
+  if (action === "craft_card" || action === "disenchant_card") {
+    const cardId = asString(body.cardId);
+    const card = CARD_BY_ID.get(cardId);
+    if (!card) throw new Error("卡牌不存在。");
+    if (action === "craft_card") {
+      const cost = craftCost(card.rarity as "普通" | "稀有" | "史诗" | "传说");
+      if (current.currencies.dust < cost) throw new Error("星尘不足，无法制作这张卡。");
+      const player = {
+        ...current,
+        currencies: { ...current.currencies, dust: current.currencies.dust - cost },
+        collection: { ...current.collection, [cardId]: (current.collection[cardId] ?? 0) + 1 },
+        updatedAt: now,
+      };
+      return { ok: true, player, cardId, amount: cost, kind: "craft", localFallback: true };
+    }
+    const owned = current.collection[cardId] ?? 0;
+    const used = current.decks.reduce((sum, deck) => sum + deck.cardIds.filter((id) => id === cardId).length, 0);
+    if (owned <= used) throw new Error("卡牌正在卡组中使用，至少保留卡组所需数量。");
+    const value = disenchantValue(card.rarity as "普通" | "稀有" | "史诗" | "传说");
+    const player = {
+      ...current,
+      currencies: { ...current.currencies, dust: current.currencies.dust + value },
+      collection: { ...current.collection, [cardId]: owned - 1 },
+      updatedAt: now,
+    };
+    return { ok: true, player, cardId, amount: value, kind: "disenchant", localFallback: true };
+  }
+
+  if (action === "claim_reward") {
+    const level = Number(body.level);
+    const reward = REWARD_TRACK.find((item) => item.level === level);
+    if (!reward) throw new Error("奖励等级不存在。");
+    const claimed = current.rewardTrack?.claimedLevels ?? [];
+    if ((current.progression?.level ?? 1) < level) throw new Error("奖励等级尚未解锁。");
+    if (claimed.includes(level)) throw new Error("该奖励已经领取。");
+    const player = {
+      ...current,
+      currencies: {
+        ...current.currencies,
+        gold: current.currencies.gold + (reward.kind === "gold" ? reward.amount : 0),
+        dust: current.currencies.dust + (reward.kind === "dust" ? reward.amount : 0),
+      },
+      packsAvailable: current.packsAvailable + (reward.kind === "pack" ? reward.amount : 0),
+      rewardTrack: { claimedLevels: [...claimed, level].sort((a, b) => a - b) },
+      updatedAt: now,
+    };
+    return { ok: true, player, level, reward, localFallback: true };
+  }
+
   if (action === "save_deck") {
     const deckInput = (body.deck ?? {}) as Record<string, unknown>;
     const id = asString(deckInput.id) || makeId("local-deck");
@@ -795,7 +855,9 @@ function applyLocalAction(
     if (body.result !== "win" && body.result !== "loss") throw new Error("对局结果无效。");
     if (body.mode !== "ai" && body.mode !== "pvp") throw new Error("对战模式无效。");
     const result = body.result;
-    const rewardGold = result === "win" ? 60 : 20;
+    const cycle = current.taskCycle ?? { dayKey: now.slice(0, 10), weekKey: "demo", dailyRerollsRemaining: 1, packsBoughtToday: 0, aiRewardsToday: 0 };
+    const aiRewardEligible = body.mode !== "ai" || (cycle.aiRewardsToday ?? 0) < 20;
+    const rewardGold = aiRewardEligible ? result === "win" ? 60 : 20 : 0;
     const match: RecentMatch = {
       id: makeId("local-match"),
       result,
@@ -827,8 +889,12 @@ function applyLocalAction(
         matchesPlayed: current.stats.matchesPlayed + 1,
       },
       progression: {
-        xp: (current.progression?.xp ?? 0) + 100,
-        level: Math.floor(((current.progression?.xp ?? 0) + 100) / 1000) + 1,
+        xp: (current.progression?.xp ?? 0) + (aiRewardEligible ? 100 : 0),
+        level: Math.floor(((current.progression?.xp ?? 0) + (aiRewardEligible ? 100 : 0)) / 1000) + 1,
+      },
+      taskCycle: {
+        ...cycle,
+        aiRewardsToday: body.mode === "ai" ? Math.min(20, (cycle.aiRewardsToday ?? 0) + 1) : cycle.aiRewardsToday,
       },
       ladder: body.mode === "pvp"
         ? (() => {
@@ -2765,6 +2831,31 @@ export function GameApp({
     }
   };
 
+  const changeCardDust = async (action: "craft_card" | "disenchant_card", card: CatalogCard) => {
+    const payload = await postAction(action, {
+      idempotencyKey: makeId(`${action}-${card.id}`),
+      cardId: card.id,
+    });
+    if (payload) {
+      setNotice({
+        tone: payload.localFallback ? "info" : "success",
+        text: action === "craft_card"
+          ? `已制作「${card.name}」，消耗 ${payload.amount ?? craftCost(card.rarity as "普通" | "稀有" | "史诗" | "传说")} 星尘。`
+          : `已分解「${card.name}」，获得 ${payload.amount ?? disenchantValue(card.rarity as "普通" | "稀有" | "史诗" | "传说")} 星尘。`,
+      });
+    }
+  };
+
+  const claimReward = async (level: number) => {
+    const payload = await postAction("claim_reward", {
+      idempotencyKey: makeId(`reward-${level}`),
+      level,
+    });
+    if (payload) {
+      setNotice({ tone: payload.localFallback ? "info" : "success", text: `已领取 Lv.${level} 奖励：${payload.reward?.title ?? "奖励"}。` });
+    }
+  };
+
   const claimTask = async (task: PlayerTask) => {
     if (task.claimed || task.progress < task.target) return;
     const payload = await postAction("claim_task", {
@@ -3578,10 +3669,13 @@ export function GameApp({
       ...(onlineMatch && pvp.state.role ? { pvpPlayer: pvp.state.role === "host" ? 0 : 1 } : {}),
     }).then((payload) => {
       if (payload) {
-        setNotice({
-          tone: payload.localFallback ? "info" : "success",
-          text: `对局已${payload.localFallback ? "归入本地演示档案" : "归档"}，获得 ${result === "win" ? 60 : 20} 金币，任务进度已同步。`,
-        });
+      const rewardGold = payload.rewardGold ?? (result === "win" ? 60 : 20);
+      setNotice({
+        tone: payload.localFallback ? "info" : "success",
+        text: rewardGold > 0
+          ? `对局已${payload.localFallback ? "归入本地演示档案" : "归档"}，获得 ${rewardGold} 金币，任务进度已同步。`
+          : "对局已归档；今日演算奖励已达上限，本局仅计入战绩。",
+      });
       }
     });
   }, [battleView, onlineMatch, onlineOpponent, postAction, pvp.state.role]);
@@ -3768,6 +3862,7 @@ export function GameApp({
                 <CollectionSection
                   cards={filteredCards}
                   collection={player.collection}
+                  dust={player.currencies.dust}
                   deckCounts={deckCounts}
                   search={search}
                   faction={factionFilter}
@@ -3785,6 +3880,9 @@ export function GameApp({
                   onTrait={setTraitFilter}
                   onKeyword={setKeywordFilter}
                   onAdd={addCard}
+                  apiBusy={apiBusy}
+                  onCraft={(card) => void changeCardDust("craft_card", card)}
+                  onDisenchant={(card) => void changeCardDust("disenchant_card", card)}
                   onOpenDeck={() => switchSection("deck")}
                 />
               )}
@@ -3882,6 +3980,8 @@ export function GameApp({
                   isDemo={isDemo}
                   resetting={apiBusy === "reset_demo"}
                   onResetDemo={() => void resetDemoProfile()}
+                  onClaimReward={(level) => void claimReward(level)}
+                  rewardBusy={apiBusy === "claim_reward"}
                 />
               )}
             </>
@@ -4182,6 +4282,7 @@ function RecentMatches({ matches }: { matches: RecentMatch[] }) {
 function CollectionSection({
   cards,
   collection,
+  dust,
   deckCounts,
   search,
   faction,
@@ -4199,10 +4300,14 @@ function CollectionSection({
   onTrait,
   onKeyword,
   onAdd,
+  apiBusy,
+  onCraft,
+  onDisenchant,
   onOpenDeck,
 }: {
   cards: CatalogCard[];
   collection: Record<string, number>;
+  dust: number;
   deckCounts: Map<string, number>;
   search: string;
   faction: string;
@@ -4220,6 +4325,9 @@ function CollectionSection({
   onTrait: (value: string) => void;
   onKeyword: (value: string) => void;
   onAdd: (card: CatalogCard) => void;
+  apiBusy: string | null;
+  onCraft: (card: CatalogCard) => void;
+  onDisenchant: (card: CatalogCard) => void;
   onOpenDeck: () => void;
 }) {
   const filterSignature = `${search}|${faction}|${type}|${rarity}|${trait}|${keyword}`;
@@ -4331,16 +4439,42 @@ function CollectionSection({
       {cards.length > 0 ? (
         <>
           <div className="card-grid">
-            {visibleCards.map((card) => (
-              <CardTile
-                key={card.id}
-                card={card}
-                owned={collection[card.id] ?? 0}
-                countInDeck={deckCounts.get(card.id) ?? 0}
-                action={() => onAdd(card)}
-                actionLabel={`将${card.name}加入当前卡组`}
-              />
-            ))}
+            {visibleCards.map((card) => {
+              const owned = collection[card.id] ?? 0;
+              const inDeck = deckCounts.get(card.id) ?? 0;
+              const rarity = card.rarity === "common" ? "普通" : card.rarity === "rare" ? "稀有" : card.rarity === "epic" ? "史诗" : "传说";
+              const craftPrice = craftCost(rarity);
+              const dustValue = disenchantValue(rarity);
+              return (
+                <div className="collection-card-wrap" key={card.id}>
+                  <CardTile
+                    card={card}
+                    owned={owned}
+                    countInDeck={inDeck}
+                    action={() => onAdd(card)}
+                    actionLabel={`将${card.name}加入当前卡组`}
+                  />
+                  <div className="collection-card-actions">
+                    <button
+                      className="button button--tiny button--outline"
+                      type="button"
+                      disabled={apiBusy !== null || dust < craftPrice}
+                      onClick={() => onCraft(card)}
+                    >
+                      制作 · {craftPrice} ✦
+                    </button>
+                    <button
+                      className="button button--tiny button--muted"
+                      type="button"
+                      disabled={apiBusy !== null || owned <= inDeck}
+                      onClick={() => onDisenchant(card)}
+                    >
+                      分解 · +{dustValue} ✦
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
           {visibleCount < cards.length && (
             <div className="collection-load-more">
@@ -6003,12 +6137,16 @@ function OperationsSection({
   isDemo,
   resetting,
   onResetDemo,
+  onClaimReward,
+  rewardBusy,
 }: {
   player: PlayerSnapshot;
   winRate: number;
   isDemo: boolean;
   resetting: boolean;
   onResetDemo: () => void;
+  onClaimReward: (level: number) => void;
+  rewardBusy: boolean;
 }) {
   const metrics = [
     { label: "内测活跃指挥官", value: "486", delta: "+12.4%", icon: "user" as IconName },
@@ -6045,7 +6183,35 @@ function OperationsSection({
           <div><span>奖励经验</span><strong>{(player.progression?.xp ?? 0).toLocaleString("zh-CN")} XP</strong><small>每 1,000 XP 提升 1 级</small></div>
           <div><span>日常重随</span><strong>{player.taskCycle?.dailyRerollsRemaining ?? 0} 次</strong><small>每日 UTC 00:00 刷新</small></div>
           <div><span>卡包商店</span><strong>{player.taskCycle?.packsBoughtToday ?? 0} / 10</strong><small>100 金币 / 个，日限购 10 个</small></div>
+          <div><span>演算奖励</span><strong>{player.taskCycle?.aiRewardsToday ?? 0} / 20</strong><small>每日最多 20 场 AI 奖励，防止刷资源</small></div>
           <div><span>天梯段位</span><strong>{player.ladder?.tier ?? "青铜"} · {player.ladder?.rating ?? 1000}</strong><small>仅联机对战影响段位</small></div>
+        </div>
+      </section>
+
+      <section className="panel reward-track-panel" aria-labelledby="reward-track-title">
+        <div className="panel__header">
+          <div><span className="panel__eyebrow">FREE REWARD TRACK</span><h2 id="reward-track-title">奖励轨道</h2></div>
+          <span className="panel__counter">{player.progression?.xp ?? 0} XP</span>
+        </div>
+        <div className="reward-track-list">
+          {REWARD_TRACK.map((reward) => {
+            const unlocked = (player.progression?.level ?? 1) >= reward.level;
+            const claimed = player.rewardTrack?.claimedLevels.includes(reward.level) ?? false;
+            return (
+              <article className={`reward-track-item ${claimed ? "is-claimed" : unlocked ? "is-ready" : "is-locked"}`} key={reward.level}>
+                <span className="reward-track-item__level">{reward.level}</span>
+                <div><strong>{reward.title}</strong><small>{reward.kind === "gold" ? "金币" : reward.kind === "pack" ? "档案包" : "星尘"} × {reward.amount}</small></div>
+                <button
+                  className="button button--small button--accent"
+                  type="button"
+                  disabled={!unlocked || claimed || rewardBusy}
+                  onClick={() => onClaimReward(reward.level)}
+                >
+                  {claimed ? "已领取" : unlocked ? "领取" : `Lv.${reward.level}`}
+                </button>
+              </article>
+            );
+          })}
         </div>
       </section>
 

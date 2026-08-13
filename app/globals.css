@@ -5040,6 +5040,65 @@ button.hero-core {
   color: var(--green);
 }
 
+.reward-track-panel {
+  margin-bottom: 17px;
+}
+
+.reward-track-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  padding: 0 18px 18px;
+}
+
+.reward-track-item {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 58px;
+  padding: 8px;
+  border: 1px solid rgba(120, 190, 181, 0.16);
+  border-radius: 9px;
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.reward-track-item.is-ready {
+  border-color: rgba(228, 109, 63, 0.5);
+  background: rgba(228, 109, 63, 0.08);
+}
+
+.reward-track-item.is-claimed {
+  opacity: 0.6;
+}
+
+.reward-track-item__level {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--cream);
+  background: rgba(113, 181, 173, 0.2);
+  font-size: 10px;
+}
+
+.reward-track-item strong,
+.reward-track-item small {
+  display: block;
+}
+
+.reward-track-item strong {
+  color: var(--cream);
+  font-size: 10px;
+}
+
+.reward-track-item small {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 8px;
+}
+
 .profile-chip__auth {
   margin-left: 8px;
   padding-left: 8px;
@@ -5050,6 +5109,26 @@ button.hero-core {
   background: none;
   border: 0;
   cursor: pointer;
+}
+
+.collection-card-wrap {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+}
+
+.collection-card-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+}
+
+.button--tiny {
+  min-height: 25px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  font-size: 8px;
+  white-space: nowrap;
 }
 
 .ops-metric {
@@ -5834,7 +5913,8 @@ button.hero-core {
 
   .metric-grid,
   .ops-metrics,
-  .ops-account-grid {
+  .ops-account-grid,
+  .reward-track-list {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -6089,6 +6169,10 @@ button.hero-core {
 
 @media (max-width: 640px) {
   .ops-account-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .reward-track-list {
     grid-template-columns: 1fr;
   }
 
