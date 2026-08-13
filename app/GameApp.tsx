@@ -111,6 +111,7 @@ type RecentMatch = {
   id: string;
   result: "win" | "loss";
   mode: string;
+  format?: "ranked" | "casual";
   opponent: string;
   rewardGold: number;
   createdAt: string;
@@ -132,9 +133,10 @@ type PlayerSnapshot = {
     dailyRerollsRemaining: number;
     packsBoughtToday: number;
     aiRewardsToday?: number;
+    weeklyFreePackClaimed?: boolean;
   };
   progression?: { xp: number; level: number };
-  ladder?: { rating: number; tier: string; stars: number; wins: number; losses: number };
+  ladder?: { seasonKey?: string; rating: number; tier: string; stars: number; wins: number; losses: number; highestRating?: number };
   rewardTrack?: { claimedLevels: number[] };
   recentMatches: RecentMatch[];
   stats: { wins: number; losses: number; matchesPlayed: number };
@@ -157,6 +159,14 @@ type GamePayload = {
   kind?: "craft" | "disenchant";
   savedDeck?: SavedDeck;
   localFallback?: boolean;
+};
+
+type AiMatchProofPayload = {
+  seed: number;
+  startingPlayer: 0 | 1;
+  playerDeck: string[];
+  opponentArchetypeId: string;
+  commands: BattleCommand[];
 };
 
 type BattleUnit = {
@@ -233,6 +243,7 @@ type BattleView = {
 };
 
 type PvpRole = "host" | "guest";
+type PvpFormat = "ranked" | "casual";
 type PvpStatus = "offline" | "connecting" | "connected" | "room" | "ready" | "playing" | "error";
 
 type PvpState = {
@@ -241,6 +252,7 @@ type PvpState = {
   playerId: string | null;
   roomCode: string | null;
   role: PvpRole | null;
+  format: PvpFormat;
   peerName: string | null;
   localReady: boolean;
   remoteReady: boolean;
@@ -249,8 +261,8 @@ type PvpState = {
 };
 
 type PvpIncoming =
-  | { id: number; type: "match-start"; payload: { seed: number; startingPlayer?: 0 | 1; deck?: string[]; decks?: [string[], string[]]; matchToken?: string } }
-  | { id: number; type: "match-sync"; payload: { state: MatchState; matchToken?: string } }
+  | { id: number; type: "match-start"; payload: { seed: number; startingPlayer?: 0 | 1; deck?: string[]; decks?: [string[], string[]]; matchToken?: string; format?: PvpFormat } }
+  | { id: number; type: "match-sync"; payload: { state: MatchState; matchToken?: string; format?: PvpFormat } }
   | { id: number; type: "command"; command: BattleCommand; state?: MatchState; matchToken?: string }
   | { id: number; type: "room-reset" }
   | { id: number; type: "rejected"; message: string; resync?: boolean };
@@ -634,10 +646,10 @@ function makeDemoPlayer(identity?: {
         claimed: false,
       },
     ],
-    taskCycle: { dayKey: new Date().toISOString().slice(0, 10), weekKey: "demo", dailyRerollsRemaining: 1, packsBoughtToday: 0, aiRewardsToday: 0 },
+    taskCycle: { dayKey: new Date().toISOString().slice(0, 10), weekKey: "demo", dailyRerollsRemaining: 1, packsBoughtToday: 0, aiRewardsToday: 0, weeklyFreePackClaimed: false },
     progression: { xp: 850, level: 1 },
     rewardTrack: { claimedLevels: [] },
-    ladder: { rating: 1000, tier: "白银", stars: 0, wins: 7, losses: 3 },
+    ladder: { seasonKey: new Date().toISOString().slice(0, 7), rating: 1000, tier: "白银", stars: 0, wins: 7, losses: 3, highestRating: 1000 },
     recentMatches: [
       {
         id: "demo-match-1",
@@ -704,6 +716,13 @@ function applyLocalAction(
       openedCards: Array.from(openedMap, ([cardId, count]) => ({ cardId, count })),
       localFallback: true,
     };
+  }
+
+  if (action === "claim_weekly_pack") {
+    const cycle = current.taskCycle ?? { dayKey: now.slice(0, 10), weekKey: "demo", dailyRerollsRemaining: 1, packsBoughtToday: 0, weeklyFreePackClaimed: false };
+    if (cycle.weeklyFreePackClaimed) throw new Error("本周免费卡包已经领取。");
+    const player = { ...current, packsAvailable: current.packsAvailable + 1, taskCycle: { ...cycle, weeklyFreePackClaimed: true }, updatedAt: now };
+    return { ok: true, player, localFallback: true };
   }
 
   if (action === "buy_pack") {
@@ -855,13 +874,14 @@ function applyLocalAction(
     if (body.result !== "win" && body.result !== "loss") throw new Error("对局结果无效。");
     if (body.mode !== "ai" && body.mode !== "pvp") throw new Error("对战模式无效。");
     const result = body.result;
-    const cycle = current.taskCycle ?? { dayKey: now.slice(0, 10), weekKey: "demo", dailyRerollsRemaining: 1, packsBoughtToday: 0, aiRewardsToday: 0 };
+    const cycle = current.taskCycle ?? { dayKey: now.slice(0, 10), weekKey: "demo", dailyRerollsRemaining: 1, packsBoughtToday: 0, aiRewardsToday: 0, weeklyFreePackClaimed: false };
     const aiRewardEligible = body.mode !== "ai" || (cycle.aiRewardsToday ?? 0) < 20;
     const rewardGold = aiRewardEligible ? result === "win" ? 60 : 20 : 0;
     const match: RecentMatch = {
       id: makeId("local-match"),
       result,
       mode: body.mode,
+      ...(body.mode === "pvp" ? { format: body.format === "casual" ? "casual" : "ranked" } : {}),
       opponent: asString(body.opponent, "镜像演算体 K-7"),
       rewardGold,
       createdAt: now,
@@ -896,9 +916,9 @@ function applyLocalAction(
         ...cycle,
         aiRewardsToday: body.mode === "ai" ? Math.min(20, (cycle.aiRewardsToday ?? 0) + 1) : cycle.aiRewardsToday,
       },
-      ladder: body.mode === "pvp"
+      ladder: body.mode === "pvp" && body.format !== "casual"
         ? (() => {
-            const existing = current.ladder ?? { rating: 1000, tier: "白银", stars: 0, wins: 0, losses: 0 };
+            const existing = current.ladder ?? { seasonKey: now.slice(0, 7), rating: 1000, tier: "白银", stars: 0, wins: 0, losses: 0, highestRating: 1000 };
             const rating = Math.max(0, existing.rating + (result === "win" ? 25 : -20));
             return {
               rating,
@@ -906,6 +926,8 @@ function applyLocalAction(
               stars: Math.floor((rating % 200) / 50),
               wins: existing.wins + (result === "win" ? 1 : 0),
               losses: existing.losses + (result === "loss" ? 1 : 0),
+              seasonKey: existing.seasonKey ?? now.slice(0, 7),
+              highestRating: Math.max(existing.highestRating ?? existing.rating, rating),
             };
           })()
         : current.ladder,
@@ -1803,6 +1825,7 @@ function useWebPvp(displayName: string) {
     playerId: null,
     roomCode: null,
     role: null,
+    format: "ranked",
     peerName: null,
     localReady: false,
     remoteReady: false,
@@ -1845,6 +1868,7 @@ function useWebPvp(displayName: string) {
     }
     if (type === "room_created" || type === "room_joined") {
       const roomCode = asString(message.room);
+      const format: PvpFormat = message.format === "casual" ? "casual" : "ranked";
       lastSequenceRef.current = 0;
       incomingQueueRef.current = [];
       setIncoming(null);
@@ -1853,6 +1877,7 @@ function useWebPvp(displayName: string) {
         status: "room",
         roomCode: roomCode || null,
         role: type === "room_created" ? "host" : "guest",
+        format,
         localReady: false,
         remoteReady: false,
         remoteReadyDeck: null,
@@ -1874,9 +1899,10 @@ function useWebPvp(displayName: string) {
         ? (payload as { players: Array<Record<string, unknown>> }).players
         : [];
       setState((current) => {
+        const nextFormat: PvpFormat = payload && typeof payload === "object" && (payload as Record<string, unknown>).format === "casual" ? "casual" : current.format;
         const peer = players.find((player) => asString(player.id) !== current.playerId);
         return peer
-          ? { ...current, peerName: asString(peer.name, "对手"), status: current.localReady ? "ready" : "room" }
+          ? { ...current, format: nextFormat, peerName: asString(peer.name, "对手"), status: current.localReady ? "ready" : "room" }
           : current;
       });
       return;
@@ -1901,8 +1927,9 @@ function useWebPvp(displayName: string) {
       const state = payload && typeof payload === "object" ? (payload as Record<string, unknown>).state : null;
       if (!state || typeof state !== "object" || !Array.isArray((state as Record<string, unknown>).players)) return;
       const matchToken = payload && typeof payload === "object" ? asString((payload as Record<string, unknown>).matchToken) : "";
-      setState((current) => ({ ...current, status: "playing", message: "已恢复联机对局状态。" }));
-      enqueueIncoming({ id: ++incomingIdRef.current, type: "match-sync", payload: { state: state as MatchState, ...(matchToken ? { matchToken } : {}) } });
+      const format: PvpFormat = payload && typeof payload === "object" && (payload as Record<string, unknown>).format === "casual" ? "casual" : "ranked";
+      setState((current) => ({ ...current, format, status: "playing", message: "已恢复联机对局状态。" }));
+      enqueueIncoming({ id: ++incomingIdRef.current, type: "match-sync", payload: { state: state as MatchState, format, ...(matchToken ? { matchToken } : {}) } });
       return;
     }
     if (type !== "action") return;
@@ -1928,7 +1955,8 @@ function useWebPvp(displayName: string) {
       const seed = Number(payload.seed);
       if ((!deck && !decks) || !Number.isFinite(seed)) return;
       const startingPlayer: 0 | 1 = payload.startingPlayer === 1 ? 1 : 0;
-      setState((current) => ({ ...current, status: "playing", message: "双方已准备，联机演算开始。" }));
+      const format: PvpFormat = payload.format === "casual" ? "casual" : "ranked";
+      setState((current) => ({ ...current, format, status: "playing", message: "双方已准备，联机演算开始。" }));
       const matchToken = asString(payload.matchToken);
       enqueueIncoming({
         id: ++incomingIdRef.current,
@@ -1936,6 +1964,7 @@ function useWebPvp(displayName: string) {
         payload: {
           seed,
           startingPlayer,
+          format,
           ...(deck ? { deck } : { decks: decks as [string[], string[]] }),
           ...(matchToken ? { matchToken } : {}),
         },
@@ -2008,6 +2037,7 @@ function useWebPvp(displayName: string) {
       playerId: null,
       roomCode: null,
       role: null,
+      format: "ranked",
       peerName: null,
       localReady: false,
       remoteReady: false,
@@ -2158,7 +2188,7 @@ function useWebPvp(displayName: string) {
         return;
       }
       socketRef.current = null;
-      setState((current) => ({ ...current, status: "offline", roomCode: null, role: null, peerName: null, localReady: false, remoteReady: false, remoteReadyDeck: null, message: "联机大厅连接已断开。" }));
+      setState((current) => ({ ...current, status: "offline", roomCode: null, role: null, format: "ranked", peerName: null, localReady: false, remoteReady: false, remoteReadyDeck: null, message: "联机大厅连接已断开。" }));
     };
     if (canFallbackToPolling(parsed)) {
       fallbackTimerRef.current = window.setTimeout(() => {
@@ -2195,8 +2225,8 @@ function useWebPvp(displayName: string) {
     return true;
   }, []);
 
-  const createRoom = useCallback(() => {
-    send({ type: "create_room" });
+  const createRoom = useCallback((format: PvpFormat = "ranked") => {
+    send({ type: "create_room", format });
   }, [send]);
 
   const joinRoom = useCallback((roomCode: string) => {
@@ -2315,6 +2345,8 @@ export function GameApp({
   const [battleReplaySlow, setBattleReplaySlow] = useState(false);
   const [battleTurnClockSeconds, setBattleTurnClockSeconds] = useState<number | null>(null);
   const recordedBattleRef = useRef<string | null>(null);
+  const aiMatchProofRef = useRef<AiMatchProofPayload | null>(null);
+  const aiCommandTranscriptRef = useRef<BattleCommand[]>([]);
   const sectionRef = useRef<SectionKey>("overview");
   const battleEffectQueueRef = useRef<BattleVisualEffect[]>([]);
   const battleEffectTimerRef = useRef<number | null>(null);
@@ -2770,6 +2802,23 @@ export function GameApp({
     }
   };
 
+  const importDeck = (ids: string[]) => {
+    const validation = validateDeck(ids);
+    if (!validation.valid) {
+      setNotice({ tone: "warning", text: validation.errors[0]?.message ?? "卡组代码不符合 30 张组牌规则。" });
+      return;
+    }
+    const counts = new Map<string, number>();
+    ids.forEach((id) => counts.set(id, (counts.get(id) ?? 0) + 1));
+    const missing = [...counts.entries()].find(([id, count]) => (player.collection[id] ?? 0) < count);
+    if (missing) {
+      setNotice({ tone: "warning", text: `收藏中没有足够的「${CARD_BY_ID.get(missing[0])?.name ?? missing[0]}」。` });
+      return;
+    }
+    setDeckIds([...ids]);
+    setNotice({ tone: "success", text: "卡组代码已解析，保存后即可投入演算。" });
+  };
+
   const selectDeck = (deckId: string) => {
     const selected = player.decks.find((deck) => deck.id === deckId);
     if (!selected) return;
@@ -2801,6 +2850,18 @@ export function GameApp({
         text: payload.localFallback
           ? "档案包已在本地演示档案中解密。"
           : "档案包解密完成，新卡牌已归入收藏。",
+      });
+    }
+  };
+
+  const claimWeeklyPack = async () => {
+    const payload = await postAction("claim_weekly_pack", {
+      idempotencyKey: makeId("weekly-pack"),
+    });
+    if (payload) {
+      setNotice({
+        tone: payload.localFallback ? "info" : "success",
+        text: `本周免费卡包已加入档案库${payload.localFallback ? "（本地演示）" : ""}。`,
       });
     }
   };
@@ -2904,7 +2965,7 @@ export function GameApp({
 
   // This transition is shared by AI and transport-driven PVP starts.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const beginBattle = (decks: [string[], string[]], startingPlayer: 0 | 1, online: boolean, opponentName?: string, seed?: number) => {
+  const beginBattle = (decks: [string[], string[]], startingPlayer: 0 | 1, online: boolean, opponentName?: string, seed?: number, opponentArchetypeId?: string) => {
     if (!online && !deckValidation.valid) {
       switchSection("deck");
       setNotice({ tone: "warning", text: `无法部署：${deckValidation.errors[0]}` });
@@ -2917,15 +2978,26 @@ export function GameApp({
       }
       unlockAudio();
       let next = createMatch({ decks, startingPlayer, ...(seed === undefined ? {} : { seed }) });
+      aiCommandTranscriptRef.current = [];
+      aiMatchProofRef.current = null;
       // In a local match the AI confirms its opening hand immediately; the
       // human player still gets a visible mulligan decision window.
       if (!online) {
-        const aiMulligan = applyCommand(next, {
+        const aiMulliganCommand: BattleCommand = {
           type: "mulligan",
           player: 1,
           cardIndexes: chooseAiMulliganIndexes(next, 1),
-        });
+        };
+        const aiMulligan = applyCommand(next, aiMulliganCommand);
         if (aiMulligan.accepted) next = aiMulligan.state;
+        if (aiMulligan.accepted) aiCommandTranscriptRef.current.push(aiMulliganCommand);
+        aiMatchProofRef.current = {
+          seed: next.seed,
+          startingPlayer,
+          playerDeck: [...decks[0]],
+          opponentArchetypeId: opponentArchetypeId ?? AI_ARCHETYPES[0]?.id ?? "tide-control",
+          commands: aiCommandTranscriptRef.current,
+        };
       }
       setBattle(unwrapTransition(next));
       setInspectedCard(null);
@@ -2982,7 +3054,7 @@ export function GameApp({
       return;
     }
     const opponent = selectedAiArchetype ?? AI_ARCHETYPES[0];
-    beginBattle([[...deckIds], [...(opponent?.deck ?? DEFAULT_OPPONENT_DECK)]], 0, false, opponent?.name);
+    beginBattle([[...deckIds], [...(opponent?.deck ?? DEFAULT_OPPONENT_DECK)]], 0, false, opponent?.name, undefined, opponent?.id);
   };
 
   // In PVP the server reducer is authoritative. The local client only sends a
@@ -3028,6 +3100,9 @@ export function GameApp({
         return null;
       }
       const next = unwrapTransition(result) as MatchState;
+      if (!onlineMatch) {
+        aiCommandTranscriptRef.current.push(preparedCommand);
+      }
       setBattle(next);
       showBattleEffects(
         battleEventsToEffects(next.events.slice(previousEventCount)),
@@ -3466,7 +3541,8 @@ export function GameApp({
         const result = runAiTurn(
           ended as MatchState,
           1,
-          (stepState) => {
+          (stepState, command) => {
+            aiCommandTranscriptRef.current.push(command);
             const previousEventCount = replaySteps.at(-1)?.eventCount ?? beforeAiEvents;
             const visualEffectCount = battleEventsToEffects(
               stepState.events.slice(previousEventCount),
@@ -3665,6 +3741,10 @@ export function GameApp({
       result,
       mode: onlineMatch ? "pvp" : "ai",
       opponent: onlineOpponent ?? (onlineMatch ? "联机对手" : "镜像演算体 K-7"),
+      ...(onlineMatch ? { format: pvp.state.format } : {}),
+      ...(!onlineMatch && aiMatchProofRef.current
+        ? { aiProof: { ...aiMatchProofRef.current, commands: [...aiCommandTranscriptRef.current] } }
+        : {}),
       ...(onlineMatch && pvpMatchTokenRef.current ? { pvpToken: pvpMatchTokenRef.current } : {}),
       ...(onlineMatch && pvp.state.role ? { pvpPlayer: pvp.state.role === "host" ? 0 : 1 } : {}),
     }).then((payload) => {
@@ -3678,7 +3758,7 @@ export function GameApp({
       });
       }
     });
-  }, [battleView, onlineMatch, onlineOpponent, postAction, pvp.state.role]);
+  }, [battleView, onlineMatch, onlineOpponent, postAction, pvp.state.format, pvp.state.role]);
 
   const totalOwned = Object.values(player.collection).reduce((sum, count) => sum + count, 0);
   const uniqueOwned = Object.values(player.collection).filter((count) => count > 0).length;
@@ -3903,6 +3983,7 @@ export function GameApp({
                   onAdd={addCard}
                   onRemove={removeCard}
                   onSave={() => void saveDeck()}
+                  onImport={importDeck}
                   onBattle={startBattle}
                 />
               )}
@@ -3965,7 +4046,7 @@ export function GameApp({
                   onPvpUrl={setPvpUrl}
                   onPvpRoomInput={setPvpRoomInput}
                   onPvpConnect={() => pvp.connect(pvpUrl)}
-                  onPvpCreate={pvp.createRoom}
+                  onPvpCreate={(format) => pvp.createRoom(format)}
                   onPvpJoin={() => pvp.joinRoom(pvpRoomInput)}
                   onPvpReady={() => pvp.ready(deckIds)}
                   onPvpDisconnect={() => pvp.disconnect()}
@@ -3982,6 +4063,8 @@ export function GameApp({
                   onResetDemo={() => void resetDemoProfile()}
                   onClaimReward={(level) => void claimReward(level)}
                   rewardBusy={apiBusy === "claim_reward"}
+                  onClaimWeeklyPack={() => void claimWeeklyPack()}
+                  weeklyPackBusy={apiBusy === "claim_weekly_pack"}
                 />
               )}
             </>
@@ -4267,7 +4350,7 @@ function RecentMatches({ matches }: { matches: RecentMatch[] }) {
               </span>
               <div className="match-row__opponent">
                 <span className="match-row__avatar"><Icon name="bot" /></span>
-                <span><strong>{match.opponent}</strong><small>{match.mode.toUpperCase()} 演算</small></span>
+                <span><strong>{match.opponent}</strong><small>{match.mode === "pvp" ? (match.format === "casual" ? "CASUAL 休闲" : "RANKED 天梯") : "AI 演算"}</small></span>
               </div>
               <span className="match-row__time">{formatTime(match.createdAt)}</span>
               <span className="match-row__reward"><Icon name="coin" size={15} /> +{match.rewardGold}</span>
@@ -4513,6 +4596,7 @@ function DeckSection({
   onAdd,
   onRemove,
   onSave,
+  onImport,
   onBattle,
 }: {
   cards: CatalogCard[];
@@ -4530,8 +4614,10 @@ function DeckSection({
   onAdd: (card: CatalogCard) => void;
   onRemove: (cardId: string) => void;
   onSave: () => void;
+  onImport: (ids: string[]) => void;
   onBattle: () => void;
 }) {
+  const [deckCode, setDeckCode] = useState("");
   const uniqueDeckCards = Array.from(deckCounts.entries())
     .map(([id, count]) => ({ card: CARD_BY_ID.get(id), count }))
     .filter((entry): entry is { card: CatalogCard; count: number } => Boolean(entry.card))
@@ -4567,6 +4653,25 @@ function DeckSection({
     .filter((item) => item.count > 0);
   const deckFaction = factionForDeck(deckIds);
   const deckHeroPower = getHeroPower(deckFaction);
+
+  const encodeDeckCode = () => {
+    const raw = `ASTRA1|${deckIds.join(",")}`;
+    const encoded = typeof window === "undefined" ? raw : window.btoa(raw).replaceAll("+", "-").replaceAll("/", "_").replaceAll("=", "");
+    setDeckCode(encoded);
+    void navigator.clipboard?.writeText(encoded).catch(() => undefined);
+  };
+
+  const decodeDeckCode = () => {
+    try {
+      const normalized = deckCode.trim().replaceAll("-", "+").replaceAll("_", "/");
+      const padded = normalized + "=".repeat((4 - (normalized.length % 4)) % 4);
+      const raw = typeof window === "undefined" ? normalized : window.atob(padded);
+      const ids = raw.startsWith("ASTRA1|") ? raw.slice(7).split(",").filter(Boolean) : raw.split(",").filter(Boolean);
+      onImport(ids);
+    } catch {
+      setDeckCode("");
+    }
+  };
 
   return (
     <section className="screen screen--deck" aria-labelledby="deck-title">
@@ -4613,6 +4718,11 @@ function DeckSection({
               <input value={name} onChange={(event) => onName(event.target.value)} maxLength={32} />
             </label>
             <strong className={deckIds.length === 30 ? "is-complete" : ""}>{deckIds.length}<small>/30</small></strong>
+          </div>
+          <div className="deck-code-tools" aria-label="卡组代码">
+            <label><span>卡组代码</span><input value={deckCode} onChange={(event) => setDeckCode(event.target.value)} placeholder="粘贴 ASTRA1 卡组代码" /></label>
+            <div><button className="button button--small button--outline" type="button" onClick={decodeDeckCode}>导入</button><button className="button button--small button--outline" type="button" onClick={encodeDeckCode}>复制导出</button></div>
+            <small>可跨设备分享 30 张卡组；导入时会校验收藏数量与组牌规则。</small>
           </div>
 
           <div className={`deck-validation ${validation.valid ? "deck-validation--valid" : "deck-validation--invalid"}`} role="status">
@@ -5093,12 +5203,13 @@ function PvpLobby({
   onUrl: (value: string) => void;
   onRoomInput: (value: string) => void;
   onConnect: () => void;
-  onCreate: () => void;
+  onCreate: (format: PvpFormat) => void;
   onJoin: () => void;
   onReady: () => void;
   onDisconnect: () => void;
 }) {
   const connected = state.status !== "offline" && state.status !== "error" && state.status !== "connecting";
+  const [selectedFormat, setSelectedFormat] = useState<PvpFormat>(state.format);
   return (
     <section className="pvp-lobby" aria-label="基础 PVP 联机大厅">
       <div className="pvp-lobby__heading">
@@ -5117,15 +5228,16 @@ function PvpLobby({
       )}
       {connected && (
         <div className="pvp-lobby__room">
-          {!state.roomCode ? (
+      {!state.roomCode ? (
             <>
-              <button className="button button--primary" type="button" onClick={onCreate}>创建房间</button>
+              <label><span>匹配模式</span><select value={selectedFormat} onChange={(event) => setSelectedFormat(event.target.value === "casual" ? "casual" : "ranked")} aria-label="选择联机模式"><option value="ranked">Ranked 天梯</option><option value="casual">Casual 休闲</option></select></label>
+              <button className="button button--primary" type="button" onClick={() => onCreate(selectedFormat)}>创建 {selectedFormat === "casual" ? "休闲" : "天梯"} 房间</button>
               <label><span>房间码</span><input value={roomInput} maxLength={4} onChange={(event) => onRoomInput(event.target.value.toUpperCase())} placeholder="A7KQ" /></label>
               <button className="button button--outline" type="button" onClick={onJoin}>加入房间</button>
             </>
           ) : (
             <>
-              <div className="pvp-lobby__code"><small>房间码</small><strong>{state.roomCode}</strong><span>{state.peerName ? `对手：${state.peerName}` : "等待对手加入"}</span></div>
+              <div className="pvp-lobby__code"><small>{state.format === "casual" ? "休闲 Casual" : "天梯 Ranked"} · 房间码</small><strong>{state.roomCode}</strong><span>{state.peerName ? `对手：${state.peerName}` : "等待对手加入"}</span></div>
               <button className="button button--primary" type="button" disabled={state.localReady || !state.peerName} onClick={onReady}>{state.localReady ? "已准备" : "准备对战"}</button>
               <button className="button button--outline" type="button" onClick={onDisconnect}>离开房间</button>
             </>
@@ -5238,7 +5350,7 @@ function BattleSection({
   onPvpUrl: (value: string) => void;
   onPvpRoomInput: (value: string) => void;
   onPvpConnect: () => void;
-  onPvpCreate: () => void;
+  onPvpCreate: (format: PvpFormat) => void;
   onPvpJoin: () => void;
   onPvpReady: () => void;
   onPvpDisconnect: () => void;
@@ -6139,6 +6251,8 @@ function OperationsSection({
   onResetDemo,
   onClaimReward,
   rewardBusy,
+  onClaimWeeklyPack,
+  weeklyPackBusy,
 }: {
   player: PlayerSnapshot;
   winRate: number;
@@ -6147,6 +6261,8 @@ function OperationsSection({
   onResetDemo: () => void;
   onClaimReward: (level: number) => void;
   rewardBusy: boolean;
+  onClaimWeeklyPack: () => void;
+  weeklyPackBusy: boolean;
 }) {
   const metrics = [
     { label: "内测活跃指挥官", value: "486", delta: "+12.4%", icon: "user" as IconName },
@@ -6185,6 +6301,13 @@ function OperationsSection({
           <div><span>卡包商店</span><strong>{player.taskCycle?.packsBoughtToday ?? 0} / 10</strong><small>100 金币 / 个，日限购 10 个</small></div>
           <div><span>演算奖励</span><strong>{player.taskCycle?.aiRewardsToday ?? 0} / 20</strong><small>每日最多 20 场 AI 奖励，防止刷资源</small></div>
           <div><span>天梯段位</span><strong>{player.ladder?.tier ?? "青铜"} · {player.ladder?.rating ?? 1000}</strong><small>仅联机对战影响段位</small></div>
+          <div><span>赛季</span><strong>{player.ladder?.seasonKey ?? new Date().toISOString().slice(0, 7)}</strong><small>每月 UTC 00:00 重置天梯</small></div>
+        </div>
+        <div className="ops-weekly-gift">
+          <div><span className="panel__eyebrow">WEEKLY SHOP GIFT</span><strong>每周免费卡包</strong><small>每周可领取 1 次，领取后加入档案库。</small></div>
+          <button className="button button--accent" type="button" disabled={weeklyPackBusy || player.taskCycle?.weeklyFreePackClaimed === true} onClick={onClaimWeeklyPack}>
+            {weeklyPackBusy ? "领取中…" : player.taskCycle?.weeklyFreePackClaimed ? "本周已领取" : "领取卡包"}
+          </button>
         </div>
       </section>
 
@@ -6225,6 +6348,8 @@ function OperationsSection({
           <div><Icon name="check" size={16} /><span>日常任务仅可在未开始前重随 1 次，任务奖励领取具备幂等保护</span></div>
           <div><Icon name="check" size={16} /><span>胜利 +60 金币、失败 +20 金币；AI 每日最多 20 场发放对战金币与 XP，卡包 +50 XP</span></div>
           <div><Icon name="check" size={16} /><span>联机战报必须匹配服务器对局快照、参赛身份和唯一对局凭证</span></div>
+          <div><Icon name="check" size={16} /><span>联机分为 Ranked 天梯与 Casual 休闲：仅 Ranked 影响赛季段位，Casual 不扣分</span></div>
+          <div><Icon name="check" size={16} /><span>每周商店提供 1 个免费卡包，按周一 UTC 00:00 刷新并由服务端幂等结算</span></div>
         </div>
       </section>
 

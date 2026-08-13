@@ -1757,6 +1757,47 @@ button.game-card:not(:disabled):hover .game-card__artwork,
   color: var(--green);
 }
 
+.deck-code-tools {
+  display: grid;
+  gap: 7px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.deck-code-tools label,
+.deck-code-tools label span {
+  display: block;
+}
+
+.deck-code-tools label span {
+  margin-bottom: 5px;
+  color: #74827a;
+  font-size: 8px;
+}
+
+.deck-code-tools input {
+  width: 100%;
+  min-height: 30px;
+  padding: 0 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 7px;
+  color: var(--paper-soft);
+  background: #101f1b;
+  font-size: 9px;
+}
+
+.deck-code-tools > div {
+  display: flex;
+  gap: 7px;
+}
+
+.deck-code-tools small {
+  color: var(--muted);
+  font-size: 8px;
+  line-height: 1.4;
+}
+
 .deck-validation {
   margin: 14px;
   padding: 11px;
@@ -5019,6 +5060,33 @@ button.hero-core {
 .ops-account-grid strong {
   color: var(--cream);
   font-size: 16px;
+}
+
+.ops-weekly-gift {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 0 18px 18px;
+  padding: 14px;
+  border: 1px solid rgba(233, 204, 120, 0.28);
+  border-radius: 10px;
+  background: rgba(233, 204, 120, 0.06);
+}
+
+.ops-weekly-gift > div {
+  display: grid;
+  gap: 4px;
+}
+
+.ops-weekly-gift strong {
+  color: var(--cream);
+  font-size: 14px;
+}
+
+.ops-weekly-gift small {
+  color: var(--muted);
+  font-size: 9px;
 }
 
 .ops-rules-list {
