@@ -92,6 +92,8 @@ type PlayerTask = {
   progress: number;
   target: number;
   rewardGold: number;
+  rewardXp?: number;
+  period?: "daily" | "weekly";
   claimed: boolean;
 };
 
@@ -121,6 +123,14 @@ type PlayerSnapshot = {
   decks: SavedDeck[];
   activeDeckId: string | null;
   tasks: PlayerTask[];
+  taskCycle?: {
+    dayKey: string;
+    weekKey: string;
+    dailyRerollsRemaining: number;
+    packsBoughtToday: number;
+  };
+  progression?: { xp: number; level: number };
+  ladder?: { rating: number; tier: string; stars: number; wins: number; losses: number };
   recentMatches: RecentMatch[];
   stats: { wins: number; losses: number; matchesPlayed: number };
   updatedAt: string;
@@ -128,11 +138,13 @@ type PlayerSnapshot = {
 
 type GamePayload = {
   ok: true;
-  identity?: { email: string; displayName: string; isDemo: boolean; isAnonymous?: boolean };
+  identity?: { email: string; displayName: string; isDemo: boolean; isAnonymous?: boolean; canLinkDevice?: boolean };
   player: PlayerSnapshot;
   openedCards?: Array<{ cardId: string; count: number }>;
   claimedTaskId?: string;
   rewardGold?: number;
+  costGold?: number;
+  task?: PlayerTask;
   savedDeck?: SavedDeck;
   localFallback?: boolean;
 };
@@ -574,6 +586,8 @@ function makeDemoPlayer(identity?: {
         progress: 0,
         target: 1,
         rewardGold: 120,
+        rewardXp: 150,
+        period: "daily",
         claimed: false,
       },
       {
@@ -583,6 +597,8 @@ function makeDemoPlayer(identity?: {
         progress: 5,
         target: 8,
         rewardGold: 80,
+        rewardXp: 150,
+        period: "daily",
         claimed: false,
       },
       {
@@ -592,9 +608,25 @@ function makeDemoPlayer(identity?: {
         progress: Math.min(CATALOG.length, 210),
         target: 210,
         rewardGold: 150,
+        rewardXp: 150,
+        period: "daily",
+        claimed: false,
+      },
+      {
+        id: "weekly-win-five",
+        title: "周常·战术胜利",
+        description: "赢得 5 场对战",
+        progress: 2,
+        target: 5,
+        rewardGold: 250,
+        rewardXp: 500,
+        period: "weekly",
         claimed: false,
       },
     ],
+    taskCycle: { dayKey: new Date().toISOString().slice(0, 10), weekKey: "demo", dailyRerollsRemaining: 1, packsBoughtToday: 0 },
+    progression: { xp: 850, level: 1 },
+    ladder: { rating: 1000, tier: "白银", stars: 0, wins: 7, losses: 3 },
     recentMatches: [
       {
         id: "demo-match-1",
@@ -661,6 +693,41 @@ function applyLocalAction(
       openedCards: Array.from(openedMap, ([cardId, count]) => ({ cardId, count })),
       localFallback: true,
     };
+  }
+
+  if (action === "buy_pack") {
+    const cycle = current.taskCycle ?? { dayKey: now.slice(0, 10), weekKey: "demo", dailyRerollsRemaining: 1, packsBoughtToday: 0 };
+    if (current.currencies.gold < 100) throw new Error("金币不足，无法购买卡包。");
+    if (cycle.packsBoughtToday >= 10) throw new Error("今日卡包购买次数已达上限。");
+    const player = {
+      ...current,
+      currencies: { ...current.currencies, gold: current.currencies.gold - 100 },
+      packsAvailable: current.packsAvailable + 1,
+      taskCycle: { ...cycle, packsBoughtToday: cycle.packsBoughtToday + 1 },
+      updatedAt: now,
+    };
+    return { ok: true, player, costGold: 100, localFallback: true };
+  }
+
+  if (action === "reroll_task") {
+    const taskId = asString(body.taskId);
+    const cycle = current.taskCycle ?? { dayKey: now.slice(0, 10), weekKey: "demo", dailyRerollsRemaining: 1, packsBoughtToday: 0 };
+    const taskIndex = current.tasks.findIndex((task) => task.id === taskId);
+    const task = taskIndex >= 0 ? current.tasks[taskIndex] : null;
+    if (!task) throw new Error("任务不存在。");
+    if (task.period === "weekly" || task.claimed || task.progress > 0 || cycle.dailyRerollsRemaining < 1) {
+      throw new Error("该任务当前不能重随。");
+    }
+    const replacements: PlayerTask[] = [
+      { id: "play-three-matches", title: "持续交锋", description: "完成 3 场对战", progress: 0, target: 3, rewardGold: 100, rewardXp: 150, period: "daily", claimed: false },
+      { id: "win-two-matches", title: "连胜协议", description: "赢得 2 场对战", progress: 0, target: 2, rewardGold: 150, rewardXp: 150, period: "daily", claimed: false },
+      { id: "open-two-packs", title: "档案解密", description: "开启 2 个卡包", progress: 0, target: 2, rewardGold: 100, rewardXp: 150, period: "daily", claimed: false },
+    ];
+    const replacement = replacements[(current.stats.matchesPlayed + current.tasks.length) % replacements.length];
+    const tasks = [...current.tasks];
+    tasks[taskIndex] = replacement.id === task.id ? replacements[(replacements.indexOf(replacement) + 1) % replacements.length] : replacement;
+    const player = { ...current, tasks, taskCycle: { ...cycle, dailyRerollsRemaining: cycle.dailyRerollsRemaining - 1 }, updatedAt: now };
+    return { ok: true, player, task: tasks[taskIndex], localFallback: true };
   }
 
   if (action === "save_deck") {
@@ -759,6 +826,23 @@ function applyLocalAction(
         losses: current.stats.losses + (result === "loss" ? 1 : 0),
         matchesPlayed: current.stats.matchesPlayed + 1,
       },
+      progression: {
+        xp: (current.progression?.xp ?? 0) + 100,
+        level: Math.floor(((current.progression?.xp ?? 0) + 100) / 1000) + 1,
+      },
+      ladder: body.mode === "pvp"
+        ? (() => {
+            const existing = current.ladder ?? { rating: 1000, tier: "白银", stars: 0, wins: 0, losses: 0 };
+            const rating = Math.max(0, existing.rating + (result === "win" ? 25 : -20));
+            return {
+              rating,
+              tier: rating >= 1800 ? "传说" : rating >= 1600 ? "钻石" : rating >= 1400 ? "白金" : rating >= 1200 ? "黄金" : rating >= 1000 ? "白银" : "青铜",
+              stars: Math.floor((rating % 200) / 50),
+              wins: existing.wins + (result === "win" ? 1 : 0),
+              losses: existing.losses + (result === "loss" ? 1 : 0),
+            };
+          })()
+        : current.ladder,
       updatedAt: now,
     };
     return { ok: true, player, rewardGold, localFallback: true };
@@ -2119,6 +2203,7 @@ export function GameApp({
   const [profileSource, setProfileSource] = useState<ProfileSource>(
     identity?.authenticated ? "cloud" : "demo",
   );
+  const [canLinkDevice, setCanLinkDevice] = useState(false);
   const isDemo = profileSource === "demo";
   const profileNodeLabel =
     profileSource === "cloud"
@@ -2338,6 +2423,7 @@ export function GameApp({
             ? "device"
             : "cloud";
         setProfileSource(nextSource);
+        setCanLinkDevice(Boolean(payload.identity?.canLinkDevice));
         if (nextSource !== "cloud") persistLocalPlayer(payload.player);
         const firstDeck =
           payload.player.decks.find((deck) => deck.id === payload.player.activeDeckId) ??
@@ -2653,6 +2739,32 @@ export function GameApp({
     }
   };
 
+  const buyPack = async () => {
+    const payload = await postAction("buy_pack", {
+      idempotencyKey: makeId("shop-pack"),
+    });
+    if (payload) {
+      setNotice({
+        tone: payload.localFallback ? "info" : "success",
+        text: `已购买 1 个档案包，消耗 ${payload.costGold ?? 100} 金币${payload.localFallback ? "（本地演示）" : ""}。`,
+      });
+    }
+  };
+
+  const rerollTask = async (task: PlayerTask) => {
+    if (task.claimed || task.progress > 0 || task.period === "weekly") return;
+    const payload = await postAction("reroll_task", {
+      idempotencyKey: makeId(`reroll-${task.id}`),
+      taskId: task.id,
+    });
+    if (payload) {
+      setNotice({
+        tone: payload.localFallback ? "info" : "success",
+        text: `已重随任务为「${payload.task?.title ?? "新任务"}」。`,
+      });
+    }
+  };
+
   const claimTask = async (task: PlayerTask) => {
     if (task.claimed || task.progress < task.target) return;
     const payload = await postAction("claim_task", {
@@ -2687,6 +2799,15 @@ export function GameApp({
         tone: payload.localFallback ? "info" : "success",
         text: "本地演示档案已重置，收藏、卡组、任务和战绩已恢复初始状态。",
       });
+    }
+  };
+
+  const linkDeviceProfile = async () => {
+    const payload = await postAction("link_device", {});
+    if (payload) {
+      setCanLinkDevice(false);
+      setProfileSource("cloud");
+      setNotice({ tone: "success", text: "本机访客档案已安全迁移到云端账号。" });
     }
   };
 
@@ -3596,6 +3717,15 @@ export function GameApp({
               <strong>{player.displayName}</strong>
               <small>{profileStatusLabel}</small>
             </span>
+            {identity?.authenticated ? (
+              canLinkDevice ? (
+                <button className="profile-chip__auth" type="button" onClick={() => void linkDeviceProfile()}>迁移本机档案</button>
+              ) : (
+                <a className="profile-chip__auth" href="/signout-with-chatgpt?return_to=%2F">退出</a>
+              )
+            ) : (
+              <a className="profile-chip__auth" href="/signin-with-chatgpt?return_to=%2F">绑定账号</a>
+            )}
           </div>
         </header>
 
@@ -3627,7 +3757,9 @@ export function GameApp({
                   openedCards={openedCards}
                   apiBusy={apiBusy}
                   onOpenPack={() => void openPack()}
+                  onBuyPack={() => void buyPack()}
                   onClaimTask={(task) => void claimTask(task)}
+                  onRerollTask={(task) => void rerollTask(task)}
                   onNavigate={switchSection}
                   onStartBattle={startBattle}
                 />
@@ -3768,7 +3900,9 @@ function OverviewSection({
   openedCards,
   apiBusy,
   onOpenPack,
+  onBuyPack,
   onClaimTask,
+  onRerollTask,
   onNavigate,
   onStartBattle,
 }: {
@@ -3779,7 +3913,9 @@ function OverviewSection({
   openedCards: Array<{ cardId: string; count: number }>;
   apiBusy: string | null;
   onOpenPack: () => void;
+  onBuyPack: () => void;
   onClaimTask: (task: PlayerTask) => void;
+  onRerollTask: (task: PlayerTask) => void;
   onNavigate: (section: SectionKey) => void;
   onStartBattle: () => void;
 }) {
@@ -3863,6 +3999,14 @@ function OverviewSection({
           <strong>{player.tasks.filter((task) => task.progress >= task.target).length}<i> / {player.tasks.length}</i></strong>
           <small>{player.tasks.some((task) => task.progress >= task.target && !task.claimed) ? "存在可领取奖励" : "继续执行战术"}</small>
         </article>
+        <article className="metric-card">
+          <span className="metric-card__icon metric-card__icon--violet">
+            <Icon name="spark" />
+          </span>
+          <span className="metric-card__label">奖励轨道</span>
+          <strong>Lv.{player.progression?.level ?? 1}</strong>
+          <small>{player.progression?.xp ?? 0} XP · 每 1,000 XP 升级</small>
+        </article>
       </div>
 
       <div className="overview-columns">
@@ -3906,6 +4050,17 @@ function OverviewSection({
                   >
                     {task.claimed ? "已领取" : ready ? "领取" : "进行中"}
                   </button>
+                  {!task.claimed && !ready && task.period !== "weekly" && task.progress === 0 && (
+                    <button
+                      className="button button--small button--muted"
+                      type="button"
+                      disabled={apiBusy === "reroll_task" || player.taskCycle?.dailyRerollsRemaining === 0}
+                      onClick={() => onRerollTask(task)}
+                      title="每日可重随 1 个未开始的日常任务"
+                    >
+                      重随
+                    </button>
+                  )}
                 </article>
               );
             })}
@@ -3941,6 +4096,10 @@ function OverviewSection({
               <button className="button button--ghost button--wide" type="button" onClick={() => onNavigate("collection")}>
                 查看收藏
               </button>
+              <button className="button button--outline button--wide" type="button" onClick={onBuyPack} disabled={apiBusy === "buy_pack" || player.currencies.gold < 100}>
+                <Icon name="coin" />
+                {apiBusy === "buy_pack" ? "购买中…" : "100 金币购买卡包"}
+              </button>
             </div>
           ) : (
             <div className="pack-offer">
@@ -3967,6 +4126,15 @@ function OverviewSection({
               >
                 <Icon name="pack" />
                 {apiBusy === "open_pack" ? "解密中…" : player.packsAvailable > 0 ? "免费开启" : "明日再来"}
+              </button>
+              <button
+                className="button button--outline button--wide"
+                type="button"
+                onClick={onBuyPack}
+                disabled={apiBusy === "buy_pack" || player.currencies.gold < 100}
+              >
+                <Icon name="coin" />
+                {apiBusy === "buy_pack" ? "购买中…" : "100 金币购买卡包"}
               </button>
             </div>
           )}
@@ -5866,6 +6034,33 @@ function OperationsSection({
           </article>
         ))}
       </div>
+
+      <section className="panel ops-account-panel" aria-labelledby="progression-title">
+        <div className="panel__header">
+          <div><span className="panel__eyebrow">PLAYER PROGRESSION</span><h2 id="progression-title">账号与奖励轨道</h2></div>
+          <span className="panel__counter">Lv.{player.progression?.level ?? 1}</span>
+        </div>
+        <div className="ops-account-grid">
+          <div><span>账号档案</span><strong>{player.displayName}</strong><small>{isDemo ? "本地演示账号" : "服务器持久化账号"}</small></div>
+          <div><span>奖励经验</span><strong>{(player.progression?.xp ?? 0).toLocaleString("zh-CN")} XP</strong><small>每 1,000 XP 提升 1 级</small></div>
+          <div><span>日常重随</span><strong>{player.taskCycle?.dailyRerollsRemaining ?? 0} 次</strong><small>每日 UTC 00:00 刷新</small></div>
+          <div><span>卡包商店</span><strong>{player.taskCycle?.packsBoughtToday ?? 0} / 10</strong><small>100 金币 / 个，日限购 10 个</small></div>
+          <div><span>天梯段位</span><strong>{player.ladder?.tier ?? "青铜"} · {player.ladder?.rating ?? 1000}</strong><small>仅联机对战影响段位</small></div>
+        </div>
+      </section>
+
+      <section className="panel ops-rules-panel" aria-labelledby="live-rules-title">
+        <div className="panel__header">
+          <div><span className="panel__eyebrow">LIVE RULES</span><h2 id="live-rules-title">当前运营规则</h2></div>
+          <span className="panel__counter">服务端结算</span>
+        </div>
+        <div className="ops-rules-list">
+          <div><Icon name="check" size={16} /><span>每日 3 个日常任务，周一 UTC 00:00 刷新 1 个周常任务</span></div>
+          <div><Icon name="check" size={16} /><span>日常任务仅可在未开始前重随 1 次，任务奖励领取具备幂等保护</span></div>
+          <div><Icon name="check" size={16} /><span>胜利 +60 金币、失败 +20 金币；每场对战 +100 XP，卡包 +50 XP</span></div>
+          <div><Icon name="check" size={16} /><span>联机战报必须匹配服务器对局快照、参赛身份和唯一对局凭证</span></div>
+        </div>
+      </section>
 
       <div className="ops-grid">
         <section className="panel health-panel">

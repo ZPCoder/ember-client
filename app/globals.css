@@ -4989,6 +4989,69 @@ button.hero-core {
   margin-bottom: 17px;
 }
 
+.ops-account-panel,
+.ops-rules-panel {
+  margin-bottom: 17px;
+}
+
+.ops-account-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  padding: 0 18px 18px;
+}
+
+.ops-account-grid > div {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border: 1px solid rgba(120, 190, 181, 0.16);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.ops-account-grid span,
+.ops-account-grid small {
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.ops-account-grid strong {
+  color: var(--cream);
+  font-size: 16px;
+}
+
+.ops-rules-list {
+  display: grid;
+  gap: 10px;
+  padding: 0 18px 18px;
+}
+
+.ops-rules-list > div {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #b7c4bb;
+  font-size: 11px;
+}
+
+.ops-rules-list svg {
+  flex: 0 0 auto;
+  color: var(--green);
+}
+
+.profile-chip__auth {
+  margin-left: 8px;
+  padding-left: 8px;
+  border-left: 1px solid rgba(120, 190, 181, 0.2);
+  color: var(--cyan);
+  font-size: 9px;
+  white-space: nowrap;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
 .ops-metric {
   display: grid;
   min-height: 88px;
@@ -5770,7 +5833,8 @@ button.hero-core {
   }
 
   .metric-grid,
-  .ops-metrics {
+  .ops-metrics,
+  .ops-account-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -6024,6 +6088,10 @@ button.hero-core {
 }
 
 @media (max-width: 640px) {
+  .ops-account-grid {
+    grid-template-columns: 1fr;
+  }
+
   .topbar {
     gap: 8px;
   }
