@@ -137,6 +137,7 @@ type PlayerSnapshot = {
   };
   progression?: { xp: number; level: number };
   ladder?: { seasonKey?: string; rating: number; tier: string; stars: number; wins: number; losses: number; highestRating?: number };
+  friends?: Array<{ id: string; displayName: string; status: "pending" | "accepted"; direction: "incoming" | "outgoing" }>;
   rewardTrack?: { claimedLevels: number[] };
   recentMatches: RecentMatch[];
   stats: { wins: number; losses: number; matchesPlayed: number };
@@ -685,6 +686,24 @@ function applyLocalAction(
       email: current.email,
     });
     return { ok: true, player, localFallback: true };
+  }
+  if (action === "update_profile") {
+    const displayName = asString(body.displayName, current.displayName).trim().replace(/\s+/g, " ");
+    if (displayName.length < 1 || displayName.length > 24) throw new Error("公开昵称必须为 1–24 个字符。");
+    const player = { ...current, displayName, updatedAt: now };
+    return { ok: true, player, displayName, localFallback: true };
+  }
+  if (action === "send_friend_request" || action === "accept_friend_request") {
+    const friendId = asString(body.friendId).trim();
+    if (!friendId || friendId === current.id) throw new Error("好友 UID 无效。");
+    const friends = [...(current.friends ?? [])];
+    const existing = friends.find((friend) => friend.id === friendId);
+    if (action === "send_friend_request" && existing?.status === "accepted") throw new Error("该玩家已经在好友列表中。");
+    if (action === "accept_friend_request" && (!existing || existing.status !== "pending")) throw new Error("没有可接受的入站好友请求。");
+    const nextFriends = existing
+      ? friends.map((friend) => friend.id === friendId ? { ...friend, status: "accepted" as const, direction: "outgoing" as const } : friend)
+      : [...friends, { id: friendId, displayName: "等待确认的指挥官", status: "pending" as const, direction: "outgoing" as const }];
+    return { ok: true, player: { ...current, friends: nextFriends, updatedAt: now }, friendId, localFallback: true };
   }
   if (action === "open_pack") {
     if (current.packsAvailable < 1) throw new Error("没有可开启的卡包。");
@@ -2963,6 +2982,40 @@ export function GameApp({
     }
   };
 
+  const updateProfile = async (displayName: string) => {
+    const nextName = displayName.trim().replace(/\s+/g, " ");
+    if (!nextName || nextName.length > 24) {
+      setNotice({ tone: "warning", text: "公开昵称必须为 1–24 个字符。" });
+      return;
+    }
+    const payload = await postAction("update_profile", {
+      idempotencyKey: makeId("profile"),
+      displayName: nextName,
+    });
+    if (payload) {
+      setNotice({
+        tone: payload.localFallback ? "info" : "success",
+        text: payload.localFallback ? "昵称已保存到本机档案。" : "昵称已保存到云端档案。",
+      });
+    }
+  };
+
+  const sendFriendRequest = async (friendId: string) => {
+    const payload = await postAction("send_friend_request", {
+      idempotencyKey: makeId("friend-request"),
+      friendId,
+    });
+    if (payload) setNotice({ tone: payload.localFallback ? "info" : "success", text: payload.localFallback ? "好友请求已记录在本机档案。" : "好友请求已发送。" });
+  };
+
+  const acceptFriendRequest = async (friendId: string) => {
+    const payload = await postAction("accept_friend_request", {
+      idempotencyKey: makeId("friend-accept"),
+      friendId,
+    });
+    if (payload) setNotice({ tone: payload.localFallback ? "info" : "success", text: payload.localFallback ? "好友已加入本机社交列表。" : "好友请求已接受。" });
+  };
+
   // This transition is shared by AI and transport-driven PVP starts.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const beginBattle = (decks: [string[], string[]], startingPlayer: 0 | 1, online: boolean, opponentName?: string, seed?: number, opponentArchetypeId?: string) => {
@@ -4056,6 +4109,7 @@ export function GameApp({
               )}
               {section === "operations" && (
                 <OperationsSection
+                  key={`${player.id}-${player.displayName}`}
                   player={player}
                   winRate={winRate}
                   isDemo={isDemo}
@@ -4065,6 +4119,11 @@ export function GameApp({
                   rewardBusy={apiBusy === "claim_reward"}
                   onClaimWeeklyPack={() => void claimWeeklyPack()}
                   weeklyPackBusy={apiBusy === "claim_weekly_pack"}
+                  onUpdateProfile={(displayName) => void updateProfile(displayName)}
+                  profileBusy={apiBusy === "update_profile"}
+                  onSendFriendRequest={(friendId) => void sendFriendRequest(friendId)}
+                  onAcceptFriendRequest={(friendId) => void acceptFriendRequest(friendId)}
+                  socialBusy={apiBusy === "send_friend_request" || apiBusy === "accept_friend_request"}
                 />
               )}
             </>
@@ -6253,6 +6312,11 @@ function OperationsSection({
   rewardBusy,
   onClaimWeeklyPack,
   weeklyPackBusy,
+  onUpdateProfile,
+  profileBusy,
+  onSendFriendRequest,
+  onAcceptFriendRequest,
+  socialBusy,
 }: {
   player: PlayerSnapshot;
   winRate: number;
@@ -6263,7 +6327,14 @@ function OperationsSection({
   rewardBusy: boolean;
   onClaimWeeklyPack: () => void;
   weeklyPackBusy: boolean;
+  onUpdateProfile: (displayName: string) => void;
+  profileBusy: boolean;
+  onSendFriendRequest: (friendId: string) => void;
+  onAcceptFriendRequest: (friendId: string) => void;
+  socialBusy: boolean;
 }) {
+  const [profileName, setProfileName] = useState(player.displayName);
+  const [friendId, setFriendId] = useState("");
   const metrics = [
     { label: "内测活跃指挥官", value: "486", delta: "+12.4%", icon: "user" as IconName },
     { label: "今日完成对局", value: "1,284", delta: "+8.1%", icon: "swords" as IconName },
@@ -6294,14 +6365,15 @@ function OperationsSection({
           <div><span className="panel__eyebrow">PLAYER PROGRESSION</span><h2 id="progression-title">账号与奖励轨道</h2></div>
           <span className="panel__counter">Lv.{player.progression?.level ?? 1}</span>
         </div>
-        <div className="ops-account-grid">
-          <div><span>账号档案</span><strong>{player.displayName}</strong><small>{isDemo ? "本地演示账号" : "服务器持久化账号"}</small></div>
+          <div className="ops-account-grid">
+          <div className="ops-account-profile"><span>公开昵称</span><label className="ops-profile-editor"><input value={profileName} maxLength={24} onChange={(event) => setProfileName(event.target.value)} aria-label="公开昵称" /><button className="button button--tiny button--accent" type="button" disabled={profileBusy || !profileName.trim()} onClick={() => onUpdateProfile(profileName)}>{profileBusy ? "保存中…" : "保存"}</button></label><small>{isDemo ? "本地演示账号" : "服务器持久化账号"}</small></div>
           <div><span>奖励经验</span><strong>{(player.progression?.xp ?? 0).toLocaleString("zh-CN")} XP</strong><small>每 1,000 XP 提升 1 级</small></div>
           <div><span>日常重随</span><strong>{player.taskCycle?.dailyRerollsRemaining ?? 0} 次</strong><small>每日 UTC 00:00 刷新</small></div>
           <div><span>卡包商店</span><strong>{player.taskCycle?.packsBoughtToday ?? 0} / 10</strong><small>100 金币 / 个，日限购 10 个</small></div>
           <div><span>演算奖励</span><strong>{player.taskCycle?.aiRewardsToday ?? 0} / 20</strong><small>每日最多 20 场 AI 奖励，防止刷资源</small></div>
           <div><span>天梯段位</span><strong>{player.ladder?.tier ?? "青铜"} · {player.ladder?.rating ?? 1000}</strong><small>仅联机对战影响段位</small></div>
           <div><span>赛季</span><strong>{player.ladder?.seasonKey ?? new Date().toISOString().slice(0, 7)}</strong><small>每月 UTC 00:00 重置天梯</small></div>
+          <div><span>玩家 UID</span><strong className="ops-player-id">{player.id}</strong><small>用于好友邀请与客服核验</small></div>
         </div>
         <div className="ops-weekly-gift">
           <div><span className="panel__eyebrow">WEEKLY SHOP GIFT</span><strong>每周免费卡包</strong><small>每周可领取 1 次，领取后加入档案库。</small></div>
@@ -6350,6 +6422,26 @@ function OperationsSection({
           <div><Icon name="check" size={16} /><span>联机战报必须匹配服务器对局快照、参赛身份和唯一对局凭证</span></div>
           <div><Icon name="check" size={16} /><span>联机分为 Ranked 天梯与 Casual 休闲：仅 Ranked 影响赛季段位，Casual 不扣分</span></div>
           <div><Icon name="check" size={16} /><span>每周商店提供 1 个免费卡包，按周一 UTC 00:00 刷新并由服务端幂等结算</span></div>
+        </div>
+      </section>
+
+      <section className="panel social-panel" aria-labelledby="social-title">
+        <div className="panel__header">
+          <div><span className="panel__eyebrow">BATTLETAG SOCIAL</span><h2 id="social-title">好友与社交</h2></div>
+          <span className="panel__counter">{player.friends?.filter((friend) => friend.status === "accepted").length ?? 0} 位好友</span>
+        </div>
+        <div className="social-add-row">
+          <label><span>好友 UID</span><input value={friendId} onChange={(event) => setFriendId(event.target.value)} placeholder="输入 player-…" /></label>
+          <button className="button button--accent" type="button" disabled={socialBusy || !friendId.trim()} onClick={() => { onSendFriendRequest(friendId.trim()); setFriendId(""); }}>发送请求</button>
+        </div>
+        <div className="social-list">
+          {(player.friends ?? []).length > 0 ? (player.friends ?? []).map((friend) => (
+            <div className="social-row" key={friend.id}>
+              <span className="social-row__avatar">{friend.displayName.slice(0, 1)}</span>
+              <div><strong>{friend.displayName}</strong><small>{friend.id}</small></div>
+              {friend.status === "accepted" ? <span className="status-pill">在线档案</span> : friend.direction === "incoming" ? <button className="button button--tiny button--accent" type="button" disabled={socialBusy} onClick={() => onAcceptFriendRequest(friend.id)}>接受</button> : <span className="status-pill status-pill--watch">待确认</span>}
+            </div>
+          )) : <p className="social-empty">还没有好友。把你的玩家 UID 分享给队友，即可发送请求。</p>}
         </div>
       </section>
 

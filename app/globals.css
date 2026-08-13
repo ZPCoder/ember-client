@@ -5062,6 +5062,40 @@ button.hero-core {
   font-size: 16px;
 }
 
+.ops-account-profile {
+  min-width: 0;
+}
+
+.ops-profile-editor {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ops-profile-editor input {
+  min-width: 0;
+  width: 100%;
+  border: 1px solid rgba(120, 190, 181, 0.24);
+  border-radius: 7px;
+  padding: 7px 8px;
+  color: var(--cream);
+  background: rgba(4, 14, 15, 0.72);
+  font: inherit;
+}
+
+.ops-profile-editor input:focus {
+  outline: 1px solid rgba(89, 211, 207, 0.7);
+  border-color: rgba(89, 211, 207, 0.7);
+}
+
+.ops-player-id {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--mono, monospace);
+  font-size: 11px !important;
+}
+
 .ops-weekly-gift {
   display: flex;
   align-items: center;
@@ -5093,6 +5127,92 @@ button.hero-core {
   display: grid;
   gap: 10px;
   padding: 0 18px 18px;
+}
+
+.social-panel {
+  margin-bottom: 17px;
+}
+
+.social-add-row {
+  display: flex;
+  align-items: end;
+  gap: 10px;
+  padding: 0 18px 16px;
+}
+
+.social-add-row label {
+  display: grid;
+  flex: 1;
+  gap: 5px;
+}
+
+.social-add-row label span {
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.social-add-row input {
+  min-width: 0;
+  border: 1px solid rgba(120, 190, 181, 0.24);
+  border-radius: 7px;
+  padding: 9px 10px;
+  color: var(--cream);
+  background: rgba(4, 14, 15, 0.72);
+  font: inherit;
+}
+
+.social-list {
+  display: grid;
+  gap: 7px;
+  padding: 0 18px 18px;
+}
+
+.social-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border: 1px solid rgba(120, 190, 181, 0.14);
+  border-radius: 9px;
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.social-row__avatar {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid rgba(89, 211, 207, 0.45);
+  border-radius: 50%;
+  color: var(--cyan);
+  background: rgba(89, 211, 207, 0.1);
+}
+
+.social-row > div {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  gap: 2px;
+}
+
+.social-row strong {
+  overflow: hidden;
+  color: var(--cream);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.social-row small,
+.social-empty {
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.social-empty {
+  margin: 0;
+  padding: 4px 0;
 }
 
 .ops-rules-list > div {
