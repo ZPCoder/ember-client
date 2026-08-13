@@ -702,6 +702,7 @@ function applyLocalAction(
   if (action === "send_friend_request" || action === "accept_friend_request") {
     const friendId = asString(body.friendId).trim();
     if (!friendId || friendId === current.id) throw new Error("好友 UID 无效。");
+    if ((current.blockedPlayerIds ?? []).includes(friendId)) throw new Error("该玩家已被屏蔽，无法建立好友关系。");
     const friends = [...(current.friends ?? [])];
     const existing = friends.find((friend) => friend.id === friendId);
     if (action === "send_friend_request" && existing?.status === "accepted") throw new Error("该玩家已经在好友列表中。");
