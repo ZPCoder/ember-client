@@ -6223,7 +6223,7 @@ function OperationsSection({
         <div className="ops-rules-list">
           <div><Icon name="check" size={16} /><span>每日 3 个日常任务，周一 UTC 00:00 刷新 1 个周常任务</span></div>
           <div><Icon name="check" size={16} /><span>日常任务仅可在未开始前重随 1 次，任务奖励领取具备幂等保护</span></div>
-          <div><Icon name="check" size={16} /><span>胜利 +60 金币、失败 +20 金币；每场对战 +100 XP，卡包 +50 XP</span></div>
+          <div><Icon name="check" size={16} /><span>胜利 +60 金币、失败 +20 金币；AI 每日最多 20 场发放对战金币与 XP，卡包 +50 XP</span></div>
           <div><Icon name="check" size={16} /><span>联机战报必须匹配服务器对局快照、参赛身份和唯一对局凭证</span></div>
         </div>
       </section>
