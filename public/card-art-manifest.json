@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-08-14T08:55:33.990Z",
+  "generatedAt": "2026-08-14T09:07:08.108Z",
   "catalogCount": 1000,
   "generatedCount": 0,
-  "individuallyGeneratedCount": 85,
+  "individuallyGeneratedCount": 90,
   "generatedBy": "imagegen-per-card-plus-legacy-variants",
   "anchor": "public/card-art-sources/frost-anchor.png",
   "cards": [
@@ -382,35 +382,35 @@
       "faction": "幽潮",
       "type": "unit",
       "art": "/cards/void-trench-mender.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "void-razorfin-corsair",
       "faction": "幽潮",
       "type": "unit",
       "art": "/cards/void-razorfin-corsair.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "void-murkplate-hermit",
       "faction": "幽潮",
       "type": "unit",
       "art": "/cards/void-murkplate-hermit.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "void-abyssal-chanter",
       "faction": "幽潮",
       "type": "unit",
       "art": "/cards/void-abyssal-chanter.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "void-moonjaw-shark",
       "faction": "幽潮",
       "type": "unit",
       "art": "/cards/void-moonjaw-shark.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "void-drowned-leviathan",

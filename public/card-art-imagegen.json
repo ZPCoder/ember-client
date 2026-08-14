@@ -1,6 +1,6 @@
 {
   "workflow": "built-in-imagegen-one-card-per-call",
-  "generatedCount": 85,
+  "generatedCount": 90,
   "cards": [
     {
       "id": "firmament-season-01",
@@ -511,6 +511,36 @@
       "name": "裂潮斗士",
       "source": "imagegen",
       "art": "/cards/void-riptide-duelist.webp"
+    },
+    {
+      "id": "void-trench-mender",
+      "name": "海沟缝合师",
+      "source": "imagegen",
+      "art": "/cards/void-trench-mender.webp"
+    },
+    {
+      "id": "void-razorfin-corsair",
+      "name": "刃鳍掠夺者",
+      "source": "imagegen",
+      "art": "/cards/void-razorfin-corsair.webp"
+    },
+    {
+      "id": "void-murkplate-hermit",
+      "name": "玄甲寄居者",
+      "source": "imagegen",
+      "art": "/cards/void-murkplate-hermit.webp"
+    },
+    {
+      "id": "void-abyssal-chanter",
+      "name": "深渊吟潮者",
+      "source": "imagegen",
+      "art": "/cards/void-abyssal-chanter.webp"
+    },
+    {
+      "id": "void-moonjaw-shark",
+      "name": "月颚猎鲨",
+      "source": "imagegen",
+      "art": "/cards/void-moonjaw-shark.webp"
     }
   ]
 }
