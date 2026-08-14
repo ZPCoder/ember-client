@@ -1,6 +1,6 @@
 {
   "workflow": "built-in-imagegen-one-card-per-call",
-  "generatedCount": 60,
+  "generatedCount": 65,
   "cards": [
     {
       "id": "firmament-season-01",
@@ -361,6 +361,36 @@
       "name": "棱镜守望者·10",
       "source": "imagegen",
       "art": "/cards/sun-season-10.webp"
+    },
+    {
+      "id": "sun-season-11",
+      "name": "白昼旗手·11",
+      "source": "imagegen",
+      "art": "/cards/sun-season-11.webp"
+    },
+    {
+      "id": "sun-season-12",
+      "name": "曙冠铸师·12",
+      "source": "imagegen",
+      "art": "/cards/sun-season-12.webp"
+    },
+    {
+      "id": "sun-season-13",
+      "name": "晨辉斥候·13",
+      "source": "imagegen",
+      "art": "/cards/sun-season-13.webp"
+    },
+    {
+      "id": "sun-season-14",
+      "name": "棱镜守望者·14",
+      "source": "imagegen",
+      "art": "/cards/sun-season-14.webp"
+    },
+    {
+      "id": "sun-season-15",
+      "name": "白昼旗手·15",
+      "source": "imagegen",
+      "art": "/cards/sun-season-15.webp"
     }
   ]
 }
