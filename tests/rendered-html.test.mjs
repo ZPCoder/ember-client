@@ -31,7 +31,7 @@ test("build emits a deployable worker, D1 metadata, and migration", async () => 
 });
 
 test("ships the complete product surface and removes starter assets", async () => {
-  const [page, game, styles, layout, packageJson, og, artManifest] = await Promise.all([
+  const [page, game, styles, layout, packageJson, og, artManifest, imageGenManifest] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/GameApp.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
@@ -39,6 +39,7 @@ test("ships the complete product surface and removes starter assets", async () =
     readFile(new URL("../package.json", import.meta.url), "utf8"),
     stat(new URL("../public/og.png", import.meta.url)),
     readFile(new URL("../public/card-art-manifest.json", import.meta.url), "utf8"),
+    readFile(new URL("../public/card-art-imagegen.json", import.meta.url), "utf8"),
   ]);
   const cardIds = CARD_CATALOG.map((card) => card.id);
   const cardArt = await Promise.all(
@@ -125,8 +126,13 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.ok(og.size > 100_000);
   assert.equal(cardIds.length, 1000);
   const parsedManifest = JSON.parse(artManifest);
+  const parsedImageGenManifest = JSON.parse(imageGenManifest);
   assert.equal(parsedManifest.catalogCount, cardIds.length);
   assert.equal(parsedManifest.cards.length, cardIds.length);
+  assert.equal(parsedImageGenManifest.workflow, "built-in-imagegen-one-card-per-call");
+  assert.equal(parsedImageGenManifest.generatedCount, parsedImageGenManifest.cards.length);
+  assert.ok(parsedImageGenManifest.cards.length >= 5);
+  assert.ok(parsedImageGenManifest.cards.every((entry) => cardIds.includes(entry.id)));
   assert.deepEqual(
     new Set(parsedManifest.cards.map((entry) => entry.id)),
     new Set(cardIds),
