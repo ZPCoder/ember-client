@@ -1,6 +1,6 @@
 {
   "workflow": "built-in-imagegen-one-card-per-call",
-  "generatedCount": 70,
+  "generatedCount": 75,
   "cards": [
     {
       "id": "firmament-season-01",
@@ -421,6 +421,36 @@
       "name": "棱镜风暴·05",
       "source": "imagegen",
       "art": "/cards/sun-season-spell-05.webp"
+    },
+    {
+      "id": "void-season-01",
+      "name": "深潮潜行者·01",
+      "source": "imagegen",
+      "art": "/cards/void-season-01.webp"
+    },
+    {
+      "id": "void-season-02",
+      "name": "雾汐引潮者·02",
+      "source": "imagegen",
+      "art": "/cards/void-season-02.webp"
+    },
+    {
+      "id": "void-season-03",
+      "name": "夜鳍掠夺者·03",
+      "source": "imagegen",
+      "art": "/cards/void-season-03.webp"
+    },
+    {
+      "id": "void-season-04",
+      "name": "沉湾祭司·04",
+      "source": "imagegen",
+      "art": "/cards/void-season-04.webp"
+    },
+    {
+      "id": "void-season-05",
+      "name": "深潮潜行者·05",
+      "source": "imagegen",
+      "art": "/cards/void-season-05.webp"
     }
   ]
 }
