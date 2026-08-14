@@ -1,6 +1,6 @@
 {
   "workflow": "built-in-imagegen-one-card-per-call",
-  "generatedCount": 90,
+  "generatedCount": 95,
   "cards": [
     {
       "id": "firmament-season-01",
@@ -541,6 +541,36 @@
       "name": "月颚猎鲨",
       "source": "imagegen",
       "art": "/cards/void-moonjaw-shark.webp"
+    },
+    {
+      "id": "neutral-moss-runner",
+      "name": "苔径奔行兽",
+      "source": "imagegen",
+      "art": "/cards/neutral-moss-runner.webp"
+    },
+    {
+      "id": "neutral-clockwork-beetle",
+      "name": "发条甲虫",
+      "source": "imagegen",
+      "art": "/cards/neutral-clockwork-beetle.webp"
+    },
+    {
+      "id": "neutral-caravan-guard",
+      "name": "远途商队卫",
+      "source": "imagegen",
+      "art": "/cards/neutral-caravan-guard.webp"
+    },
+    {
+      "id": "neutral-stonehorn",
+      "name": "石角驮兽",
+      "source": "imagegen",
+      "art": "/cards/neutral-stonehorn.webp"
+    },
+    {
+      "id": "neutral-wandering-alchemist",
+      "name": "云游调剂师",
+      "source": "imagegen",
+      "art": "/cards/neutral-wandering-alchemist.webp"
     }
   ]
 }
