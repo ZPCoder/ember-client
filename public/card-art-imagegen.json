@@ -1,6 +1,6 @@
 {
   "workflow": "built-in-imagegen-one-card-per-call",
-  "generatedCount": 110,
+  "generatedCount": 115,
   "cards": [
     {
       "id": "firmament-season-01",
@@ -661,6 +661,36 @@
       "name": "遗迹冠鹿",
       "source": "imagegen",
       "art": "/cards/neutral-ruin-stag.webp"
+    },
+    {
+      "id": "neutral-mobile-forge",
+      "name": "自走熔铸炉",
+      "source": "imagegen",
+      "art": "/cards/neutral-mobile-forge.webp"
+    },
+    {
+      "id": "neutral-cloudrail-behemoth",
+      "name": "云轨冲撞令",
+      "source": "imagegen",
+      "art": "/cards/neutral-cloudrail-behemoth.webp"
+    },
+    {
+      "id": "neutral-worldroad-colossus",
+      "name": "万途驮城者",
+      "source": "imagegen",
+      "art": "/cards/neutral-worldroad-colossus.webp"
+    },
+    {
+      "id": "neutral-pocket-remedy",
+      "name": "行囊急救剂",
+      "source": "imagegen",
+      "art": "/cards/neutral-pocket-remedy.webp"
+    },
+    {
+      "id": "neutral-springtrap",
+      "name": "便携弹簧阱",
+      "source": "imagegen",
+      "art": "/cards/neutral-springtrap.webp"
     }
   ]
 }

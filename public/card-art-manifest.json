@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-08-14T10:00:48.662Z",
+  "generatedAt": "2026-08-14T10:21:53.252Z",
   "catalogCount": 1000,
   "generatedCount": 0,
-  "individuallyGeneratedCount": 110,
+  "individuallyGeneratedCount": 115,
   "generatedBy": "imagegen-per-card-plus-legacy-variants",
   "anchor": "public/card-art-sources/frost-anchor.png",
   "cards": [
@@ -571,35 +571,35 @@
       "faction": "中立",
       "type": "unit",
       "art": "/cards/neutral-mobile-forge.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "neutral-cloudrail-behemoth",
       "faction": "中立",
       "type": "spell",
       "art": "/cards/neutral-cloudrail-behemoth.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "neutral-worldroad-colossus",
       "faction": "中立",
       "type": "unit",
       "art": "/cards/neutral-worldroad-colossus.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "neutral-pocket-remedy",
       "faction": "中立",
       "type": "spell",
       "art": "/cards/neutral-pocket-remedy.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "neutral-springtrap",
       "faction": "中立",
       "type": "spell",
       "art": "/cards/neutral-springtrap.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "neutral-field-reinforcement",
