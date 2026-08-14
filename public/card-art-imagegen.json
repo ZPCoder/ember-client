@@ -1,6 +1,6 @@
 {
   "workflow": "built-in-imagegen-one-card-per-call",
-  "generatedCount": 20,
+  "generatedCount": 25,
   "cards": [
     {
       "id": "firmament-season-01",
@@ -121,6 +121,36 @@
       "name": "云端终局者·20",
       "source": "imagegen",
       "art": "/cards/firmament-season-20.webp"
+    },
+    {
+      "id": "firmament-season-21",
+      "name": "天穹巨像·21",
+      "source": "imagegen",
+      "art": "/cards/firmament-season-21.webp"
+    },
+    {
+      "id": "firmament-season-22",
+      "name": "穹顶圣卫·22",
+      "source": "imagegen",
+      "art": "/cards/firmament-season-22.webp"
+    },
+    {
+      "id": "firmament-season-23",
+      "name": "日冕穹顶龙·23",
+      "source": "imagegen",
+      "art": "/cards/firmament-season-23.webp"
+    },
+    {
+      "id": "firmament-season-24",
+      "name": "云端终局者·24",
+      "source": "imagegen",
+      "art": "/cards/firmament-season-24.webp"
+    },
+    {
+      "id": "firmament-season-25",
+      "name": "天穹巨像·25",
+      "source": "imagegen",
+      "art": "/cards/firmament-season-25.webp"
     }
   ]
 }
