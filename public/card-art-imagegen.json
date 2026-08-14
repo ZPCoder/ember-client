@@ -1,6 +1,6 @@
 {
   "workflow": "built-in-imagegen-one-card-per-call",
-  "generatedCount": 35,
+  "generatedCount": 50,
   "cards": [
     {
       "id": "firmament-season-01",
@@ -211,6 +211,96 @@
       "name": "日冕穹顶龙·35",
       "source": "imagegen",
       "art": "/cards/firmament-season-35.webp"
+    },
+    {
+      "id": "firmament-season-spell-01",
+      "name": "穹顶灼流·01",
+      "source": "imagegen",
+      "art": "/cards/firmament-season-spell-01.webp"
+    },
+    {
+      "id": "firmament-season-spell-02",
+      "name": "日冕回响·02",
+      "source": "imagegen",
+      "art": "/cards/firmament-season-spell-02.webp"
+    },
+    {
+      "id": "firmament-season-spell-03",
+      "name": "云端复苏·03",
+      "source": "imagegen",
+      "art": "/cards/firmament-season-spell-03.webp"
+    },
+    {
+      "id": "firmament-season-spell-04",
+      "name": "天穹战令·04",
+      "source": "imagegen",
+      "art": "/cards/firmament-season-spell-04.webp"
+    },
+    {
+      "id": "firmament-season-spell-05",
+      "name": "穹顶风暴·05",
+      "source": "imagegen",
+      "art": "/cards/firmament-season-spell-05.webp"
+    },
+    {
+      "id": "firmament-season-spell-06",
+      "name": "日冕发现·06",
+      "source": "imagegen",
+      "art": "/cards/firmament-season-spell-06.webp"
+    },
+    {
+      "id": "firmament-season-spell-07",
+      "name": "云端灼流·07",
+      "source": "imagegen",
+      "art": "/cards/firmament-season-spell-07.webp"
+    },
+    {
+      "id": "firmament-season-spell-08",
+      "name": "天穹回响·08",
+      "source": "imagegen",
+      "art": "/cards/firmament-season-spell-08.webp"
+    },
+    {
+      "id": "firmament-season-spell-09",
+      "name": "穹顶复苏·09",
+      "source": "imagegen",
+      "art": "/cards/firmament-season-spell-09.webp"
+    },
+    {
+      "id": "firmament-season-spell-10",
+      "name": "日冕战令·10",
+      "source": "imagegen",
+      "art": "/cards/firmament-season-spell-10.webp"
+    },
+    {
+      "id": "firmament-season-spell-11",
+      "name": "云端风暴·11",
+      "source": "imagegen",
+      "art": "/cards/firmament-season-spell-11.webp"
+    },
+    {
+      "id": "firmament-season-spell-12",
+      "name": "天穹发现·12",
+      "source": "imagegen",
+      "art": "/cards/firmament-season-spell-12.webp"
+    },
+    {
+      "id": "firmament-season-spell-13",
+      "name": "穹顶灼流·13",
+      "source": "imagegen",
+      "art": "/cards/firmament-season-spell-13.webp"
+    },
+    {
+      "id": "firmament-season-spell-14",
+      "name": "日冕回响·14",
+      "source": "imagegen",
+      "art": "/cards/firmament-season-spell-14.webp"
+    },
+    {
+      "id": "firmament-season-weapon",
+      "name": "天穹·核心武装",
+      "source": "imagegen",
+      "art": "/cards/firmament-season-weapon.webp"
     }
   ]
 }

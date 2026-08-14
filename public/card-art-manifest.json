@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-08-14T06:39:28.405Z",
+  "generatedAt": "2026-08-14T07:32:59.869Z",
   "catalogCount": 1000,
   "generatedCount": 0,
-  "individuallyGeneratedCount": 35,
+  "individuallyGeneratedCount": 50,
   "generatedBy": "imagegen-per-card-plus-legacy-variants",
   "anchor": "public/card-art-sources/frost-anchor.png",
   "cards": [
@@ -6906,105 +6906,105 @@
       "faction": "天穹",
       "type": "spell",
       "art": "/cards/firmament-season-spell-01.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "firmament-season-spell-02",
       "faction": "天穹",
       "type": "spell",
       "art": "/cards/firmament-season-spell-02.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "firmament-season-spell-03",
       "faction": "天穹",
       "type": "spell",
       "art": "/cards/firmament-season-spell-03.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "firmament-season-spell-04",
       "faction": "天穹",
       "type": "spell",
       "art": "/cards/firmament-season-spell-04.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "firmament-season-spell-05",
       "faction": "天穹",
       "type": "spell",
       "art": "/cards/firmament-season-spell-05.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "firmament-season-spell-06",
       "faction": "天穹",
       "type": "spell",
       "art": "/cards/firmament-season-spell-06.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "firmament-season-spell-07",
       "faction": "天穹",
       "type": "spell",
       "art": "/cards/firmament-season-spell-07.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "firmament-season-spell-08",
       "faction": "天穹",
       "type": "spell",
       "art": "/cards/firmament-season-spell-08.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "firmament-season-spell-09",
       "faction": "天穹",
       "type": "spell",
       "art": "/cards/firmament-season-spell-09.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "firmament-season-spell-10",
       "faction": "天穹",
       "type": "spell",
       "art": "/cards/firmament-season-spell-10.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "firmament-season-spell-11",
       "faction": "天穹",
       "type": "spell",
       "art": "/cards/firmament-season-spell-11.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "firmament-season-spell-12",
       "faction": "天穹",
       "type": "spell",
       "art": "/cards/firmament-season-spell-12.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "firmament-season-spell-13",
       "faction": "天穹",
       "type": "spell",
       "art": "/cards/firmament-season-spell-13.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "firmament-season-spell-14",
       "faction": "天穹",
       "type": "spell",
       "art": "/cards/firmament-season-spell-14.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "firmament-season-weapon",
       "faction": "天穹",
       "type": "weapon",
       "art": "/cards/firmament-season-weapon.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     }
   ]
 }
