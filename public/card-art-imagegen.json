@@ -1,6 +1,6 @@
 {
   "workflow": "built-in-imagegen-one-card-per-call",
-  "generatedCount": 80,
+  "generatedCount": 85,
   "cards": [
     {
       "id": "firmament-season-01",
@@ -481,6 +481,36 @@
       "name": "暮鳍疾刺",
       "source": "imagegen",
       "art": "/cards/void-duskfin-darter.webp"
+    },
+    {
+      "id": "void-shellback-sentinel",
+      "name": "覆壳哨卫",
+      "source": "imagegen",
+      "art": "/cards/void-shellback-sentinel.webp"
+    },
+    {
+      "id": "void-inkveil-oracle",
+      "name": "墨帷先知",
+      "source": "imagegen",
+      "art": "/cards/void-inkveil-oracle.webp"
+    },
+    {
+      "id": "void-siphon-lamprey",
+      "name": "噬流七鳃鳗",
+      "source": "imagegen",
+      "art": "/cards/void-siphon-lamprey.webp"
+    },
+    {
+      "id": "void-coral-mimic",
+      "name": "蚀珊瑚拟态",
+      "source": "imagegen",
+      "art": "/cards/void-coral-mimic.webp"
+    },
+    {
+      "id": "void-riptide-duelist",
+      "name": "裂潮斗士",
+      "source": "imagegen",
+      "art": "/cards/void-riptide-duelist.webp"
     }
   ]
 }

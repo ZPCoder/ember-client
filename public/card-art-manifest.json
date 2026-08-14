@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-08-14T08:44:50.877Z",
+  "generatedAt": "2026-08-14T08:55:33.990Z",
   "catalogCount": 1000,
   "generatedCount": 0,
-  "individuallyGeneratedCount": 80,
+  "individuallyGeneratedCount": 85,
   "generatedBy": "imagegen-per-card-plus-legacy-variants",
   "anchor": "public/card-art-sources/frost-anchor.png",
   "cards": [
@@ -347,35 +347,35 @@
       "faction": "幽潮",
       "type": "unit",
       "art": "/cards/void-shellback-sentinel.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "void-inkveil-oracle",
       "faction": "幽潮",
       "type": "unit",
       "art": "/cards/void-inkveil-oracle.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "void-siphon-lamprey",
       "faction": "幽潮",
       "type": "unit",
       "art": "/cards/void-siphon-lamprey.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "void-coral-mimic",
       "faction": "幽潮",
       "type": "unit",
       "art": "/cards/void-coral-mimic.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "void-riptide-duelist",
       "faction": "幽潮",
       "type": "unit",
       "art": "/cards/void-riptide-duelist.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "void-trench-mender",
