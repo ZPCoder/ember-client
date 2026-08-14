@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-08-14T04:22:48.518Z",
+  "generatedAt": "2026-08-14T04:41:20.067Z",
   "catalogCount": 1000,
   "generatedCount": 0,
-  "individuallyGeneratedCount": 10,
+  "individuallyGeneratedCount": 15,
   "generatedBy": "imagegen-per-card-plus-legacy-variants",
   "anchor": "public/card-art-sources/frost-anchor.png",
   "cards": [
@@ -6731,35 +6731,35 @@
       "faction": "天穹",
       "type": "unit",
       "art": "/cards/firmament-season-11.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "firmament-season-12",
       "faction": "天穹",
       "type": "unit",
       "art": "/cards/firmament-season-12.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "firmament-season-13",
       "faction": "天穹",
       "type": "unit",
       "art": "/cards/firmament-season-13.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "firmament-season-14",
       "faction": "天穹",
       "type": "unit",
       "art": "/cards/firmament-season-14.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "firmament-season-15",
       "faction": "天穹",
       "type": "unit",
       "art": "/cards/firmament-season-15.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "firmament-season-16",
