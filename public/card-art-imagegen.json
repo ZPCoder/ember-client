@@ -1,6 +1,6 @@
 {
   "workflow": "built-in-imagegen-one-card-per-call",
-  "generatedCount": 95,
+  "generatedCount": 100,
   "cards": [
     {
       "id": "firmament-season-01",
@@ -571,6 +571,36 @@
       "name": "云游调剂师",
       "source": "imagegen",
       "art": "/cards/neutral-wandering-alchemist.webp"
+    },
+    {
+      "id": "neutral-tactical-map",
+      "name": "折痕战术图",
+      "source": "imagegen",
+      "art": "/cards/neutral-tactical-map.webp"
+    },
+    {
+      "id": "neutral-repair-sprite",
+      "name": "修补精灵",
+      "source": "imagegen",
+      "art": "/cards/neutral-repair-sprite.webp"
+    },
+    {
+      "id": "neutral-thunder-egg",
+      "name": "蕴雷晶卵",
+      "source": "imagegen",
+      "art": "/cards/neutral-thunder-egg.webp"
+    },
+    {
+      "id": "neutral-lantern-mouse",
+      "name": "绒鼠引路",
+      "source": "imagegen",
+      "art": "/cards/neutral-lantern-mouse.webp"
+    },
+    {
+      "id": "neutral-windstep-messenger",
+      "name": "踏风报信人",
+      "source": "imagegen",
+      "art": "/cards/neutral-windstep-messenger.webp"
     }
   ]
 }
