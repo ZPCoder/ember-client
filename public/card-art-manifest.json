@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-08-14T10:21:53.252Z",
+  "generatedAt": "2026-08-14T10:38:34.163Z",
   "catalogCount": 1000,
   "generatedCount": 0,
-  "individuallyGeneratedCount": 115,
+  "individuallyGeneratedCount": 120,
   "generatedBy": "imagegen-per-card-plus-legacy-variants",
   "anchor": "public/card-art-sources/frost-anchor.png",
   "cards": [
@@ -606,35 +606,35 @@
       "faction": "中立",
       "type": "spell",
       "art": "/cards/neutral-field-reinforcement.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "neutral-route-ledger",
       "faction": "中立",
       "type": "spell",
       "art": "/cards/neutral-route-ledger.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "neutral-calibrated-bolt",
       "faction": "中立",
       "type": "spell",
       "art": "/cards/neutral-calibrated-bolt.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "neutral-masterwork-plating",
       "faction": "中立",
       "type": "spell",
       "art": "/cards/neutral-masterwork-plating.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "neutral-grand-expedition",
       "faction": "中立",
       "type": "weapon",
       "art": "/cards/neutral-grand-expedition.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-cinder-scout",

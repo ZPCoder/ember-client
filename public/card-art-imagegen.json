@@ -1,6 +1,6 @@
 {
   "workflow": "built-in-imagegen-one-card-per-call",
-  "generatedCount": 115,
+  "generatedCount": 120,
   "cards": [
     {
       "id": "firmament-season-01",
@@ -691,6 +691,36 @@
       "name": "便携弹簧阱",
       "source": "imagegen",
       "art": "/cards/neutral-springtrap.webp"
+    },
+    {
+      "id": "neutral-field-reinforcement",
+      "name": "野战加固",
+      "source": "imagegen",
+      "art": "/cards/neutral-field-reinforcement.webp"
+    },
+    {
+      "id": "neutral-route-ledger",
+      "name": "通途账册",
+      "source": "imagegen",
+      "art": "/cards/neutral-route-ledger.webp"
+    },
+    {
+      "id": "neutral-calibrated-bolt",
+      "name": "校准弩炮",
+      "source": "imagegen",
+      "art": "/cards/neutral-calibrated-bolt.webp"
+    },
+    {
+      "id": "neutral-masterwork-plating",
+      "name": "大师级覆甲",
+      "source": "imagegen",
+      "art": "/cards/neutral-masterwork-plating.webp"
+    },
+    {
+      "id": "neutral-grand-expedition",
+      "name": "远征合金刃",
+      "source": "imagegen",
+      "art": "/cards/neutral-grand-expedition.webp"
     }
   ]
 }
