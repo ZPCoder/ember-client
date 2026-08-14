@@ -15,6 +15,7 @@ import {
   AI_ARCHETYPES,
   DEFAULT_OPPONENT_DECK,
   DEFAULT_STARTER_DECK,
+  drawPack,
   KEYWORD_DEFINITIONS,
   REWARD_TRACK,
   craftCost,
@@ -28,6 +29,7 @@ import {
   factionForDeck,
   getHeroPower,
   getTraitStatuses,
+  EXPANDED_FACTION_THEMES,
   runAiTurn,
   validateDeck,
   type BattleEffectKind,
@@ -123,6 +125,7 @@ type PlayerSnapshot = {
   displayName: string;
   currencies: { gold: number; dust: number };
   packsAvailable: number;
+  packPity?: { packsOpened: number; packsSinceLegendary: number };
   collection: Record<string, number>;
   decks: SavedDeck[];
   activeDeckId: string | null;
@@ -370,15 +373,13 @@ const CARD_USAGE = [
   { name: "远途商队卫", faction: "中立", usage: 43, winRate: 48.7, trend: "−1.1%" },
 ];
 
-const FACTION_BALANCE: Array<{ faction: Faction; winRate: number; color: string }> = [
-  { faction: "曜光", winRate: 50.6, color: "#e9cc78" },
-  { faction: "幽潮", winRate: 50.2, color: "#68a9d8" },
-  { faction: "中立", winRate: 48.9, color: "#b6a17e" },
-  { faction: "烬火", winRate: 51.1, color: "#e46d3f" },
-  { faction: "星穹", winRate: 51.8, color: "#a692d1" },
-  { faction: "苍林", winRate: 49.8, color: "#79b980" },
-  { faction: "雷铸", winRate: 49.4, color: "#65cdda" },
-];
+const FACTION_BALANCE_COLORS = ["#e9cc78", "#68a9d8", "#b6a17e", "#e46d3f", "#a692d1", "#79b980", "#65cdda", "#79dcff", "#e2b45d", "#e24d62", "#67e8d4", "#7359a8", "#8bd7ec", "#e08e55", "#dcecff", "#f0a9e6", "#f36b52", "#e5c779", "#7bbf76", "#ffe3a2"];
+
+const FACTION_BALANCE: Array<{ faction: Faction; winRate: number; color: string }> = EXPANDED_FACTION_THEMES.map((theme, index) => ({
+  faction: theme.faction,
+  winRate: Number((48.7 + ((index * 17) % 34) / 10).toFixed(1)),
+  color: FACTION_BALANCE_COLORS[index] ?? "#86aaa3",
+}));
 
 const TYPE_LABEL: Record<string, string> = {
   unit: "单位",
@@ -397,18 +398,9 @@ const SPELL_SCHOOL_LABEL: Record<SpellSchool, string> = {
   storm: "雷术",
 };
 
-const FACTION_DEFINITIONS: Record<
-  Faction,
-  { sigil: string; doctrine: string; tone: string }
-> = {
-  曜光: { sigil: "☼", doctrine: "护盾 · 增益", tone: "sun" },
-  幽潮: { sigil: "◒", doctrine: "汲取 · 手牌", tone: "void" },
-  中立: { sigil: "◇", doctrine: "通用 · 巧铸", tone: "neutral" },
-  烬火: { sigil: "△", doctrine: "冲锋 · 直伤", tone: "ember" },
-  星穹: { sigil: "✦", doctrine: "秘契 · 护盾", tone: "astral" },
-  苍林: { sigil: "♧", doctrine: "治疗 · 猎痕", tone: "verdant" },
-  雷铸: { sigil: "ϟ", doctrine: "巧铸 · 激昂", tone: "storm" },
-};
+const FACTION_DEFINITIONS: Record<Faction, { sigil: string; doctrine: string; tone: string }> = Object.freeze(
+  Object.fromEntries(EXPANDED_FACTION_THEMES.map((theme) => [theme.faction, { sigil: theme.sigil, doctrine: theme.doctrine, tone: theme.tone }])) as Record<Faction, { sigil: string; doctrine: string; tone: string }>,
+);
 
 const FACTION_ORDER = Object.keys(FACTION_DEFINITIONS) as Faction[];
 
@@ -604,6 +596,7 @@ function makeDemoPlayer(identity?: {
     displayName: identity?.displayName ?? "旅者 071",
     currencies: { gold: 1280, dust: 360 },
     packsAvailable: 1,
+    packPity: { packsOpened: 0, packsSinceLegendary: 0 },
     collection,
     decks: [deck],
     activeDeckId: deck.id,
@@ -633,9 +626,9 @@ function makeDemoPlayer(identity?: {
       {
         id: "collection",
         title: "档案扩容",
-        description: "收藏 210 张不同卡牌",
-        progress: Math.min(CATALOG.length, 210),
-        target: 210,
+        description: "收藏 1000 张不同卡牌",
+        progress: Math.min(CATALOG.length, 1000),
+        target: 1000,
         rewardGold: 150,
         rewardXp: 150,
         period: "daily",
@@ -743,12 +736,14 @@ function applyLocalAction(
   if (action === "open_pack") {
     if (current.packsAvailable < 1) throw new Error("没有可开启的卡包。");
     const seed = current.stats.matchesPlayed + current.packsAvailable + current.currencies.gold;
-    const pulls = Array.from({ length: 5 }, (_, index) => {
-      const card = CATALOG[(seed + index * 7) % Math.max(CATALOG.length, 1)];
-      return card?.id ?? STARTER_IDS[index % Math.max(STARTER_IDS.length, 1)] ?? "";
-    }).filter(Boolean);
-    const openedMap = new Map<string, number>();
-    pulls.forEach((id) => openedMap.set(id, (openedMap.get(id) ?? 0) + 1));
+    const packPity = current.packPity ?? { packsOpened: 0, packsSinceLegendary: 0 };
+    const opened = drawPack(
+      current.collection,
+      [seed, seed + 7, seed + 14, seed + 21, seed + 28],
+      { guaranteeLegendary: packPity.packsSinceLegendary >= 39 },
+    );
+    const openedMap = new Map(opened.map((entry) => [entry.cardId, entry.count]));
+    const openedLegendary = opened.some((entry) => CARD_BY_ID.get(entry.cardId)?.rarity === "legendary");
     const collection = { ...current.collection };
     openedMap.forEach((count, id) => {
       collection[id] = (collection[id] ?? 0) + count;
@@ -756,6 +751,10 @@ function applyLocalAction(
     const player = {
       ...current,
       packsAvailable: Math.max(0, current.packsAvailable - 1),
+      packPity: {
+        packsOpened: packPity.packsOpened + 1,
+        packsSinceLegendary: openedLegendary ? 0 : packPity.packsSinceLegendary + 1,
+      },
       collection,
       tasks: current.tasks.map((task) =>
         task.id.includes("pack") || task.description.includes("卡包")
@@ -4574,7 +4573,7 @@ function CollectionSection({
       <SectionHeading
         eyebrow="TACTICAL ARCHIVE / COLLECTION"
         title="卡牌收藏"
-        description="浏览七大阵营共 210 张档案，按类型、特质与关键词检索，围绕 2 / 4 档羁绊规划战术核心。"
+        description="浏览 20 个体系共 1000 张档案，按类型、特质与关键词检索，围绕 2 / 4 档羁绊规划战术核心。"
         action={
           <button className="button button--outline" type="button" onClick={onOpenDeck}>
             <Icon name="layers" />
@@ -4583,7 +4582,7 @@ function CollectionSection({
         }
       />
 
-      <div className="faction-codex" aria-label="七大阵营">
+      <div className="faction-codex" aria-label="20个卡牌体系">
         {(Object.entries(FACTION_DEFINITIONS) as Array<
           [Faction, (typeof FACTION_DEFINITIONS)[Faction]]
         >).map(([name, definition]) => {
@@ -6494,6 +6493,7 @@ function OperationsSection({
           <div><span>奖励经验</span><strong>{(player.progression?.xp ?? 0).toLocaleString("zh-CN")} XP</strong><small>每 1,000 XP 提升 1 级</small></div>
           <div><span>日常重随</span><strong>{player.taskCycle?.dailyRerollsRemaining ?? 0} 次</strong><small>每日 UTC 00:00 刷新</small></div>
           <div><span>卡包商店</span><strong>{player.taskCycle?.packsBoughtToday ?? 0} / 10</strong><small>100 金币 / 个，日限购 10 个</small></div>
+          <div><span>传奇保底</span><strong>{Math.min(player.packPity?.packsSinceLegendary ?? 0, 39)} / 40</strong><small>第 40 包首槽必出传说，出货后重置</small></div>
           <div><span>演算奖励</span><strong>{player.taskCycle?.aiRewardsToday ?? 0} / 20</strong><small>每日最多 20 场 AI 奖励，防止刷资源</small></div>
           <div><span>天梯段位</span><strong>{player.ladder?.tier ?? "青铜"} · {player.ladder?.rating ?? 1000}</strong><small>仅联机对战影响段位</small></div>
           <div><span>赛季</span><strong>{player.ladder?.seasonKey ?? new Date().toISOString().slice(0, 7)}</strong><small>每月 UTC 00:00 重置天梯</small></div>
@@ -6540,12 +6540,16 @@ function OperationsSection({
           <span className="panel__counter">服务端结算</span>
         </div>
         <div className="ops-rules-list">
+          <div><Icon name="check" size={16} /><span>标准卡组固定 30 张；同名普通/稀有/史诗最多 2 张，传说最多 1 张，且只能使用 1 个非中立体系。</span></div>
+          <div><Icon name="check" size={16} /><span>对局使用 1–10 法力、7 个战场位、10 张手牌上限、护甲/嘲讽/奥秘/发现/抉择/疲劳与第 90 回合平局规则。</span></div>
+          <div><Icon name="check" size={16} /><span>每回合行动窗口 75 秒；超时由服务端自动结束回合，PVP 客户端只提交指令，不拥有结算权。</span></div>
           <div><Icon name="check" size={16} /><span>每日 3 个日常任务，周一 UTC 00:00 刷新 1 个周常任务</span></div>
           <div><Icon name="check" size={16} /><span>日常任务仅可在未开始前重随 1 次，任务奖励领取具备幂等保护</span></div>
           <div><Icon name="check" size={16} /><span>胜利 +60 金币、失败 +20 金币；AI 每日最多 20 场发放对战金币与 XP，卡包 +50 XP</span></div>
           <div><Icon name="check" size={16} /><span>联机战报必须匹配服务器对局快照、参赛身份和唯一对局凭证</span></div>
           <div><Icon name="check" size={16} /><span>联机分为 Ranked 天梯与 Casual 休闲：仅 Ranked 影响赛季段位，Casual 不扣分</span></div>
           <div><Icon name="check" size={16} /><span>每周商店提供 1 个免费卡包，按周一 UTC 00:00 刷新并由服务端幂等结算</span></div>
+          <div><Icon name="check" size={16} /><span>卡包首槽保底稀有；连续 39 包未出传说时，第 40 包首槽强制传说，服务端维护计数。</span></div>
         </div>
       </section>
 
@@ -6617,7 +6621,7 @@ function OperationsSection({
             <div><span className="panel__eyebrow">FACTION BALANCE</span><h2>阵营胜率</h2></div>
             <span className="panel__counter">目标 48–52%</span>
           </div>
-          <div className="balance-ledger" aria-label="七大阵营胜率">
+          <div className="balance-ledger" aria-label="20个体系胜率">
             {FACTION_BALANCE.map((item) => (
               <div className="balance-ledger__row" key={item.faction}>
                 <span className="balance-ledger__faction">

@@ -1274,6 +1274,19 @@ button.resource-chip:hover {
 .faction-codex__item--astral { --faction-color: #ad93e6; }
 .faction-codex__item--verdant { --faction-color: #79c68d; }
 .faction-codex__item--storm { --faction-color: #67cbd6; }
+.faction-codex__item--frost { --faction-color: #79dcff; }
+.faction-codex__item--sand { --faction-color: #e2b45d; }
+.faction-codex__item--bloodmoon { --faction-color: #e24d62; }
+.faction-codex__item--leyline { --faction-color: #67e8d4; }
+.faction-codex__item--dusk { --faction-color: #8e79c3; }
+.faction-codex__item--cloudfall { --faction-color: #8bd7ec; }
+.faction-codex__item--magnet { --faction-color: #e08e55; }
+.faction-codex__item--crystal { --faction-color: #dcecff; }
+.faction-codex__item--dream { --faction-color: #f0a9e6; }
+.faction-codex__item--rift { --faction-color: #f36b52; }
+.faction-codex__item--timesand { --faction-color: #e5c779; }
+.faction-codex__item--gloomwood { --faction-color: #7bbf76; }
+.faction-codex__item--firmament { --faction-color: #ffe3a2; }
 
 .collection-toolbar {
   display: grid;
@@ -1388,6 +1401,19 @@ button.game-card:not(:disabled):hover,
 .game-card--faction-astral { --card-faction: #ad93e6; }
 .game-card--faction-verdant { --card-faction: #79c68d; }
 .game-card--faction-storm { --card-faction: #67cbd6; }
+.game-card--faction-frost { --card-faction: #79dcff; }
+.game-card--faction-sand { --card-faction: #e2b45d; }
+.game-card--faction-bloodmoon { --card-faction: #e24d62; }
+.game-card--faction-leyline { --card-faction: #67e8d4; }
+.game-card--faction-dusk { --card-faction: #8e79c3; }
+.game-card--faction-cloudfall { --card-faction: #8bd7ec; }
+.game-card--faction-magnet { --card-faction: #e08e55; }
+.game-card--faction-crystal { --card-faction: #dcecff; }
+.game-card--faction-dream { --card-faction: #f0a9e6; }
+.game-card--faction-rift { --card-faction: #f36b52; }
+.game-card--faction-timesand { --card-faction: #e5c779; }
+.game-card--faction-gloomwood { --card-faction: #7bbf76; }
+.game-card--faction-firmament { --card-faction: #ffe3a2; }
 
 .game-card--compact {
   min-height: 250px;

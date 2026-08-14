@@ -31,13 +31,14 @@ test("build emits a deployable worker, D1 metadata, and migration", async () => 
 });
 
 test("ships the complete product surface and removes starter assets", async () => {
-  const [page, game, styles, layout, packageJson, og] = await Promise.all([
+  const [page, game, styles, layout, packageJson, og, artManifest] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/GameApp.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
     stat(new URL("../public/og.png", import.meta.url)),
+    readFile(new URL("../public/card-art-manifest.json", import.meta.url), "utf8"),
   ]);
   const cardIds = CARD_CATALOG.map((card) => card.id);
   const cardArt = await Promise.all(
@@ -122,14 +123,21 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.doesNotMatch(game, /<svg/i);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
   assert.ok(og.size > 100_000);
-  assert.equal(cardIds.length, 210);
+  assert.equal(cardIds.length, 1000);
+  const parsedManifest = JSON.parse(artManifest);
+  assert.equal(parsedManifest.catalogCount, cardIds.length);
+  assert.equal(parsedManifest.cards.length, cardIds.length);
+  assert.deepEqual(
+    new Set(parsedManifest.cards.map((entry) => entry.id)),
+    new Set(cardIds),
+  );
   assert.ok(cardArt.every(({ asset }) => asset.size > 75_000));
   assert.ok(
     cardArt.every(({ metadata }) =>
       metadata.format === "webp" && metadata.width === 768 && metadata.height === 960,
     ),
   );
-  assert.equal(new Set(cardArt.map(({ hash }) => hash)).size, 210);
+  assert.equal(new Set(cardArt.map(({ hash }) => hash)).size, 1000);
 
   await assert.rejects(
     access(new URL("../app/_sites-preview", projectRoot)),
