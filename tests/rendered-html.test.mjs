@@ -137,7 +137,8 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.ok(
     cardArt.every(({ metadata }) =>
       metadata.format === "webp" &&
-      ((metadata.width === 512 && metadata.height === 640) ||
+      ((metadata.width === 384 && metadata.height === 480) ||
+        (metadata.width === 512 && metadata.height === 640) ||
         (metadata.width === 768 && metadata.height === 960)),
     ),
   );

@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-14T02:07:41.236Z",
+  "generatedAt": "2026-08-14T02:13:04.263Z",
   "catalogCount": 1000,
-  "generatedCount": 790,
+  "generatedCount": 1000,
   "generatedBy": "imagegen-anchor-plus-deterministic-card-art-variants",
   "anchor": "public/card-art-sources/frost-anchor.png",
   "cards": [
