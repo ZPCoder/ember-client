@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-08-14T09:29:18.339Z",
+  "generatedAt": "2026-08-14T09:41:22.978Z",
   "catalogCount": 1000,
   "generatedCount": 0,
-  "individuallyGeneratedCount": 100,
+  "individuallyGeneratedCount": 105,
   "generatedBy": "imagegen-per-card-plus-legacy-variants",
   "anchor": "public/card-art-sources/frost-anchor.png",
   "cards": [
@@ -501,35 +501,35 @@
       "faction": "中立",
       "type": "unit",
       "art": "/cards/neutral-ironpot-cook.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "neutral-brassback-badger",
       "faction": "中立",
       "type": "unit",
       "art": "/cards/neutral-brassback-badger.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "neutral-relic-appraiser",
       "faction": "中立",
       "type": "unit",
       "art": "/cards/neutral-relic-appraiser.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "neutral-riveted-ram",
       "faction": "中立",
       "type": "unit",
       "art": "/cards/neutral-riveted-ram.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "neutral-crossroad-duelist",
       "faction": "中立",
       "type": "unit",
       "art": "/cards/neutral-crossroad-duelist.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "neutral-dune-tracker",

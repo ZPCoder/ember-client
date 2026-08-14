@@ -1,6 +1,6 @@
 {
   "workflow": "built-in-imagegen-one-card-per-call",
-  "generatedCount": 100,
+  "generatedCount": 105,
   "cards": [
     {
       "id": "firmament-season-01",
@@ -601,6 +601,36 @@
       "name": "踏风报信人",
       "source": "imagegen",
       "art": "/cards/neutral-windstep-messenger.webp"
+    },
+    {
+      "id": "neutral-ironpot-cook",
+      "name": "铁锅行厨",
+      "source": "imagegen",
+      "art": "/cards/neutral-ironpot-cook.webp"
+    },
+    {
+      "id": "neutral-brassback-badger",
+      "name": "铜背獾",
+      "source": "imagegen",
+      "art": "/cards/neutral-brassback-badger.webp"
+    },
+    {
+      "id": "neutral-relic-appraiser",
+      "name": "遗物估价师",
+      "source": "imagegen",
+      "art": "/cards/neutral-relic-appraiser.webp"
+    },
+    {
+      "id": "neutral-riveted-ram",
+      "name": "铆钉撞角羊",
+      "source": "imagegen",
+      "art": "/cards/neutral-riveted-ram.webp"
+    },
+    {
+      "id": "neutral-crossroad-duelist",
+      "name": "岔路决斗客",
+      "source": "imagegen",
+      "art": "/cards/neutral-crossroad-duelist.webp"
     }
   ]
 }
