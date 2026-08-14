@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-08-14T09:41:22.978Z",
+  "generatedAt": "2026-08-14T10:00:48.662Z",
   "catalogCount": 1000,
   "generatedCount": 0,
-  "individuallyGeneratedCount": 105,
+  "individuallyGeneratedCount": 110,
   "generatedBy": "imagegen-per-card-plus-legacy-variants",
   "anchor": "public/card-art-sources/frost-anchor.png",
   "cards": [
@@ -536,35 +536,35 @@
       "faction": "中立",
       "type": "unit",
       "art": "/cards/neutral-dune-tracker.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "neutral-aether-peddler",
       "faction": "中立",
       "type": "unit",
       "art": "/cards/neutral-aether-peddler.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "neutral-bastion-tortoise",
       "faction": "中立",
       "type": "unit",
       "art": "/cards/neutral-bastion-tortoise.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "neutral-gearhawk-handler",
       "faction": "中立",
       "type": "unit",
       "art": "/cards/neutral-gearhawk-handler.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "neutral-ruin-stag",
       "faction": "中立",
       "type": "unit",
       "art": "/cards/neutral-ruin-stag.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "neutral-mobile-forge",

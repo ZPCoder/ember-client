@@ -1,6 +1,6 @@
 {
   "workflow": "built-in-imagegen-one-card-per-call",
-  "generatedCount": 105,
+  "generatedCount": 110,
   "cards": [
     {
       "id": "firmament-season-01",
@@ -631,6 +631,36 @@
       "name": "岔路决斗客",
       "source": "imagegen",
       "art": "/cards/neutral-crossroad-duelist.webp"
+    },
+    {
+      "id": "neutral-dune-tracker",
+      "name": "沙迹追猎者",
+      "source": "imagegen",
+      "art": "/cards/neutral-dune-tracker.webp"
+    },
+    {
+      "id": "neutral-aether-peddler",
+      "name": "以太货郎",
+      "source": "imagegen",
+      "art": "/cards/neutral-aether-peddler.webp"
+    },
+    {
+      "id": "neutral-bastion-tortoise",
+      "name": "驮垒巨龟",
+      "source": "imagegen",
+      "art": "/cards/neutral-bastion-tortoise.webp"
+    },
+    {
+      "id": "neutral-gearhawk-handler",
+      "name": "齿隼驯养师",
+      "source": "imagegen",
+      "art": "/cards/neutral-gearhawk-handler.webp"
+    },
+    {
+      "id": "neutral-ruin-stag",
+      "name": "遗迹冠鹿",
+      "source": "imagegen",
+      "art": "/cards/neutral-ruin-stag.webp"
     }
   ]
 }
