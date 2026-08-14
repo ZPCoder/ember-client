@@ -1,6 +1,6 @@
 {
   "workflow": "built-in-imagegen-one-card-per-call",
-  "generatedCount": 50,
+  "generatedCount": 55,
   "cards": [
     {
       "id": "firmament-season-01",
@@ -301,6 +301,36 @@
       "name": "天穹·核心武装",
       "source": "imagegen",
       "art": "/cards/firmament-season-weapon.webp"
+    },
+    {
+      "id": "sun-season-01",
+      "name": "晨辉斥候·01",
+      "source": "imagegen",
+      "art": "/cards/sun-season-01.webp"
+    },
+    {
+      "id": "sun-season-02",
+      "name": "棱镜守望者·02",
+      "source": "imagegen",
+      "art": "/cards/sun-season-02.webp"
+    },
+    {
+      "id": "sun-season-03",
+      "name": "白昼旗手·03",
+      "source": "imagegen",
+      "art": "/cards/sun-season-03.webp"
+    },
+    {
+      "id": "sun-season-04",
+      "name": "曙冠铸师·04",
+      "source": "imagegen",
+      "art": "/cards/sun-season-04.webp"
+    },
+    {
+      "id": "sun-season-05",
+      "name": "晨辉斥候·05",
+      "source": "imagegen",
+      "art": "/cards/sun-season-05.webp"
     }
   ]
 }
