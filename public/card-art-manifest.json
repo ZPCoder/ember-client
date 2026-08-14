@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-08-14T08:34:08.104Z",
+  "generatedAt": "2026-08-14T08:44:50.877Z",
   "catalogCount": 1000,
   "generatedCount": 0,
-  "individuallyGeneratedCount": 75,
+  "individuallyGeneratedCount": 80,
   "generatedBy": "imagegen-per-card-plus-legacy-variants",
   "anchor": "public/card-art-sources/frost-anchor.png",
   "cards": [
@@ -102,21 +102,21 @@
       "faction": "幽潮",
       "type": "spell",
       "art": "/cards/void-chill-needle.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "void-moonless-surge",
       "faction": "幽潮",
       "type": "spell",
       "art": "/cards/void-moonless-surge.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "void-ink-storm",
       "faction": "幽潮",
       "type": "spell",
       "art": "/cards/void-ink-storm.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "neutral-moss-runner",
@@ -333,14 +333,14 @@
       "faction": "幽潮",
       "type": "unit",
       "art": "/cards/void-brine-skulker.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "void-duskfin-darter",
       "faction": "幽潮",
       "type": "unit",
       "art": "/cards/void-duskfin-darter.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "void-shellback-sentinel",

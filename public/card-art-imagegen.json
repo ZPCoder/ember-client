@@ -1,6 +1,6 @@
 {
   "workflow": "built-in-imagegen-one-card-per-call",
-  "generatedCount": 75,
+  "generatedCount": 80,
   "cards": [
     {
       "id": "firmament-season-01",
@@ -451,6 +451,36 @@
       "name": "深潮潜行者·05",
       "source": "imagegen",
       "art": "/cards/void-season-05.webp"
+    },
+    {
+      "id": "void-chill-needle",
+      "name": "寒潮刺针",
+      "source": "imagegen",
+      "art": "/cards/void-chill-needle.webp"
+    },
+    {
+      "id": "void-moonless-surge",
+      "name": "无月涌流",
+      "source": "imagegen",
+      "art": "/cards/void-moonless-surge.webp"
+    },
+    {
+      "id": "void-ink-storm",
+      "name": "墨云震荡",
+      "source": "imagegen",
+      "art": "/cards/void-ink-storm.webp"
+    },
+    {
+      "id": "void-brine-skulker",
+      "name": "盐雾伏游者",
+      "source": "imagegen",
+      "art": "/cards/void-brine-skulker.webp"
+    },
+    {
+      "id": "void-duskfin-darter",
+      "name": "暮鳍疾刺",
+      "source": "imagegen",
+      "art": "/cards/void-duskfin-darter.webp"
     }
   ]
 }
