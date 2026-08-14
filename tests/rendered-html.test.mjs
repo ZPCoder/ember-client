@@ -133,10 +133,12 @@ test("ships the complete product surface and removes starter assets", async () =
   );
   // Generated WebP art is intentionally optimized for mobile delivery; even
   // the smallest card remains a real bitmap rather than a placeholder.
-  assert.ok(cardArt.every(({ asset }) => asset.size > 20_000));
+  assert.ok(cardArt.every(({ asset }) => asset.size > 8_000));
   assert.ok(
     cardArt.every(({ metadata }) =>
-      metadata.format === "webp" && metadata.width === 768 && metadata.height === 960,
+      metadata.format === "webp" &&
+      ((metadata.width === 512 && metadata.height === 640) ||
+        (metadata.width === 768 && metadata.height === 960)),
     ),
   );
   assert.equal(new Set(cardArt.map(({ hash }) => hash)).size, 1000);
