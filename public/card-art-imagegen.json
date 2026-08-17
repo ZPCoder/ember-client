@@ -1,6 +1,6 @@
 {
   "workflow": "built-in-imagegen-one-card-per-call",
-  "generatedCount": 135,
+  "generatedCount": 140,
   "cards": [
     {
       "id": "firmament-season-01",
@@ -811,6 +811,36 @@
       "name": "商路护卫·15",
       "source": "imagegen",
       "art": "/cards/neutral-season-15.webp"
+    },
+    {
+      "id": "neutral-season-spell-01",
+      "name": "齿轮灼流·01",
+      "source": "imagegen",
+      "art": "/cards/neutral-season-spell-01.webp"
+    },
+    {
+      "id": "neutral-season-spell-02",
+      "name": "商路回响·02",
+      "source": "imagegen",
+      "art": "/cards/neutral-season-spell-02.webp"
+    },
+    {
+      "id": "neutral-season-spell-03",
+      "name": "荒原复苏·03",
+      "source": "imagegen",
+      "art": "/cards/neutral-season-spell-03.webp"
+    },
+    {
+      "id": "neutral-season-spell-04",
+      "name": "远途战令·04",
+      "source": "imagegen",
+      "art": "/cards/neutral-season-spell-04.webp"
+    },
+    {
+      "id": "neutral-season-spell-05",
+      "name": "齿轮风暴·05",
+      "source": "imagegen",
+      "art": "/cards/neutral-season-spell-05.webp"
     }
   ]
 }
