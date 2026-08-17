@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-08-17T19:42:18.918Z",
+  "generatedAt": "2026-08-17T20:58:55.010Z",
   "catalogCount": 1000,
   "generatedCount": 0,
-  "individuallyGeneratedCount": 219,
+  "individuallyGeneratedCount": 224,
   "generatedBy": "imagegen-per-card-plus-legacy-variants",
   "anchor": "public/card-art-sources/frost-anchor.png",
   "cards": [
@@ -872,35 +872,35 @@
       "faction": "星穹",
       "type": "unit",
       "art": "/cards/astral-comet-scribe.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-orbit-moonhare",
       "faction": "星穹",
       "type": "unit",
       "art": "/cards/astral-orbit-moonhare.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-veil-seer",
       "faction": "星穹",
       "type": "unit",
       "art": "/cards/astral-veil-seer.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-mirror-adept",
       "faction": "星穹",
       "type": "unit",
       "art": "/cards/astral-mirror-adept.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-constellation-gardener",
       "faction": "星穹",
       "type": "unit",
       "art": "/cards/astral-constellation-gardener.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-nebula-knight",

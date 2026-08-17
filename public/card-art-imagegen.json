@@ -1,6 +1,6 @@
 {
   "workflow": "built-in-imagegen-one-card-per-call",
-  "generatedCount": 219,
+  "generatedCount": 224,
   "cards": [
     {
       "id": "firmament-season-01",
@@ -1315,6 +1315,36 @@
       "name": "棱镜守卫",
       "source": "imagegen",
       "art": "/cards/astral-prism-guard.webp"
+    },
+    {
+      "id": "astral-comet-scribe",
+      "name": "彗迹抄录员",
+      "source": "imagegen",
+      "art": "/cards/astral-comet-scribe.webp"
+    },
+    {
+      "id": "astral-orbit-moonhare",
+      "name": "环轨月兔",
+      "source": "imagegen",
+      "art": "/cards/astral-orbit-moonhare.webp"
+    },
+    {
+      "id": "astral-veil-seer",
+      "name": "星幕先知",
+      "source": "imagegen",
+      "art": "/cards/astral-veil-seer.webp"
+    },
+    {
+      "id": "astral-mirror-adept",
+      "name": "镜宙修习者",
+      "source": "imagegen",
+      "art": "/cards/astral-mirror-adept.webp"
+    },
+    {
+      "id": "astral-constellation-gardener",
+      "name": "星座园丁",
+      "source": "imagegen",
+      "art": "/cards/astral-constellation-gardener.webp"
     }
   ]
 }
