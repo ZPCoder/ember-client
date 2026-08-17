@@ -1,6 +1,6 @@
 {
   "workflow": "built-in-imagegen-one-card-per-call",
-  "generatedCount": 224,
+  "generatedCount": 229,
   "cards": [
     {
       "id": "firmament-season-01",
@@ -1345,6 +1345,36 @@
       "name": "星座园丁",
       "source": "imagegen",
       "art": "/cards/astral-constellation-gardener.webp"
+    },
+    {
+      "id": "astral-nebula-knight",
+      "name": "星云骑士",
+      "source": "imagegen",
+      "art": "/cards/astral-nebula-knight.webp"
+    },
+    {
+      "id": "astral-archive-stargazer",
+      "name": "秘库观星官",
+      "source": "imagegen",
+      "art": "/cards/astral-archive-stargazer.webp"
+    },
+    {
+      "id": "astral-eclipse-stalker",
+      "name": "食影巡猎者",
+      "source": "imagegen",
+      "art": "/cards/astral-eclipse-stalker.webp"
+    },
+    {
+      "id": "astral-prismatic-stag",
+      "name": "棱光星鹿",
+      "source": "imagegen",
+      "art": "/cards/astral-prismatic-stag.webp"
+    },
+    {
+      "id": "astral-comet-rider",
+      "name": "彗星骑手",
+      "source": "imagegen",
+      "art": "/cards/astral-comet-rider.webp"
     }
   ]
 }

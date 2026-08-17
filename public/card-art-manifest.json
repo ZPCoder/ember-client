@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-08-17T20:58:55.010Z",
+  "generatedAt": "2026-08-17T22:44:14.706Z",
   "catalogCount": 1000,
   "generatedCount": 0,
-  "individuallyGeneratedCount": 224,
+  "individuallyGeneratedCount": 229,
   "generatedBy": "imagegen-per-card-plus-legacy-variants",
   "anchor": "public/card-art-sources/frost-anchor.png",
   "cards": [
@@ -907,35 +907,35 @@
       "faction": "星穹",
       "type": "unit",
       "art": "/cards/astral-nebula-knight.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-archive-stargazer",
       "faction": "星穹",
       "type": "unit",
       "art": "/cards/astral-archive-stargazer.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-eclipse-stalker",
       "faction": "星穹",
       "type": "unit",
       "art": "/cards/astral-eclipse-stalker.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-prismatic-stag",
       "faction": "星穹",
       "type": "unit",
       "art": "/cards/astral-prismatic-stag.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-comet-rider",
       "faction": "星穹",
       "type": "unit",
       "art": "/cards/astral-comet-rider.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-galaxy-weaver",
