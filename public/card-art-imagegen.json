@@ -1,6 +1,6 @@
 {
   "workflow": "built-in-imagegen-one-card-per-call",
-  "generatedCount": 214,
+  "generatedCount": 219,
   "cards": [
     {
       "id": "firmament-season-01",
@@ -1285,6 +1285,36 @@
       "name": "熔芯过载",
       "source": "imagegen",
       "art": "/cards/ember-molten-core-overload.webp"
+    },
+    {
+      "id": "ember-cinder-rain",
+      "name": "烬雨齐射",
+      "source": "imagegen",
+      "art": "/cards/ember-cinder-rain.webp"
+    },
+    {
+      "id": "ember-calamity-verdict",
+      "name": "灾火审判",
+      "source": "imagegen",
+      "art": "/cards/ember-calamity-verdict.webp"
+    },
+    {
+      "id": "ember-red-lotus-finale",
+      "name": "红莲焚刃",
+      "source": "imagegen",
+      "art": "/cards/ember-red-lotus-finale.webp"
+    },
+    {
+      "id": "astral-skychart-apprentice",
+      "name": "天图学徒",
+      "source": "imagegen",
+      "art": "/cards/astral-skychart-apprentice.webp"
+    },
+    {
+      "id": "astral-prism-guard",
+      "name": "棱镜守卫",
+      "source": "imagegen",
+      "art": "/cards/astral-prism-guard.webp"
     }
   ]
 }

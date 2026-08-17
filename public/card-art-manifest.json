@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-08-17T18:37:43.262Z",
+  "generatedAt": "2026-08-17T19:42:18.918Z",
   "catalogCount": 1000,
   "generatedCount": 0,
-  "individuallyGeneratedCount": 214,
+  "individuallyGeneratedCount": 219,
   "generatedBy": "imagegen-per-card-plus-legacy-variants",
   "anchor": "public/card-art-sources/frost-anchor.png",
   "cards": [
@@ -830,21 +830,21 @@
       "faction": "烬火",
       "type": "spell",
       "art": "/cards/ember-cinder-rain.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-calamity-verdict",
       "faction": "烬火",
       "type": "spell",
       "art": "/cards/ember-calamity-verdict.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-red-lotus-finale",
       "faction": "烬火",
       "type": "weapon",
       "art": "/cards/ember-red-lotus-finale.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-stardust-familiar",
@@ -858,14 +858,14 @@
       "faction": "星穹",
       "type": "unit",
       "art": "/cards/astral-skychart-apprentice.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-prism-guard",
       "faction": "星穹",
       "type": "unit",
       "art": "/cards/astral-prism-guard.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-comet-scribe",
