@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-08-17T02:05:52.960Z",
+  "generatedAt": "2026-08-17T02:33:58.899Z",
   "catalogCount": 1000,
   "generatedCount": 0,
-  "individuallyGeneratedCount": 145,
+  "individuallyGeneratedCount": 149,
   "generatedBy": "imagegen-per-card-plus-legacy-variants",
   "anchor": "public/card-art-sources/frost-anchor.png",
   "cards": [
@@ -11,7 +11,7 @@
       "faction": "曜光",
       "type": "unit",
       "art": "/cards/sun-dawn-scout.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sun-mirror-warden",
@@ -67,7 +67,7 @@
       "faction": "幽潮",
       "type": "unit",
       "art": "/cards/void-mist-lurker.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "void-undertow-guard",
@@ -851,7 +851,7 @@
       "faction": "星穹",
       "type": "unit",
       "art": "/cards/astral-stardust-familiar.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-skychart-apprentice",
@@ -1061,7 +1061,7 @@
       "faction": "苍林",
       "type": "unit",
       "art": "/cards/verdant-spore-scout.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-dewleaf-apprentice",

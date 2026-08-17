@@ -1,6 +1,6 @@
 {
   "workflow": "built-in-imagegen-one-card-per-call",
-  "generatedCount": 145,
+  "generatedCount": 149,
   "cards": [
     {
       "id": "firmament-season-01",
@@ -871,6 +871,30 @@
       "name": "焦岩卫士",
       "source": "imagegen",
       "art": "/cards/ember-charrock-guard.webp"
+    },
+    {
+      "id": "sun-dawn-scout",
+      "name": "晨辉斥候",
+      "source": "imagegen",
+      "art": "/cards/sun-dawn-scout.webp"
+    },
+    {
+      "id": "void-mist-lurker",
+      "name": "雾汐潜行者",
+      "source": "imagegen",
+      "art": "/cards/void-mist-lurker.webp"
+    },
+    {
+      "id": "astral-stardust-familiar",
+      "name": "星尘伴灵",
+      "source": "imagegen",
+      "art": "/cards/astral-stardust-familiar.webp"
+    },
+    {
+      "id": "verdant-spore-scout",
+      "name": "孢芽斥候",
+      "source": "imagegen",
+      "art": "/cards/verdant-spore-scout.webp"
     }
   ]
 }
