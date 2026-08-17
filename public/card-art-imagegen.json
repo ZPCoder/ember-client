@@ -1,6 +1,6 @@
 {
   "workflow": "built-in-imagegen-one-card-per-call",
-  "generatedCount": 204,
+  "generatedCount": 209,
   "cards": [
     {
       "id": "firmament-season-01",
@@ -1225,6 +1225,36 @@
       "name": "灼地多首兽",
       "source": "imagegen",
       "art": "/cards/ember-scorchland-hydra.webp"
+    },
+    {
+      "id": "ember-forgecrown-general",
+      "name": "炉冠统领",
+      "source": "imagegen",
+      "art": "/cards/ember-forgecrown-general.webp"
+    },
+    {
+      "id": "ember-caldera-core",
+      "name": "地心焰核",
+      "source": "imagegen",
+      "art": "/cards/ember-caldera-core.webp"
+    },
+    {
+      "id": "ember-spark-artificer",
+      "name": "余烬工程师",
+      "source": "imagegen",
+      "art": "/cards/ember-spark-artificer.webp"
+    },
+    {
+      "id": "ember-leaping-spark",
+      "name": "跳火",
+      "source": "imagegen",
+      "art": "/cards/ember-leaping-spark.webp"
+    },
+    {
+      "id": "ember-flame-pierce",
+      "name": "烈焰穿刺",
+      "source": "imagegen",
+      "art": "/cards/ember-flame-pierce.webp"
     }
   ]
 }

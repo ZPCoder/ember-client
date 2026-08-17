@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-08-17T16:53:26.213Z",
+  "generatedAt": "2026-08-17T17:38:56.200Z",
   "catalogCount": 1000,
   "generatedCount": 0,
-  "individuallyGeneratedCount": 204,
+  "individuallyGeneratedCount": 209,
   "generatedBy": "imagegen-per-card-plus-legacy-variants",
   "anchor": "public/card-art-sources/frost-anchor.png",
   "cards": [
@@ -760,35 +760,35 @@
       "faction": "烬火",
       "type": "unit",
       "art": "/cards/ember-forgecrown-general.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-caldera-core",
       "faction": "烬火",
       "type": "unit",
       "art": "/cards/ember-caldera-core.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-spark-artificer",
       "faction": "烬火",
       "type": "unit",
       "art": "/cards/ember-spark-artificer.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-leaping-spark",
       "faction": "烬火",
       "type": "spell",
       "art": "/cards/ember-leaping-spark.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-flame-pierce",
       "faction": "烬火",
       "type": "spell",
       "art": "/cards/ember-flame-pierce.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-ignite-morale",
