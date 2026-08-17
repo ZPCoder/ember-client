@@ -1,6 +1,6 @@
 {
   "workflow": "built-in-imagegen-one-card-per-call",
-  "generatedCount": 209,
+  "generatedCount": 214,
   "cards": [
     {
       "id": "firmament-season-01",
@@ -1255,6 +1255,36 @@
       "name": "烈焰穿刺",
       "source": "imagegen",
       "art": "/cards/ember-flame-pierce.webp"
+    },
+    {
+      "id": "ember-ignite-morale",
+      "name": "战意点燃",
+      "source": "imagegen",
+      "art": "/cards/ember-ignite-morale.webp"
+    },
+    {
+      "id": "ember-cinder-dispatch",
+      "name": "余烬急报",
+      "source": "imagegen",
+      "art": "/cards/ember-cinder-dispatch.webp"
+    },
+    {
+      "id": "ember-fireline-lockdown",
+      "name": "火线封锁",
+      "source": "imagegen",
+      "art": "/cards/ember-fireline-lockdown.webp"
+    },
+    {
+      "id": "ember-ash-rekindling",
+      "name": "灰烬再燃",
+      "source": "imagegen",
+      "art": "/cards/ember-ash-rekindling.webp"
+    },
+    {
+      "id": "ember-molten-core-overload",
+      "name": "熔芯过载",
+      "source": "imagegen",
+      "art": "/cards/ember-molten-core-overload.webp"
     }
   ]
 }

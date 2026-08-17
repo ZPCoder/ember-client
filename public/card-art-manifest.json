@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-08-17T17:38:56.200Z",
+  "generatedAt": "2026-08-17T18:37:43.262Z",
   "catalogCount": 1000,
   "generatedCount": 0,
-  "individuallyGeneratedCount": 209,
+  "individuallyGeneratedCount": 214,
   "generatedBy": "imagegen-per-card-plus-legacy-variants",
   "anchor": "public/card-art-sources/frost-anchor.png",
   "cards": [
@@ -795,35 +795,35 @@
       "faction": "烬火",
       "type": "spell",
       "art": "/cards/ember-ignite-morale.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-cinder-dispatch",
       "faction": "烬火",
       "type": "spell",
       "art": "/cards/ember-cinder-dispatch.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-fireline-lockdown",
       "faction": "烬火",
       "type": "spell",
       "art": "/cards/ember-fireline-lockdown.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-ash-rekindling",
       "faction": "烬火",
       "type": "spell",
       "art": "/cards/ember-ash-rekindling.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-molten-core-overload",
       "faction": "烬火",
       "type": "spell",
       "art": "/cards/ember-molten-core-overload.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-cinder-rain",
