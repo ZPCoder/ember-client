@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-08-17T01:41:20.140Z",
+  "generatedAt": "2026-08-17T02:05:52.960Z",
   "catalogCount": 1000,
   "generatedCount": 0,
-  "individuallyGeneratedCount": 140,
+  "individuallyGeneratedCount": 145,
   "generatedBy": "imagegen-per-card-plus-legacy-variants",
   "anchor": "public/card-art-sources/frost-anchor.png",
   "cards": [
@@ -641,35 +641,35 @@
       "faction": "烬火",
       "type": "unit",
       "art": "/cards/ember-cinder-scout.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-coalfang-pup",
       "faction": "烬火",
       "type": "unit",
       "art": "/cards/ember-coalfang-pup.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-ash-forager",
       "faction": "烬火",
       "type": "unit",
       "art": "/cards/ember-ash-forager.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-blade-acolyte",
       "faction": "烬火",
       "type": "unit",
       "art": "/cards/ember-blade-acolyte.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-charrock-guard",
       "faction": "烬火",
       "type": "unit",
       "art": "/cards/ember-charrock-guard.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-flamespine-vanguard",

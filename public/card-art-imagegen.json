@@ -1,6 +1,6 @@
 {
   "workflow": "built-in-imagegen-one-card-per-call",
-  "generatedCount": 140,
+  "generatedCount": 145,
   "cards": [
     {
       "id": "firmament-season-01",
@@ -841,6 +841,36 @@
       "name": "齿轮风暴·05",
       "source": "imagegen",
       "art": "/cards/neutral-season-spell-05.webp"
+    },
+    {
+      "id": "ember-cinder-scout",
+      "name": "火星斥候",
+      "source": "imagegen",
+      "art": "/cards/ember-cinder-scout.webp"
+    },
+    {
+      "id": "ember-coalfang-pup",
+      "name": "炭牙幼兽",
+      "source": "imagegen",
+      "art": "/cards/ember-coalfang-pup.webp"
+    },
+    {
+      "id": "ember-ash-forager",
+      "name": "灰烬搜寻者",
+      "source": "imagegen",
+      "art": "/cards/ember-ash-forager.webp"
+    },
+    {
+      "id": "ember-blade-acolyte",
+      "name": "炽刃侍从",
+      "source": "imagegen",
+      "art": "/cards/ember-blade-acolyte.webp"
+    },
+    {
+      "id": "ember-charrock-guard",
+      "name": "焦岩卫士",
+      "source": "imagegen",
+      "art": "/cards/ember-charrock-guard.webp"
     }
   ]
 }
