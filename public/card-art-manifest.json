@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-08-17T14:03:40.432Z",
+  "generatedAt": "2026-08-17T16:08:12.353Z",
   "catalogCount": 1000,
   "generatedCount": 0,
-  "individuallyGeneratedCount": 194,
+  "individuallyGeneratedCount": 199,
   "generatedBy": "imagegen-per-card-plus-legacy-variants",
   "anchor": "public/card-art-sources/frost-anchor.png",
   "cards": [
@@ -690,35 +690,35 @@
       "faction": "烬火",
       "type": "unit",
       "art": "/cards/ember-heart-drinker.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-slag-sentinel",
       "faction": "烬火",
       "type": "unit",
       "art": "/cards/ember-slag-sentinel.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-crimson-duelist",
       "faction": "烬火",
       "type": "unit",
       "art": "/cards/ember-crimson-duelist.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-magma-hornbeast",
       "faction": "烬火",
       "type": "unit",
       "art": "/cards/ember-magma-hornbeast.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-oath-pyromancer",
       "faction": "烬火",
       "type": "unit",
       "art": "/cards/ember-oath-pyromancer.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-volcanic-ram",

@@ -1,6 +1,6 @@
 {
   "workflow": "built-in-imagegen-one-card-per-call",
-  "generatedCount": 194,
+  "generatedCount": 199,
   "cards": [
     {
       "id": "firmament-season-01",
@@ -1165,6 +1165,36 @@
       "name": "熔炉铸师",
       "source": "imagegen",
       "art": "/cards/ember-forge-smith.webp"
+    },
+    {
+      "id": "ember-heart-drinker",
+      "name": "焰心汲能者",
+      "source": "imagegen",
+      "art": "/cards/ember-heart-drinker.webp"
+    },
+    {
+      "id": "ember-slag-sentinel",
+      "name": "炉渣哨兵",
+      "source": "imagegen",
+      "art": "/cards/ember-slag-sentinel.webp"
+    },
+    {
+      "id": "ember-crimson-duelist",
+      "name": "赤焰决斗家",
+      "source": "imagegen",
+      "art": "/cards/ember-crimson-duelist.webp"
+    },
+    {
+      "id": "ember-magma-hornbeast",
+      "name": "熔角战兽",
+      "source": "imagegen",
+      "art": "/cards/ember-magma-hornbeast.webp"
+    },
+    {
+      "id": "ember-oath-pyromancer",
+      "name": "焚誓祭司",
+      "source": "imagegen",
+      "art": "/cards/ember-oath-pyromancer.webp"
     }
   ]
 }
