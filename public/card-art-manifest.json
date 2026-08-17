@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-08-17T16:08:12.353Z",
+  "generatedAt": "2026-08-17T16:53:26.213Z",
   "catalogCount": 1000,
   "generatedCount": 0,
-  "individuallyGeneratedCount": 199,
+  "individuallyGeneratedCount": 204,
   "generatedBy": "imagegen-per-card-plus-legacy-variants",
   "anchor": "public/card-art-sources/frost-anchor.png",
   "cards": [
@@ -725,35 +725,35 @@
       "faction": "烬火",
       "type": "unit",
       "art": "/cards/ember-volcanic-ram.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-heatbound-colossus",
       "faction": "烬火",
       "type": "unit",
       "art": "/cards/ember-heatbound-colossus.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-ashwing-phoenix",
       "faction": "烬火",
       "type": "unit",
       "art": "/cards/ember-ashwing-phoenix.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-war-drummer",
       "faction": "烬火",
       "type": "unit",
       "art": "/cards/ember-war-drummer.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-scorchland-hydra",
       "faction": "烬火",
       "type": "unit",
       "art": "/cards/ember-scorchland-hydra.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-forgecrown-general",

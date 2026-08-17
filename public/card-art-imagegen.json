@@ -1,6 +1,6 @@
 {
   "workflow": "built-in-imagegen-one-card-per-call",
-  "generatedCount": 199,
+  "generatedCount": 204,
   "cards": [
     {
       "id": "firmament-season-01",
@@ -1195,6 +1195,36 @@
       "name": "焚誓祭司",
       "source": "imagegen",
       "art": "/cards/ember-oath-pyromancer.webp"
+    },
+    {
+      "id": "ember-volcanic-ram",
+      "name": "火山冲角兽",
+      "source": "imagegen",
+      "art": "/cards/ember-volcanic-ram.webp"
+    },
+    {
+      "id": "ember-heatbound-colossus",
+      "name": "炽铠巨像",
+      "source": "imagegen",
+      "art": "/cards/ember-heatbound-colossus.webp"
+    },
+    {
+      "id": "ember-ashwing-phoenix",
+      "name": "灰翼不死鸟",
+      "source": "imagegen",
+      "art": "/cards/ember-ashwing-phoenix.webp"
+    },
+    {
+      "id": "ember-war-drummer",
+      "name": "燎原战鼓手",
+      "source": "imagegen",
+      "art": "/cards/ember-war-drummer.webp"
+    },
+    {
+      "id": "ember-scorchland-hydra",
+      "name": "灼地多首兽",
+      "source": "imagegen",
+      "art": "/cards/ember-scorchland-hydra.webp"
     }
   ]
 }
