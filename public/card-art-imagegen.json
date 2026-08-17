@@ -1,6 +1,6 @@
 {
   "workflow": "built-in-imagegen-one-card-per-call",
-  "generatedCount": 125,
+  "generatedCount": 130,
   "cards": [
     {
       "id": "firmament-season-01",
@@ -751,6 +751,36 @@
       "name": "远途旅者·05",
       "source": "imagegen",
       "art": "/cards/neutral-season-05.webp"
+    },
+    {
+      "id": "neutral-season-06",
+      "name": "齿轮工匠·06",
+      "source": "imagegen",
+      "art": "/cards/neutral-season-06.webp"
+    },
+    {
+      "id": "neutral-season-07",
+      "name": "商路护卫·07",
+      "source": "imagegen",
+      "art": "/cards/neutral-season-07.webp"
+    },
+    {
+      "id": "neutral-season-08",
+      "name": "荒原策士·08",
+      "source": "imagegen",
+      "art": "/cards/neutral-season-08.webp"
+    },
+    {
+      "id": "neutral-season-09",
+      "name": "远途旅者·09",
+      "source": "imagegen",
+      "art": "/cards/neutral-season-09.webp"
+    },
+    {
+      "id": "neutral-season-10",
+      "name": "齿轮工匠·10",
+      "source": "imagegen",
+      "art": "/cards/neutral-season-10.webp"
     }
   ]
 }
