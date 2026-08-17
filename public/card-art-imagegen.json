@@ -1,6 +1,6 @@
 {
   "workflow": "built-in-imagegen-one-card-per-call",
-  "generatedCount": 159,
+  "generatedCount": 194,
   "cards": [
     {
       "id": "firmament-season-01",
@@ -955,6 +955,216 @@
       "name": "夜鳍突袭者",
       "source": "imagegen",
       "art": "/cards/void-nightfin-raider.webp"
+    },
+    {
+      "id": "void-abyss-whale",
+      "name": "渊歌巨鲸",
+      "source": "imagegen",
+      "art": "/cards/void-abyss-whale.webp"
+    },
+    {
+      "id": "sun-lumen-page",
+      "name": "微光侍读",
+      "source": "imagegen",
+      "art": "/cards/sun-lumen-page.webp"
+    },
+    {
+      "id": "sun-glasswing-courier",
+      "name": "琉翼信使",
+      "source": "imagegen",
+      "art": "/cards/sun-glasswing-courier.webp"
+    },
+    {
+      "id": "sun-prism-squire",
+      "name": "棱镜扈从",
+      "source": "imagegen",
+      "art": "/cards/sun-prism-squire.webp"
+    },
+    {
+      "id": "sun-horizon-hunter",
+      "name": "天际猎手",
+      "source": "imagegen",
+      "art": "/cards/sun-horizon-hunter.webp"
+    },
+    {
+      "id": "sun-choir-acolyte",
+      "name": "晨咏侍祭",
+      "source": "imagegen",
+      "art": "/cards/sun-choir-acolyte.webp"
+    },
+    {
+      "id": "sun-gilded-lancer",
+      "name": "鎏金枪骑",
+      "source": "imagegen",
+      "art": "/cards/sun-gilded-lancer.webp"
+    },
+    {
+      "id": "sun-sunwell-artificer",
+      "name": "日井匠师",
+      "source": "imagegen",
+      "art": "/cards/sun-sunwell-artificer.webp"
+    },
+    {
+      "id": "sun-aurora-duelist",
+      "name": "极昼决斗家",
+      "source": "imagegen",
+      "art": "/cards/sun-aurora-duelist.webp"
+    },
+    {
+      "id": "sun-halo-captain",
+      "name": "光环卫队长",
+      "source": "imagegen",
+      "art": "/cards/sun-halo-captain.webp"
+    },
+    {
+      "id": "sun-whitefire-priest",
+      "name": "白焰司祭",
+      "source": "imagegen",
+      "art": "/cards/sun-whitefire-priest.webp"
+    },
+    {
+      "id": "sun-prism-huntress",
+      "name": "虹棱女猎手",
+      "source": "imagegen",
+      "art": "/cards/sun-prism-huntress.webp"
+    },
+    {
+      "id": "sun-zenith-golem",
+      "name": "正午晶铠像",
+      "source": "imagegen",
+      "art": "/cards/sun-zenith-golem.webp"
+    },
+    {
+      "id": "sun-radiant-griffin",
+      "name": "辉穹狮鹫",
+      "source": "imagegen",
+      "art": "/cards/sun-radiant-griffin.webp"
+    },
+    {
+      "id": "sun-corona-archon",
+      "name": "日冕执政官",
+      "source": "imagegen",
+      "art": "/cards/sun-corona-archon.webp"
+    },
+    {
+      "id": "sun-daystar-titan",
+      "name": "曜日泰坦",
+      "source": "imagegen",
+      "art": "/cards/sun-daystar-titan.webp"
+    },
+    {
+      "id": "sun-flare-spark",
+      "name": "耀斑火种",
+      "source": "imagegen",
+      "art": "/cards/sun-flare-spark.webp"
+    },
+    {
+      "id": "sun-refraction-aid",
+      "name": "折光援护",
+      "source": "imagegen",
+      "art": "/cards/sun-refraction-aid.webp"
+    },
+    {
+      "id": "sun-mirror-tempering",
+      "name": "镜甲淬炼",
+      "source": "imagegen",
+      "art": "/cards/sun-mirror-tempering.webp"
+    },
+    {
+      "id": "sun-orbit-insight",
+      "name": "环日启示",
+      "source": "imagegen",
+      "art": "/cards/sun-orbit-insight.webp"
+    },
+    {
+      "id": "sun-supernova-judgment",
+      "name": "新星裁决刃",
+      "source": "imagegen",
+      "art": "/cards/sun-supernova-judgment.webp"
+    },
+    {
+      "id": "sun-spear-descent",
+      "name": "天枪坠击",
+      "source": "imagegen",
+      "art": "/cards/sun-spear-descent.webp"
+    },
+    {
+      "id": "sun-dawn-muster",
+      "name": "晨阵集结",
+      "source": "imagegen",
+      "art": "/cards/sun-dawn-muster.webp"
+    },
+    {
+      "id": "void-drowned-leviathan",
+      "name": "溺忆海兽",
+      "source": "imagegen",
+      "art": "/cards/void-drowned-leviathan.webp"
+    },
+    {
+      "id": "void-tempest-manta",
+      "name": "暴潮魔鬼鱼",
+      "source": "imagegen",
+      "art": "/cards/void-tempest-manta.webp"
+    },
+    {
+      "id": "void-thalassic-sovereign",
+      "name": "幽海无冠王",
+      "source": "imagegen",
+      "art": "/cards/void-thalassic-sovereign.webp"
+    },
+    {
+      "id": "void-saltbite",
+      "name": "盐蚀咬痕",
+      "source": "imagegen",
+      "art": "/cards/void-saltbite.webp"
+    },
+    {
+      "id": "void-deepwater-draught",
+      "name": "深水汲饮",
+      "source": "imagegen",
+      "art": "/cards/void-deepwater-draught.webp"
+    },
+    {
+      "id": "void-pressure-spike",
+      "name": "压潮尖刺",
+      "source": "imagegen",
+      "art": "/cards/void-pressure-spike.webp"
+    },
+    {
+      "id": "void-echoing-current",
+      "name": "回响暗流",
+      "source": "imagegen",
+      "art": "/cards/void-echoing-current.webp"
+    },
+    {
+      "id": "void-maelstrom-memory",
+      "name": "漩涡钩镰",
+      "source": "imagegen",
+      "art": "/cards/void-maelstrom-memory.webp"
+    },
+    {
+      "id": "void-moonpool-mutation",
+      "name": "月池异变",
+      "source": "imagegen",
+      "art": "/cards/void-moonpool-mutation.webp"
+    },
+    {
+      "id": "void-blackwake-torpedo",
+      "name": "黑浪鱼雷",
+      "source": "imagegen",
+      "art": "/cards/void-blackwake-torpedo.webp"
+    },
+    {
+      "id": "ember-flamespine-vanguard",
+      "name": "焰脊先锋",
+      "source": "imagegen",
+      "art": "/cards/ember-flamespine-vanguard.webp"
+    },
+    {
+      "id": "ember-forge-smith",
+      "name": "熔炉铸师",
+      "source": "imagegen",
+      "art": "/cards/ember-forge-smith.webp"
     }
   ]
 }

@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-08-17T03:09:41.221Z",
+  "generatedAt": "2026-08-17T14:03:40.432Z",
   "catalogCount": 1000,
   "generatedCount": 0,
-  "individuallyGeneratedCount": 159,
+  "individuallyGeneratedCount": 194,
   "generatedBy": "imagegen-per-card-plus-legacy-variants",
   "anchor": "public/card-art-sources/frost-anchor.png",
   "cards": [
@@ -95,7 +95,7 @@
       "faction": "幽潮",
       "type": "unit",
       "art": "/cards/void-abyss-whale.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "void-chill-needle",
@@ -179,154 +179,154 @@
       "faction": "曜光",
       "type": "unit",
       "art": "/cards/sun-lumen-page.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sun-glasswing-courier",
       "faction": "曜光",
       "type": "unit",
       "art": "/cards/sun-glasswing-courier.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sun-prism-squire",
       "faction": "曜光",
       "type": "unit",
       "art": "/cards/sun-prism-squire.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sun-horizon-hunter",
       "faction": "曜光",
       "type": "unit",
       "art": "/cards/sun-horizon-hunter.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sun-choir-acolyte",
       "faction": "曜光",
       "type": "unit",
       "art": "/cards/sun-choir-acolyte.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sun-gilded-lancer",
       "faction": "曜光",
       "type": "unit",
       "art": "/cards/sun-gilded-lancer.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sun-sunwell-artificer",
       "faction": "曜光",
       "type": "unit",
       "art": "/cards/sun-sunwell-artificer.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sun-aurora-duelist",
       "faction": "曜光",
       "type": "unit",
       "art": "/cards/sun-aurora-duelist.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sun-halo-captain",
       "faction": "曜光",
       "type": "unit",
       "art": "/cards/sun-halo-captain.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sun-whitefire-priest",
       "faction": "曜光",
       "type": "unit",
       "art": "/cards/sun-whitefire-priest.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sun-prism-huntress",
       "faction": "曜光",
       "type": "unit",
       "art": "/cards/sun-prism-huntress.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sun-zenith-golem",
       "faction": "曜光",
       "type": "unit",
       "art": "/cards/sun-zenith-golem.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sun-radiant-griffin",
       "faction": "曜光",
       "type": "unit",
       "art": "/cards/sun-radiant-griffin.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sun-corona-archon",
       "faction": "曜光",
       "type": "unit",
       "art": "/cards/sun-corona-archon.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sun-daystar-titan",
       "faction": "曜光",
       "type": "unit",
       "art": "/cards/sun-daystar-titan.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sun-flare-spark",
       "faction": "曜光",
       "type": "spell",
       "art": "/cards/sun-flare-spark.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sun-refraction-aid",
       "faction": "曜光",
       "type": "spell",
       "art": "/cards/sun-refraction-aid.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sun-mirror-tempering",
       "faction": "曜光",
       "type": "spell",
       "art": "/cards/sun-mirror-tempering.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sun-orbit-insight",
       "faction": "曜光",
       "type": "spell",
       "art": "/cards/sun-orbit-insight.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sun-spear-descent",
       "faction": "曜光",
       "type": "spell",
       "art": "/cards/sun-spear-descent.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sun-dawn-muster",
       "faction": "曜光",
       "type": "spell",
       "art": "/cards/sun-dawn-muster.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sun-supernova-judgment",
       "faction": "曜光",
       "type": "weapon",
       "art": "/cards/sun-supernova-judgment.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "void-brine-skulker",
@@ -417,70 +417,70 @@
       "faction": "幽潮",
       "type": "unit",
       "art": "/cards/void-drowned-leviathan.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "void-tempest-manta",
       "faction": "幽潮",
       "type": "unit",
       "art": "/cards/void-tempest-manta.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "void-thalassic-sovereign",
       "faction": "幽潮",
       "type": "unit",
       "art": "/cards/void-thalassic-sovereign.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "void-saltbite",
       "faction": "幽潮",
       "type": "spell",
       "art": "/cards/void-saltbite.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "void-deepwater-draught",
       "faction": "幽潮",
       "type": "spell",
       "art": "/cards/void-deepwater-draught.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "void-pressure-spike",
       "faction": "幽潮",
       "type": "spell",
       "art": "/cards/void-pressure-spike.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "void-echoing-current",
       "faction": "幽潮",
       "type": "spell",
       "art": "/cards/void-echoing-current.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "void-moonpool-mutation",
       "faction": "幽潮",
       "type": "spell",
       "art": "/cards/void-moonpool-mutation.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "void-blackwake-torpedo",
       "faction": "幽潮",
       "type": "spell",
       "art": "/cards/void-blackwake-torpedo.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "void-maelstrom-memory",
       "faction": "幽潮",
       "type": "weapon",
       "art": "/cards/void-maelstrom-memory.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "neutral-lantern-mouse",
@@ -676,14 +676,14 @@
       "faction": "烬火",
       "type": "unit",
       "art": "/cards/ember-flamespine-vanguard.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-forge-smith",
       "faction": "烬火",
       "type": "unit",
       "art": "/cards/ember-forge-smith.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-heart-drinker",

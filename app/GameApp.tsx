@@ -29,6 +29,10 @@ import {
   factionForDeck,
   getHeroPower,
   getTraitStatuses,
+  LADDER_START_RATING,
+  ladderStarsForRating,
+  ladderTierForRating,
+  updateRankedSnapshot,
   EXPANDED_FACTION_THEMES,
   runAiTurn,
   validateDeck,
@@ -139,7 +143,7 @@ type PlayerSnapshot = {
     weeklyFreePackClaimed?: boolean;
   };
   progression?: { xp: number; level: number };
-  ladder?: { seasonKey?: string; rating: number; tier: string; stars: number; wins: number; losses: number; highestRating?: number };
+  ladder?: { seasonKey?: string; rating: number; tier: string; stars: number; wins: number; losses: number; highestRating?: number; winStreak?: number };
   friends?: Array<{ id: string; displayName: string; status: "pending" | "accepted"; direction: "incoming" | "outgoing" }>;
   chatMessages?: Array<{ id: string; senderId: string; recipientId: string; text: string; createdAt: string }>;
   blockedPlayerIds?: string[];
@@ -521,6 +525,23 @@ function formatTime(value: string) {
   }).format(date);
 }
 
+function formatUtcResetCountdown(period: "day" | "week", now: number): string {
+  if (!now) return "计算中…";
+  const next = new Date(now);
+  if (period === "day") {
+    next.setUTCHours(24, 0, 0, 0);
+  } else {
+    const day = next.getUTCDay() || 7;
+    next.setUTCDate(next.getUTCDate() + (8 - day));
+    next.setUTCHours(0, 0, 0, 0);
+  }
+  const seconds = Math.max(0, Math.floor((next.getTime() - now) / 1000));
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const remainingSeconds = seconds % 60;
+  return `${hours}时 ${minutes.toString().padStart(2, "0")}分 ${remainingSeconds.toString().padStart(2, "0")}秒`;
+}
+
 function makeId(prefix: string) {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
     return `${prefix}-${crypto.randomUUID()}`;
@@ -649,7 +670,7 @@ function makeDemoPlayer(identity?: {
     taskCycle: { dayKey: new Date().toISOString().slice(0, 10), weekKey: "demo", dailyRerollsRemaining: 1, packsBoughtToday: 0, aiRewardsToday: 0, weeklyFreePackClaimed: false },
     progression: { xp: 850, level: 1 },
     rewardTrack: { claimedLevels: [] },
-    ladder: { seasonKey: new Date().toISOString().slice(0, 7), rating: 1000, tier: "白银", stars: 0, wins: 7, losses: 3, highestRating: 1000 },
+    ladder: { seasonKey: new Date().toISOString().slice(0, 7), rating: LADDER_START_RATING, tier: ladderTierForRating(LADDER_START_RATING), stars: ladderStarsForRating(LADDER_START_RATING), wins: 7, losses: 3, highestRating: LADDER_START_RATING, winStreak: 0 },
     recentMatches: [
       {
         id: "demo-match-1",
@@ -971,16 +992,11 @@ function applyLocalAction(
       },
       ladder: body.mode === "pvp" && body.format !== "casual"
         ? (() => {
-            const existing = current.ladder ?? { seasonKey: now.slice(0, 7), rating: 1000, tier: "白银", stars: 0, wins: 0, losses: 0, highestRating: 1000 };
-            const rating = Math.max(0, existing.rating + (result === "win" ? 25 : -20));
+            const existing = current.ladder ?? { seasonKey: now.slice(0, 7), rating: LADDER_START_RATING, tier: ladderTierForRating(LADDER_START_RATING), stars: ladderStarsForRating(LADDER_START_RATING), wins: 0, losses: 0, highestRating: LADDER_START_RATING, winStreak: 0 };
+            const ranked = updateRankedSnapshot(existing, result);
             return {
-              rating,
-              tier: rating >= 1800 ? "传说" : rating >= 1600 ? "钻石" : rating >= 1400 ? "白金" : rating >= 1200 ? "黄金" : rating >= 1000 ? "白银" : "青铜",
-              stars: Math.floor((rating % 200) / 50),
-              wins: existing.wins + (result === "win" ? 1 : 0),
-              losses: existing.losses + (result === "loss" ? 1 : 0),
+              ...ranked,
               seasonKey: existing.seasonKey ?? now.slice(0, 7),
-              highestRating: Math.max(existing.highestRating ?? existing.rating, rating),
             };
           })()
         : current.ladder,
@@ -4252,6 +4268,14 @@ function OverviewSection({
   onNavigate: (section: SectionKey) => void;
   onStartBattle: () => void;
 }) {
+  const [clockNow, setClockNow] = useState(0);
+  useEffect(() => {
+    const tick = () => setClockNow(Date.now());
+    tick();
+    const timer = window.setInterval(tick, 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
   return (
     <section className="screen screen--overview" aria-labelledby="overview-title">
       <SectionHeading
@@ -4406,7 +4430,7 @@ function OverviewSection({
               <span className="panel__eyebrow">ARCHIVE DROP</span>
               <h2 id="pack-title">免费档案包</h2>
             </div>
-            <span className="pack-panel__timer"><Icon name="clock" size={15} /> 04:00 刷新</span>
+            <span className="pack-panel__timer"><Icon name="clock" size={15} /> {formatUtcResetCountdown("day", clockNow)} 刷新</span>
           </div>
           {openedCards.length > 0 ? (
             <div className="pack-reveal">
@@ -6446,6 +6470,7 @@ function OperationsSection({
   socialBusy: boolean;
 }) {
   const [profileName, setProfileName] = useState(player.displayName);
+  const [clockNow, setClockNow] = useState(0);
   const [friendId, setFriendId] = useState("");
   const [selectedFriendId, setSelectedFriendId] = useState<string | null>(null);
   const [chatText, setChatText] = useState("");
@@ -6458,19 +6483,28 @@ function OperationsSection({
       .filter((message) => (message.senderId === player.id && message.recipientId === selectedFriend.id) || (message.senderId === selectedFriend.id && message.recipientId === player.id))
       .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
     : [];
+  useEffect(() => {
+    const tick = () => setClockNow(Date.now());
+    tick();
+    const timer = window.setInterval(tick, 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+  const completedTasks = player.tasks.filter((task) => task.claimed).length;
+  const readyTasks = player.tasks.filter((task) => !task.claimed && task.progress >= task.target).length;
+  const uniqueOwned = Object.values(player.collection).filter((count) => count > 0).length;
   const metrics = [
-    { label: "内测活跃指挥官", value: "486", delta: "+12.4%", icon: "user" as IconName },
-    { label: "今日完成对局", value: "1,284", delta: "+8.1%", icon: "swords" as IconName },
-    { label: "平均回合数", value: "8.6", delta: "−0.3", icon: "clock" as IconName },
-    { label: "规则异常率", value: "0.04%", delta: "稳定", icon: "shield" as IconName },
+    { label: "累计对局", value: player.stats.matchesPlayed.toLocaleString("zh-CN"), delta: `${player.stats.wins} 胜`, icon: "swords" as IconName },
+    { label: "个人胜率", value: `${winRate}%`, delta: `${player.stats.losses} 负`, icon: "user" as IconName },
+    { label: "待领取任务", value: readyTasks.toString(), delta: `${completedTasks} 已领取`, icon: "check" as IconName },
+    { label: "收藏完成度", value: `${Math.round((uniqueOwned / CATALOG.length) * 100)}%`, delta: `${uniqueOwned} / ${CATALOG.length}`, icon: "cards" as IconName },
   ];
   return (
     <section className="screen screen--operations" aria-labelledby="operations-title">
       <SectionHeading
         eyebrow="LIVE OPS / INTERNAL BETA"
         title="运营观测台"
-        description="一期内测数据快照。玩家资产及对局查询为只读，敏感调整必须经补偿单审计。"
-        action={<span className="live-badge"><i /> 数据每 5 分钟刷新</span>}
+        description="个人运营面板：任务、奖励、赛季和社交状态均由服务端规则结算。"
+        action={<span className="live-badge"><i /> UTC 日界线倒计时 {formatUtcResetCountdown("day", clockNow)}</span>}
       />
 
       <div className="ops-metrics">
@@ -6495,12 +6529,12 @@ function OperationsSection({
           <div><span>卡包商店</span><strong>{player.taskCycle?.packsBoughtToday ?? 0} / 10</strong><small>100 金币 / 个，日限购 10 个</small></div>
           <div><span>传奇保底</span><strong>{Math.min(player.packPity?.packsSinceLegendary ?? 0, 39)} / 40</strong><small>第 40 包首槽必出传说，出货后重置</small></div>
           <div><span>演算奖励</span><strong>{player.taskCycle?.aiRewardsToday ?? 0} / 20</strong><small>每日最多 20 场 AI 奖励，防止刷资源</small></div>
-          <div><span>天梯段位</span><strong>{player.ladder?.tier ?? "青铜"} · {player.ladder?.rating ?? 1000}</strong><small>仅联机对战影响段位</small></div>
+          <div><span>天梯段位</span><strong>{player.ladder?.tier ?? "青铜"} · {player.ladder?.rating ?? LADDER_START_RATING} · {player.ladder?.stars ?? 0}★</strong><small>{player.ladder?.winStreak && player.ladder.winStreak >= 2 ? `连胜 ${player.ladder.winStreak} 场，当前段位有额外星级进度` : "仅 Ranked 联机对战影响段位"}</small></div>
           <div><span>赛季</span><strong>{player.ladder?.seasonKey ?? new Date().toISOString().slice(0, 7)}</strong><small>每月 UTC 00:00 重置天梯</small></div>
-          <div><span>玩家 UID</span><strong className="ops-player-id">{player.id}</strong><small>用于好友邀请与客服核验</small></div>
+          <div><span>玩家 UID</span><strong className="ops-player-id">{player.id}</strong><small>用于好友邀请与客服核验；资产绑定稳定身份而非邮箱</small></div>
         </div>
         <div className="ops-weekly-gift">
-          <div><span className="panel__eyebrow">WEEKLY SHOP GIFT</span><strong>每周免费卡包</strong><small>每周可领取 1 次，领取后加入档案库。</small></div>
+              <div><span className="panel__eyebrow">WEEKLY SHOP GIFT</span><strong>每周免费卡包</strong><small>每周可领取 1 次，距离 UTC 周一刷新还有 {formatUtcResetCountdown("week", clockNow)}。</small></div>
           <button className="button button--accent" type="button" disabled={weeklyPackBusy || player.taskCycle?.weeklyFreePackClaimed === true} onClick={onClaimWeeklyPack}>
             {weeklyPackBusy ? "领取中…" : player.taskCycle?.weeklyFreePackClaimed ? "本周已领取" : "领取卡包"}
           </button>
@@ -6547,9 +6581,10 @@ function OperationsSection({
           <div><Icon name="check" size={16} /><span>日常任务仅可在未开始前重随 1 次，任务奖励领取具备幂等保护</span></div>
           <div><Icon name="check" size={16} /><span>胜利 +60 金币、失败 +20 金币；AI 每日最多 20 场发放对战金币与 XP，卡包 +50 XP</span></div>
           <div><Icon name="check" size={16} /><span>联机战报必须匹配服务器对局快照、参赛身份和唯一对局凭证</span></div>
-          <div><Icon name="check" size={16} /><span>联机分为 Ranked 天梯与 Casual 休闲：仅 Ranked 影响赛季段位，Casual 不扣分</span></div>
+          <div><Icon name="check" size={16} /><span>联机分为 Ranked 天梯与 Casual 休闲：仅 Ranked 影响赛季段位；白银至白金段位连续胜利会获得额外星级进度，失败会重置连胜。</span></div>
           <div><Icon name="check" size={16} /><span>每周商店提供 1 个免费卡包，按周一 UTC 00:00 刷新并由服务端幂等结算</span></div>
           <div><Icon name="check" size={16} /><span>卡包首槽保底稀有；连续 39 包未出传说时，第 40 包首槽强制传说，服务端维护计数。</span></div>
+          <div><Icon name="check" size={16} /><span>好友请求每日最多 20 次，聊天每分钟最多 20 条；屏蔽、举报和好友关系由服务端保存，幂等重试不会重复发放或重复发送。</span></div>
         </div>
       </section>
 
