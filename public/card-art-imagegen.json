@@ -1,6 +1,6 @@
 {
   "workflow": "built-in-imagegen-one-card-per-call",
-  "generatedCount": 149,
+  "generatedCount": 154,
   "cards": [
     {
       "id": "firmament-season-01",
@@ -895,6 +895,36 @@
       "name": "孢芽斥候",
       "source": "imagegen",
       "art": "/cards/verdant-spore-scout.webp"
+    },
+    {
+      "id": "sun-mirror-warden",
+      "name": "镜盾守望者",
+      "source": "imagegen",
+      "art": "/cards/sun-mirror-warden.webp"
+    },
+    {
+      "id": "sun-banner-bearer",
+      "name": "曙色旗手",
+      "source": "imagegen",
+      "art": "/cards/sun-banner-bearer.webp"
+    },
+    {
+      "id": "sun-lion-guard",
+      "name": "曜原狮卫",
+      "source": "imagegen",
+      "art": "/cards/sun-lion-guard.webp"
+    },
+    {
+      "id": "sun-skyfire-roc",
+      "name": "焰羽巡天者",
+      "source": "imagegen",
+      "art": "/cards/sun-skyfire-roc.webp"
+    },
+    {
+      "id": "sun-focused-ray",
+      "name": "聚光灼流",
+      "source": "imagegen",
+      "art": "/cards/sun-focused-ray.webp"
     }
   ]
 }

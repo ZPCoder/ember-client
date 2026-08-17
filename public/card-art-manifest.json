@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-08-17T02:33:58.899Z",
+  "generatedAt": "2026-08-17T02:53:05.675Z",
   "catalogCount": 1000,
   "generatedCount": 0,
-  "individuallyGeneratedCount": 149,
+  "individuallyGeneratedCount": 154,
   "generatedBy": "imagegen-per-card-plus-legacy-variants",
   "anchor": "public/card-art-sources/frost-anchor.png",
   "cards": [
@@ -18,35 +18,35 @@
       "faction": "曜光",
       "type": "unit",
       "art": "/cards/sun-mirror-warden.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sun-banner-bearer",
       "faction": "曜光",
       "type": "unit",
       "art": "/cards/sun-banner-bearer.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sun-lion-guard",
       "faction": "曜光",
       "type": "unit",
       "art": "/cards/sun-lion-guard.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sun-skyfire-roc",
       "faction": "曜光",
       "type": "unit",
       "art": "/cards/sun-skyfire-roc.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sun-focused-ray",
       "faction": "曜光",
       "type": "spell",
       "art": "/cards/sun-focused-ray.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sun-dew-blessing",
