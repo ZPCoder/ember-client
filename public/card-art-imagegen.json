@@ -1,6 +1,6 @@
 {
   "workflow": "built-in-imagegen-one-card-per-call",
-  "generatedCount": 154,
+  "generatedCount": 159,
   "cards": [
     {
       "id": "firmament-season-01",
@@ -925,6 +925,36 @@
       "name": "聚光灼流",
       "source": "imagegen",
       "art": "/cards/sun-focused-ray.webp"
+    },
+    {
+      "id": "sun-dew-blessing",
+      "name": "晨露祝福",
+      "source": "imagegen",
+      "art": "/cards/sun-dew-blessing.webp"
+    },
+    {
+      "id": "sun-daybreak-order",
+      "name": "破晓号令",
+      "source": "imagegen",
+      "art": "/cards/sun-daybreak-order.webp"
+    },
+    {
+      "id": "void-undertow-guard",
+      "name": "逆流卫士",
+      "source": "imagegen",
+      "art": "/cards/void-undertow-guard.webp"
+    },
+    {
+      "id": "void-echo-mimic",
+      "name": "回声拟形",
+      "source": "imagegen",
+      "art": "/cards/void-echo-mimic.webp"
+    },
+    {
+      "id": "void-nightfin-raider",
+      "name": "夜鳍突袭者",
+      "source": "imagegen",
+      "art": "/cards/void-nightfin-raider.webp"
     }
   ]
 }

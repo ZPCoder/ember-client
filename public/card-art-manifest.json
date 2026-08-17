@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-08-17T02:53:05.675Z",
+  "generatedAt": "2026-08-17T03:09:41.221Z",
   "catalogCount": 1000,
   "generatedCount": 0,
-  "individuallyGeneratedCount": 154,
+  "individuallyGeneratedCount": 159,
   "generatedBy": "imagegen-per-card-plus-legacy-variants",
   "anchor": "public/card-art-sources/frost-anchor.png",
   "cards": [
@@ -53,14 +53,14 @@
       "faction": "曜光",
       "type": "spell",
       "art": "/cards/sun-dew-blessing.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sun-daybreak-order",
       "faction": "曜光",
       "type": "spell",
       "art": "/cards/sun-daybreak-order.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "void-mist-lurker",
@@ -74,21 +74,21 @@
       "faction": "幽潮",
       "type": "unit",
       "art": "/cards/void-undertow-guard.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "void-echo-mimic",
       "faction": "幽潮",
       "type": "unit",
       "art": "/cards/void-echo-mimic.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "void-nightfin-raider",
       "faction": "幽潮",
       "type": "unit",
       "art": "/cards/void-nightfin-raider.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "void-abyss-whale",
