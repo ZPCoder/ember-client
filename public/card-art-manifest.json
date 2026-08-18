@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-08-18T04:08:56.315Z",
+  "generatedAt": "2026-08-18T05:18:26.298Z",
   "catalogCount": 1000,
   "generatedCount": 0,
-  "individuallyGeneratedCount": 254,
+  "individuallyGeneratedCount": 259,
   "generatedBy": "imagegen-per-card-plus-legacy-variants",
   "anchor": "public/card-art-sources/frost-anchor.png",
   "cards": [
@@ -1124,35 +1124,35 @@
       "faction": "苍林",
       "type": "unit",
       "art": "/cards/verdant-canopy-archer.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-rootweave-artisan",
       "faction": "苍林",
       "type": "unit",
       "art": "/cards/verdant-rootweave-artisan.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-bloom-banner",
       "faction": "苍林",
       "type": "unit",
       "art": "/cards/verdant-bloom-banner.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-moonfern-stalker",
       "faction": "苍林",
       "type": "unit",
       "art": "/cards/verdant-moonfern-stalker.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-grovebond-shaman",
       "faction": "苍林",
       "type": "unit",
       "art": "/cards/verdant-grovebond-shaman.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-briarhide-boar",

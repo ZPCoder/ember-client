@@ -1,6 +1,6 @@
 {
   "workflow": "built-in-imagegen-one-card-per-call",
-  "generatedCount": 254,
+  "generatedCount": 259,
   "cards": [
     {
       "id": "firmament-season-01",
@@ -1525,6 +1525,36 @@
       "name": "藤鞭斗士",
       "source": "imagegen",
       "art": "/cards/verdant-vinewhip-duelist.webp"
+    },
+    {
+      "id": "verdant-canopy-archer",
+      "name": "冠层猎弓手",
+      "source": "imagegen",
+      "art": "/cards/verdant-canopy-archer.webp"
+    },
+    {
+      "id": "verdant-rootweave-artisan",
+      "name": "盘根编甲师",
+      "source": "imagegen",
+      "art": "/cards/verdant-rootweave-artisan.webp"
+    },
+    {
+      "id": "verdant-bloom-banner",
+      "name": "繁花执旗者",
+      "source": "imagegen",
+      "art": "/cards/verdant-bloom-banner.webp"
+    },
+    {
+      "id": "verdant-moonfern-stalker",
+      "name": "月蕨追猎者",
+      "source": "imagegen",
+      "art": "/cards/verdant-moonfern-stalker.webp"
+    },
+    {
+      "id": "verdant-grovebond-shaman",
+      "name": "林契萨满",
+      "source": "imagegen",
+      "art": "/cards/verdant-grovebond-shaman.webp"
     }
   ]
 }
