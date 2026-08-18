@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-08-18T05:18:26.298Z",
+  "generatedAt": "2026-08-18T07:03:57.380Z",
   "catalogCount": 1000,
   "generatedCount": 0,
-  "individuallyGeneratedCount": 259,
+  "individuallyGeneratedCount": 264,
   "generatedBy": "imagegen-per-card-plus-legacy-variants",
   "anchor": "public/card-art-sources/frost-anchor.png",
   "cards": [
@@ -1159,35 +1159,35 @@
       "faction": "苍林",
       "type": "unit",
       "art": "/cards/verdant-briarhide-boar.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-ancient-bough-guardian",
       "faction": "苍林",
       "type": "unit",
       "art": "/cards/verdant-ancient-bough-guardian.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-dawnpetal-stag",
       "faction": "苍林",
       "type": "unit",
       "art": "/cards/verdant-dawnpetal-stag.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-seedvault-engineer",
       "faction": "苍林",
       "type": "unit",
       "art": "/cards/verdant-seedvault-engineer.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-thousandleaf-titan",
       "faction": "苍林",
       "type": "unit",
       "art": "/cards/verdant-thousandleaf-titan.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-worldroot-matriarch",

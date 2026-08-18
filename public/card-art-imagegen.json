@@ -1,6 +1,6 @@
 {
   "workflow": "built-in-imagegen-one-card-per-call",
-  "generatedCount": 259,
+  "generatedCount": 264,
   "cards": [
     {
       "id": "firmament-season-01",
@@ -1555,6 +1555,36 @@
       "name": "林契萨满",
       "source": "imagegen",
       "art": "/cards/verdant-grovebond-shaman.webp"
+    },
+    {
+      "id": "verdant-briarhide-boar",
+      "name": "荆皮战野猪",
+      "source": "imagegen",
+      "art": "/cards/verdant-briarhide-boar.webp"
+    },
+    {
+      "id": "verdant-ancient-bough-guardian",
+      "name": "古枝壁垒",
+      "source": "imagegen",
+      "art": "/cards/verdant-ancient-bough-guardian.webp"
+    },
+    {
+      "id": "verdant-dawnpetal-stag",
+      "name": "曦瓣灵鹿",
+      "source": "imagegen",
+      "art": "/cards/verdant-dawnpetal-stag.webp"
+    },
+    {
+      "id": "verdant-seedvault-engineer",
+      "name": "种库构筑师",
+      "source": "imagegen",
+      "art": "/cards/verdant-seedvault-engineer.webp"
+    },
+    {
+      "id": "verdant-thousandleaf-titan",
+      "name": "千叶巨灵",
+      "source": "imagegen",
+      "art": "/cards/verdant-thousandleaf-titan.webp"
     }
   ]
 }
