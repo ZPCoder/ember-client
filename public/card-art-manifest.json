@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-08-18T09:03:43.454Z",
+  "generatedAt": "2026-08-18T11:07:37.067Z",
   "catalogCount": 1000,
   "generatedCount": 0,
-  "individuallyGeneratedCount": 269,
+  "individuallyGeneratedCount": 274,
   "generatedBy": "imagegen-per-card-plus-legacy-variants",
   "anchor": "public/card-art-sources/frost-anchor.png",
   "cards": [
@@ -1229,35 +1229,35 @@
       "faction": "苍林",
       "type": "spell",
       "art": "/cards/verdant-pathfinder-call.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-canopy-ambush",
       "faction": "苍林",
       "type": "spell",
       "art": "/cards/verdant-canopy-ambush.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-seedburst",
       "faction": "苍林",
       "type": "spell",
       "art": "/cards/verdant-seedburst.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-wild-regrowth",
       "faction": "苍林",
       "type": "spell",
       "art": "/cards/verdant-wild-regrowth.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-flourishing-chorus",
       "faction": "苍林",
       "type": "spell",
       "art": "/cards/verdant-flourishing-chorus.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-all-roots-as-one",

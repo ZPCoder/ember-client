@@ -1,6 +1,6 @@
 {
   "workflow": "built-in-imagegen-one-card-per-call",
-  "generatedCount": 269,
+  "generatedCount": 274,
   "cards": [
     {
       "id": "firmament-season-01",
@@ -1615,6 +1615,36 @@
       "name": "扎根仪式",
       "source": "imagegen",
       "art": "/cards/verdant-rooting-rite.webp"
+    },
+    {
+      "id": "verdant-pathfinder-call",
+      "name": "寻径者号角",
+      "source": "imagegen",
+      "art": "/cards/verdant-pathfinder-call.webp"
+    },
+    {
+      "id": "verdant-canopy-ambush",
+      "name": "冠林伏击",
+      "source": "imagegen",
+      "art": "/cards/verdant-canopy-ambush.webp"
+    },
+    {
+      "id": "verdant-seedburst",
+      "name": "种荚迸裂",
+      "source": "imagegen",
+      "art": "/cards/verdant-seedburst.webp"
+    },
+    {
+      "id": "verdant-wild-regrowth",
+      "name": "野性复苏",
+      "source": "imagegen",
+      "art": "/cards/verdant-wild-regrowth.webp"
+    },
+    {
+      "id": "verdant-flourishing-chorus",
+      "name": "繁盛合唱",
+      "source": "imagegen",
+      "art": "/cards/verdant-flourishing-chorus.webp"
     }
   ]
 }
