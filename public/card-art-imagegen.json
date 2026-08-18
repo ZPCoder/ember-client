@@ -1,6 +1,6 @@
 {
   "workflow": "built-in-imagegen-one-card-per-call",
-  "generatedCount": 249,
+  "generatedCount": 254,
   "cards": [
     {
       "id": "firmament-season-01",
@@ -1495,6 +1495,36 @@
       "name": "棘步疾行者",
       "source": "imagegen",
       "art": "/cards/verdant-thornstep-runner.webp"
+    },
+    {
+      "id": "verdant-seedsong-sprite",
+      "name": "种歌精灵",
+      "source": "imagegen",
+      "art": "/cards/verdant-seedsong-sprite.webp"
+    },
+    {
+      "id": "verdant-antler-pathfinder",
+      "name": "青角寻径者",
+      "source": "imagegen",
+      "art": "/cards/verdant-antler-pathfinder.webp"
+    },
+    {
+      "id": "verdant-barkshield-sentinel",
+      "name": "树甲哨卫",
+      "source": "imagegen",
+      "art": "/cards/verdant-barkshield-sentinel.webp"
+    },
+    {
+      "id": "verdant-nectar-mender",
+      "name": "蜜露愈师",
+      "source": "imagegen",
+      "art": "/cards/verdant-nectar-mender.webp"
+    },
+    {
+      "id": "verdant-vinewhip-duelist",
+      "name": "藤鞭斗士",
+      "source": "imagegen",
+      "art": "/cards/verdant-vinewhip-duelist.webp"
     }
   ]
 }

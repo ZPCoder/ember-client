@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-08-18T02:12:11.799Z",
+  "generatedAt": "2026-08-18T04:08:56.315Z",
   "catalogCount": 1000,
   "generatedCount": 0,
-  "individuallyGeneratedCount": 249,
+  "individuallyGeneratedCount": 254,
   "generatedBy": "imagegen-per-card-plus-legacy-variants",
   "anchor": "public/card-art-sources/frost-anchor.png",
   "cards": [
@@ -1089,35 +1089,35 @@
       "faction": "苍林",
       "type": "unit",
       "art": "/cards/verdant-seedsong-sprite.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-antler-pathfinder",
       "faction": "苍林",
       "type": "unit",
       "art": "/cards/verdant-antler-pathfinder.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-barkshield-sentinel",
       "faction": "苍林",
       "type": "unit",
       "art": "/cards/verdant-barkshield-sentinel.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-nectar-mender",
       "faction": "苍林",
       "type": "unit",
       "art": "/cards/verdant-nectar-mender.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-vinewhip-duelist",
       "faction": "苍林",
       "type": "unit",
       "art": "/cards/verdant-vinewhip-duelist.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-canopy-archer",
