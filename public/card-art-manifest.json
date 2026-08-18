@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-08-17T22:44:14.706Z",
+  "generatedAt": "2026-08-18T00:30:43.497Z",
   "catalogCount": 1000,
   "generatedCount": 0,
-  "individuallyGeneratedCount": 229,
+  "individuallyGeneratedCount": 234,
   "generatedBy": "imagegen-per-card-plus-legacy-variants",
   "anchor": "public/card-art-sources/frost-anchor.png",
   "cards": [
@@ -942,35 +942,35 @@
       "faction": "星穹",
       "type": "unit",
       "art": "/cards/astral-galaxy-weaver.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-lunar-vessel",
       "faction": "星穹",
       "type": "unit",
       "art": "/cards/astral-lunar-vessel.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-deepspace-oracle",
       "faction": "星穹",
       "type": "unit",
       "art": "/cards/astral-deepspace-oracle.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-zenith-dragon",
       "faction": "星穹",
       "type": "unit",
       "art": "/cards/astral-zenith-dragon.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-horizon-guardian",
       "faction": "星穹",
       "type": "unit",
       "art": "/cards/astral-horizon-guardian.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-cosmos-sovereign",

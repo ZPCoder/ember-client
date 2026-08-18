@@ -1,6 +1,6 @@
 {
   "workflow": "built-in-imagegen-one-card-per-call",
-  "generatedCount": 229,
+  "generatedCount": 234,
   "cards": [
     {
       "id": "firmament-season-01",
@@ -1375,6 +1375,36 @@
       "name": "彗星骑手",
       "source": "imagegen",
       "art": "/cards/astral-comet-rider.webp"
+    },
+    {
+      "id": "astral-galaxy-weaver",
+      "name": "银河编织者",
+      "source": "imagegen",
+      "art": "/cards/astral-galaxy-weaver.webp"
+    },
+    {
+      "id": "astral-lunar-vessel",
+      "name": "月相载体",
+      "source": "imagegen",
+      "art": "/cards/astral-lunar-vessel.webp"
+    },
+    {
+      "id": "astral-deepspace-oracle",
+      "name": "深空神谕者",
+      "source": "imagegen",
+      "art": "/cards/astral-deepspace-oracle.webp"
+    },
+    {
+      "id": "astral-zenith-dragon",
+      "name": "天顶星龙",
+      "source": "imagegen",
+      "art": "/cards/astral-zenith-dragon.webp"
+    },
+    {
+      "id": "astral-horizon-guardian",
+      "name": "视界守护者",
+      "source": "imagegen",
+      "art": "/cards/astral-horizon-guardian.webp"
     }
   ]
 }
