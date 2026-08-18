@@ -1,6 +1,6 @@
 {
   "workflow": "built-in-imagegen-one-card-per-call",
-  "generatedCount": 274,
+  "generatedCount": 279,
   "cards": [
     {
       "id": "firmament-season-01",
@@ -1645,6 +1645,36 @@
       "name": "繁盛合唱",
       "source": "imagegen",
       "art": "/cards/verdant-flourishing-chorus.webp"
+    },
+    {
+      "id": "verdant-all-roots-as-one",
+      "name": "万根藤鞭",
+      "source": "imagegen",
+      "art": "/cards/verdant-all-roots-as-one.webp"
+    },
+    {
+      "id": "storm-spark-mite",
+      "name": "火花螨",
+      "source": "imagegen",
+      "art": "/cards/storm-spark-mite.webp"
+    },
+    {
+      "id": "storm-coppercoil-cadet",
+      "name": "铜线圈新兵",
+      "source": "imagegen",
+      "art": "/cards/storm-coppercoil-cadet.webp"
+    },
+    {
+      "id": "storm-lightning-courier",
+      "name": "闪电信使",
+      "source": "imagegen",
+      "art": "/cards/storm-lightning-courier.webp"
+    },
+    {
+      "id": "storm-capacitor-sentry",
+      "name": "蓄能哨机",
+      "source": "imagegen",
+      "art": "/cards/storm-capacitor-sentry.webp"
     }
   ]
 }
