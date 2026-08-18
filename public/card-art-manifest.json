@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-08-18T07:03:57.380Z",
+  "generatedAt": "2026-08-18T09:03:43.454Z",
   "catalogCount": 1000,
   "generatedCount": 0,
-  "individuallyGeneratedCount": 264,
+  "individuallyGeneratedCount": 269,
   "generatedBy": "imagegen-per-card-plus-legacy-variants",
   "anchor": "public/card-art-sources/frost-anchor.png",
   "cards": [
@@ -1194,35 +1194,35 @@
       "faction": "苍林",
       "type": "unit",
       "art": "/cards/verdant-worldroot-matriarch.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-sprout-pact",
       "faction": "苍林",
       "type": "spell",
       "art": "/cards/verdant-sprout-pact.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-morning-dew",
       "faction": "苍林",
       "type": "spell",
       "art": "/cards/verdant-morning-dew.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-thorn-lash",
       "faction": "苍林",
       "type": "spell",
       "art": "/cards/verdant-thorn-lash.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-rooting-rite",
       "faction": "苍林",
       "type": "spell",
       "art": "/cards/verdant-rooting-rite.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-pathfinder-call",

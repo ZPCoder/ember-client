@@ -1,6 +1,6 @@
 {
   "workflow": "built-in-imagegen-one-card-per-call",
-  "generatedCount": 264,
+  "generatedCount": 269,
   "cards": [
     {
       "id": "firmament-season-01",
@@ -1585,6 +1585,36 @@
       "name": "千叶巨灵",
       "source": "imagegen",
       "art": "/cards/verdant-thousandleaf-titan.webp"
+    },
+    {
+      "id": "verdant-worldroot-matriarch",
+      "name": "世界根母",
+      "source": "imagegen",
+      "art": "/cards/verdant-worldroot-matriarch.webp"
+    },
+    {
+      "id": "verdant-sprout-pact",
+      "name": "萌芽之约",
+      "source": "imagegen",
+      "art": "/cards/verdant-sprout-pact.webp"
+    },
+    {
+      "id": "verdant-morning-dew",
+      "name": "林间晨露",
+      "source": "imagegen",
+      "art": "/cards/verdant-morning-dew.webp"
+    },
+    {
+      "id": "verdant-thorn-lash",
+      "name": "荆藤抽击",
+      "source": "imagegen",
+      "art": "/cards/verdant-thorn-lash.webp"
+    },
+    {
+      "id": "verdant-rooting-rite",
+      "name": "扎根仪式",
+      "source": "imagegen",
+      "art": "/cards/verdant-rooting-rite.webp"
     }
   ]
 }
