@@ -1,6 +1,6 @@
 {
   "workflow": "built-in-imagegen-one-card-per-call",
-  "generatedCount": 244,
+  "generatedCount": 249,
   "cards": [
     {
       "id": "firmament-season-01",
@@ -1465,6 +1465,36 @@
       "name": "流星钉刺",
       "source": "imagegen",
       "art": "/cards/astral-meteor-pin.webp"
+    },
+    {
+      "id": "astral-deep-divination",
+      "name": "深空占卜",
+      "source": "imagegen",
+      "art": "/cards/astral-deep-divination.webp"
+    },
+    {
+      "id": "astral-supernova-ripple",
+      "name": "超新星权杖",
+      "source": "imagegen",
+      "art": "/cards/astral-supernova-ripple.webp"
+    },
+    {
+      "id": "verdant-dewleaf-apprentice",
+      "name": "露叶学徒",
+      "source": "imagegen",
+      "art": "/cards/verdant-dewleaf-apprentice.webp"
+    },
+    {
+      "id": "verdant-mossback-keeper",
+      "name": "苔背守苗人",
+      "source": "imagegen",
+      "art": "/cards/verdant-mossback-keeper.webp"
+    },
+    {
+      "id": "verdant-thornstep-runner",
+      "name": "棘步疾行者",
+      "source": "imagegen",
+      "art": "/cards/verdant-thornstep-runner.webp"
     }
   ]
 }
