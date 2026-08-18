@@ -1,6 +1,6 @@
 {
   "workflow": "built-in-imagegen-one-card-per-call",
-  "generatedCount": 234,
+  "generatedCount": 239,
   "cards": [
     {
       "id": "firmament-season-01",
@@ -1405,6 +1405,36 @@
       "name": "视界守护者",
       "source": "imagegen",
       "art": "/cards/astral-horizon-guardian.webp"
+    },
+    {
+      "id": "astral-cosmos-sovereign",
+      "name": "万象星主",
+      "source": "imagegen",
+      "art": "/cards/astral-cosmos-sovereign.webp"
+    },
+    {
+      "id": "astral-infinite-observer",
+      "name": "无垠观测者",
+      "source": "imagegen",
+      "art": "/cards/astral-infinite-observer.webp"
+    },
+    {
+      "id": "astral-glimmer-echo",
+      "name": "微光回响",
+      "source": "imagegen",
+      "art": "/cards/astral-glimmer-echo.webp"
+    },
+    {
+      "id": "astral-chart-revelation",
+      "name": "星图启示",
+      "source": "imagegen",
+      "art": "/cards/astral-chart-revelation.webp"
+    },
+    {
+      "id": "astral-phase-shift",
+      "name": "相位变形",
+      "source": "imagegen",
+      "art": "/cards/astral-phase-shift.webp"
     }
   ]
 }

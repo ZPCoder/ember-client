@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-08-18T00:30:43.497Z",
+  "generatedAt": "2026-08-18T00:54:05.610Z",
   "catalogCount": 1000,
   "generatedCount": 0,
-  "individuallyGeneratedCount": 234,
+  "individuallyGeneratedCount": 239,
   "generatedBy": "imagegen-per-card-plus-legacy-variants",
   "anchor": "public/card-art-sources/frost-anchor.png",
   "cards": [
@@ -977,35 +977,35 @@
       "faction": "星穹",
       "type": "unit",
       "art": "/cards/astral-cosmos-sovereign.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-infinite-observer",
       "faction": "星穹",
       "type": "unit",
       "art": "/cards/astral-infinite-observer.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-glimmer-echo",
       "faction": "星穹",
       "type": "spell",
       "art": "/cards/astral-glimmer-echo.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-chart-revelation",
       "faction": "星穹",
       "type": "spell",
       "art": "/cards/astral-chart-revelation.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-phase-shift",
       "faction": "星穹",
       "type": "spell",
       "art": "/cards/astral-phase-shift.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-gentle-orbit",
