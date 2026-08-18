@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-08-18T00:54:05.610Z",
+  "generatedAt": "2026-08-18T01:16:32.299Z",
   "catalogCount": 1000,
   "generatedCount": 0,
-  "individuallyGeneratedCount": 239,
+  "individuallyGeneratedCount": 244,
   "generatedBy": "imagegen-per-card-plus-legacy-variants",
   "anchor": "public/card-art-sources/frost-anchor.png",
   "cards": [
@@ -1012,35 +1012,35 @@
       "faction": "星穹",
       "type": "spell",
       "art": "/cards/astral-gentle-orbit.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-lucid-script",
       "faction": "星穹",
       "type": "spell",
       "art": "/cards/astral-lucid-script.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-mirror-lesson",
       "faction": "星穹",
       "type": "spell",
       "art": "/cards/astral-mirror-lesson.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-constellation-call",
       "faction": "星穹",
       "type": "spell",
       "art": "/cards/astral-constellation-call.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-meteor-pin",
       "faction": "星穹",
       "type": "spell",
       "art": "/cards/astral-meteor-pin.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-deep-divination",

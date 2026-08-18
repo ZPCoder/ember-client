@@ -1,6 +1,6 @@
 {
   "workflow": "built-in-imagegen-one-card-per-call",
-  "generatedCount": 239,
+  "generatedCount": 244,
   "cards": [
     {
       "id": "firmament-season-01",
@@ -1435,6 +1435,36 @@
       "name": "相位变形",
       "source": "imagegen",
       "art": "/cards/astral-phase-shift.webp"
+    },
+    {
+      "id": "astral-gentle-orbit",
+      "name": "温柔轨道",
+      "source": "imagegen",
+      "art": "/cards/astral-gentle-orbit.webp"
+    },
+    {
+      "id": "astral-lucid-script",
+      "name": "清醒星文",
+      "source": "imagegen",
+      "art": "/cards/astral-lucid-script.webp"
+    },
+    {
+      "id": "astral-mirror-lesson",
+      "name": "镜像课程",
+      "source": "imagegen",
+      "art": "/cards/astral-mirror-lesson.webp"
+    },
+    {
+      "id": "astral-constellation-call",
+      "name": "星群呼唤",
+      "source": "imagegen",
+      "art": "/cards/astral-constellation-call.webp"
+    },
+    {
+      "id": "astral-meteor-pin",
+      "name": "流星钉刺",
+      "source": "imagegen",
+      "art": "/cards/astral-meteor-pin.webp"
     }
   ]
 }
