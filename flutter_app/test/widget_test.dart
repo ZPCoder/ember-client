@@ -146,6 +146,17 @@ void main() {
             .single['kind'],
         'return-unit-to-hand',
       );
+      expect(generatedBattleCards, hasLength(18));
+      expect(
+        generatedBattleCards
+            .where(
+              (card) =>
+                  card.id.endsWith('-appendage') ||
+                  card.id.endsWith('-appendage-soldier'),
+            )
+            .length,
+        12,
+      );
     },
   );
 
@@ -816,6 +827,35 @@ void main() {
       expect(state.ai.hand.single, victim);
       expect(state.ai.handCostReductions, [0]);
       expect(state.ai.deathHistory, isEmpty);
+
+      final generated = generatedBattleCards.singleWhere(
+        (card) => card.id == 'storm-season-08-appendage-soldier',
+      );
+      state.player.hand
+        ..clear()
+        ..addAll([generated, settleDeaths, resurrect]);
+      state.player.handCostReductions
+        ..clear()
+        ..addAll([0, 0, 0]);
+      state.player.handFragments
+        ..clear()
+        ..addAll([null, null, null]);
+      state.player.mana = 10;
+      state.player.armor = 0;
+      expect(controller.playCard(generated, handIndex: 0), isTrue);
+      expect(state.player.armor, 1);
+      final generatedUnit = state.player.board.last;
+      expect(generatedUnit.card.id, generated.id);
+      generatedUnit
+        ..attack = 9
+        ..health = 0
+        ..maxHealth = 9;
+      expect(controller.playCard(settleDeaths, handIndex: 0), isTrue);
+      expect(state.player.deathHistory.last.cardId, generated.id);
+      expect(controller.playCard(resurrect, handIndex: 0), isTrue);
+      expect(state.player.board.last.card.id, generated.id);
+      expect(state.player.board.last.attack, 2);
+      expect(state.player.board.last.health, 4);
       controller.dispose();
     },
   );

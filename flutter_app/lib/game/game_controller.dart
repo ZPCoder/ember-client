@@ -1776,13 +1776,16 @@ class GameController extends ChangeNotifier {
   }) {
     final partId = part['id']?.toString() ?? '${colossal.id}-appendage';
     final partName = part['name']?.toString() ?? '${colossal.name}附肢';
+    final generatedId = soldier ? '$partId-soldier' : partId;
+    final registered = card(generatedId);
+    if (registered != null) return registered;
     final keywords = part['keywords'] is List
         ? (part['keywords'] as List)
               .map((item) => item.toString())
               .toList(growable: false)
         : const <String>[];
     return CardDefinition(
-      id: soldier ? '$partId-soldier' : partId,
+      id: generatedId,
       name: soldier ? '$partName士兵' : partName,
       description: soldier ? '先驱召唤的巨型附肢士兵。' : '巨型组装的附肢。',
       faction: colossal.faction,
@@ -1799,6 +1802,12 @@ class GameController extends ChangeNotifier {
                 .map((item) => item.toString())
                 .toList(growable: false)
           : colossal.minionTypes,
+      onPlay: part['effect'] is List
+          ? (part['effect'] as List)
+                .whereType<Map>()
+                .map((item) => Map<String, dynamic>.from(item))
+                .toList(growable: false)
+          : const <Map<String, dynamic>>[],
     );
   }
 
