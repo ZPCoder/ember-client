@@ -10,12 +10,16 @@ import { CARD_CATALOG } from "../lib/game/catalog.ts";
 
 const projectRoot = new URL("../", import.meta.url);
 
-test("build emits a deployable worker, D1 metadata, and migration", async () => {
-  const [worker, hosting, migration] = await Promise.all([
+test("build emits a deployable worker, D1 metadata, and migrations", async () => {
+  const [worker, hosting, migration, matchmakingMigration] = await Promise.all([
     stat(new URL("../dist/server/index.js", import.meta.url)),
     readFile(new URL("../dist/.openai/hosting.json", import.meta.url), "utf8"),
     readFile(
       new URL("../dist/.openai/drizzle/0000_polite_fabian_cortez.sql", import.meta.url),
+      "utf8",
+    ),
+    readFile(
+      new URL("../dist/.openai/drizzle/0003_thick_miss_america.sql", import.meta.url),
       "utf8",
     ),
   ]);
@@ -28,6 +32,9 @@ test("build emits a deployable worker, D1 metadata, and migration", async () => 
   });
   assert.match(migration, /CREATE TABLE `players`/);
   assert.match(migration, /CREATE TABLE `match_records`/);
+  assert.match(matchmakingMigration, /CREATE TABLE IF NOT EXISTS `pvp_matchmaking_ratings`/);
+  assert.match(matchmakingMigration, /CREATE TABLE IF NOT EXISTS `pvp_mmr_settlements`/);
+  assert.match(matchmakingMigration, /pvp_matchmaking_ratings_format_rating_idx/);
 });
 
 test("ships the complete product surface and removes starter assets", async () => {
@@ -71,6 +78,9 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(game, /新兵专属匹配池/);
   assert.match(game, /改打 AI 演算/);
   assert.match(game, /apprenticeMatchPoolForFacts/);
+  assert.match(game, /隐藏水平匹配 · 数值不公开/);
+  assert.match(game, /显示段位不参与选人/);
+  assert.match(game, /匹配质量/);
   assert.match(game, /天梯预备套牌/);
   assert.match(game, /activate_ladder_ready/);
   assert.match(game, /claim_ladder_ready_deck/);
@@ -122,6 +132,8 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(styles, /\.apprentice-track__pool/);
   assert.match(styles, /\.pvp-lobby__pool/);
   assert.match(styles, /\.pvp-lobby__queue\.is-protected/);
+  assert.match(styles, /\.pvp-lobby__mmr/);
+  assert.match(styles, /\.pvp-lobby__match-rule/);
   assert.match(styles, /\.apprentice-step\.is-ready/);
   assert.match(styles, /\.ladder-ready__grid/);
   assert.match(styles, /\.ladder-ready-card\.is-claimed/);
@@ -136,9 +148,15 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(styles, /@keyframes battle-room-enter/);
   assert.match(styles, /\.battle-fx__card-reveal/);
   assert.match(worker, /pvp_queue_format_pool_joined_idx/);
-  assert.match(worker, /COALESCE\(q\.pool, 'standard'\) = \?/);
+  assert.match(worker, /pvp_queue_format_pool_rating_joined_idx/);
+  assert.match(worker, /q\.pool = \?/);
   assert.match(worker, /apprenticeMatchPoolForFacts/);
-  assert.match(worker, /新兵保护匹配中，只寻找仍在晋升轨道的对手/);
+  assert.match(worker, /pvp_matchmaking_ratings/);
+  assert.match(worker, /pvp_mmr_settlements/);
+  assert.match(worker, /updateHiddenMmr/);
+  assert.match(worker, /MATCHMAKING_WINDOW_INITIAL/);
+  assert.match(worker, /MATCHMAKING_WINDOW_STEP_MS/);
+  assert.match(worker, /正在按隐藏水平寻找/);
   assert.match(styles, /@keyframes battle-card-reveal/);
   assert.match(styles, /\.battlefield__fx-layer/);
   assert.match(styles, /battle-banner-enter 840ms/);

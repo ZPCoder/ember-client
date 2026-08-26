@@ -3295,6 +3295,20 @@ button.game-card:not(:disabled):hover .game-card__artwork,
   background: rgba(216, 162, 81, 0.06);
 }
 
+.pvp-lobby__mmr {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: 7px 0 0 5px;
+  padding: 4px 7px;
+  border: 1px solid rgba(177, 133, 255, 0.24);
+  border-radius: 999px;
+  color: #b9a1e7;
+  background: rgba(177, 133, 255, 0.055);
+  font-size: 8px;
+  font-weight: 800;
+}
+
 .pvp-lobby p {
   margin: 8px 0 13px;
   color: var(--muted);
@@ -3384,6 +3398,35 @@ button.game-card:not(:disabled):hover .game-card__artwork,
 .pvp-lobby__code span {
   color: var(--muted);
   font-size: 9px;
+}
+
+.pvp-lobby__match-rule {
+  display: flex;
+  flex: 1 1 220px;
+  align-items: center;
+  gap: 8px;
+  min-width: 190px;
+  padding: 7px 9px;
+  border: 1px solid rgba(177, 133, 255, 0.2);
+  border-radius: 9px;
+  color: #b9a1e7;
+  background: rgba(177, 133, 255, 0.05);
+}
+
+.pvp-lobby__match-rule > span {
+  display: grid;
+  gap: 2px;
+}
+
+.pvp-lobby__match-rule strong {
+  color: #d8c9f3;
+  font-size: 9px;
+}
+
+.pvp-lobby__match-rule small {
+  color: #857a99;
+  font-size: 8px;
+  line-height: 1.4;
 }
 
 .pvp-lobby__queue {
@@ -7551,6 +7594,11 @@ button.hero-core {
   .pvp-lobby__connect .button,
   .pvp-lobby__room .button {
     flex: 1;
+  }
+
+  .pvp-lobby__match-rule {
+    flex-basis: 100%;
+    order: 3;
   }
 
   .battlefield {

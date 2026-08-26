@@ -55,6 +55,7 @@ import {
   type HeroPowerEffect,
   type Keyword,
   type LadderReadyDeckId,
+  type MatchQuality,
   type MatchState,
   type SpellSchool,
   type Trait,
@@ -301,6 +302,7 @@ type PvpState = {
   role: PvpRole | null;
   format: PvpFormat;
   matchPool: ApprenticeMatchPool | null;
+  matchQuality: MatchQuality | null;
   peerName: string | null;
   localReady: boolean;
   remoteReady: boolean;
@@ -2090,6 +2092,7 @@ function useWebPvp(displayName: string) {
     role: null,
     format: "ranked",
     matchPool: null,
+    matchQuality: null,
     peerName: null,
     localReady: false,
     remoteReady: false,
@@ -2137,11 +2140,11 @@ function useWebPvp(displayName: string) {
         : message.pool === "standard"
           ? "standard"
           : null;
-      setState((current) => ({ ...current, status: "queue", roomCode: null, role: null, format, matchPool: matchPool ?? current.matchPool, peerName: null, localReady: false, remoteReady: false, remoteReadyDeck: null, message: asString(message.message, "正在寻找同模式对手…") }));
+      setState((current) => ({ ...current, status: "queue", roomCode: null, role: null, format, matchPool: matchPool ?? current.matchPool, matchQuality: null, peerName: null, localReady: false, remoteReady: false, remoteReadyDeck: null, message: asString(message.message, "正在按隐藏水平寻找对手…") }));
       return;
     }
     if (type === "queue_left") {
-      setState((current) => ({ ...current, status: "connected", roomCode: null, role: null, matchPool: null, peerName: null, message: asString(message.message, "已取消匹配。") }));
+      setState((current) => ({ ...current, status: "connected", roomCode: null, role: null, matchPool: null, matchQuality: null, peerName: null, message: asString(message.message, "已取消匹配。") }));
       return;
     }
     if (type === "room_created" || type === "room_joined") {
@@ -2152,6 +2155,9 @@ function useWebPvp(displayName: string) {
         : message.pool === "standard"
           ? "standard"
           : null;
+      const matchQuality: MatchQuality | null = message.matchQuality === "ideal" || message.matchQuality === "close" || message.matchQuality === "expanded"
+        ? message.matchQuality
+        : null;
       lastSequenceRef.current = 0;
       incomingQueueRef.current = [];
       setIncoming(null);
@@ -2162,6 +2168,7 @@ function useWebPvp(displayName: string) {
         role: type === "room_created" ? "host" : "guest",
         format,
         matchPool: matchPool ?? current.matchPool,
+        matchQuality,
         localReady: false,
         remoteReady: false,
         remoteReadyDeck: null,
@@ -2324,6 +2331,7 @@ function useWebPvp(displayName: string) {
       role: null,
       format: "ranked",
       matchPool: null,
+      matchQuality: null,
       peerName: null,
       localReady: false,
       remoteReady: false,
@@ -2490,7 +2498,7 @@ function useWebPvp(displayName: string) {
         return;
       }
       socketRef.current = null;
-      setState((current) => ({ ...current, status: "offline", roomCode: null, role: null, format: "ranked", matchPool: null, peerName: null, localReady: false, remoteReady: false, remoteReadyDeck: null, message: "联机大厅连接已断开。" }));
+      setState((current) => ({ ...current, status: "offline", roomCode: null, role: null, format: "ranked", matchPool: null, matchQuality: null, peerName: null, localReady: false, remoteReady: false, remoteReadyDeck: null, message: "联机大厅连接已断开。" }));
     };
     if (canFallbackToPolling(parsed)) {
       fallbackTimerRef.current = window.setTimeout(() => {
@@ -6195,6 +6203,13 @@ function PvpLobby({
   const connected = state.status !== "offline" && state.status !== "error" && state.status !== "connecting";
   const [selectedFormat, setSelectedFormat] = useState<PvpFormat>(state.format);
   const protectedPool = state.matchPool ? state.matchPool === "apprentice" : apprenticePool;
+  const matchQualityLabel = state.matchQuality === "ideal"
+    ? "精确"
+    : state.matchQuality === "close"
+      ? "接近"
+      : state.matchQuality === "expanded"
+        ? "扩展"
+        : null;
   return (
     <section className="pvp-lobby" aria-label="基础 PVP 联机大厅">
       <div className="pvp-lobby__heading">
@@ -6202,9 +6217,10 @@ function PvpLobby({
           <span className="panel__eyebrow">LIVE PVP / ROOM LINK</span>
           <h3>基础联机对战</h3>
           <span className={`pvp-lobby__pool ${protectedPool ? "is-protected" : "is-standard"}`}>
-            <Icon name={protectedPool ? "shield" : "signal"} size={13} />
+            <Icon name={protectedPool ? "shield" : "radar"} size={13} />
             {protectedPool ? "新兵专属匹配池" : "常规水平匹配池"}
           </span>
+          <span className="pvp-lobby__mmr"><Icon name="radar" size={13} />隐藏水平匹配 · 数值不公开</span>
         </div>
         <span className={`pvp-lobby__status pvp-lobby__status--${state.status}`}><i />{state.status === "offline" ? "未连接" : state.status === "connecting" ? "连接中" : state.status === "error" ? "连接异常" : state.status === "queue" ? "匹配中" : state.status === "playing" ? "对战中" : "大厅在线"}</span>
       </div>
@@ -6222,7 +6238,7 @@ function PvpLobby({
               <div>
                 <span className="panel__eyebrow">SERVER MATCHMAKING · {protectedPool ? "CADET" : "STANDARD"}</span>
                 <strong>{protectedPool ? "新兵保护匹配" : state.format === "casual" ? "休闲匹配" : "天梯匹配"}</strong>
-                <small>{protectedPool ? "服务器只会配对仍在晋升轨道的新玩家；毕业后自动转入常规池。" : "只会匹配同模式玩家，并优先寻找相近水平的对手。"}</small>
+                <small>{protectedPool ? "只配对同轨道新玩家，并按隐藏水平从严到宽寻找对手。" : "Ranked 与 Casual 都按各自隐藏水平配对；等待越久，公平窗口逐步扩张。"}</small>
               </div>
               <div className="pvp-lobby__queue-actions">
                 {protectedPool && <button className="button button--primary" type="button" onClick={onFallbackAi}>改打 AI 演算</button>}
@@ -6233,13 +6249,14 @@ function PvpLobby({
             <>
               <label><span>匹配模式</span><select value={selectedFormat} onChange={(event) => setSelectedFormat(event.target.value === "casual" ? "casual" : "ranked")} aria-label="选择联机模式"><option value="ranked">Ranked 天梯</option><option value="casual">Casual 休闲</option></select></label>
               <button className="button button--primary" type="button" onClick={() => onQueue(selectedFormat)}>快速匹配</button>
+              <span className="pvp-lobby__match-rule"><Icon name="radar" size={14} /><span><strong>公平匹配</strong><small>显示段位不参与选人；隐藏水平跨赛季保留，并按模式分别更新。</small></span></span>
               <button className="button button--primary" type="button" onClick={() => onCreate(selectedFormat)}>创建 {selectedFormat === "casual" ? "休闲" : "天梯"} 房间</button>
               <label><span>房间码</span><input value={roomInput} maxLength={4} onChange={(event) => onRoomInput(event.target.value.toUpperCase())} placeholder="A7KQ" /></label>
               <button className="button button--outline" type="button" onClick={onJoin}>加入房间</button>
             </>
           ) : (
             <>
-              <div className="pvp-lobby__code"><small>{state.format === "casual" ? "休闲 Casual" : "天梯 Ranked"} · 房间码</small><strong>{state.roomCode}</strong><span>{state.peerName ? `对手：${state.peerName}` : "等待对手加入"}</span></div>
+              <div className="pvp-lobby__code"><small>{state.format === "casual" ? "休闲 Casual" : "天梯 Ranked"} · 房间码{matchQualityLabel ? ` · 匹配质量 ${matchQualityLabel}` : ""}</small><strong>{state.roomCode}</strong><span>{state.peerName ? `对手：${state.peerName}` : "等待对手加入"}</span></div>
               <button className="button button--primary" type="button" disabled={state.localReady || !state.peerName} onClick={onReady}>{state.localReady ? "已准备" : "准备对战"}</button>
               <button className="button button--outline" type="button" onClick={onDisconnect}>离开房间</button>
             </>
@@ -7413,7 +7430,7 @@ function OperationsSection({
           <div><span>卡包商店</span><strong>{player.taskCycle?.packsBoughtToday ?? 0} / 10</strong><small>100 金币 / 个，日限购 10 个</small></div>
           <div><span>传奇保底</span><strong>{Math.min(player.packPity?.packsSinceLegendary ?? 0, 39)} / 40</strong><small>第 40 包首槽必出传说，出货后重置</small></div>
           <div><span>演算奖励</span><strong>{player.taskCycle?.aiRewardsToday ?? 0} / 20</strong><small>每日最多 20 场 AI 奖励，防止刷资源</small></div>
-          <div><span>天梯段位</span><strong>{player.ladder?.tier ?? "青铜"} · {player.ladder?.rating ?? LADDER_START_RATING} · {player.ladder?.stars ?? 0}★</strong><small>{player.ladder?.winStreak && player.ladder.winStreak >= 2 ? `连胜 ${player.ladder.winStreak} 场，当前段位有额外星级进度` : "仅 Ranked 联机对战影响段位"}</small></div>
+          <div><span>天梯段位</span><strong>{player.ladder?.tier ?? "青铜"} · {player.ladder?.rating ?? LADDER_START_RATING} · {player.ladder?.stars ?? 0}★</strong><small>{player.ladder?.winStreak && player.ladder.winStreak >= 2 ? `连胜 ${player.ladder.winStreak} 场，当前段位有额外星级进度。` : "仅 Ranked 联机对战影响可见段位。"} 匹配使用不公开且跨赛季保留的独立水平。</small></div>
           <div><span>赛季</span><strong>{player.ladder?.seasonKey ?? new Date().toISOString().slice(0, 7)}</strong><small>每月 UTC 00:00 重置天梯</small></div>
           <div><span>玩家 UID</span><strong className="ops-player-id">{player.id}</strong><small>用于好友邀请与客服核验；资产绑定稳定身份而非邮箱</small></div>
         </div>
