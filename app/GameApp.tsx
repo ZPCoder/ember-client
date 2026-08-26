@@ -51,6 +51,8 @@ import {
   catchUpProgressFromCollection,
   recordCatchUpCards,
   CATCH_UP_PACK_SETS,
+  CATCH_UP_PACK_DEFINITIONS,
+  CATCH_UP_PACK_VERSION_ID,
   CATCH_UP_LEGENDARY_GUARANTEE_CARDS,
   getTraitStatuses,
   LADDER_DIAMOND_FIVE_PROGRESS,
@@ -6653,8 +6655,8 @@ function DeckSection({
           <span>
             <Icon name="cards" size={14} />
             {catchUpPack?.claimedAt
-              ? `追赶包已领取 · ${catchUpPack.cardsGranted} 张`
-              : `追赶包预估 ${catchUpPreview.cardCount} 张（每系列 1–10 · 稀有+ ≥20%）`}
+              ? `${CATCH_UP_PACK_DEFINITIONS[CATCH_UP_PACK_VERSION_ID].label}已领取 · ${catchUpPack.cardsGranted} 张`
+              : `${CATCH_UP_PACK_DEFINITIONS[CATCH_UP_PACK_VERSION_ID].label}预估 ${catchUpPreview.cardCount} 张（每系列 1–10 · 稀有+ ≥20%）`}
           </span>
           <span>
             <Icon name="spark" size={14} />

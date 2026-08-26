@@ -44,13 +44,14 @@ test("build emits a deployable worker, D1 metadata, and migrations", async () =>
 });
 
 test("ships the complete product surface and removes starter assets", async () => {
-  const [page, game, styles, worker, ranked, rankedRewards, gameStore, layout, packageJson, og, artManifest, imageGenManifest] = await Promise.all([
+  const [page, game, styles, worker, ranked, rankedRewards, catchUpPack, gameStore, layout, packageJson, og, artManifest, imageGenManifest] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/GameApp.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
     readFile(new URL("../worker/index.ts", import.meta.url), "utf8"),
     readFile(new URL("../lib/game/ranked.ts", import.meta.url), "utf8"),
     readFile(new URL("../lib/game/ranked-rewards.ts", import.meta.url), "utf8"),
+    readFile(new URL("../lib/game/catch-up-pack.ts", import.meta.url), "utf8"),
     readFile(new URL("../db/game-store.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
@@ -111,6 +112,7 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(game, /claim_catch_up_pack/);
   assert.match(game, /previewCatchUpPack/);
   assert.match(game, /每系列 1–10 · 稀有\+ ≥20%/);
+  assert.match(catchUpPack, /圣甲虫回归追赶包/);
   assert.match(game, /前 50 张传说保底/);
   assert.match(gameStore, /generateCatchUpPack/);
   assert.match(game, /collectionWithTrialCards/);
