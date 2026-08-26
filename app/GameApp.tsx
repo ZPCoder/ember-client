@@ -140,6 +140,7 @@ type CatalogCard = {
   durability?: number;
   spellDamage?: number;
   tradeable?: boolean;
+  preparable?: boolean;
   target: CardTargetRule;
   keywords: Keyword[];
   traits: Trait[];
@@ -304,7 +305,7 @@ type BattleSide = {
   mana: number;
   maxMana: number;
   deckCount: number;
-  hand: Array<{ instanceId: string; cardId: string }>;
+  hand: Array<{ instanceId: string; cardId: string; handIndex: number; costReduction: number }>;
   board: BattleUnit[];
 };
 
@@ -576,6 +577,7 @@ function cardFromRaw(raw: Record<string, unknown>): CatalogCard {
         ? asNumber(raw.spellDamage)
         : undefined,
     tradeable: raw.tradeable === true,
+    preparable: raw.preparable === true,
     target: asString(raw.target, "none") as CardTargetRule,
     keywords: Array.isArray(raw.keywords)
       ? (raw.keywords.map(String) as Keyword[])
@@ -1311,14 +1313,26 @@ function getSide(raw: Record<string, unknown>, side: "player" | "ai"): Record<st
   return {};
 }
 
-function normalizeHand(value: unknown): BattleSide["hand"] {
+function normalizeHand(value: unknown, reductionsValue?: unknown): BattleSide["hand"] {
   if (!Array.isArray(value)) return [];
+  const reductions = Array.isArray(reductionsValue) ? reductionsValue : [];
   return value.map((entry, index) => {
-    if (typeof entry === "string") return { instanceId: `${entry}-${index}`, cardId: entry };
+    const rawReduction = reductions[index];
+    const costReduction = typeof rawReduction === "number" && Number.isFinite(rawReduction)
+      ? Math.max(0, Math.floor(rawReduction))
+      : 0;
+    if (typeof entry === "string") return {
+      instanceId: `${entry}-${index}`,
+      cardId: entry,
+      handIndex: index,
+      costReduction,
+    };
     const item = (entry ?? {}) as Record<string, unknown>;
     return {
       instanceId: asString(item.instanceId ?? item.uid ?? item.id, `hand-${index}`),
       cardId: asString(item.cardId ?? item.definitionId ?? item.id),
+      handIndex: index,
+      costReduction,
     };
   });
 }
@@ -1465,7 +1479,7 @@ function battleFromRaw(value: unknown): BattleView | null {
     deckCount: Array.isArray(side.deck)
       ? side.deck.length
       : asNumber(side.deckCount ?? side.remainingDeck),
-    hand: normalizeHand(side.hand),
+    hand: normalizeHand(side.hand, side.handCostReductions),
     board: normalizeBoard(side.board ?? side.units, turn),
   });
   const statusRaw = asString(raw.status ?? raw.phase, "playing").toLowerCase();
@@ -1739,6 +1753,7 @@ function CardTile({
   action,
   actionLabel,
   disabled = false,
+  costOverride,
 }: {
   card: CatalogCard;
   owned?: number;
@@ -1748,16 +1763,20 @@ function CardTile({
   action?: () => void;
   actionLabel?: string;
   disabled?: boolean;
+  costOverride?: number;
 }) {
   const factionTone = FACTION_DEFINITIONS[card.faction]?.tone ?? "neutral";
   const cardClassName = `game-card game-card--faction-${factionTone} ${compact ? "game-card--compact" : ""}`;
+  const displayedCost = typeof costOverride === "number"
+    ? Math.max(0, Math.floor(costOverride))
+    : card.cost;
   const content = (
     <>
       <div className="game-card__visual">
         <Sigil card={card} />
         <CardArtwork card={card} className="game-card__artwork" />
-        <span className="game-card__cost" aria-label={`${card.cost} 点能量`}>
-          {card.cost}
+        <span className={`game-card__cost ${displayedCost < card.cost ? "is-discounted" : ""}`} aria-label={`${displayedCost} 点能量${displayedCost < card.cost ? `，原费用 ${card.cost}` : ""}`}>
+          {displayedCost}
         </span>
         <span className={`game-card__rarity game-card__rarity--${card.rarity}`} />
         {typeof owned === "number" && (
@@ -4352,8 +4371,9 @@ export function GameApp({
       return;
     }
     const card = CARD_BY_ID.get(handCard.cardId);
-    if (card && card.cost > battleView.player.mana) {
-      setBattleMessage(`能量不足：部署「${card.name}」需要 ${card.cost} 点能量。`);
+    const effectiveCost = card ? Math.max(0, card.cost - handCard.costReduction) : 0;
+    if (card && effectiveCost > battleView.player.mana) {
+      setBattleMessage(`能量不足：部署「${card.name}」需要 ${effectiveCost} 点能量。`);
       return;
     }
     const targetRule = card?.target ?? "none";
@@ -4399,6 +4419,7 @@ export function GameApp({
       type: "play-card",
       player: 0,
       cardId: handCard.cardId,
+      handIndex: handCard.handIndex,
     });
     if (next) setBattleMessage(`已部署「${card?.name ?? "战术卡"}」。`);
   };
@@ -4421,12 +4442,54 @@ export function GameApp({
       setBattleMessage("交易需要 1 点能量。");
       return;
     }
-    const next = issueCommand({ type: "trade-card", player: 0, cardId: handCard.cardId });
+    const next = issueCommand({
+      type: "trade-card",
+      player: 0,
+      cardId: handCard.cardId,
+      handIndex: handCard.handIndex,
+    });
     if (next) {
       setPendingCard(null);
       setPendingHeroPower(false);
       setSelectedAttacker(null);
       setBattleMessage(`已交易「${card.name}」，抽取一张替代牌。`);
+    }
+  };
+
+  const prepareCard = (handCard: BattleSide["hand"][number]) => {
+    if (battleEffectLockRef.current) {
+      setBattleMessage("战况回放中，请等待行动窗口稳定。");
+      return;
+    }
+    if (!battleView || battleView.status !== "playing" || battleView.currentPlayer !== "player") {
+      setBattleMessage("当前不是你的行动窗口。");
+      return;
+    }
+    const card = CARD_BY_ID.get(handCard.cardId);
+    if (!card?.preparable) {
+      setBattleMessage("这张卡牌不能预备。");
+      return;
+    }
+    if (handCard.costReduction > 0) {
+      setBattleMessage(`「${card.name}」已经完成过预备。`);
+      return;
+    }
+    if (battleView.player.mana < 1) {
+      setBattleMessage("预备至少需要 1 点剩余能量。");
+      return;
+    }
+    const manaSpent = battleView.player.mana;
+    const next = issueCommand({
+      type: "prepare-card",
+      player: 0,
+      cardId: handCard.cardId,
+      handIndex: handCard.handIndex,
+    });
+    if (next) {
+      setPendingCard(null);
+      setPendingHeroPower(false);
+      setSelectedAttacker(null);
+      setBattleMessage(`已用 ${manaSpent} 点能量预备「${card.name}」，费用永久降低 ${manaSpent + 1} 点。`);
     }
   };
 
@@ -4473,6 +4536,7 @@ export function GameApp({
           type: "play-card",
           player: 0,
           cardId: pendingCard?.cardId ?? "",
+          handIndex: pendingCard?.handIndex,
           target: normalizedTarget,
         });
     if (next) {
@@ -4992,6 +5056,7 @@ export function GameApp({
                   onReturnLobby={returnToBattleLobby}
                   onPlayCard={playCard}
                   onTradeCard={tradeCard}
+                  onPrepareCard={prepareCard}
                   onChooseDiscover={chooseDiscover}
                   onChooseOne={chooseOne}
                   onToggleMulligan={toggleMulliganCard}
@@ -6773,6 +6838,7 @@ function BattleSection({
   onReturnLobby,
   onPlayCard,
   onTradeCard,
+  onPrepareCard,
   onChooseDiscover,
   onChooseOne,
   onToggleMulligan,
@@ -6833,6 +6899,7 @@ function BattleSection({
   onReturnLobby: () => void;
   onPlayCard: (card: BattleSide["hand"][number]) => void;
   onTradeCard: (card: BattleSide["hand"][number]) => void;
+  onPrepareCard: (card: BattleSide["hand"][number]) => void;
   onChooseDiscover: (cardId: string) => void;
   onChooseOne: (optionIndex: number) => void;
   onToggleMulligan: (index: number) => void;
@@ -7436,10 +7503,11 @@ function BattleSection({
               {battle.player.hand.map((handCard, handIndex) => {
                 const card = CARD_BY_ID.get(handCard.cardId);
                 if (!card) return null;
+                const effectiveCost = Math.max(0, card.cost - handCard.costReduction);
                 const selectedForMulligan = mulliganSelection.includes(handIndex);
                 const disabled = mulliganActive
                   ? !playerCanMulligan
-                  : !playerCanAct || card.cost > battle.player.mana || pendingHeroPower;
+                  : !playerCanAct || effectiveCost > battle.player.mana || pendingHeroPower;
                 return (
                   <div
                     className={`hand-card ${disabled ? "hand-card--disabled" : ""} ${pendingCard?.instanceId === handCard.instanceId || selectedForMulligan ? "hand-card--selected" : ""}`}
@@ -7449,6 +7517,7 @@ function BattleSection({
                       card={card}
                       compact
                       showDescription
+                      costOverride={effectiveCost}
                       action={() => mulliganActive ? onToggleMulligan(handIndex) : onPlayCard(handCard)}
                       actionLabel={mulliganActive ? `${selectedForMulligan ? "保留" : "更换"}${card.name}` : `使用${card.name}`}
                       disabled={disabled}
@@ -7472,6 +7541,23 @@ function BattleSection({
                       >
                         <span>↔</span> 交易 · 1
                       </button>
+                    )}
+                    {!mulliganActive && card.preparable && (
+                      handCard.costReduction > 0 ? (
+                        <span className="hand-card__prepare is-ready" aria-label={`${card.name}已预备，费用降低 ${handCard.costReduction} 点`}>
+                          <span>⌄</span> 已预备 · −{handCard.costReduction}
+                        </span>
+                      ) : (
+                        <button
+                          className="hand-card__prepare"
+                          type="button"
+                          disabled={!playerCanAct || battle.player.mana < 1}
+                          onClick={() => onPrepareCard(handCard)}
+                          aria-label={`预备${card.name}，花费全部剩余能量并额外降低 1 点费用`}
+                        >
+                          <span>⌄</span> 预备 · 全部能量
+                        </button>
+                      )
                     )}
                   </div>
                 );

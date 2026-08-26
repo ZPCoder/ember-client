@@ -107,6 +107,8 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(game, /claim_ladder_ready_deck/);
   assert.match(game, /LADDER_READY_DECKS/);
   assert.match(game, /AI 与在线对战均可使用/);
+  assert.match(game, /预备 · 全部能量/);
+  assert.match(game, /type: "prepare-card"/);
   assert.match(game, /\/api\/game/);
   assert.match(game, /\/cards\/\$\{card\.id\}\.webp/);
   assert.match(game, /<Image[\s\S]*?\bunoptimized\b[\s\S]*?\/>/);
@@ -161,6 +163,8 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(styles, /\.ranked-rewards-grid/);
   assert.match(styles, /\.ranked-reward-card\.is-earned/);
   assert.match(styles, /\.ranked-rewards-history/);
+  assert.match(styles, /\.hand-card__prepare/);
+  assert.match(styles, /\.game-card__cost\.is-discounted/);
   assert.match(styles, /\.turn-clock/);
   assert.match(styles, /\.board-slot/);
   assert.match(styles, /battle-target-pulse/);
@@ -181,6 +185,8 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(worker, /MATCHMAKING_WINDOW_INITIAL/);
   assert.match(worker, /MATCHMAKING_WINDOW_STEP_MS/);
   assert.match(worker, /正在按隐藏水平寻找/);
+  assert.match(worker, /case "prepare-card"/);
+  assert.match(worker, /safeEvent\.type === "card-prepared"/);
   assert.match(ranked, /LADDER_RANKS_PER_LEAGUE = 10/);
   assert.match(ranked, /LADDER_STARS_PER_RANK = 3/);
   assert.match(ranked, /resetRankedSnapshotForSeason/);

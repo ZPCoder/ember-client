@@ -2046,6 +2046,13 @@ button.game-card:not(:disabled):hover .game-card__artwork,
   box-shadow: 0 0 18px color-mix(in srgb, var(--card-faction) 23%, transparent);
 }
 
+.game-card__cost.is-discounted {
+  border-color: rgba(120, 236, 164, 0.78);
+  color: #d9ffe7;
+  background: rgba(24, 108, 64, 0.94);
+  box-shadow: 0 0 20px rgba(71, 219, 126, 0.34);
+}
+
 .game-card__owned {
   right: 10px;
   bottom: 9px;
@@ -5441,6 +5448,48 @@ button.hero-core {
 }
 
 .hand-card__trade span {
+  font-size: 10px;
+  line-height: 1;
+}
+
+.hand-card__prepare {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  margin-top: 4px;
+  padding: 4px 5px;
+  border: 1px solid rgba(104, 224, 156, 0.4);
+  border-radius: 5px;
+  color: #b9f6cf;
+  background: rgba(22, 85, 57, 0.58);
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: 140ms ease;
+}
+
+.hand-card__prepare:hover:not(:disabled) {
+  border-color: rgba(128, 245, 178, 0.82);
+  background: rgba(30, 117, 76, 0.76);
+  box-shadow: 0 0 14px rgba(70, 222, 134, 0.24);
+}
+
+.hand-card__prepare:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
+.hand-card__prepare.is-ready {
+  border-color: rgba(235, 205, 120, 0.5);
+  color: #f4dfa6;
+  background: rgba(107, 77, 28, 0.52);
+  cursor: default;
+}
+
+.hand-card__prepare span {
   font-size: 10px;
   line-height: 1;
 }
