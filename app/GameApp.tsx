@@ -864,14 +864,30 @@ function readLocalPlayer(email: string): PlayerSnapshot | null {
     const now = new Date().toISOString();
     const seasonKey = now.slice(0, 7);
     const rankedLadders = normalizeRankedLadders(parsed.rankedLadders, parsed.ladder, seasonKey);
+    const storedCatchUp = parsed.catchUpPack;
+    const receivedCopiesByCard = storedCatchUp?.receivedCopiesByCard
+      ?? catchUpProgressFromCollection(parsed.collection).receivedCopiesByCard;
     const rolled = rollRankedSeason({
       ladders: rankedLadders,
       rankedRewards: normalizeRankedRewardState(parsed.rankedRewards),
       collection: parsed.collection,
+      receivedCopiesByCard,
       packsAvailable: parsed.packsAvailable,
     }, CARD_CATALOG, seasonKey, now);
-    const migratedCatchUpProgress = catchUpProgressFromCollection(rolled.collection);
-    const storedCatchUp = parsed.catchUpPack;
+    const baseCatchUpProgress = catchUpProgressFromCollection(parsed.collection);
+    const baseCatchUp = {
+      claimedAt: storedCatchUp?.claimedAt ?? null,
+      cardsGranted: storedCatchUp?.cardsGranted ?? 0,
+      cardsSeenBySet: storedCatchUp?.cardsSeenBySet ?? baseCatchUpProgress.cardsSeenBySet,
+      legendarySeenSets: storedCatchUp?.legendarySeenSets ?? baseCatchUpProgress.legendarySeenSets,
+      receivedCopiesByCard: storedCatchUp?.receivedCopiesByCard ?? baseCatchUpProgress.receivedCopiesByCard,
+    };
+    const rankedGrantedCardIds: string[] = [];
+    for (const [cardId, count] of Object.entries(rolled.collection)) {
+      const granted = Math.max(0, count - (parsed.collection[cardId] ?? 0));
+      for (let index = 0; index < granted; index += 1) rankedGrantedCardIds.push(cardId);
+    }
+    const rolledCatchUpProgress = recordCatchUpCards(baseCatchUp, rankedGrantedCardIds);
     const migrated = {
       ...parsed,
       decks: parsed.decks.map((deck) => ({
@@ -884,11 +900,8 @@ function readLocalPlayer(email: string): PlayerSnapshot | null {
       collection: rolled.collection,
       packsAvailable: rolled.packsAvailable,
       catchUpPack: {
-        claimedAt: storedCatchUp?.claimedAt ?? null,
-        cardsGranted: storedCatchUp?.cardsGranted ?? 0,
-        cardsSeenBySet: storedCatchUp?.cardsSeenBySet ?? migratedCatchUpProgress.cardsSeenBySet,
-        legendarySeenSets: storedCatchUp?.legendarySeenSets ?? migratedCatchUpProgress.legendarySeenSets,
-        receivedCopiesByCard: storedCatchUp?.receivedCopiesByCard ?? migratedCatchUpProgress.receivedCopiesByCard,
+        ...baseCatchUp,
+        ...rolledCatchUpProgress,
       },
       trialCards: parsed.trialCards ?? (
         parsed.ladderReady?.activatedAt && parsed.ladderReady.expiresAt
@@ -1672,6 +1685,8 @@ function applyLocalAction(
             ladders: normalizeRankedLadders(current.rankedLadders, current.ladder, seasonKey),
             rankedRewards: normalizeRankedRewardState(current.rankedRewards),
             collection: current.collection,
+            receivedCopiesByCard: current.catchUpPack?.receivedCopiesByCard
+              ?? catchUpProgressFromCollection(current.collection).receivedCopiesByCard,
             packsAvailable: current.packsAvailable,
           }, CARD_CATALOG, seasonKey, now);
           return applyRankedMatchResult(rolled, CARD_CATALOG, rankedFormat, result);
