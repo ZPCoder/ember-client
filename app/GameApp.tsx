@@ -9690,7 +9690,7 @@ function OperationsSection({
           <div><Icon name="check" size={16} /><span>联机战报必须匹配服务器对局快照、参赛身份和唯一对局凭证</span></div>
           <div><Icon name="check" size={16} /><span>联机分为 Ranked 天梯与 Casual 休闲：仅 Ranked 影响赛季段位；白银至白金段位连续胜利会获得额外星级进度，失败会重置连胜。</span></div>
           <div><Icon name="check" size={16} /><span>每周商店提供 1 个免费标准包，按周一 UTC 00:00 刷新并由服务端幂等结算</span></div>
-          <div><Icon name="check" size={16} /><span>标准包只产出当前标准环境卡牌；首槽保底稀有，连续 39 包未出传说时，第 40 包首槽强制传说。</span></div>
+          <div><Icon name="check" size={16} /><span>标准包只产出当前标准环境卡牌；前 10 包内保证首张传说，之后连续 39 包未出传说时，第 40 包首槽强制传说。</span></div>
           <div><Icon name="check" size={16} /><span>好友请求每日最多 20 次，聊天每分钟最多 20 条；屏蔽、举报和好友关系由服务端保存，幂等重试不会重复发放或重复发送。</span></div>
         </div>
       </section>
