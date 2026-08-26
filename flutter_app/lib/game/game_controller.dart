@@ -811,6 +811,7 @@ class GameController extends ChangeNotifier {
       hand: [],
       board: [],
       coinAvailable: playerIsSecond,
+      coinEntityId: playerIsSecond ? _nextCardEntityId() : null,
     );
     final ai = BattleSide(
       faction: aiFaction,
@@ -827,6 +828,7 @@ class GameController extends ChangeNotifier {
       hand: [],
       board: [],
       coinAvailable: aiIsSecond,
+      coinEntityId: aiIsSecond ? _nextCardEntityId() : null,
     );
     battle = BattleState(
       player: player,
@@ -1904,7 +1906,10 @@ class GameController extends ChangeNotifier {
     required String owner,
   }) {
     if (!source.coinAvailable) return false;
+    final coin = card('the-coin');
+    final coinEntityId = source.coinEntityId ?? _nextCardEntityId();
     source.coinAvailable = false;
+    source.coinEntityId = null;
     // The Coin is a real 0-cost spell: it counts as the previous card for
     // Combo even when Counterspell prevents its mana effect.
     source.cardsPlayedThisTurn++;
@@ -1914,10 +1919,42 @@ class GameController extends ChangeNotifier {
       triggeringSide: source,
     );
     if (countered) {
+      if (coin != null) {
+        _sendCardToGraveyard(
+          source,
+          coin,
+          coinEntityId,
+          fromZone: 'hand',
+          reason: 'countered',
+        );
+      }
       stateLog(owner == 'player' ? '幸运币被反制。' : '敌方的幸运币被反制。');
       _processDeaths();
       _checkFinished();
       return true;
+    }
+
+    if (coin != null) {
+      while (source.spellsPlayedEntityIds.length <
+          source.spellsPlayedThisGame.length) {
+        source.spellsPlayedEntityIds.add(
+          'legacy-spell-${source.spellsPlayedEntityIds.length}-${source.spellsPlayedThisGame[source.spellsPlayedEntityIds.length]}',
+        );
+      }
+      while (source.spellsPlayedFromStartingDeck.length <
+          source.spellsPlayedThisGame.length) {
+        source.spellsPlayedFromStartingDeck.add(true);
+      }
+      source.spellsPlayedThisGame.add(coin.id);
+      source.spellsPlayedEntityIds.add(coinEntityId);
+      source.spellsPlayedFromStartingDeck.add(false);
+      _sendCardToGraveyard(
+        source,
+        coin,
+        coinEntityId,
+        fromZone: 'hand',
+        reason: 'resolved',
+      );
     }
 
     final absorbsOverloadDebt = source.overloadLocked > source.maxMana;
@@ -3284,6 +3321,10 @@ class GameController extends ChangeNotifier {
             : 0;
         final damageAmount = amount + spellBonus;
         switch (kind) {
+          case 'gain-temporary-mana':
+            source.mana += max(0, amount);
+            stateLog(sourceName, '获得 ${max(0, amount)} 点临时法力。');
+            break;
           case 'secret':
             final secretId = effect['secretId']?.toString();
             final trigger = effect['trigger']?.toString();

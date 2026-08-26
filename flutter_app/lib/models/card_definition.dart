@@ -371,6 +371,7 @@ class BattleSide {
     List<String>? handEntityIds,
     required this.board,
     this.coinAvailable = false,
+    this.coinEntityId,
     this.weapon,
     this.overloadLocked = 0,
     this.heraldCount = 0,
@@ -443,6 +444,7 @@ class BattleSide {
   final List<String> handEntityIds;
   final List<BattleUnit> board;
   bool coinAvailable;
+  String? coinEntityId;
   BattleWeapon? weapon;
   int overloadLocked;
   int heraldCount;

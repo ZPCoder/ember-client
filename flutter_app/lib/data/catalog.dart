@@ -198,6 +198,19 @@ bool hasMinionType(CardDefinition card, String minionType) =>
 
 const generatedBattleCards = <CardDefinition>[
   CardDefinition(
+    id: 'the-coin',
+    name: '幸运币',
+    description: '在本回合中，获得一个法力水晶。',
+    faction: '中立',
+    type: 'spell',
+    cost: 0,
+    rarity: '普通',
+    collectible: false,
+    effect: <Map<String, dynamic>>[
+      <String, dynamic>{'kind': 'gain-temporary-mana', 'amount': 1},
+    ],
+  ),
+  CardDefinition(
     id: 'generated-ember-mine',
     name: '余烬地雷',
     description: '抽到时施放：对你的核心造成 3 点伤害。',

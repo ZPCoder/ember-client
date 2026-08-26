@@ -263,7 +263,11 @@ void main() {
             .single['kind'],
         'recast-nondeck-spells-once',
       );
-      expect(generatedBattleCards, hasLength(19));
+      expect(generatedBattleCards, hasLength(20));
+      expect(
+        generatedBattleCards.singleWhere((card) => card.id == 'the-coin').effect,
+        [<String, dynamic>{'kind': 'gain-temporary-mana', 'amount': 1}],
+      );
       expect(
         generatedBattleCards
             .where(
@@ -364,9 +368,13 @@ void main() {
     expect(state.player.mana, 1);
 
     state.player.coinAvailable = true;
+    state.player.coinEntityId = 'mobile-opening-coin';
     expect(controller.useCoin(), isTrue);
     expect(state.player.coinAvailable, isFalse);
+    expect(state.player.coinEntityId, isNull);
     expect(state.player.mana, 2);
+    expect(state.player.spellsPlayedThisGame.last, 'the-coin');
+    expect(state.player.spellsPlayedEntityIds.last, 'mobile-opening-coin');
     controller.dispose();
   });
 
@@ -3294,6 +3302,7 @@ void main() {
     state.player.mana = 1;
     state.player.cardsPlayedThisTurn = 0;
     state.player.coinAvailable = true;
+    state.player.coinEntityId = 'mobile-countered-coin';
     state.player.board
       ..clear()
       ..add(
@@ -3322,12 +3331,19 @@ void main() {
     expect(state.player.mana, 1);
     expect(state.player.armor, 0);
     expect(state.ai.secrets, isEmpty);
+    expect(state.player.cardGraveyard.single.entityId, 'mobile-countered-coin');
+    expect(state.player.cardGraveyard.single.reason, 'countered');
 
     state.player.coinAvailable = true;
+    state.player.coinEntityId = 'mobile-resolved-coin';
     expect(controller.useCoin(), isTrue);
     expect(state.player.cardsPlayedThisTurn, 2);
     expect(state.player.mana, 2);
     expect(state.player.armor, 1);
+    expect(state.player.spellsPlayedThisGame, ['the-coin']);
+    expect(state.player.spellsPlayedEntityIds, ['mobile-resolved-coin']);
+    expect(state.player.spellsPlayedFromStartingDeck, [false]);
+    expect(state.player.cardGraveyard.last.entityId, 'mobile-resolved-coin');
 
     state.player.hand
       ..clear()
