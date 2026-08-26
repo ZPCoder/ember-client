@@ -6115,8 +6115,91 @@ button.hero-core {
 }
 
 .ops-account-panel,
+.ranked-rewards-panel,
 .ops-rules-panel {
   margin-bottom: 17px;
+}
+
+.ranked-rewards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  padding: 0 18px 12px;
+}
+
+.ranked-reward-card {
+  display: grid;
+  align-content: start;
+  gap: 7px;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid rgba(120, 190, 181, 0.18);
+  border-radius: 10px;
+  background:
+    linear-gradient(145deg, rgba(113, 181, 173, 0.08), transparent 55%),
+    rgba(0, 0, 0, 0.14);
+}
+
+.ranked-reward-card.is-earned {
+  border-color: rgba(233, 204, 120, 0.38);
+  background:
+    linear-gradient(145deg, rgba(233, 204, 120, 0.12), transparent 58%),
+    rgba(0, 0, 0, 0.14);
+}
+
+.ranked-reward-card > span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--cyan);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ranked-reward-card.is-earned > span {
+  color: var(--gold);
+}
+
+.ranked-reward-card strong {
+  color: var(--cream);
+  font-size: 16px;
+}
+
+.ranked-reward-card small {
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.6;
+}
+
+.ranked-rewards-history {
+  display: grid;
+  grid-template-columns: auto minmax(0, auto) minmax(0, 1fr);
+  align-items: center;
+  gap: 9px;
+  margin: 0 18px 18px;
+  padding: 10px 12px;
+  border: 1px solid rgba(120, 190, 181, 0.14);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.ranked-rewards-history span,
+.ranked-rewards-history small {
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.ranked-rewards-history strong {
+  color: var(--cream);
+  font-size: 11px;
+}
+
+.ranked-rewards-history small {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .ops-account-grid {
@@ -7308,6 +7391,7 @@ button.hero-core {
   .metric-grid,
   .ops-metrics,
   .ops-account-grid,
+  .ranked-rewards-grid,
   .reward-track-list {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -7683,6 +7767,18 @@ button.hero-core {
 
   .ops-account-grid {
     grid-template-columns: 1fr;
+  }
+
+  .ranked-rewards-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ranked-rewards-history {
+    grid-template-columns: 1fr;
+  }
+
+  .ranked-rewards-history small {
+    white-space: normal;
   }
 
   .reward-track-list {

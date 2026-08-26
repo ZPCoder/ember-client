@@ -38,12 +38,14 @@ test("build emits a deployable worker, D1 metadata, and migrations", async () =>
 });
 
 test("ships the complete product surface and removes starter assets", async () => {
-  const [page, game, styles, worker, ranked, layout, packageJson, og, artManifest, imageGenManifest] = await Promise.all([
+  const [page, game, styles, worker, ranked, rankedRewards, gameStore, layout, packageJson, og, artManifest, imageGenManifest] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/GameApp.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
     readFile(new URL("../worker/index.ts", import.meta.url), "utf8"),
     readFile(new URL("../lib/game/ranked.ts", import.meta.url), "utf8"),
+    readFile(new URL("../lib/game/ranked-rewards.ts", import.meta.url), "utf8"),
+    readFile(new URL("../db/game-store.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
     stat(new URL("../public/og.png", import.meta.url)),
@@ -85,6 +87,9 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(game, /胜利星级 ×/);
   assert.match(game, /当前 10\/5 段位保护生效/);
   assert.match(game, /每月从青铜 10 重启/);
+  assert.match(game, /赛季天梯奖励/);
+  assert.match(game, /下月首次登录自动入库/);
+  assert.match(game, /任意段位赢得 5 场 Ranked/);
   assert.match(game, /天梯预备套牌/);
   assert.match(game, /activate_ladder_ready/);
   assert.match(game, /claim_ladder_ready_deck/);
@@ -141,6 +146,9 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(styles, /\.apprentice-step\.is-ready/);
   assert.match(styles, /\.ladder-ready__grid/);
   assert.match(styles, /\.ladder-ready-card\.is-claimed/);
+  assert.match(styles, /\.ranked-rewards-grid/);
+  assert.match(styles, /\.ranked-reward-card\.is-earned/);
+  assert.match(styles, /\.ranked-rewards-history/);
   assert.match(styles, /\.turn-clock/);
   assert.match(styles, /\.board-slot/);
   assert.match(styles, /battle-target-pulse/);
@@ -167,6 +175,12 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(ranked, /normalizeRankedSnapshot/);
   assert.match(ranked, /crossedRankFloors/);
   assert.match(ranked, /progress < LADDER_DIAMOND_FIVE_PROGRESS/);
+  assert.match(rankedRewards, /RANKED_SEASON_REWARD_LEVELS/);
+  assert.match(rankedRewards, /RANKED_FIRST_TIME_REWARD_LEVELS/);
+  assert.match(rankedRewards, /applyOutstandingRankedRewards/);
+  assert.match(rankedRewards, /rollRankedSeason/);
+  assert.match(gameStore, /applyRankedMatchResult/);
+  assert.match(gameStore, /rollRankedSeason/);
   assert.match(styles, /@keyframes battle-card-reveal/);
   assert.match(styles, /\.battlefield__fx-layer/);
   assert.match(styles, /battle-banner-enter 840ms/);

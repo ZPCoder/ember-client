@@ -24,6 +24,7 @@ import {
   TRAIT_DEFINITIONS,
   TRAIT_ORDER,
   applyCommand,
+  applyRankedMatchResult,
   apprenticeMatchPoolForFacts,
   apprenticeMilestoneComplete,
   apprenticeMilestoneProgress,
@@ -31,6 +32,7 @@ import {
   battleEventsToEffects,
   chooseAiMulliganIndexes,
   createMatch,
+  createRankedRewardState,
   factionForDeck,
   getHeroPower,
   getLadderReadyDeck,
@@ -41,14 +43,17 @@ import {
   LADDER_READY_TRIAL_MS,
   LADDER_START_RATING,
   createRankedSnapshot,
+  describeRankedRewardBundle,
   isRankFloorProgress,
   ladderLabelForProgress,
   ladderProgressForRating,
-  resetRankedSnapshotForSeason,
+  normalizeRankedRewardState,
+  RANKED_FIRST_TIME_REWARD_LEVELS,
+  rankedSeasonRewardForPeak,
+  rollRankedSeason,
   ladderReadyTrialIsActive,
   planAiTurnReplay,
   shouldScheduleLocalAiTurn,
-  updateRankedSnapshot,
   EXPANDED_FACTION_THEMES,
   validateDeck,
   type BattleEffectKind,
@@ -62,6 +67,7 @@ import {
   type MatchQuality,
   type MatchState,
   type RankedSnapshot,
+  type RankedRewardState,
   type SpellSchool,
   type Trait,
   type BattleVisualEffect,
@@ -165,6 +171,7 @@ type PlayerSnapshot = {
   };
   progression?: { xp: number; level: number };
   ladder?: RankedSnapshot;
+  rankedRewards?: RankedRewardState;
   friends?: Array<{ id: string; displayName: string; status: "pending" | "accepted"; direction: "incoming" | "outgoing" }>;
   chatMessages?: Array<{ id: string; senderId: string; recipientId: string; text: string; createdAt: string }>;
   blockedPlayerIds?: string[];
@@ -654,7 +661,24 @@ function readLocalPlayer(email: string): PlayerSnapshot | null {
     const raw = window.localStorage.getItem(localProfileKey(email));
     if (!raw) return null;
     const parsed: unknown = JSON.parse(raw);
-    return isPlayerSnapshot(parsed) ? parsed : null;
+    if (!isPlayerSnapshot(parsed)) return null;
+    const now = new Date().toISOString();
+    const seasonKey = now.slice(0, 7);
+    const rolled = rollRankedSeason({
+      ladder: parsed.ladder ?? createRankedSnapshot(seasonKey),
+      rankedRewards: normalizeRankedRewardState(parsed.rankedRewards),
+      collection: parsed.collection,
+      packsAvailable: parsed.packsAvailable,
+    }, CARD_CATALOG, seasonKey, now);
+    const migrated = {
+      ...parsed,
+      ladder: rolled.ladder,
+      rankedRewards: rolled.rankedRewards,
+      collection: rolled.collection,
+      packsAvailable: rolled.packsAvailable,
+    };
+    persistLocalPlayer(migrated);
+    return migrated;
   } catch {
     return null;
   }
@@ -673,6 +697,7 @@ function makeDemoPlayer(identity?: {
   displayName: string;
   email: string;
 }): PlayerSnapshot {
+  const seasonKey = new Date().toISOString().slice(0, 7);
   const collection = Object.fromEntries(CATALOG.map((card) => [card.id, 2]));
   const deck: SavedDeck = {
     id: "demo-starter",
@@ -741,7 +766,8 @@ function makeDemoPlayer(identity?: {
     rewardTrack: { claimedLevels: [] },
     apprenticeTrack: { claimedMilestones: [] },
     ladderReady: { activatedAt: null, expiresAt: null, claimedDeckId: null },
-    ladder: { ...createRankedSnapshot(new Date().toISOString().slice(0, 7)), wins: 7, losses: 3 },
+    ladder: { ...createRankedSnapshot(seasonKey), wins: 7, losses: 3 },
+    rankedRewards: { ...createRankedRewardState(), earnedCardBackSeasons: [seasonKey] },
     recentMatches: [
       {
         id: "demo-match-1",
@@ -1159,8 +1185,23 @@ function applyLocalAction(
         ? { ...task, progress: Math.min(task.target, task.progress + 1) }
         : task;
     });
+    const rankedEconomy = body.mode === "pvp" && body.format !== "casual"
+      ? (() => {
+          const seasonKey = now.slice(0, 7);
+          const rolled = rollRankedSeason({
+            ladder: current.ladder ?? createRankedSnapshot(seasonKey),
+            rankedRewards: normalizeRankedRewardState(current.rankedRewards),
+            collection: current.collection,
+            packsAvailable: current.packsAvailable,
+          }, CARD_CATALOG, seasonKey, now);
+          return applyRankedMatchResult(rolled, CARD_CATALOG, result);
+        })()
+      : null;
     const player = {
       ...current,
+      collection: rankedEconomy?.collection ?? current.collection,
+      packsAvailable: rankedEconomy?.packsAvailable ?? current.packsAvailable,
+      rankedRewards: rankedEconomy?.rankedRewards ?? current.rankedRewards,
       currencies: {
         ...current.currencies,
         gold: current.currencies.gold + rewardGold,
@@ -1180,16 +1221,7 @@ function applyLocalAction(
         ...cycle,
         aiRewardsToday: body.mode === "ai" ? Math.min(20, (cycle.aiRewardsToday ?? 0) + 1) : cycle.aiRewardsToday,
       },
-      ladder: body.mode === "pvp" && body.format !== "casual"
-        ? (() => {
-            const seasonKey = now.slice(0, 7);
-            const existing = current.ladder ?? createRankedSnapshot(seasonKey);
-            const currentSeason = existing.seasonKey === seasonKey
-              ? existing
-              : resetRankedSnapshotForSeason(existing, seasonKey);
-            return updateRankedSnapshot(currentSeason, result);
-          })()
-        : current.ladder,
+      ladder: rankedEconomy?.ladder ?? current.ladder,
       updatedAt: now,
     };
     return { ok: true, player, rewardGold, localFallback: true };
@@ -7407,6 +7439,16 @@ function OperationsSection({
     : `${"★".repeat(ladderStars)}${"☆".repeat(3 - ladderStars)}`;
   const ladderAtFloor = isRankFloorProgress(ladderProgress);
   const ladderStarBonus = Math.min(11, Math.max(1, player.ladder?.starBonus ?? 1));
+  const rankedRewards = normalizeRankedRewardState(player.rankedRewards);
+  const currentSeasonKey = player.ladder?.seasonKey ?? new Date().toISOString().slice(0, 7);
+  const seasonCardBackEarned = rankedRewards.earnedCardBackSeasons.includes(currentSeasonKey);
+  const projectedSeasonReward = rankedSeasonRewardForPeak(
+    player.ladder?.seasonBestProgress ?? ladderProgress,
+  );
+  const nextFirstTimeReward = RANKED_FIRST_TIME_REWARD_LEVELS.find(
+    (level) => !rankedRewards.claimedFirstTimeFloors.includes(level.floor),
+  );
+  const latestSeasonChest = rankedRewards.seasonChests.at(-1) ?? null;
   const metrics = [
     { label: "累计对局", value: player.stats.matchesPlayed.toLocaleString("zh-CN"), delta: `${player.stats.wins} 胜`, icon: "swords" as IconName },
     { label: "个人胜率", value: `${winRate}%`, delta: `${player.stats.losses} 负`, icon: "user" as IconName },
@@ -7453,6 +7495,35 @@ function OperationsSection({
           <button className="button button--accent" type="button" disabled={weeklyPackBusy || player.taskCycle?.weeklyFreePackClaimed === true} onClick={onClaimWeeklyPack}>
             {weeklyPackBusy ? "领取中…" : player.taskCycle?.weeklyFreePackClaimed ? "本周已领取" : "领取卡包"}
           </button>
+        </div>
+      </section>
+
+      <section className="panel ranked-rewards-panel" aria-labelledby="ranked-rewards-title">
+        <div className="panel__header">
+          <div><span className="panel__eyebrow">RANKED REWARDS</span><h2 id="ranked-rewards-title">赛季天梯奖励</h2></div>
+          <span className="panel__counter">自动结算 · 防重复</span>
+        </div>
+        <div className="ranked-rewards-grid">
+          <article className="ranked-reward-card">
+            <span><Icon name="pack" size={17} />赛季宝箱</span>
+            <strong>{ladderLabel}</strong>
+            <small>按本赛季最高段位累计：{describeRankedRewardBundle(projectedSeasonReward)}。下月首次登录自动入库。</small>
+          </article>
+          <article className={`ranked-reward-card ${seasonCardBackEarned ? "is-earned" : ""}`}>
+            <span><Icon name="cards" size={17} />赛季卡背</span>
+            <strong>{seasonCardBackEarned ? "本赛季已解锁" : `${Math.min(5, player.ladder?.wins ?? 0)} / 5 胜`}</strong>
+            <small>{seasonCardBackEarned ? `${currentSeasonKey} 卡背已永久收藏。` : "任意段位赢得 5 场 Ranked 后即时并永久解锁。"}</small>
+          </article>
+          <article className={`ranked-reward-card ${nextFirstTimeReward ? "" : "is-earned"}`}>
+            <span><Icon name="spark" size={17} />首次段位奖励</span>
+            <strong>{rankedRewards.claimedFirstTimeFloors.length} / {RANKED_FIRST_TIME_REWARD_LEVELS.length}</strong>
+            <small>{nextFirstTimeReward ? `下一档 ${nextFirstTimeReward.label}：${describeRankedRewardBundle(nextFirstTimeReward.reward)}。` : "全部保护段的一次性奖励均已领取。"}</small>
+          </article>
+        </div>
+        <div className="ranked-rewards-history">
+          <span>最近赛季结算</span>
+          <strong>{latestSeasonChest ? `${latestSeasonChest.seasonKey} · ${latestSeasonChest.peakLabel}` : "尚无已结算赛季"}</strong>
+          <small>{latestSeasonChest ? describeRankedRewardBundle(latestSeasonChest) : "达到青铜 5 后，赛季结束即可获得首个奖励宝箱。"}</small>
         </div>
       </section>
 
