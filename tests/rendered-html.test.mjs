@@ -38,11 +38,12 @@ test("build emits a deployable worker, D1 metadata, and migrations", async () =>
 });
 
 test("ships the complete product surface and removes starter assets", async () => {
-  const [page, game, styles, worker, layout, packageJson, og, artManifest, imageGenManifest] = await Promise.all([
+  const [page, game, styles, worker, ranked, layout, packageJson, og, artManifest, imageGenManifest] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/GameApp.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
     readFile(new URL("../worker/index.ts", import.meta.url), "utf8"),
+    readFile(new URL("../lib/game/ranked.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
     stat(new URL("../public/og.png", import.meta.url)),
@@ -81,6 +82,9 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(game, /隐藏水平匹配 · 数值不公开/);
   assert.match(game, /显示段位不参与选人/);
   assert.match(game, /匹配质量/);
+  assert.match(game, /胜利星级 ×/);
+  assert.match(game, /当前 10\/5 段位保护生效/);
+  assert.match(game, /每月从青铜 10 重启/);
   assert.match(game, /天梯预备套牌/);
   assert.match(game, /activate_ladder_ready/);
   assert.match(game, /claim_ladder_ready_deck/);
@@ -157,6 +161,12 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(worker, /MATCHMAKING_WINDOW_INITIAL/);
   assert.match(worker, /MATCHMAKING_WINDOW_STEP_MS/);
   assert.match(worker, /正在按隐藏水平寻找/);
+  assert.match(ranked, /LADDER_RANKS_PER_LEAGUE = 10/);
+  assert.match(ranked, /LADDER_STARS_PER_RANK = 3/);
+  assert.match(ranked, /resetRankedSnapshotForSeason/);
+  assert.match(ranked, /normalizeRankedSnapshot/);
+  assert.match(ranked, /crossedRankFloors/);
+  assert.match(ranked, /progress < LADDER_DIAMOND_FIVE_PROGRESS/);
   assert.match(styles, /@keyframes battle-card-reveal/);
   assert.match(styles, /\.battlefield__fx-layer/);
   assert.match(styles, /battle-banner-enter 840ms/);

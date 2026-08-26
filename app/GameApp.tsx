@@ -35,12 +35,16 @@ import {
   getHeroPower,
   getLadderReadyDeck,
   getTraitStatuses,
+  LADDER_DIAMOND_FIVE_PROGRESS,
   LADDER_READY_DECKS,
   LADDER_READY_TRIAL_DAYS,
   LADDER_READY_TRIAL_MS,
   LADDER_START_RATING,
-  ladderStarsForRating,
-  ladderTierForRating,
+  createRankedSnapshot,
+  isRankFloorProgress,
+  ladderLabelForProgress,
+  ladderProgressForRating,
+  resetRankedSnapshotForSeason,
   ladderReadyTrialIsActive,
   planAiTurnReplay,
   shouldScheduleLocalAiTurn,
@@ -57,6 +61,7 @@ import {
   type LadderReadyDeckId,
   type MatchQuality,
   type MatchState,
+  type RankedSnapshot,
   type SpellSchool,
   type Trait,
   type BattleVisualEffect,
@@ -159,7 +164,7 @@ type PlayerSnapshot = {
     weeklyFreePackClaimed?: boolean;
   };
   progression?: { xp: number; level: number };
-  ladder?: { seasonKey?: string; rating: number; tier: string; stars: number; wins: number; losses: number; highestRating?: number; winStreak?: number };
+  ladder?: RankedSnapshot;
   friends?: Array<{ id: string; displayName: string; status: "pending" | "accepted"; direction: "incoming" | "outgoing" }>;
   chatMessages?: Array<{ id: string; senderId: string; recipientId: string; text: string; createdAt: string }>;
   blockedPlayerIds?: string[];
@@ -736,7 +741,7 @@ function makeDemoPlayer(identity?: {
     rewardTrack: { claimedLevels: [] },
     apprenticeTrack: { claimedMilestones: [] },
     ladderReady: { activatedAt: null, expiresAt: null, claimedDeckId: null },
-    ladder: { seasonKey: new Date().toISOString().slice(0, 7), rating: LADDER_START_RATING, tier: ladderTierForRating(LADDER_START_RATING), stars: ladderStarsForRating(LADDER_START_RATING), wins: 7, losses: 3, highestRating: LADDER_START_RATING, winStreak: 0 },
+    ladder: { ...createRankedSnapshot(new Date().toISOString().slice(0, 7)), wins: 7, losses: 3 },
     recentMatches: [
       {
         id: "demo-match-1",
@@ -1177,12 +1182,12 @@ function applyLocalAction(
       },
       ladder: body.mode === "pvp" && body.format !== "casual"
         ? (() => {
-            const existing = current.ladder ?? { seasonKey: now.slice(0, 7), rating: LADDER_START_RATING, tier: ladderTierForRating(LADDER_START_RATING), stars: ladderStarsForRating(LADDER_START_RATING), wins: 0, losses: 0, highestRating: LADDER_START_RATING, winStreak: 0 };
-            const ranked = updateRankedSnapshot(existing, result);
-            return {
-              ...ranked,
-              seasonKey: existing.seasonKey ?? now.slice(0, 7),
-            };
+            const seasonKey = now.slice(0, 7);
+            const existing = current.ladder ?? createRankedSnapshot(seasonKey);
+            const currentSeason = existing.seasonKey === seasonKey
+              ? existing
+              : resetRankedSnapshotForSeason(existing, seasonKey);
+            return updateRankedSnapshot(currentSeason, result);
           })()
         : current.ladder,
       updatedAt: now,
@@ -7393,6 +7398,15 @@ function OperationsSection({
   const completedTasks = player.tasks.filter((task) => task.claimed).length;
   const readyTasks = player.tasks.filter((task) => !task.claimed && task.progress >= task.target).length;
   const uniqueOwned = Object.values(player.collection).filter((count) => count > 0).length;
+  const ladderProgress = player.ladder?.rankProgress
+    ?? ladderProgressForRating(player.ladder?.rating ?? LADDER_START_RATING);
+  const ladderLabel = ladderLabelForProgress(ladderProgress);
+  const ladderStars = Math.min(2, Math.max(0, player.ladder?.stars ?? 0));
+  const ladderStarPips = ladderLabel === "传说"
+    ? "LEGEND"
+    : `${"★".repeat(ladderStars)}${"☆".repeat(3 - ladderStars)}`;
+  const ladderAtFloor = isRankFloorProgress(ladderProgress);
+  const ladderStarBonus = Math.min(11, Math.max(1, player.ladder?.starBonus ?? 1));
   const metrics = [
     { label: "累计对局", value: player.stats.matchesPlayed.toLocaleString("zh-CN"), delta: `${player.stats.wins} 胜`, icon: "swords" as IconName },
     { label: "个人胜率", value: `${winRate}%`, delta: `${player.stats.losses} 负`, icon: "user" as IconName },
@@ -7430,8 +7444,8 @@ function OperationsSection({
           <div><span>卡包商店</span><strong>{player.taskCycle?.packsBoughtToday ?? 0} / 10</strong><small>100 金币 / 个，日限购 10 个</small></div>
           <div><span>传奇保底</span><strong>{Math.min(player.packPity?.packsSinceLegendary ?? 0, 39)} / 40</strong><small>第 40 包首槽必出传说，出货后重置</small></div>
           <div><span>演算奖励</span><strong>{player.taskCycle?.aiRewardsToday ?? 0} / 20</strong><small>每日最多 20 场 AI 奖励，防止刷资源</small></div>
-          <div><span>天梯段位</span><strong>{player.ladder?.tier ?? "青铜"} · {player.ladder?.rating ?? LADDER_START_RATING} · {player.ladder?.stars ?? 0}★</strong><small>{player.ladder?.winStreak && player.ladder.winStreak >= 2 ? `连胜 ${player.ladder.winStreak} 场，当前段位有额外星级进度。` : "仅 Ranked 联机对战影响可见段位。"} 匹配使用不公开且跨赛季保留的独立水平。</small></div>
-          <div><span>赛季</span><strong>{player.ladder?.seasonKey ?? new Date().toISOString().slice(0, 7)}</strong><small>每月 UTC 00:00 重置天梯</small></div>
+          <div><span>天梯段位</span><strong>{ladderLabel} · {ladderStarPips}</strong><small>胜利星级 ×{ladderStarBonus}{player.ladder?.winStreak && player.ladder.winStreak >= 3 && ladderProgress < LADDER_DIAMOND_FIVE_PROGRESS ? ` · ${player.ladder.winStreak} 连胜再翻倍` : ""} · {ladderAtFloor ? "当前 10/5 段位保护生效" : "失败仅失 1 星"}。隐藏水平仍独立匹配。</small></div>
+          <div><span>赛季</span><strong>{player.ladder?.seasonKey ?? new Date().toISOString().slice(0, 7)}</strong><small>每月从青铜 10 重启；上赛季最佳段位决定初始星级倍率，到达每个 10/5 保护段后倍率递减。</small></div>
           <div><span>玩家 UID</span><strong className="ops-player-id">{player.id}</strong><small>用于好友邀请与客服核验；资产绑定稳定身份而非邮箱</small></div>
         </div>
         <div className="ops-weekly-gift">
