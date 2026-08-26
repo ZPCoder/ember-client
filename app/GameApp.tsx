@@ -720,6 +720,32 @@ const GENERATED_CATALOG: CatalogCard[] = (GENERATED_CARD_DEFINITIONS as readonly
 const CARD_BY_ID = new Map([...CATALOG, ...GENERATED_CATALOG].map((card) => [card.id, card]));
 const CARD_RULE_BY_ID = new Map([...CARD_CATALOG, ...GENERATED_CARD_DEFINITIONS].map((card) => [card.id, card]));
 
+function catalogCardSearchInput(
+  card: CatalogCard,
+  collection: Readonly<Record<string, number>>,
+) {
+  return {
+    name: card.name,
+    description: card.description,
+    cost: card.cost,
+    attack: card.attack,
+    health: card.health,
+    owned: Math.max(0, Math.floor(collection[card.id] ?? 0)),
+    copyLimit: card.rarity === "legendary" ? 1 : 2,
+    type: card.type,
+    rarity: card.rarity,
+    searchTerms: [
+      card.faction,
+      TYPE_LABEL[card.type] ?? card.type,
+      card.set ? CARD_SET_DEFINITIONS[card.set].label : "",
+      ...card.minionTypes.map((minionType) => MINION_TYPE_DEFINITIONS[minionType].label),
+      ...card.traits.map((trait) => TRAIT_DEFINITIONS[trait].label),
+      ...card.keywords.map((keyword) => KEYWORD_DEFINITIONS[keyword].label),
+      card.school ? SPELL_SCHOOL_LABEL[card.school] : "",
+    ],
+  };
+}
+
 function cardRuleForHandSlot(
   handCard: BattleSide["hand"][number],
 ): CardDefinition | undefined {
@@ -3748,26 +3774,10 @@ export function GameApp({
   const filteredCards = useMemo(() => {
     const searchClauses = parseCardSearch(search);
     const matches = CATALOG.filter((card) => {
-      const matchesSearch = matchesParsedCardSearch({
-        name: card.name,
-        description: card.description,
-        cost: card.cost,
-        attack: card.attack,
-        health: card.health,
-        owned: Math.max(0, Math.floor(player.collection[card.id] ?? 0)),
-        copyLimit: card.rarity === "legendary" ? 1 : 2,
-        type: card.type,
-        rarity: card.rarity,
-        searchTerms: [
-          card.faction,
-          TYPE_LABEL[card.type] ?? card.type,
-          card.set ? CARD_SET_DEFINITIONS[card.set].label : "",
-          ...card.minionTypes.map((minionType) => MINION_TYPE_DEFINITIONS[minionType].label),
-          ...card.traits.map((trait) => TRAIT_DEFINITIONS[trait].label),
-          ...card.keywords.map((keyword) => KEYWORD_DEFINITIONS[keyword].label),
-          card.school ? SPELL_SCHOOL_LABEL[card.school] : "",
-        ],
-      }, searchClauses);
+      const matchesSearch = matchesParsedCardSearch(
+        catalogCardSearchInput(card, player.collection),
+        searchClauses,
+      );
       return (
         matchesSearch &&
         (factionFilter === "全部" || card.faction === factionFilter) &&
@@ -6712,6 +6722,9 @@ function DeckSection({
   onClaimReturnQuest: (stageId: ReturnQuestStageId) => void;
 }) {
   const [deckCode, setDeckCode] = useState("");
+  const [librarySearch, setLibrarySearch] = useState("");
+  const [libraryMana, setLibraryMana] = useState<"all" | "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7+">("all");
+  const [libraryOwnership, setLibraryOwnership] = useState<"all" | "addable" | "missing">("all");
   const [copiedDeckFingerprint, setCopiedDeckFingerprint] = useState<string | null>(null);
   const [claimConfirmation, setClaimConfirmation] = useState<LadderReadyDeckId | null>(null);
   const [recipeFaction, setRecipeFaction] = useState<Faction>(() =>
@@ -6770,6 +6783,28 @@ function DeckSection({
     (id) => CARD_BY_ID.get(id)?.type === "hero",
   ).length;
   const spellCount = deckIds.length - unitCount - weaponCount - heroCount;
+  const libraryClauses = parseCardSearch(librarySearch);
+  const libraryCards = cards
+    .filter((card) => {
+      const owned = collection[card.id] ?? 0;
+      const inDeck = deckCounts.get(card.id) ?? 0;
+      const matchesMana = libraryMana === "all"
+        || (libraryMana === "7+" ? card.cost >= 7 : card.cost === Number(libraryMana));
+      const matchesOwnership = libraryOwnership === "all"
+        || (libraryOwnership === "addable" ? owned > inDeck : owned === 0);
+      return matchesMana
+        && matchesOwnership
+        && matchesParsedCardSearch(catalogCardSearchInput(card, collection), libraryClauses);
+    })
+    .sort((left, right) => {
+      const leftAddable = (collection[left.id] ?? 0) > (deckCounts.get(left.id) ?? 0) ? 1 : 0;
+      const rightAddable = (collection[right.id] ?? 0) > (deckCounts.get(right.id) ?? 0) ? 1 : 0;
+      return rightAddable - leftAddable || left.cost - right.cost || left.name.localeCompare(right.name, "zh-CN");
+    });
+  const libraryFilterSignature = `${librarySearch}|${libraryMana}|${libraryOwnership}|${format}`;
+  const [libraryPagination, setLibraryPagination] = useState({ signature: libraryFilterSignature, count: 60 });
+  const libraryVisibleCount = libraryPagination.signature === libraryFilterSignature ? libraryPagination.count : 60;
+  const visibleLibraryCards = libraryCards.slice(0, libraryVisibleCount);
   const traitStatuses = getTraitStatuses(
     uniqueDeckCards.map(({ card }) => card),
   );
@@ -7263,10 +7298,33 @@ function DeckSection({
               <span className="panel__eyebrow">AVAILABLE ARCHIVE</span>
               <h2>可用档案</h2>
             </div>
-            <span>点击添加 · 已拥有优先</span>
+            <span>显示 {visibleLibraryCards.length} / {libraryCards.length} · 已拥有优先</span>
+          </div>
+          <div className="deck-library__tools">
+            <label className="search-field">
+              <span className="sr-only">搜索可用档案</span>
+              <Icon name="search" size={16} />
+              <input type="search" value={librarySearch} onChange={(event) => setLibrarySearch(event.target.value)} placeholder="搜索，或 费用:3 攻击:4+…" />
+              {librarySearch && <button type="button" onClick={() => setLibrarySearch("")} aria-label="清除可用档案搜索"><Icon name="close" size={14} /></button>}
+            </label>
+            <label className="filter-field">
+              <span>库存</span>
+              <select value={libraryOwnership} onChange={(event) => setLibraryOwnership(event.target.value as "all" | "addable" | "missing")}>
+                <option value="all">全部</option>
+                <option value="addable">可添加</option>
+                <option value="missing">未拥有</option>
+              </select>
+            </label>
+            <div className="deck-library__mana" aria-label="按费用筛选">
+              {(["all", "0", "1", "2", "3", "4", "5", "6", "7+"] as const).map((mana) => (
+                <button type="button" className={libraryMana === mana ? "is-active" : ""} aria-pressed={libraryMana === mana} onClick={() => setLibraryMana(mana)} key={mana}>
+                  {mana === "all" ? "全部费用" : mana}
+                </button>
+              ))}
+            </div>
           </div>
           <div className="deck-card-grid">
-            {cards.map((card) => {
+            {visibleLibraryCards.map((card) => {
               const count = deckCounts.get(card.id) ?? 0;
               const owned = collection[card.id] ?? 0;
               const limit = card.rarity === "legendary" ? 1 : 2;
@@ -7288,6 +7346,16 @@ function DeckSection({
               );
             })}
           </div>
+          {libraryCards.length === 0 && (
+            <EmptyState icon="search" title="没有匹配的可用档案">调整搜索、费用或库存条件后重试。</EmptyState>
+          )}
+          {libraryVisibleCount < libraryCards.length && (
+            <div className="collection-load-more">
+              <button className="button button--outline" type="button" onClick={() => setLibraryPagination({ signature: libraryFilterSignature, count: libraryVisibleCount + 60 })}>
+                再加载 {Math.min(60, libraryCards.length - libraryVisibleCount)} 张
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </section>
