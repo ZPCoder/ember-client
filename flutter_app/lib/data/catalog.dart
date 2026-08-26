@@ -146,6 +146,34 @@ const traitLabels = <String, String>{
   'craft': '巧铸',
 };
 
+const minionTypeOrder = <String>[
+  'beast',
+  'construct',
+  'dragon',
+  'elemental',
+  'tideborn',
+  'raider',
+  'spirit',
+  'undead',
+  'all',
+];
+
+const minionTypeLabels = <String, String>{
+  'beast': '猛兽',
+  'construct': '构装',
+  'dragon': '龙裔',
+  'elemental': '元素',
+  'tideborn': '潮裔',
+  'raider': '掠夺者',
+  'spirit': '灵体',
+  'undead': '亡灵',
+  'all': '万象',
+};
+
+bool hasMinionType(CardDefinition card, String minionType) =>
+    card.minionTypes.contains(minionType) ||
+    (minionType != 'all' && card.minionTypes.contains('all'));
+
 const generatedBattleCards = <CardDefinition>[
   CardDefinition(
     id: 'generated-emberwing-matriarch',
@@ -158,6 +186,7 @@ const generatedBattleCards = <CardDefinition>[
     attack: 8,
     health: 8,
     keywords: <String>['rush'],
+    minionTypes: <String>['dragon'],
   ),
   CardDefinition(
     id: 'generated-tidecoil-leviathan',
@@ -170,6 +199,7 @@ const generatedBattleCards = <CardDefinition>[
     attack: 6,
     health: 10,
     keywords: <String>['lifesteal'],
+    minionTypes: <String>['dragon'],
   ),
   CardDefinition(
     id: 'generated-thundercrown-drake',
@@ -182,6 +212,7 @@ const generatedBattleCards = <CardDefinition>[
     attack: 7,
     health: 9,
     keywords: <String>['shield'],
+    minionTypes: <String>['dragon'],
   ),
   CardDefinition(
     id: 'generated-riftmaw-tyrant',
@@ -194,6 +225,7 @@ const generatedBattleCards = <CardDefinition>[
     attack: 9,
     health: 7,
     keywords: <String>['charge'],
+    minionTypes: <String>['dragon'],
   ),
   CardDefinition(
     id: 'generated-skyvault-guardian',
@@ -206,6 +238,7 @@ const generatedBattleCards = <CardDefinition>[
     attack: 8,
     health: 12,
     keywords: <String>['taunt'],
+    minionTypes: <String>['dragon'],
   ),
   CardDefinition(
     id: 'generated-worldbreaker-progeny',
@@ -217,6 +250,7 @@ const generatedBattleCards = <CardDefinition>[
     rarity: '传说',
     attack: 12,
     health: 12,
+    minionTypes: <String>['dragon'],
   ),
 ];
 

@@ -22,6 +22,8 @@ import {
   ETERNAL_SCARAB_CARD_BACK_NAME,
   ETERNAL_SCARAB_LEGEND_SEASON_TARGET,
   KEYWORD_DEFINITIONS,
+  MINION_TYPE_DEFINITIONS,
+  MINION_TYPE_ORDER,
   REWARD_TRACK,
   craftCost,
   disenchantValue,
@@ -43,6 +45,7 @@ import {
   findMissingDeckCards,
   formatDeckShareText,
   getHeroPower,
+  hasMinionType,
   getLadderReadyDeck,
   getTraitStatuses,
   LADDER_DIAMOND_FIVE_PROGRESS,
@@ -86,6 +89,7 @@ import {
   type Faction,
   type HeroPowerEffect,
   type Keyword,
+  type MinionType,
   type LadderReadyDeckId,
   type MatchQuality,
   type MissingDeckCard,
@@ -150,6 +154,7 @@ type CatalogCard = {
   target: CardTargetRule;
   keywords: Keyword[];
   traits: Trait[];
+  minionTypes: MinionType[];
   school?: SpellSchool;
   set?: CardDefinition["set"];
 };
@@ -276,6 +281,7 @@ type BattleUnit = {
   canAttack: boolean;
   attacksMade: number;
   keywords: Keyword[];
+  minionTypes: MinionType[];
   stealthActive: boolean;
   frozenTurns: number;
   summoningSick: boolean;
@@ -407,7 +413,11 @@ function orientPvpMatchForLocal(state: MatchState, role: PvpRole): MatchState {
     deck: [...player.deck],
     deckCostOverrides: [...(player.deckCostOverrides ?? player.deck.map(() => null))],
     hand: [...player.hand],
-    board: player.board.map((unit) => ({ ...unit, owner: swap(unit.owner) })),
+    board: player.board.map((unit) => ({
+      ...unit,
+      owner: swap(unit.owner),
+      minionTypes: [...(unit.minionTypes ?? [])],
+    })),
   })) as [MatchState["players"][0], MatchState["players"][1]];
   return {
     ...state,
@@ -609,6 +619,9 @@ function cardFromRaw(raw: Record<string, unknown>): CatalogCard {
       : [],
     traits: Array.isArray(raw.traits)
       ? (raw.traits.map(String) as Trait[])
+      : [],
+    minionTypes: Array.isArray(raw.minionTypes)
+      ? (raw.minionTypes.map(String) as MinionType[])
       : [],
     school:
       typeof raw.school === "string"
@@ -1427,6 +1440,9 @@ function normalizeBoard(value: unknown, turn: number): BattleUnit[] {
         Math.max(1, asNumber(item.stars ?? item.starLevel ?? item.rank, 1)),
       ) as 1 | 2,
       keywords: keywords as Keyword[],
+      minionTypes: Array.isArray(item.minionTypes)
+        ? (item.minionTypes.map(String) as MinionType[])
+        : [...(card?.minionTypes ?? [])],
       stealthActive,
       frozenTurns,
       summoningSick,
@@ -1851,7 +1867,20 @@ function CardTile({
           {card.set && <span>{CARD_SET_DEFINITIONS[card.set].label}</span>}
         </div>
         <h3>{card.name}</h3>
-        <div className="game-card__tags" aria-label="卡牌特质与关键词">
+        <div className="game-card__tags" aria-label="随从类型、卡牌特质与关键词">
+          {card.minionTypes.map((minionType) => {
+            const definition = MINION_TYPE_DEFINITIONS[minionType];
+            return (
+              <span
+                className="card-tag card-tag--minion-type"
+                title={`${definition.label}：${definition.description}`}
+                aria-label={`随从类型：${definition.label}`}
+                key={minionType}
+              >
+                {definition.sigil} {definition.label}
+              </span>
+            );
+          })}
           {card.traits.map((trait) => {
             const definition = TRAIT_DEFINITIONS[trait];
             return (
@@ -2883,6 +2912,7 @@ export function GameApp({
   const [rarityFilter, setRarityFilter] = useState("全部");
   const [traitFilter, setTraitFilter] = useState("全部");
   const [keywordFilter, setKeywordFilter] = useState("全部");
+  const [minionTypeFilter, setMinionTypeFilter] = useState("全部");
   const [deckName, setDeckName] = useState("星火远征队");
   const [deckFormat, setDeckFormat] = useState<RankedFormat>("standard");
   const [deckIds, setDeckIds] = useState<string[]>(() => [...STARTER_IDS]);
@@ -3273,6 +3303,16 @@ export function GameApp({
     [],
   );
 
+  const minionTypeOptions = useMemo(
+    () => MINION_TYPE_ORDER
+      .filter((minionType) => CATALOG.some((card) => card.minionTypes.includes(minionType)))
+      .map((minionType) => ({
+        id: minionType,
+        label: MINION_TYPE_DEFINITIONS[minionType].label,
+      })),
+    [],
+  );
+
   const filteredCards = useMemo(() => {
     const needle = search.trim().toLocaleLowerCase("zh-CN");
     const matches = CATALOG.filter((card) => {
@@ -3280,6 +3320,9 @@ export function GameApp({
         !needle ||
         card.name.toLocaleLowerCase("zh-CN").includes(needle) ||
         card.description.toLocaleLowerCase("zh-CN").includes(needle) ||
+        card.minionTypes.some((minionType) =>
+          MINION_TYPE_DEFINITIONS[minionType].label.toLocaleLowerCase("zh-CN").includes(needle),
+        ) ||
         card.traits.some((trait) =>
           TRAIT_DEFINITIONS[trait].label.toLocaleLowerCase("zh-CN").includes(needle),
         ) ||
@@ -3296,6 +3339,7 @@ export function GameApp({
         (factionFilter === "全部" || card.faction === factionFilter) &&
         (typeFilter === "全部" || card.type === typeFilter) &&
         (rarityFilter === "全部" || card.rarity === rarityFilter) &&
+        (minionTypeFilter === "全部" || hasMinionType(card.minionTypes, minionTypeFilter as MinionType)) &&
         (traitFilter === "全部" || card.traits.includes(traitFilter as Trait)) &&
         (keywordFilter === "全部" || card.keywords.includes(keywordFilter as Keyword))
       );
@@ -3310,7 +3354,7 @@ export function GameApp({
     return Array.from({ length: longestBucket }, (_, index) =>
       factionBuckets.map((cards) => cards[index]).filter(Boolean),
     ).flat() as CatalogCard[];
-  }, [factionFilter, keywordFilter, rarityFilter, search, traitFilter, typeFilter]);
+  }, [factionFilter, keywordFilter, minionTypeFilter, rarityFilter, search, traitFilter, typeFilter]);
 
   const battleView = useMemo(() => battleFromRaw(battle), [battle]);
   const battleStatus = battleView?.status;
@@ -5054,15 +5098,18 @@ export function GameApp({
                   rarity={rarityFilter}
                   trait={traitFilter}
                   keyword={keywordFilter}
+                  minionType={minionTypeFilter}
                   factions={factions}
                   traitOptions={traitOptions}
                   keywordOptions={keywordOptions}
+                  minionTypeOptions={minionTypeOptions}
                   onSearch={setSearch}
                   onFaction={setFactionFilter}
                   onType={setTypeFilter}
                   onRarity={setRarityFilter}
                   onTrait={setTraitFilter}
                   onKeyword={setKeywordFilter}
+                  onMinionType={setMinionTypeFilter}
                   onAdd={addCard}
                   apiBusy={apiBusy}
                   onCraft={(card) => void changeCardDust("craft_card", card)}
@@ -5744,15 +5791,18 @@ function CollectionSection({
   rarity,
   trait,
   keyword,
+  minionType,
   factions,
   traitOptions,
   keywordOptions,
+  minionTypeOptions,
   onSearch,
   onFaction,
   onType,
   onRarity,
   onTrait,
   onKeyword,
+  onMinionType,
   onAdd,
   apiBusy,
   onCraft,
@@ -5769,22 +5819,25 @@ function CollectionSection({
   rarity: string;
   trait: string;
   keyword: string;
+  minionType: string;
   factions: string[];
   traitOptions: Array<{ id: Trait; label: string }>;
   keywordOptions: Array<{ id: Keyword; label: string }>;
+  minionTypeOptions: Array<{ id: MinionType; label: string }>;
   onSearch: (value: string) => void;
   onFaction: (value: string) => void;
   onType: (value: string) => void;
   onRarity: (value: string) => void;
   onTrait: (value: string) => void;
   onKeyword: (value: string) => void;
+  onMinionType: (value: string) => void;
   onAdd: (card: CatalogCard) => void;
   apiBusy: string | null;
   onCraft: (card: CatalogCard) => void;
   onDisenchant: (card: CatalogCard) => void;
   onOpenDeck: () => void;
 }) {
-  const filterSignature = `${search}|${faction}|${type}|${rarity}|${trait}|${keyword}`;
+  const filterSignature = `${search}|${faction}|${type}|${rarity}|${trait}|${keyword}|${minionType}`;
   const [pagination, setPagination] = useState({ signature: filterSignature, count: 30 });
   const visibleCount = pagination.signature === filterSignature ? pagination.count : 30;
   const visibleCards = cards.slice(0, visibleCount);
@@ -5794,7 +5847,7 @@ function CollectionSection({
       <SectionHeading
         eyebrow="TACTICAL ARCHIVE / COLLECTION"
         title="卡牌收藏"
-        description="浏览 20 个体系共 1000 张档案，按类型、特质与关键词检索，围绕 2 / 4 档羁绊规划战术核心。"
+        description="浏览 20 个体系共 1000 张档案，按卡牌类型、随从类型、特质与关键词检索，并围绕可查询的类型联动规划牌组。"
         action={
           <button className="button button--outline" type="button" onClick={onOpenDeck}>
             <Icon name="layers" />
@@ -5864,6 +5917,15 @@ function CollectionSection({
             <option value="rare">稀有</option>
             <option value="epic">史诗</option>
             <option value="legendary">传说</option>
+          </select>
+        </label>
+        <label className="filter-field">
+          <span>随从类型</span>
+          <select value={minionType} onChange={(event) => onMinionType(event.target.value)}>
+            <option value="全部">全部</option>
+            {minionTypeOptions.map((item) => (
+              <option value={item.id} key={item.id}>{item.label}</option>
+            ))}
           </select>
         </label>
         <label className="filter-field">
@@ -6069,6 +6131,14 @@ function DeckSection({
       keyword,
       count: deckIds.filter((id) =>
         CARD_BY_ID.get(id)?.keywords.includes(keyword),
+      ).length,
+    }))
+    .filter((item) => item.count > 0);
+  const minionTypeProfile = MINION_TYPE_ORDER
+    .map((minionType) => ({
+      minionType,
+      count: deckIds.filter((id) =>
+        CARD_BY_ID.get(id)?.minionTypes.includes(minionType),
       ).length,
     }))
     .filter((item) => item.count > 0);
@@ -6431,6 +6501,18 @@ function DeckSection({
                 </div>
               </div>
             )}
+            {minionTypeProfile.length > 0 && (
+              <div className="deck-keywords">
+                <small>随从类型分布</small>
+                <div>
+                  {minionTypeProfile.map(({ minionType, count }) => (
+                    <span title={MINION_TYPE_DEFINITIONS[minionType].description} key={minionType}>
+                      {MINION_TYPE_DEFINITIONS[minionType].sigil} {MINION_TYPE_DEFINITIONS[minionType].label} ×{count}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="deck-list">
@@ -6447,7 +6529,7 @@ function DeckSection({
                 </span>
                 <span className="deck-entry__cost">{card.cost}</span>
                 <span className={`deck-entry__rarity deck-entry__rarity--${card.rarity}`} />
-                <span className="deck-entry__name"><strong>{card.name}</strong><small>{missing ? `缺少 ${missing.missing} 张` : `${card.faction} · ${TYPE_LABEL[card.type]}`}</small></span>
+                <span className="deck-entry__name"><strong>{card.name}</strong><small>{missing ? `缺少 ${missing.missing} 张` : `${card.faction} · ${TYPE_LABEL[card.type]}${card.minionTypes.length > 0 ? ` · ${card.minionTypes.map((type) => MINION_TYPE_DEFINITIONS[type].label).join("/")}` : ""}`}</small></span>
                 <span className="deck-entry__count">{missing ? `缺${missing.missing}` : `×${count}`}</span>
                 <button type="button" onClick={() => onRemove(card.id)} aria-label={`从卡组移除一张${card.name}`}>
                   <Icon name="minus" size={16} />
@@ -6643,6 +6725,7 @@ function BoardUnit({
       target: "none",
       keywords: unit.keywords,
       traits: [],
+      minionTypes: unit.minionTypes,
       stealthActive: false,
     };
   const impactText = battleImpactText(impact);
@@ -6667,7 +6750,7 @@ function BoardUnit({
         onClick={targetable ? onTarget : onSelect}
         disabled={!targetable && (!onSelect || !unit.canAttack)}
         aria-pressed={onSelect ? selected : undefined}
-        aria-label={`${unit.name}，${unit.stars} 星，攻击 ${unit.attack}，生命 ${unit.health}${targetable ? "，设为攻击目标" : unit.canAttack ? "，选择攻击" : "，本回合无法攻击"}${statusText ? `，${statusText.replaceAll("❄ ", "").replaceAll("↗ ", "").replaceAll("◌ ", "").replaceAll("↯ ", "")}` : ""}`}
+        aria-label={`${unit.name}${unit.minionTypes.length > 0 ? `，${unit.minionTypes.map((type) => MINION_TYPE_DEFINITIONS[type].label).join("、")}` : ""}，${unit.stars} 星，攻击 ${unit.attack}，生命 ${unit.health}${targetable ? "，设为攻击目标" : unit.canAttack ? "，选择攻击" : "，本回合无法攻击"}${statusText ? `，${statusText.replaceAll("❄ ", "").replaceAll("↗ ", "").replaceAll("◌ ", "").replaceAll("↯ ", "")}` : ""}`}
         title={visualCard.description || `${unit.name} · ${unit.attack}/${unit.health}`}
       >
       <div className="board-unit__art">
@@ -6678,9 +6761,14 @@ function BoardUnit({
       {targetable && <span className="board-unit__target-hint">选择目标</span>}
       {targetPreview && <span className="board-unit__target-preview">{targetPreview}</span>}
       <strong>{unit.name}</strong>
-      {unit.keywords.length > 0 && (
+      {(unit.minionTypes.length > 0 || unit.keywords.length > 0) && (
         <div className="board-unit__keywords">
-          {unit.keywords.slice(0, 3).map((keyword) => (
+          {unit.minionTypes.slice(0, 2).map((minionType) => (
+            <span className="board-unit__minion-type" key={minionType}>
+              {MINION_TYPE_DEFINITIONS[minionType].sigil} {MINION_TYPE_DEFINITIONS[minionType].label}
+            </span>
+          ))}
+          {unit.keywords.slice(0, Math.max(0, 3 - unit.minionTypes.length)).map((keyword) => (
             <span key={keyword}>{KEYWORD_DEFINITIONS[keyword]?.label ?? keyword}</span>
           ))}
         </div>

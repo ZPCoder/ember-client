@@ -901,7 +901,9 @@ class GameController extends ChangeNotifier {
     }
     if (returned.isNotEmpty) {
       state.player.deck.addAll(returned);
-      state.player.deckCostOverrides.addAll(List<int?>.filled(returned.length, null));
+      state.player.deckCostOverrides.addAll(
+        List<int?>.filled(returned.length, null),
+      );
       _shuffleDeck(state.player);
     }
     state.mulliganSelected.clear();
@@ -1083,6 +1085,24 @@ class GameController extends ChangeNotifier {
     }
   }
 
+  bool _drawMinionType(BattleSide side, String minionType) {
+    _syncDeckCostOverrides(side);
+    final matchIndex = side.deck.lastIndexWhere(
+      (candidate) => candidate.isUnit && hasMinionType(candidate, minionType),
+    );
+    // A failed search is not an empty-deck draw and therefore never creates
+    // Fatigue or substitutes an unrelated card.
+    if (matchIndex < 0) return false;
+    final drawn = side.deck.removeAt(matchIndex);
+    final costOverride = side.deckCostOverrides.removeAt(matchIndex);
+    if (_addCardToHand(side, drawn, costOverride: costOverride)) return true;
+    stateLog(
+      _ownerOf(side) == 'player' ? '手牌已满' : '敌方手牌已满',
+      ' ${drawn.name} 被燃毁。',
+    );
+    return true;
+  }
+
   bool _addCardToHand(
     BattleSide side,
     CardDefinition drawn, {
@@ -1200,10 +1220,7 @@ class GameController extends ChangeNotifier {
     _draw(state.player);
     final insertionIndex = _random.nextInt(state.player.deck.length + 1);
     _syncDeckCostOverrides(state.player);
-    state.player.deck.insert(
-      insertionIndex,
-      this.card(card.id) ?? card,
-    );
+    state.player.deck.insert(insertionIndex, this.card(card.id) ?? card);
     state.player.deckCostOverrides.insert(insertionIndex, null);
     state.logs.insert(0, '${card.name} 已交易，抽取一张替代档案。');
     _emitFx(
@@ -1694,12 +1711,18 @@ class GameController extends ChangeNotifier {
           }.contains(kind)) {
             effect['amount'] =
                 ((effect['amount'] as num?)?.toInt() ?? 1) * multiplier;
-          } else if ({'draw', 'draw-opponent', 'summon'}.contains(kind)) {
+          } else if ({
+            'draw',
+            'draw-opponent',
+            'draw-minion-type',
+            'summon',
+          }.contains(kind)) {
             effect['count'] =
                 ((effect['count'] as num?)?.toInt() ?? 1) * multiplier;
           } else if ({
             'buff',
             'buff-all-friendly',
+            'buff-friendly-minion-type',
             'temporary-buff',
           }.contains(kind)) {
             effect['attack'] =
@@ -1737,6 +1760,11 @@ class GameController extends ChangeNotifier {
       health: (part['health'] as num?)?.toInt() ?? 1,
       keywords: keywords,
       traits: colossal.traits,
+      minionTypes: part['minionTypes'] is List
+          ? (part['minionTypes'] as List)
+                .map((item) => item.toString())
+                .toList(growable: false)
+          : colossal.minionTypes,
     );
   }
 
@@ -2074,6 +2102,7 @@ class GameController extends ChangeNotifier {
         targetHero: targetHero,
         sourceName: card.name,
         sourceCard: card,
+        sourceUnit: unit,
       );
       if (comboActive && card.combo.isNotEmpty && battle?.phase == 'main') {
         _resolveEffects(
@@ -2333,6 +2362,7 @@ class GameController extends ChangeNotifier {
     bool targetHero = false,
     required String sourceName,
     CardDefinition? sourceCard,
+    BattleUnit? sourceUnit,
   }) {
     _effectResolutionDepth++;
     try {
@@ -2419,10 +2449,9 @@ class GameController extends ChangeNotifier {
             stateLog(sourceName, '对所有敌方单位造成 $damageAmount 点伤害。');
             break;
           case 'destroy-highest-health-enemy':
-            final candidates = enemy.board
-                .where((unit) => unit.health > 0)
-                .toList()
-              ..sort((left, right) => right.health.compareTo(left.health));
+            final candidates =
+                enemy.board.where((unit) => unit.health > 0).toList()
+                  ..sort((left, right) => right.health.compareTo(left.health));
             if (candidates.isNotEmpty) {
               final destroyed = candidates.first;
               destroyed.health = 0;
@@ -2477,10 +2506,20 @@ class GameController extends ChangeNotifier {
               _draw(source);
             }
             break;
+          case 'draw-minion-type':
+            final count = (effect['count'] as num?)?.toInt() ?? 1;
+            final minionType = effect['minionType']?.toString() ?? '';
+            for (var i = 0; i < count; i++) {
+              if (!_drawMinionType(source, minionType)) break;
+            }
+            break;
           case 'shuffle-random-into-deck':
             final ids = effect['cardIds'];
             final pool = ids is List
-                ? ids.map((id) => card(id.toString())).whereType<CardDefinition>().toList()
+                ? ids
+                      .map((id) => card(id.toString()))
+                      .whereType<CardDefinition>()
+                      .toList()
                 : <CardDefinition>[];
             final count = (effect['count'] as num?)?.toInt() ?? 1;
             final fixedCost = (effect['cost'] as num?)?.toInt();
@@ -2535,6 +2574,27 @@ class GameController extends ChangeNotifier {
               unit.permanentHealthBonus += health;
             }
             stateLog(sourceName, '友方全体获得 +$attack/+$health。');
+            break;
+          case 'buff-friendly-minion-type':
+            final attack = (effect['attack'] as num?)?.toInt() ?? 0;
+            final health = (effect['health'] as num?)?.toInt() ?? 0;
+            final minionType = effect['minionType']?.toString() ?? '';
+            final excludeSource = effect['excludeSource'] == true;
+            var affected = 0;
+            for (final unit in [...source.board]) {
+              if (excludeSource && identical(unit, sourceUnit)) continue;
+              if (!hasMinionType(unit.card, minionType)) continue;
+              unit.attack += attack;
+              unit.maxHealth += health;
+              unit.health += health;
+              unit.permanentAttackBonus += attack;
+              unit.permanentHealthBonus += health;
+              affected++;
+            }
+            stateLog(
+              sourceName,
+              '${minionTypeLabels[minionType] ?? minionType}单位 $affected 个获得 +$attack/+$health。',
+            );
             break;
           case 'temporary-buff':
             final unit = target != null && source.board.contains(target)

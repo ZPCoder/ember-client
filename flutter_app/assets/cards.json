@@ -18,7 +18,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "sun-mirror-warden",
@@ -39,7 +40,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "sun-banner-bearer",
@@ -66,7 +68,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "sun-lion-guard",
@@ -87,7 +90,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "sun-skyfire-roc",
@@ -108,7 +114,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "sun-focused-ray",
@@ -190,7 +197,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "void-undertow-guard",
@@ -210,7 +218,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "void-echo-mimic",
@@ -231,7 +240,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": [
+      "all"
+    ]
   },
   {
     "id": "void-nightfin-raider",
@@ -254,7 +266,11 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": [
+      "tideborn",
+      "beast"
+    ]
   },
   {
     "id": "void-abyss-whale",
@@ -275,7 +291,11 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": [
+      "tideborn",
+      "beast"
+    ]
   },
   {
     "id": "void-chill-needle",
@@ -360,7 +380,10 @@
     "keywords": [],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "neutral-clockwork-beetle",
@@ -379,7 +402,11 @@
     "keywords": [],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": [
+      "beast",
+      "construct"
+    ]
   },
   {
     "id": "neutral-caravan-guard",
@@ -400,7 +427,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "neutral-stonehorn",
@@ -422,7 +450,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "neutral-wandering-alchemist",
@@ -450,7 +481,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "neutral-tactical-map",
@@ -498,7 +530,11 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": [
+      "construct",
+      "spirit"
+    ]
   },
   {
     "id": "neutral-thunder-egg",
@@ -518,7 +554,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": [
+      "elemental"
+    ]
   },
   {
     "id": "sun-lumen-page",
@@ -536,7 +575,8 @@
     "keywords": [],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "sun-glasswing-courier",
@@ -557,7 +597,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "sun-prism-squire",
@@ -578,7 +619,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "sun-horizon-hunter",
@@ -598,7 +640,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "sun-choir-acolyte",
@@ -625,7 +668,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "sun-gilded-lancer",
@@ -646,7 +690,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "sun-sunwell-artificer",
@@ -667,7 +712,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "sun-aurora-duelist",
@@ -687,7 +733,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "sun-halo-captain",
@@ -707,7 +754,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "sun-whitefire-priest",
@@ -727,7 +775,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "sun-prism-huntress",
@@ -746,7 +795,8 @@
     "keywords": [],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "sun-zenith-golem",
@@ -775,7 +825,10 @@
       }
     ],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "construct"
+    ]
   },
   {
     "id": "sun-radiant-griffin",
@@ -796,7 +849,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "sun-corona-archon",
@@ -817,7 +873,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "sun-daystar-titan",
@@ -839,7 +896,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "sun-flare-spark",
@@ -1009,7 +1067,8 @@
     "keywords": [],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "void-duskfin-darter",
@@ -1029,7 +1088,11 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": [
+      "tideborn",
+      "beast"
+    ]
   },
   {
     "id": "void-shellback-sentinel",
@@ -1049,7 +1112,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "void-inkveil-oracle",
@@ -1075,7 +1139,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "void-siphon-lamprey",
@@ -1095,7 +1160,11 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "tideborn",
+      "beast"
+    ]
   },
   {
     "id": "void-coral-mimic",
@@ -1115,7 +1184,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "all"
+    ]
   },
   {
     "id": "void-riptide-duelist",
@@ -1136,7 +1208,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "void-trench-mender",
@@ -1164,7 +1237,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "void-razorfin-corsair",
@@ -1185,7 +1259,11 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "tideborn",
+      "raider"
+    ]
   },
   {
     "id": "void-murkplate-hermit",
@@ -1207,7 +1285,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "void-abyssal-chanter",
@@ -1234,7 +1313,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "void-moonjaw-shark",
@@ -1254,7 +1334,11 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "tideborn",
+      "beast"
+    ]
   },
   {
     "id": "void-drowned-leviathan",
@@ -1275,7 +1359,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "void-tempest-manta",
@@ -1297,7 +1384,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "void-thalassic-sovereign",
@@ -1319,7 +1409,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "void-saltbite",
@@ -1513,7 +1604,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "neutral-ironpot-cook",
@@ -1540,7 +1632,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "neutral-brassback-badger",
@@ -1560,12 +1653,15 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "neutral-relic-appraiser",
     "name": "遗物估价师",
-    "description": "法术伤害 +1。登场时抽一张牌。真品的故事往往比价格更高。",
+    "description": "法术伤害 +1。战吼：从牌库抽一张构装单位。真品总会回应懂行的人。",
     "faction": "中立",
     "type": "unit",
     "cost": 2,
@@ -1578,7 +1674,8 @@
     "spellDamage": 1,
     "onPlay": [
       {
-        "kind": "draw",
+        "kind": "draw-minion-type",
+        "minionType": "construct",
         "count": 1
       }
     ],
@@ -1588,7 +1685,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "neutral-riveted-ram",
@@ -1609,7 +1707,11 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "beast",
+      "construct"
+    ]
   },
   {
     "id": "neutral-crossroad-duelist",
@@ -1637,7 +1739,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "neutral-dune-tracker",
@@ -1658,7 +1761,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "neutral-aether-peddler",
@@ -1678,7 +1782,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "neutral-bastion-tortoise",
@@ -1698,12 +1803,15 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "neutral-gearhawk-handler",
     "name": "齿隼驯养师",
-    "description": "护盾。她和机械猎隼共用一套警戒视野。",
+    "description": "护盾。战吼：使其他友方构装获得 +1/+1。她与机械猎隼共享警戒视野。",
     "faction": "中立",
     "type": "unit",
     "cost": 4,
@@ -1711,7 +1819,8 @@
     "attack": 4,
     "health": 5,
     "keywords": [
-      "shield"
+      "shield",
+      "battlecry"
     ],
     "traits": [
       "hunt",
@@ -1719,7 +1828,20 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "beast",
+      "construct"
+    ],
+    "onPlay": [
+      {
+        "kind": "buff-friendly-minion-type",
+        "minionType": "construct",
+        "attack": 1,
+        "health": 1,
+        "excludeSource": true
+      }
+    ]
   },
   {
     "id": "neutral-ruin-stag",
@@ -1748,7 +1870,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "neutral-mobile-forge",
@@ -1778,7 +1903,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "construct"
+    ]
   },
   {
     "id": "neutral-cloudrail-behemoth",
@@ -1838,7 +1966,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "neutral-pocket-remedy",
@@ -2043,7 +2172,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "ember-coalfang-pup",
@@ -2063,7 +2193,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "ember-ash-forager",
@@ -2090,7 +2223,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "ember-blade-acolyte",
@@ -2110,7 +2244,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "ember-charrock-guard",
@@ -2130,7 +2265,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "ember-flamespine-vanguard",
@@ -2151,7 +2287,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "ember-forge-smith",
@@ -2179,7 +2316,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "ember-heart-drinker",
@@ -2200,7 +2338,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "ember-slag-sentinel",
@@ -2222,7 +2361,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "ember-crimson-duelist",
@@ -2243,7 +2383,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "ember-magma-hornbeast",
@@ -2270,7 +2411,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "ember-oath-pyromancer",
@@ -2297,7 +2441,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "ember-volcanic-ram",
@@ -2318,7 +2463,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "ember-heatbound-colossus",
@@ -2339,7 +2487,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "ember-ashwing-phoenix",
@@ -2368,7 +2517,11 @@
       }
     ],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "undead",
+      "beast"
+    ]
   },
   {
     "id": "ember-war-drummer",
@@ -2397,7 +2550,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "ember-scorchland-hydra",
@@ -2424,7 +2578,11 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "dragon",
+      "beast"
+    ]
   },
   {
     "id": "ember-forgecrown-general",
@@ -2453,7 +2611,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "ember-caldera-core",
@@ -2482,7 +2641,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "elemental"
+    ]
   },
   {
     "id": "ember-spark-artificer",
@@ -2509,7 +2671,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "ember-leaping-spark",
@@ -2778,7 +2941,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "astral-skychart-apprentice",
@@ -2804,7 +2968,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "astral-prism-guard",
@@ -2824,7 +2989,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "astral-comet-scribe",
@@ -2850,7 +3016,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "astral-orbit-moonhare",
@@ -2870,7 +3037,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "astral-veil-seer",
@@ -2890,7 +3058,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "astral-mirror-adept",
@@ -2910,7 +3079,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "astral-constellation-gardener",
@@ -2938,7 +3108,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "astral-nebula-knight",
@@ -2958,7 +3129,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "astral-archive-stargazer",
@@ -2985,7 +3157,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "astral-eclipse-stalker",
@@ -3006,7 +3179,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "astral-prismatic-stag",
@@ -3027,7 +3201,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "astral-comet-rider",
@@ -3048,7 +3225,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "astral-galaxy-weaver",
@@ -3076,7 +3254,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "astral-lunar-vessel",
@@ -3097,7 +3276,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "astral-deepspace-oracle",
@@ -3123,7 +3303,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "astral-zenith-dragon",
@@ -3143,7 +3324,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "dragon"
+    ]
   },
   {
     "id": "astral-horizon-guardian",
@@ -3172,7 +3356,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "astral-cosmos-sovereign",
@@ -3200,7 +3385,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "all"
+    ]
   },
   {
     "id": "astral-infinite-observer",
@@ -3229,7 +3417,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "astral-glimmer-echo",
@@ -3489,7 +3678,8 @@
     "keywords": [],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "verdant-dewleaf-apprentice",
@@ -3517,7 +3707,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "verdant-mossback-keeper",
@@ -3537,7 +3728,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "verdant-thornstep-runner",
@@ -3558,7 +3750,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "verdant-seedsong-sprite",
@@ -3584,7 +3777,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": [
+      "spirit"
+    ]
   },
   {
     "id": "verdant-antler-pathfinder",
@@ -3603,7 +3799,8 @@
     "keywords": [],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "verdant-barkshield-sentinel",
@@ -3623,7 +3820,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "verdant-nectar-mender",
@@ -3651,7 +3849,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "verdant-vinewhip-duelist",
@@ -3671,7 +3870,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "verdant-canopy-archer",
@@ -3698,7 +3898,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "verdant-rootweave-artisan",
@@ -3719,7 +3920,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "verdant-bloom-banner",
@@ -3748,7 +3950,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "verdant-moonfern-stalker",
@@ -3769,7 +3972,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "verdant-grovebond-shaman",
@@ -3796,7 +4000,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "verdant-briarhide-boar",
@@ -3818,7 +4023,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "verdant-ancient-bough-guardian",
@@ -3846,7 +4052,8 @@
       }
     ],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "verdant-dawnpetal-stag",
@@ -3867,7 +4074,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "verdant-seedvault-engineer",
@@ -3889,7 +4099,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "verdant-thousandleaf-titan",
@@ -3910,7 +4121,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "verdant-worldroot-matriarch",
@@ -3940,7 +4152,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "verdant-sprout-pact",
@@ -4202,7 +4415,10 @@
     "keywords": [],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "storm-coppercoil-cadet",
@@ -4223,7 +4439,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": [
+      "construct"
+    ]
   },
   {
     "id": "storm-lightning-courier",
@@ -4243,7 +4462,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "storm-capacitor-sentry",
@@ -4271,7 +4491,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": [
+      "construct"
+    ]
   },
   {
     "id": "storm-ironcloud-scavenger",
@@ -4298,7 +4521,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "storm-voltedge-duelist",
@@ -4318,7 +4542,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "storm-relay-shieldguard",
@@ -4340,7 +4565,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "storm-coil-sage",
@@ -4367,7 +4593,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": [
+      "construct"
+    ]
   },
   {
     "id": "storm-thundertrack-hound",
@@ -4388,7 +4617,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "storm-magnetic-salvager",
@@ -4408,7 +4640,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "storm-forge-armorer",
@@ -4437,7 +4670,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "storm-arcspark-marksman",
@@ -4463,7 +4697,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "storm-turbine-lancer",
@@ -4485,7 +4720,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "storm-overcharge-golem",
@@ -4505,7 +4741,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "construct"
+    ]
   },
   {
     "id": "storm-cloudbreaker-captain",
@@ -4533,7 +4772,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "raider"
+    ]
   },
   {
     "id": "storm-tempest-bulwark",
@@ -4555,7 +4797,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "construct"
+    ]
   },
   {
     "id": "storm-chainbolt-colossus",
@@ -4582,7 +4827,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "storm-skyrail-ace",
@@ -4603,7 +4849,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "storm-living-dynamo",
@@ -4625,7 +4872,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "construct"
+    ]
   },
   {
     "id": "storm-skyforge-thunderking",
@@ -4654,7 +4904,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "storm-static-spark",
@@ -4922,7 +5173,8 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "sun-season-02",
@@ -4943,7 +5195,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "sun-season-03",
@@ -4973,7 +5226,8 @@
       }
     ],
     "disguised": true,
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "sun-season-04",
@@ -5001,7 +5255,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "sun-season-05",
@@ -5022,7 +5277,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "sun-season-06",
@@ -5043,7 +5299,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "sun-season-07",
@@ -5072,7 +5329,8 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "sun-season-08",
@@ -5102,7 +5360,8 @@
     "onDeath": [],
     "effect": [],
     "preparable": true,
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "sun-season-09",
@@ -5123,7 +5382,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "sun-season-10",
@@ -5144,7 +5404,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "pegasus-2024"
+    "set": "pegasus-2024",
+    "minionTypes": []
   },
   {
     "id": "sun-season-11",
@@ -5165,7 +5426,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "pegasus-2024"
+    "set": "pegasus-2024",
+    "minionTypes": []
   },
   {
     "id": "sun-season-12",
@@ -5194,7 +5456,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "pegasus-2024"
+    "set": "pegasus-2024",
+    "minionTypes": []
   },
   {
     "id": "sun-season-13",
@@ -5223,7 +5486,8 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "pegasus-2024"
+    "set": "pegasus-2024",
+    "minionTypes": []
   },
   {
     "id": "sun-season-14",
@@ -5250,7 +5514,8 @@
       }
     ],
     "effect": [],
-    "set": "pegasus-2024"
+    "set": "pegasus-2024",
+    "minionTypes": []
   },
   {
     "id": "sun-season-15",
@@ -5279,7 +5544,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "pegasus-2024"
+    "set": "pegasus-2024",
+    "minionTypes": []
   },
   {
     "id": "sun-season-spell-01",
@@ -5420,7 +5686,8 @@
     "herald": {
       "colossalCardId": "void-season-08"
     },
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "void-season-02",
@@ -5449,7 +5716,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "void-season-03",
@@ -5479,7 +5747,11 @@
       }
     ],
     "disguised": true,
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": [
+      "tideborn",
+      "raider"
+    ]
   },
   {
     "id": "void-season-04",
@@ -5504,7 +5776,8 @@
     "herald": {
       "colossalCardId": "void-season-08"
     },
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "void-season-05",
@@ -5533,7 +5806,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "void-season-06",
@@ -5554,7 +5828,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "void-season-07",
@@ -5583,7 +5858,11 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": [
+      "tideborn",
+      "raider"
+    ]
   },
   {
     "id": "void-season-08",
@@ -5634,7 +5913,8 @@
         }
       ]
     },
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "void-season-09",
@@ -5655,7 +5935,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "void-season-10",
@@ -5676,7 +5957,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "pegasus-2024"
+    "set": "pegasus-2024",
+    "minionTypes": []
   },
   {
     "id": "void-season-11",
@@ -5705,7 +5987,11 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "pegasus-2024"
+    "set": "pegasus-2024",
+    "minionTypes": [
+      "tideborn",
+      "raider"
+    ]
   },
   {
     "id": "void-season-12",
@@ -5735,7 +6021,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "pegasus-2024"
+    "set": "pegasus-2024",
+    "minionTypes": []
   },
   {
     "id": "void-season-13",
@@ -5764,7 +6051,8 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "pegasus-2024"
+    "set": "pegasus-2024",
+    "minionTypes": []
   },
   {
     "id": "void-season-14",
@@ -5799,7 +6087,8 @@
       }
     ],
     "effect": [],
-    "set": "pegasus-2024"
+    "set": "pegasus-2024",
+    "minionTypes": []
   },
   {
     "id": "void-season-15",
@@ -5828,7 +6117,11 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "pegasus-2024"
+    "set": "pegasus-2024",
+    "minionTypes": [
+      "tideborn",
+      "raider"
+    ]
   },
   {
     "id": "void-season-spell-01",
@@ -5966,7 +6259,8 @@
     "tradeable": true,
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "neutral-season-02",
@@ -5994,7 +6288,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "neutral-season-03",
@@ -6024,7 +6319,8 @@
       }
     ],
     "disguised": true,
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "neutral-season-04",
@@ -6046,7 +6342,8 @@
     "spellDamage": 1,
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "neutral-season-05",
@@ -6068,7 +6365,8 @@
     "tradeable": true,
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "neutral-season-06",
@@ -6096,7 +6394,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "neutral-season-07",
@@ -6125,7 +6424,8 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "neutral-season-08",
@@ -6234,7 +6534,8 @@
     "tradeable": true,
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "neutral-season-10",
@@ -6262,7 +6563,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "pegasus-2024"
+    "set": "pegasus-2024",
+    "minionTypes": []
   },
   {
     "id": "neutral-season-11",
@@ -6283,7 +6585,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "pegasus-2024"
+    "set": "pegasus-2024",
+    "minionTypes": []
   },
   {
     "id": "neutral-season-12",
@@ -6314,7 +6617,8 @@
     "spellDamage": 1,
     "onDeath": [],
     "effect": [],
-    "set": "pegasus-2024"
+    "set": "pegasus-2024",
+    "minionTypes": []
   },
   {
     "id": "neutral-season-13",
@@ -6344,7 +6648,8 @@
     "tradeable": true,
     "onDeath": [],
     "effect": [],
-    "set": "pegasus-2024"
+    "set": "pegasus-2024",
+    "minionTypes": []
   },
   {
     "id": "neutral-season-14",
@@ -6378,7 +6683,8 @@
       }
     ],
     "effect": [],
-    "set": "pegasus-2024"
+    "set": "pegasus-2024",
+    "minionTypes": []
   },
   {
     "id": "neutral-season-15",
@@ -6407,7 +6713,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "pegasus-2024"
+    "set": "pegasus-2024",
+    "minionTypes": []
   },
   {
     "id": "neutral-season-spell-01",
@@ -6548,7 +6855,8 @@
     "herald": {
       "colossalCardId": "ember-season-08"
     },
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "ember-season-02",
@@ -6569,7 +6877,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "ember-season-03",
@@ -6599,7 +6908,8 @@
       }
     ],
     "disguised": true,
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "ember-season-04",
@@ -6624,7 +6934,10 @@
     "herald": {
       "colossalCardId": "ember-season-08"
     },
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "ember-season-05",
@@ -6645,7 +6958,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "ember-season-06",
@@ -6666,7 +6980,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "ember-season-07",
@@ -6695,7 +7010,8 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "ember-season-08",
@@ -6746,7 +7062,10 @@
         }
       ]
     },
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "ember-season-09",
@@ -6767,7 +7086,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "ember-season-10",
@@ -6788,7 +7108,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "pegasus-2024"
+    "set": "pegasus-2024",
+    "minionTypes": []
   },
   {
     "id": "ember-season-11",
@@ -6809,7 +7130,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "pegasus-2024"
+    "set": "pegasus-2024",
+    "minionTypes": []
   },
   {
     "id": "ember-season-12",
@@ -6839,7 +7161,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "pegasus-2024"
+    "set": "pegasus-2024",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "ember-season-13",
@@ -6868,7 +7193,8 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "pegasus-2024"
+    "set": "pegasus-2024",
+    "minionTypes": []
   },
   {
     "id": "ember-season-14",
@@ -6895,7 +7221,8 @@
       }
     ],
     "effect": [],
-    "set": "pegasus-2024"
+    "set": "pegasus-2024",
+    "minionTypes": []
   },
   {
     "id": "ember-season-15",
@@ -6924,7 +7251,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "pegasus-2024"
+    "set": "pegasus-2024",
+    "minionTypes": []
   },
   {
     "id": "ember-season-spell-01",
@@ -7054,7 +7382,8 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "astral-season-02",
@@ -7075,7 +7404,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "astral-season-03",
@@ -7105,7 +7435,8 @@
       }
     ],
     "disguised": true,
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "astral-season-04",
@@ -7126,7 +7457,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "astral-season-05",
@@ -7147,7 +7479,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "astral-season-06",
@@ -7168,7 +7501,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "astral-season-07",
@@ -7197,7 +7531,8 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "astral-season-08",
@@ -7228,7 +7563,8 @@
     "onDeath": [],
     "effect": [],
     "preparable": true,
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "astral-season-09",
@@ -7249,7 +7585,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "astral-season-10",
@@ -7270,7 +7607,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "pegasus-2024"
+    "set": "pegasus-2024",
+    "minionTypes": []
   },
   {
     "id": "astral-season-11",
@@ -7291,7 +7629,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "pegasus-2024"
+    "set": "pegasus-2024",
+    "minionTypes": []
   },
   {
     "id": "astral-season-12",
@@ -7321,7 +7660,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "pegasus-2024"
+    "set": "pegasus-2024",
+    "minionTypes": []
   },
   {
     "id": "astral-season-13",
@@ -7350,7 +7690,8 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "pegasus-2024"
+    "set": "pegasus-2024",
+    "minionTypes": []
   },
   {
     "id": "astral-season-14",
@@ -7377,7 +7718,8 @@
       }
     ],
     "effect": [],
-    "set": "pegasus-2024"
+    "set": "pegasus-2024",
+    "minionTypes": []
   },
   {
     "id": "astral-season-15",
@@ -7406,7 +7748,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "pegasus-2024"
+    "set": "pegasus-2024",
+    "minionTypes": []
   },
   {
     "id": "astral-season-spell-01",
@@ -7541,7 +7884,8 @@
       }
     ],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "verdant-season-02",
@@ -7562,7 +7906,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "verdant-season-03",
@@ -7592,7 +7937,8 @@
       }
     ],
     "disguised": true,
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "verdant-season-04",
@@ -7613,7 +7959,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "verdant-season-05",
@@ -7639,7 +7986,8 @@
       }
     ],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "verdant-season-06",
@@ -7660,7 +8008,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "verdant-season-07",
@@ -7689,7 +8038,8 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "verdant-season-08",
@@ -7720,7 +8070,8 @@
     "onDeath": [],
     "effect": [],
     "preparable": true,
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "verdant-season-09",
@@ -7746,7 +8097,8 @@
       }
     ],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "verdant-season-10",
@@ -7767,7 +8119,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "pegasus-2024"
+    "set": "pegasus-2024",
+    "minionTypes": []
   },
   {
     "id": "verdant-season-11",
@@ -7788,7 +8141,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "pegasus-2024"
+    "set": "pegasus-2024",
+    "minionTypes": []
   },
   {
     "id": "verdant-season-12",
@@ -7818,7 +8172,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "pegasus-2024"
+    "set": "pegasus-2024",
+    "minionTypes": []
   },
   {
     "id": "verdant-season-13",
@@ -7852,7 +8207,8 @@
       }
     ],
     "effect": [],
-    "set": "pegasus-2024"
+    "set": "pegasus-2024",
+    "minionTypes": []
   },
   {
     "id": "verdant-season-14",
@@ -7879,7 +8235,8 @@
       }
     ],
     "effect": [],
-    "set": "pegasus-2024"
+    "set": "pegasus-2024",
+    "minionTypes": []
   },
   {
     "id": "verdant-season-15",
@@ -7908,7 +8265,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "pegasus-2024"
+    "set": "pegasus-2024",
+    "minionTypes": []
   },
   {
     "id": "verdant-season-spell-01",
@@ -8043,7 +8401,8 @@
     "herald": {
       "colossalCardId": "storm-season-08"
     },
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "storm-season-02",
@@ -8070,7 +8429,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "storm-season-03",
@@ -8100,7 +8460,8 @@
       }
     ],
     "disguised": true,
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "storm-season-04",
@@ -8125,7 +8486,8 @@
     "herald": {
       "colossalCardId": "storm-season-08"
     },
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "storm-season-05",
@@ -8147,7 +8509,8 @@
     "overload": 1,
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "storm-season-06",
@@ -8174,7 +8537,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "storm-season-07",
@@ -8203,7 +8567,8 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "storm-season-08",
@@ -8254,7 +8619,8 @@
         }
       ]
     },
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "storm-season-09",
@@ -8276,7 +8642,8 @@
     "overload": 1,
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "storm-season-10",
@@ -8303,7 +8670,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "pegasus-2024"
+    "set": "pegasus-2024",
+    "minionTypes": []
   },
   {
     "id": "storm-season-11",
@@ -8324,7 +8692,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "pegasus-2024"
+    "set": "pegasus-2024",
+    "minionTypes": []
   },
   {
     "id": "storm-season-12",
@@ -8354,7 +8723,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "pegasus-2024"
+    "set": "pegasus-2024",
+    "minionTypes": []
   },
   {
     "id": "storm-season-13",
@@ -8384,7 +8754,8 @@
     "overload": 1,
     "onDeath": [],
     "effect": [],
-    "set": "pegasus-2024"
+    "set": "pegasus-2024",
+    "minionTypes": []
   },
   {
     "id": "storm-season-14",
@@ -8417,7 +8788,8 @@
       }
     ],
     "effect": [],
-    "set": "pegasus-2024"
+    "set": "pegasus-2024",
+    "minionTypes": []
   },
   {
     "id": "storm-season-15",
@@ -8446,7 +8818,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "pegasus-2024"
+    "set": "pegasus-2024",
+    "minionTypes": []
   },
   {
     "id": "storm-season-spell-01",
@@ -8583,7 +8956,8 @@
     "target": "enemy-unit",
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "frost-season-02",
@@ -8604,7 +8978,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "frost-season-03",
@@ -8625,7 +9000,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": [
+      "dragon"
+    ]
   },
   {
     "id": "frost-season-04",
@@ -8646,7 +9024,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "frost-season-05",
@@ -8675,7 +9054,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "frost-season-06",
@@ -8696,7 +9076,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "frost-season-07",
@@ -8725,7 +9106,10 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": [
+      "dragon"
+    ]
   },
   {
     "id": "frost-season-08",
@@ -8754,7 +9138,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "frost-season-09",
@@ -8783,7 +9168,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "frost-season-10",
@@ -8804,7 +9190,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "frost-season-11",
@@ -8825,7 +9212,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "dragon"
+    ]
   },
   {
     "id": "frost-season-12",
@@ -8855,7 +9245,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "frost-season-13",
@@ -8884,7 +9275,8 @@
     "target": "enemy-unit",
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "frost-season-14",
@@ -8911,7 +9303,8 @@
       }
     ],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "frost-season-15",
@@ -8940,7 +9333,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "dragon"
+    ]
   },
   {
     "id": "frost-season-16",
@@ -8961,7 +9357,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "frost-season-17",
@@ -8990,7 +9387,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "frost-season-18",
@@ -9011,7 +9409,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "frost-season-19",
@@ -9040,7 +9439,10 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "dragon"
+    ]
   },
   {
     "id": "frost-season-20",
@@ -9061,7 +9463,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "frost-season-21",
@@ -9090,7 +9493,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "frost-season-22",
@@ -9119,7 +9523,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "frost-season-23",
@@ -9149,7 +9554,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "dragon"
+    ]
   },
   {
     "id": "frost-season-24",
@@ -9170,7 +9578,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "frost-season-25",
@@ -9199,7 +9608,8 @@
     "target": "enemy-unit",
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "frost-season-26",
@@ -9220,7 +9630,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "frost-season-27",
@@ -9256,7 +9667,10 @@
       }
     ],
     "disguised": true,
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": [
+      "dragon"
+    ]
   },
   {
     "id": "frost-season-28",
@@ -9277,7 +9691,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "frost-season-29",
@@ -9306,7 +9721,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "frost-season-30",
@@ -9327,7 +9743,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "frost-season-31",
@@ -9356,7 +9773,10 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": [
+      "dragon"
+    ]
   },
   {
     "id": "frost-season-32",
@@ -9379,7 +9799,8 @@
     "onDeath": [],
     "effect": [],
     "preparable": true,
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "frost-season-33",
@@ -9408,7 +9829,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "frost-season-34",
@@ -9438,7 +9860,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "frost-season-35",
@@ -9459,7 +9882,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": [
+      "dragon"
+    ]
   },
   {
     "id": "frost-season-spell-01",
@@ -9801,7 +10227,8 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "sand-season-02",
@@ -9823,7 +10250,8 @@
     "tradeable": true,
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "sand-season-03",
@@ -9844,7 +10272,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "sand-season-04",
@@ -9865,7 +10294,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "sand-season-05",
@@ -9887,7 +10317,8 @@
     "tradeable": true,
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "sand-season-06",
@@ -9908,7 +10339,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "sand-season-07",
@@ -9937,7 +10369,8 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "sand-season-08",
@@ -9967,7 +10400,8 @@
     "tradeable": true,
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "sand-season-09",
@@ -9988,7 +10422,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "sand-season-10",
@@ -10009,7 +10444,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "sand-season-11",
@@ -10031,7 +10467,8 @@
     "tradeable": true,
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "sand-season-12",
@@ -10061,7 +10498,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "sand-season-13",
@@ -10090,7 +10528,8 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "sand-season-14",
@@ -10118,7 +10557,8 @@
     ],
     "tradeable": true,
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "sand-season-15",
@@ -10147,7 +10587,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "sand-season-16",
@@ -10168,7 +10609,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "sand-season-17",
@@ -10190,7 +10632,8 @@
     "tradeable": true,
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "sand-season-18",
@@ -10211,7 +10654,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "sand-season-19",
@@ -10240,7 +10684,8 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "sand-season-20",
@@ -10262,7 +10707,8 @@
     "tradeable": true,
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "sand-season-21",
@@ -10283,7 +10729,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "sand-season-22",
@@ -10312,7 +10759,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "sand-season-23",
@@ -10343,7 +10791,8 @@
     "tradeable": true,
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "sand-season-24",
@@ -10364,7 +10813,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "sand-season-25",
@@ -10393,7 +10843,8 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "sand-season-26",
@@ -10415,7 +10866,8 @@
     "tradeable": true,
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "sand-season-27",
@@ -10451,7 +10903,8 @@
       }
     ],
     "disguised": true,
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "sand-season-28",
@@ -10472,7 +10925,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "sand-season-29",
@@ -10502,7 +10956,8 @@
     "tradeable": true,
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "sand-season-30",
@@ -10523,7 +10978,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "sand-season-31",
@@ -10552,7 +11008,8 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "sand-season-32",
@@ -10576,7 +11033,8 @@
     "onDeath": [],
     "effect": [],
     "preparable": true,
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "sand-season-33",
@@ -10597,7 +11055,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "sand-season-34",
@@ -10627,7 +11086,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "sand-season-35",
@@ -10649,7 +11109,8 @@
     "tradeable": true,
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "sand-season-spell-01",
@@ -10991,7 +11452,8 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "bloodmoon-season-02",
@@ -11012,7 +11474,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "bloodmoon-season-03",
@@ -11033,7 +11496,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "bloodmoon-season-04",
@@ -11059,7 +11523,8 @@
       }
     ],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "bloodmoon-season-05",
@@ -11080,7 +11545,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "bloodmoon-season-06",
@@ -11101,7 +11567,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "bloodmoon-season-07",
@@ -11130,7 +11597,8 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "bloodmoon-season-08",
@@ -11164,7 +11632,8 @@
       }
     ],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "bloodmoon-season-09",
@@ -11185,7 +11654,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "bloodmoon-season-10",
@@ -11206,7 +11676,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "bloodmoon-season-11",
@@ -11227,7 +11698,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "bloodmoon-season-12",
@@ -11262,7 +11734,8 @@
       }
     ],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "bloodmoon-season-13",
@@ -11291,7 +11764,8 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "bloodmoon-season-14",
@@ -11318,7 +11792,8 @@
       }
     ],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "bloodmoon-season-15",
@@ -11347,7 +11822,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "bloodmoon-season-16",
@@ -11373,7 +11849,8 @@
       }
     ],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "bloodmoon-season-17",
@@ -11394,7 +11871,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "bloodmoon-season-18",
@@ -11415,7 +11893,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "bloodmoon-season-19",
@@ -11444,7 +11923,8 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "bloodmoon-season-20",
@@ -11470,7 +11950,8 @@
       }
     ],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "bloodmoon-season-21",
@@ -11491,7 +11972,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "bloodmoon-season-22",
@@ -11520,7 +12002,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "bloodmoon-season-23",
@@ -11550,7 +12033,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "bloodmoon-season-24",
@@ -11576,7 +12060,8 @@
       }
     ],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "bloodmoon-season-25",
@@ -11605,7 +12090,8 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "bloodmoon-season-26",
@@ -11626,7 +12112,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "bloodmoon-season-27",
@@ -11662,7 +12149,8 @@
       }
     ],
     "disguised": true,
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "bloodmoon-season-28",
@@ -11688,7 +12176,8 @@
       }
     ],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "bloodmoon-season-29",
@@ -11717,7 +12206,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "bloodmoon-season-30",
@@ -11738,7 +12228,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "bloodmoon-season-31",
@@ -11767,7 +12258,8 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "bloodmoon-season-32",
@@ -11795,7 +12287,8 @@
     ],
     "effect": [],
     "preparable": true,
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "bloodmoon-season-33",
@@ -11816,7 +12309,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "bloodmoon-season-34",
@@ -11846,7 +12340,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "bloodmoon-season-35",
@@ -11867,7 +12362,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "bloodmoon-season-spell-01",
@@ -12210,7 +12706,8 @@
     "spellDamage": 1,
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "leyline-season-02",
@@ -12237,7 +12734,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "leyline-season-03",
@@ -12265,7 +12763,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "leyline-season-04",
@@ -12287,7 +12786,8 @@
     "spellDamage": 1,
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "leyline-season-05",
@@ -12314,7 +12814,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "leyline-season-06",
@@ -12342,7 +12843,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "leyline-season-07",
@@ -12372,7 +12874,8 @@
     "spellDamage": 1,
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "leyline-season-08",
@@ -12407,7 +12910,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "leyline-season-09",
@@ -12435,7 +12939,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "leyline-season-10",
@@ -12457,7 +12962,8 @@
     "spellDamage": 1,
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "leyline-season-11",
@@ -12484,7 +12990,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "leyline-season-12",
@@ -12521,7 +13028,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "leyline-season-13",
@@ -12551,7 +13059,8 @@
     "spellDamage": 1,
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "leyline-season-14",
@@ -12584,7 +13093,8 @@
       }
     ],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "leyline-season-15",
@@ -12620,7 +13130,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "leyline-season-16",
@@ -12642,7 +13153,8 @@
     "spellDamage": 1,
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "leyline-season-17",
@@ -12669,7 +13181,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "leyline-season-18",
@@ -12697,7 +13210,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "leyline-season-19",
@@ -12727,7 +13241,8 @@
     "spellDamage": 1,
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "leyline-season-20",
@@ -12754,7 +13269,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "leyline-season-21",
@@ -12782,7 +13298,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "leyline-season-22",
@@ -12812,7 +13329,8 @@
     "spellDamage": 1,
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "leyline-season-23",
@@ -12848,7 +13366,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "leyline-season-24",
@@ -12876,7 +13395,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "leyline-season-25",
@@ -12906,7 +13426,8 @@
     "spellDamage": 1,
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "leyline-season-26",
@@ -12933,7 +13454,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "leyline-season-27",
@@ -12976,7 +13498,8 @@
       }
     ],
     "disguised": true,
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "leyline-season-28",
@@ -12998,7 +13521,8 @@
     "spellDamage": 1,
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "leyline-season-29",
@@ -13033,7 +13557,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "leyline-season-30",
@@ -13061,7 +13586,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "leyline-season-31",
@@ -13091,7 +13617,8 @@
     "spellDamage": 1,
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "leyline-season-32",
@@ -13120,7 +13647,8 @@
     "onDeath": [],
     "effect": [],
     "preparable": true,
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "leyline-season-33",
@@ -13148,7 +13676,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "leyline-season-34",
@@ -13179,7 +13708,8 @@
     "spellDamage": 1,
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "leyline-season-35",
@@ -13206,7 +13736,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "leyline-season-spell-01",
@@ -13548,7 +14079,8 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "dusk-season-02",
@@ -13576,7 +14108,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "dusk-season-03",
@@ -13597,7 +14130,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "dusk-season-04",
@@ -13618,7 +14152,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "dusk-season-05",
@@ -13646,7 +14181,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "dusk-season-06",
@@ -13667,7 +14203,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "dusk-season-07",
@@ -13696,7 +14233,8 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "dusk-season-08",
@@ -13724,7 +14262,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "dusk-season-09",
@@ -13745,7 +14284,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "dusk-season-10",
@@ -13766,7 +14306,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "dusk-season-11",
@@ -13794,7 +14335,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "dusk-season-12",
@@ -13824,7 +14366,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "dusk-season-13",
@@ -13853,7 +14396,8 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "dusk-season-14",
@@ -13887,7 +14431,8 @@
       }
     ],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "dusk-season-15",
@@ -13916,7 +14461,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "dusk-season-16",
@@ -13937,7 +14483,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "dusk-season-17",
@@ -13965,7 +14512,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "dusk-season-18",
@@ -13986,7 +14534,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "dusk-season-19",
@@ -14015,7 +14564,8 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "dusk-season-20",
@@ -14043,7 +14593,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "dusk-season-21",
@@ -14064,7 +14615,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "dusk-season-22",
@@ -14093,7 +14645,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "dusk-season-23",
@@ -14121,7 +14674,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "dusk-season-24",
@@ -14142,7 +14696,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "dusk-season-25",
@@ -14171,7 +14726,8 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "dusk-season-26",
@@ -14203,7 +14759,8 @@
     "herald": {
       "colossalCardId": "dusk-season-32"
     },
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "dusk-season-27",
@@ -14239,7 +14796,8 @@
       }
     ],
     "disguised": true,
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "dusk-season-28",
@@ -14264,7 +14822,8 @@
     "herald": {
       "colossalCardId": "dusk-season-32"
     },
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "dusk-season-29",
@@ -14292,7 +14851,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "dusk-season-30",
@@ -14313,7 +14873,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "dusk-season-31",
@@ -14342,7 +14903,8 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "dusk-season-32",
@@ -14392,7 +14954,8 @@
         }
       ]
     },
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "dusk-season-33",
@@ -14413,7 +14976,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "dusk-season-34",
@@ -14443,7 +15007,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "dusk-season-35",
@@ -14471,7 +15036,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "dusk-season-spell-01",
@@ -14842,7 +15408,8 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "cloudfall-season-02",
@@ -14863,7 +15430,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "cloudfall-season-03",
@@ -14884,7 +15452,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "cloudfall-season-04",
@@ -14913,7 +15482,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "cloudfall-season-05",
@@ -14934,7 +15506,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "cloudfall-season-06",
@@ -14955,7 +15528,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "cloudfall-season-07",
@@ -14984,7 +15558,8 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "cloudfall-season-08",
@@ -15013,7 +15588,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "cloudfall-season-09",
@@ -15034,7 +15612,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "cloudfall-season-10",
@@ -15055,7 +15634,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "cloudfall-season-11",
@@ -15076,7 +15656,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "cloudfall-season-12",
@@ -15105,7 +15686,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "cloudfall-season-13",
@@ -15134,7 +15718,8 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "cloudfall-season-14",
@@ -15161,7 +15746,8 @@
       }
     ],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "cloudfall-season-15",
@@ -15190,7 +15776,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "cloudfall-season-16",
@@ -15219,7 +15806,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "cloudfall-season-17",
@@ -15240,7 +15830,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "cloudfall-season-18",
@@ -15261,7 +15852,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "cloudfall-season-19",
@@ -15290,7 +15882,8 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "cloudfall-season-20",
@@ -15319,7 +15912,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "cloudfall-season-21",
@@ -15340,7 +15936,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "cloudfall-season-22",
@@ -15369,7 +15966,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "cloudfall-season-23",
@@ -15399,7 +15997,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "cloudfall-season-24",
@@ -15428,7 +16027,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "cloudfall-season-25",
@@ -15457,7 +16059,8 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "cloudfall-season-26",
@@ -15478,7 +16081,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "cloudfall-season-27",
@@ -15514,7 +16118,8 @@
       }
     ],
     "disguised": true,
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "cloudfall-season-28",
@@ -15543,7 +16148,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "cloudfall-season-29",
@@ -15572,7 +16180,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "cloudfall-season-30",
@@ -15593,7 +16202,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "cloudfall-season-31",
@@ -15622,7 +16232,8 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "cloudfall-season-32",
@@ -15653,7 +16264,10 @@
     "onDeath": [],
     "effect": [],
     "preparable": true,
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "cloudfall-season-33",
@@ -15674,7 +16288,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "cloudfall-season-34",
@@ -15704,7 +16319,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "cloudfall-season-35",
@@ -15725,7 +16341,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "cloudfall-season-spell-01",
@@ -16067,7 +16684,10 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": [
+      "construct"
+    ]
   },
   {
     "id": "magnet-season-02",
@@ -16089,7 +16709,8 @@
     "overload": 1,
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "magnet-season-03",
@@ -16117,7 +16738,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "magnet-season-04",
@@ -16138,7 +16760,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "magnet-season-05",
@@ -16159,7 +16784,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": [
+      "construct"
+    ]
   },
   {
     "id": "magnet-season-06",
@@ -16181,7 +16809,8 @@
     "overload": 1,
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "magnet-season-07",
@@ -16209,7 +16838,8 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "magnet-season-08",
@@ -16238,7 +16868,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "magnet-season-09",
@@ -16259,7 +16892,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": [
+      "construct"
+    ]
   },
   {
     "id": "magnet-season-10",
@@ -16281,7 +16917,8 @@
     "overload": 1,
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "magnet-season-11",
@@ -16309,7 +16946,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "magnet-season-12",
@@ -16339,7 +16977,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "magnet-season-13",
@@ -16368,7 +17009,10 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "construct"
+    ]
   },
   {
     "id": "magnet-season-14",
@@ -16396,7 +17040,8 @@
     ],
     "overload": 1,
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "magnet-season-15",
@@ -16424,7 +17069,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "magnet-season-16",
@@ -16445,7 +17091,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "magnet-season-17",
@@ -16466,7 +17115,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "construct"
+    ]
   },
   {
     "id": "magnet-season-18",
@@ -16488,7 +17140,8 @@
     "overload": 1,
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "magnet-season-19",
@@ -16516,7 +17169,8 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "magnet-season-20",
@@ -16537,7 +17191,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "magnet-season-21",
@@ -16558,7 +17215,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "construct"
+    ]
   },
   {
     "id": "magnet-season-22",
@@ -16588,7 +17248,8 @@
     "overload": 1,
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "magnet-season-23",
@@ -16617,7 +17278,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "magnet-season-24",
@@ -16638,7 +17300,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "magnet-season-25",
@@ -16667,7 +17332,10 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "construct"
+    ]
   },
   {
     "id": "magnet-season-26",
@@ -16689,7 +17357,8 @@
     "overload": 1,
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "magnet-season-27",
@@ -16732,7 +17401,8 @@
       }
     ],
     "disguised": true,
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "magnet-season-28",
@@ -16753,7 +17423,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "magnet-season-29",
@@ -16782,7 +17455,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": [
+      "construct"
+    ]
   },
   {
     "id": "magnet-season-30",
@@ -16804,7 +17480,8 @@
     "overload": 1,
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "magnet-season-31",
@@ -16832,7 +17509,8 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "magnet-season-32",
@@ -16855,7 +17533,10 @@
     "onDeath": [],
     "effect": [],
     "preparable": true,
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "magnet-season-33",
@@ -16876,7 +17557,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": [
+      "construct"
+    ]
   },
   {
     "id": "magnet-season-34",
@@ -16907,7 +17591,8 @@
     "overload": 1,
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "magnet-season-35",
@@ -16935,7 +17620,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "magnet-season-spell-01",
@@ -17278,7 +17964,8 @@
     "target": "enemy-unit",
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "crystal-season-02",
@@ -17299,7 +17986,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "crystal-season-03",
@@ -17321,7 +18009,10 @@
     "spellDamage": 1,
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "crystal-season-04",
@@ -17342,7 +18033,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "crystal-season-05",
@@ -17363,7 +18055,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "crystal-season-06",
@@ -17394,7 +18087,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "crystal-season-07",
@@ -17423,7 +18117,10 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "crystal-season-08",
@@ -17452,7 +18149,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "crystal-season-09",
@@ -17474,7 +18172,8 @@
     "spellDamage": 1,
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "crystal-season-10",
@@ -17495,7 +18194,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "crystal-season-11",
@@ -17525,7 +18225,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "crystal-season-12",
@@ -17556,7 +18259,8 @@
     "spellDamage": 1,
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "crystal-season-13",
@@ -17585,7 +18289,8 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "crystal-season-14",
@@ -17612,7 +18317,8 @@
       }
     ],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "crystal-season-15",
@@ -17642,7 +18348,10 @@
     "spellDamage": 1,
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "crystal-season-16",
@@ -17672,7 +18381,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "crystal-season-17",
@@ -17693,7 +18403,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "crystal-season-18",
@@ -17715,7 +18426,8 @@
     "spellDamage": 1,
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "crystal-season-19",
@@ -17744,7 +18456,10 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "crystal-season-20",
@@ -17765,7 +18480,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "crystal-season-21",
@@ -17796,7 +18512,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "crystal-season-22",
@@ -17825,7 +18542,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "crystal-season-23",
@@ -17855,7 +18573,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "crystal-season-24",
@@ -17877,7 +18598,8 @@
     "spellDamage": 1,
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "crystal-season-25",
@@ -17906,7 +18628,8 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "crystal-season-26",
@@ -17936,7 +18659,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "crystal-season-27",
@@ -17973,7 +18697,10 @@
       }
     ],
     "disguised": true,
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "crystal-season-28",
@@ -17994,7 +18721,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "crystal-season-29",
@@ -18023,7 +18751,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "crystal-season-30",
@@ -18045,7 +18774,8 @@
     "spellDamage": 1,
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "crystal-season-31",
@@ -18075,7 +18805,10 @@
     "target": "enemy-unit",
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "crystal-season-32",
@@ -18098,7 +18831,8 @@
     "onDeath": [],
     "effect": [],
     "preparable": true,
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "crystal-season-33",
@@ -18120,7 +18854,8 @@
     "spellDamage": 1,
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "crystal-season-34",
@@ -18150,7 +18885,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "crystal-season-35",
@@ -18171,7 +18907,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "crystal-season-spell-01",
@@ -18513,7 +19252,8 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "dream-season-02",
@@ -18534,7 +19274,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "dream-season-03",
@@ -18555,7 +19296,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "dream-season-04",
@@ -18576,7 +19318,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "dream-season-05",
@@ -18597,7 +19342,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "dream-season-06",
@@ -18618,7 +19364,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "dream-season-07",
@@ -18647,7 +19394,8 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "dream-season-08",
@@ -18676,7 +19424,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "dream-season-09",
@@ -18697,7 +19448,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "dream-season-10",
@@ -18718,7 +19470,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "dream-season-11",
@@ -18739,7 +19492,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "dream-season-12",
@@ -18769,7 +19523,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "dream-season-13",
@@ -18798,7 +19555,8 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "dream-season-14",
@@ -18825,7 +19583,8 @@
       }
     ],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "dream-season-15",
@@ -18854,7 +19613,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "dream-season-16",
@@ -18875,7 +19635,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "dream-season-17",
@@ -18896,7 +19659,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "dream-season-18",
@@ -18917,7 +19681,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "dream-season-19",
@@ -18946,7 +19711,8 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "dream-season-20",
@@ -18967,7 +19733,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "dream-season-21",
@@ -18988,7 +19757,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "dream-season-22",
@@ -19017,7 +19787,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "dream-season-23",
@@ -19047,7 +19818,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "dream-season-24",
@@ -19068,7 +19840,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "dream-season-25",
@@ -19097,7 +19872,8 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "dream-season-26",
@@ -19118,7 +19894,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "dream-season-27",
@@ -19154,7 +19931,8 @@
       }
     ],
     "disguised": true,
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "dream-season-28",
@@ -19175,7 +19953,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "dream-season-29",
@@ -19204,7 +19985,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "dream-season-30",
@@ -19225,7 +20007,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "dream-season-31",
@@ -19254,7 +20037,8 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "dream-season-32",
@@ -19277,7 +20061,10 @@
     "onDeath": [],
     "effect": [],
     "preparable": true,
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "dream-season-33",
@@ -19298,7 +20085,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "dream-season-34",
@@ -19328,7 +20116,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "dream-season-35",
@@ -19349,7 +20138,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "dream-season-spell-01",
@@ -19721,7 +20511,8 @@
     "spellDamage": 1,
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "rift-season-02",
@@ -19742,7 +20533,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "rift-season-03",
@@ -19764,7 +20556,10 @@
     "overload": 1,
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "rift-season-04",
@@ -19785,7 +20580,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "rift-season-05",
@@ -19807,7 +20603,8 @@
     "spellDamage": 1,
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "rift-season-06",
@@ -19828,7 +20625,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "rift-season-07",
@@ -19858,7 +20656,10 @@
     "overload": 1,
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "rift-season-08",
@@ -19887,7 +20688,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "rift-season-09",
@@ -19909,7 +20711,8 @@
     "spellDamage": 1,
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "rift-season-10",
@@ -19930,7 +20733,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "rift-season-11",
@@ -19952,7 +20756,10 @@
     "overload": 1,
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "rift-season-12",
@@ -19982,7 +20789,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "rift-season-13",
@@ -20012,7 +20820,8 @@
     "spellDamage": 1,
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "rift-season-14",
@@ -20039,7 +20848,8 @@
       }
     ],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "rift-season-15",
@@ -20069,7 +20879,10 @@
     "overload": 1,
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "rift-season-16",
@@ -20090,7 +20903,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "rift-season-17",
@@ -20112,7 +20926,8 @@
     "spellDamage": 1,
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "rift-season-18",
@@ -20133,7 +20948,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "rift-season-19",
@@ -20163,7 +20979,10 @@
     "overload": 1,
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "rift-season-20",
@@ -20184,7 +21003,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "rift-season-21",
@@ -20206,7 +21026,8 @@
     "spellDamage": 1,
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "rift-season-22",
@@ -20235,7 +21056,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "rift-season-23",
@@ -20266,7 +21088,10 @@
     "overload": 1,
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "rift-season-24",
@@ -20287,7 +21112,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "rift-season-25",
@@ -20317,7 +21143,8 @@
     "spellDamage": 1,
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "rift-season-26",
@@ -20342,7 +21169,8 @@
     "herald": {
       "colossalCardId": "rift-season-32"
     },
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "rift-season-27",
@@ -20379,7 +21207,10 @@
       }
     ],
     "disguised": true,
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "rift-season-28",
@@ -20404,7 +21235,8 @@
     "herald": {
       "colossalCardId": "rift-season-32"
     },
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "rift-season-29",
@@ -20434,7 +21266,8 @@
     "spellDamage": 1,
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "rift-season-30",
@@ -20455,7 +21288,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "rift-season-31",
@@ -20485,7 +21319,10 @@
     "overload": 1,
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "rift-season-32",
@@ -20528,7 +21365,8 @@
         }
       ]
     },
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "rift-season-33",
@@ -20550,7 +21388,8 @@
     "spellDamage": 1,
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "rift-season-34",
@@ -20580,7 +21419,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "rift-season-35",
@@ -20602,7 +21442,10 @@
     "overload": 1,
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "rift-season-spell-01",
@@ -20953,7 +21796,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "timesand-season-02",
@@ -20980,7 +21824,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "timesand-season-03",
@@ -21008,7 +21853,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "timesand-season-04",
@@ -21038,7 +21886,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "timesand-season-05",
@@ -21065,7 +21914,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "timesand-season-06",
@@ -21093,7 +21943,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "timesand-season-07",
@@ -21131,7 +21982,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "timesand-season-08",
@@ -21166,7 +22020,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "timesand-season-09",
@@ -21194,7 +22049,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "timesand-season-10",
@@ -21224,7 +22080,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "timesand-season-11",
@@ -21251,7 +22108,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "timesand-season-12",
@@ -21288,7 +22148,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "timesand-season-13",
@@ -21326,7 +22187,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "timesand-season-14",
@@ -21359,7 +22221,8 @@
       }
     ],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "timesand-season-15",
@@ -21395,7 +22258,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "timesand-season-16",
@@ -21425,7 +22291,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "timesand-season-17",
@@ -21452,7 +22319,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "timesand-season-18",
@@ -21480,7 +22348,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "timesand-season-19",
@@ -21518,7 +22387,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "timesand-season-20",
@@ -21545,7 +22417,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "timesand-season-21",
@@ -21573,7 +22446,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "timesand-season-22",
@@ -21611,7 +22485,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "timesand-season-23",
@@ -21647,7 +22522,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "timesand-season-24",
@@ -21675,7 +22553,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "timesand-season-25",
@@ -21713,7 +22592,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "timesand-season-26",
@@ -21740,7 +22620,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "timesand-season-27",
@@ -21780,7 +22661,10 @@
     ],
     "effect": [],
     "disguised": true,
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "timesand-season-28",
@@ -21810,7 +22694,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "timesand-season-29",
@@ -21845,7 +22730,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "timesand-season-30",
@@ -21873,7 +22759,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "timesand-season-31",
@@ -21911,7 +22798,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "timesand-season-32",
@@ -21940,7 +22830,8 @@
     "onDeath": [],
     "effect": [],
     "preparable": true,
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "timesand-season-33",
@@ -21968,7 +22859,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "timesand-season-34",
@@ -22007,7 +22899,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "timesand-season-35",
@@ -22034,7 +22927,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "timesand-season-spell-01",
@@ -22376,7 +23272,8 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "gloomwood-season-02",
@@ -22402,7 +23299,8 @@
       }
     ],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "gloomwood-season-03",
@@ -22423,7 +23321,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "gloomwood-season-04",
@@ -22444,7 +23345,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "gloomwood-season-05",
@@ -22465,7 +23367,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "gloomwood-season-06",
@@ -22491,7 +23394,8 @@
       }
     ],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "gloomwood-season-07",
@@ -22520,7 +23424,10 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "gloomwood-season-08",
@@ -22549,7 +23456,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "gloomwood-season-09",
@@ -22570,7 +23478,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "gloomwood-season-10",
@@ -22596,7 +23505,8 @@
       }
     ],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "gloomwood-season-11",
@@ -22617,7 +23527,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "gloomwood-season-12",
@@ -22647,7 +23560,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "gloomwood-season-13",
@@ -22676,7 +23590,8 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "gloomwood-season-14",
@@ -22702,7 +23617,8 @@
       }
     ],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "gloomwood-season-15",
@@ -22731,7 +23647,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "gloomwood-season-16",
@@ -22752,7 +23671,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "gloomwood-season-17",
@@ -22773,7 +23693,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "gloomwood-season-18",
@@ -22799,7 +23720,8 @@
       }
     ],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "gloomwood-season-19",
@@ -22828,7 +23750,10 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "gloomwood-season-20",
@@ -22849,7 +23774,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "gloomwood-season-21",
@@ -22870,7 +23796,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "gloomwood-season-22",
@@ -22904,7 +23831,8 @@
       }
     ],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "gloomwood-season-23",
@@ -22934,7 +23862,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "gloomwood-season-24",
@@ -22955,7 +23886,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "gloomwood-season-25",
@@ -22984,7 +23916,8 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "gloomwood-season-26",
@@ -23010,7 +23943,8 @@
       }
     ],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "gloomwood-season-27",
@@ -23046,7 +23980,10 @@
       }
     ],
     "disguised": true,
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "gloomwood-season-28",
@@ -23067,7 +24004,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "gloomwood-season-29",
@@ -23096,7 +24034,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "gloomwood-season-30",
@@ -23122,7 +24061,8 @@
       }
     ],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "gloomwood-season-31",
@@ -23151,7 +24091,10 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "gloomwood-season-32",
@@ -23174,7 +24117,8 @@
     "onDeath": [],
     "effect": [],
     "preparable": true,
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "gloomwood-season-33",
@@ -23195,7 +24139,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "gloomwood-season-34",
@@ -23230,7 +24175,8 @@
       }
     ],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "gloomwood-season-35",
@@ -23251,7 +24197,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": [
+      "beast"
+    ]
   },
   {
     "id": "gloomwood-season-spell-01",
@@ -23593,7 +24542,8 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "firmament-season-02",
@@ -23614,7 +24564,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "firmament-season-03",
@@ -23635,7 +24586,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": [
+      "dragon"
+    ]
   },
   {
     "id": "firmament-season-04",
@@ -23663,7 +24617,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "firmament-season-05",
@@ -23684,7 +24639,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "firmament-season-06",
@@ -23705,7 +24661,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "firmament-season-07",
@@ -23734,7 +24691,10 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": [
+      "dragon"
+    ]
   },
   {
     "id": "firmament-season-08",
@@ -23762,7 +24722,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "firmament-season-09",
@@ -23783,7 +24744,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "firmament-season-10",
@@ -23804,7 +24766,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "core"
+    "set": "core",
+    "minionTypes": []
   },
   {
     "id": "firmament-season-11",
@@ -23825,7 +24788,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "dragon"
+    ]
   },
   {
     "id": "firmament-season-12",
@@ -23854,7 +24820,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "firmament-season-13",
@@ -23883,7 +24850,8 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "firmament-season-14",
@@ -23910,7 +24878,8 @@
       }
     ],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "firmament-season-15",
@@ -23939,7 +24908,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "dragon"
+    ]
   },
   {
     "id": "firmament-season-16",
@@ -23967,7 +24939,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "firmament-season-17",
@@ -23988,7 +24961,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "firmament-season-18",
@@ -24009,7 +24983,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "firmament-season-19",
@@ -24038,7 +25013,10 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "dragon"
+    ]
   },
   {
     "id": "firmament-season-20",
@@ -24066,7 +25044,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "firmament-season-21",
@@ -24087,7 +25066,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "firmament-season-22",
@@ -24116,7 +25096,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "firmament-season-23",
@@ -24146,7 +25127,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": [
+      "dragon"
+    ]
   },
   {
     "id": "firmament-season-24",
@@ -24174,7 +25158,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "firmament-season-25",
@@ -24203,7 +25188,8 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "raptor-2025"
+    "set": "raptor-2025",
+    "minionTypes": []
   },
   {
     "id": "firmament-season-26",
@@ -24228,7 +25214,8 @@
     "herald": {
       "colossalCardId": "firmament-season-32"
     },
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "firmament-season-27",
@@ -24264,7 +25251,10 @@
       }
     ],
     "disguised": true,
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": [
+      "dragon"
+    ]
   },
   {
     "id": "firmament-season-28",
@@ -24296,7 +25286,8 @@
     "herald": {
       "colossalCardId": "firmament-season-32"
     },
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "firmament-season-29",
@@ -24325,7 +25316,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "firmament-season-30",
@@ -24346,7 +25338,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "firmament-season-31",
@@ -24375,7 +25368,10 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": [
+      "dragon"
+    ]
   },
   {
     "id": "firmament-season-32",
@@ -24426,7 +25422,8 @@
         }
       ]
     },
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "firmament-season-33",
@@ -24447,7 +25444,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "firmament-season-34",
@@ -24477,7 +25475,8 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": []
   },
   {
     "id": "firmament-season-35",
@@ -24498,7 +25497,10 @@
     ],
     "onDeath": [],
     "effect": [],
-    "set": "scarab-2026"
+    "set": "scarab-2026",
+    "minionTypes": [
+      "dragon"
+    ]
   },
   {
     "id": "firmament-season-spell-01",

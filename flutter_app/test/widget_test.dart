@@ -56,6 +56,27 @@ void main() {
       expect(catalog.where((card) => card.hasShatter), hasLength(5));
       expect(catalog.where((card) => card.hasHerald), hasLength(12));
       expect(catalog.where((card) => card.hasColossal), hasLength(6));
+      final typedUnits = catalog
+          .where((card) => card.isUnit && card.minionTypes.isNotEmpty)
+          .toList();
+      expect(typedUnits.length, greaterThanOrEqualTo(100));
+      expect(
+        typedUnits.expand((card) => card.minionTypes).toSet(),
+        containsAll(minionTypeOrder),
+      );
+      expect(
+        catalog
+            .singleWhere((card) => card.id == 'neutral-clockwork-beetle')
+            .minionTypes,
+        ['beast', 'construct'],
+      );
+      expect(
+        hasMinionType(
+          catalog.singleWhere((card) => card.id == 'void-echo-mimic'),
+          'dragon',
+        ),
+        isTrue,
+      );
       expect(
         catalog
             .where((card) => card.hasShatter)
@@ -131,6 +152,7 @@ void main() {
       'disguised': true,
       'keywords': ['护盾'],
       'traits': ['晨辉'],
+      'minionTypes': ['beast', 'construct'],
     });
 
     expect(card.name, '曙光测试');
@@ -141,6 +163,7 @@ void main() {
     expect(card.preparable, isTrue);
     expect(card.bribe, isTrue);
     expect(card.disguised, isTrue);
+    expect(card.minionTypes, ['beast', 'construct']);
   });
 
   test('multiplayer events parse relay payloads', () {
@@ -347,6 +370,169 @@ void main() {
       controller.dispose();
     },
   );
+
+  test('mobile minion types drive buffs and targeted deck searches', () async {
+    const plain = CardDefinition(
+      id: 'type-plain',
+      name: '无类型单位',
+      description: '不响应类型联动。',
+      faction: '中立',
+      type: 'unit',
+      cost: 1,
+      rarity: '普通',
+      attack: 1,
+      health: 1,
+    );
+    const construct = CardDefinition(
+      id: 'type-construct',
+      name: '测试构装',
+      description: '构装单位。',
+      faction: '中立',
+      type: 'unit',
+      cost: 6,
+      rarity: '普通',
+      attack: 3,
+      health: 4,
+      minionTypes: ['construct'],
+    );
+    const allType = CardDefinition(
+      id: 'type-all',
+      name: '测试万象',
+      description: '视为所有类型。',
+      faction: '中立',
+      type: 'unit',
+      cost: 2,
+      rarity: '史诗',
+      attack: 2,
+      health: 2,
+      minionTypes: ['all'],
+    );
+    const handler = CardDefinition(
+      id: 'type-handler',
+      name: '类型驯养师',
+      description: '使其他友方构装获得 +1/+1。',
+      faction: '中立',
+      type: 'unit',
+      cost: 4,
+      rarity: '史诗',
+      attack: 4,
+      health: 5,
+      minionTypes: ['construct'],
+      onPlay: [
+        {
+          'kind': 'buff-friendly-minion-type',
+          'minionType': 'construct',
+          'attack': 1,
+          'health': 1,
+          'excludeSource': true,
+        },
+      ],
+    );
+    const appraiser = CardDefinition(
+      id: 'type-appraiser',
+      name: '类型估价师',
+      description: '从牌库抽一张构装。',
+      faction: '中立',
+      type: 'unit',
+      cost: 2,
+      rarity: '稀有',
+      attack: 2,
+      health: 2,
+      onPlay: [
+        {'kind': 'draw-minion-type', 'minionType': 'construct', 'count': 1},
+      ],
+    );
+    BattleUnit deployed(String id, CardDefinition card) => BattleUnit(
+      instanceId: id,
+      card: card,
+      owner: 'player',
+      attack: card.attack ?? 0,
+      health: card.health ?? 1,
+      maxHealth: card.health ?? 1,
+    );
+
+    final controller = GameController(startingPlayer: 'player')
+      ..catalog = [plain, construct, allType, handler, appraiser]
+      ..deckIds.addAll(List.filled(30, plain.id));
+    controller.startBattle();
+    await controller.confirmMulligan();
+    final state = controller.battle!;
+    state.player.board
+      ..clear()
+      ..addAll([
+        deployed('typed-construct', construct),
+        deployed('typed-all', allType),
+        deployed('typed-plain', plain),
+      ]);
+    state.player.hand
+      ..clear()
+      ..add(handler);
+    state.player.handCostReductions
+      ..clear()
+      ..add(0);
+    state.player.handFragments
+      ..clear()
+      ..add(null);
+    state.player.mana = 4;
+
+    expect(controller.playCard(handler, handIndex: 0), isTrue);
+    expect(
+      state.player.board.map(
+        (unit) => [unit.card.id, unit.attack, unit.maxHealth],
+      ),
+      [
+        [construct.id, 4, 5],
+        [allType.id, 3, 3],
+        [plain.id, 1, 1],
+        [handler.id, 4, 5],
+      ],
+    );
+
+    state.player.hand
+      ..clear()
+      ..add(appraiser);
+    state.player.handCostReductions
+      ..clear()
+      ..add(0);
+    state.player.handFragments
+      ..clear()
+      ..add(null);
+    state.player.deck
+      ..clear()
+      ..addAll([plain, construct]);
+    state.player.deckCostOverrides
+      ..clear()
+      ..addAll([null, 1]);
+    state.player.mana = 2;
+    expect(controller.playCard(appraiser, handIndex: 0), isTrue);
+    expect(state.player.deck, [plain]);
+    expect(state.player.deckCostOverrides, [null]);
+    expect(state.player.hand.single, construct);
+    expect(state.player.handCostReductions.single, 5);
+
+    state.player.hand
+      ..clear()
+      ..add(appraiser);
+    state.player.handCostReductions
+      ..clear()
+      ..add(0);
+    state.player.handFragments
+      ..clear()
+      ..add(null);
+    state.player.deck
+      ..clear()
+      ..add(plain);
+    state.player.deckCostOverrides
+      ..clear()
+      ..add(null);
+    state.player.fatigue = 0;
+    state.player.mana = 2;
+    expect(controller.playCard(appraiser, handIndex: 0), isTrue);
+    expect(state.player.deck, [plain]);
+    expect(state.player.hand, isEmpty);
+    expect(state.player.fatigue, 0);
+    controller.dispose();
+  });
 
   test(
     'mobile Disguised deploys under the recipient and damages that controller',
@@ -2382,9 +2568,10 @@ void main() {
               'board': [
                 {
                   'entityId': 'u1',
-                  'cardId': 'sun-dawn-scout',
-                  'attack': 2,
+                  'cardId': 'neutral-clockwork-beetle',
+                  'attack': 3,
                   'health': 3,
+                  'minionTypes': ['beast', 'construct'],
                   'hasAttacked': false,
                 },
               ],
@@ -2404,6 +2591,7 @@ void main() {
     expect(controller.remoteHealth, 24);
     expect(controller.hand.single.id, 'sun-dawn-scout');
     expect(controller.localBoard.single.instanceId, 'u1');
+    expect(controller.localBoard.single.minionTypes, ['beast', 'construct']);
     expect(controller.canAct, isTrue);
 
     client.lastEvent = MultiplayerEvent(

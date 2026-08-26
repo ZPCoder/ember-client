@@ -13,6 +13,7 @@ class OnlineUnit {
     required this.health,
     required this.maxHealth,
     this.keywords = const <String>[],
+    this.minionTypes = const <String>[],
     this.hasAttacked = false,
     this.attacksMade = 0,
     this.summoningSick = false,
@@ -29,6 +30,7 @@ class OnlineUnit {
   final int maxHealth;
   int health;
   final List<String> keywords;
+  final List<String> minionTypes;
   final bool hasAttacked;
   final int attacksMade;
   final bool summoningSick;
@@ -740,6 +742,10 @@ class OnlineBattleController extends ChangeNotifier {
           final keywords = rawKeywords is List
               ? rawKeywords.map((item) => item.toString()).toList()
               : <String>[];
+          final rawMinionTypes = unit['minionTypes'];
+          final minionTypes = rawMinionTypes is List
+              ? rawMinionTypes.map((item) => item.toString()).toList()
+              : <String>[];
           final catalogDefinition = cardId == null ? null : card(cardId);
           final definition =
               catalogDefinition ??
@@ -759,6 +765,7 @@ class OnlineBattleController extends ChangeNotifier {
                           (unit['health'] as num?)?.toInt() ??
                           1,
                       keywords: keywords,
+                      minionTypes: minionTypes,
                     ));
           if (definition == null) return null;
           final projectedKeywords = rawKeywords is List
@@ -775,6 +782,9 @@ class OnlineBattleController extends ChangeNotifier {
             maxHealth:
                 (unit['maxHealth'] as num?)?.toInt() ?? definition.health ?? 1,
             keywords: projectedKeywords,
+            minionTypes: minionTypes.isNotEmpty
+                ? minionTypes
+                : List<String>.from(definition.minionTypes),
             hasAttacked: hasAttacked,
             attacksMade:
                 (unit['attacksMade'] as num?)?.toInt() ?? (hasAttacked ? 1 : 0),

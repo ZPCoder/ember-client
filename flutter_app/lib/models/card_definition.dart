@@ -23,6 +23,7 @@ class CardDefinition {
     this.spellDamage = 0,
     this.keywords = const [],
     this.traits = const [],
+    this.minionTypes = const [],
     this.school,
     this.target,
     this.combo = const [],
@@ -57,6 +58,7 @@ class CardDefinition {
   final int spellDamage;
   final List<String> keywords;
   final List<String> traits;
+  final List<String> minionTypes;
   final String? school;
   final String? target;
   final List<Map<String, dynamic>> combo;
@@ -80,6 +82,7 @@ class CardDefinition {
     String? name,
     String? description,
     List<String>? keywords,
+    List<String>? minionTypes,
     String? target,
     List<Map<String, dynamic>>? combo,
     List<Map<String, dynamic>>? onTurnStart,
@@ -117,6 +120,7 @@ class CardDefinition {
       spellDamage: spellDamage,
       keywords: keywords ?? this.keywords,
       traits: traits,
+      minionTypes: minionTypes ?? this.minionTypes,
       school: school,
       target: target ?? this.target,
       combo: combo ?? this.combo,
@@ -177,6 +181,7 @@ class CardDefinition {
       spellDamage: (json['spellDamage'] as num?)?.toInt() ?? 0,
       keywords: strings(json['keywords']),
       traits: strings(json['traits']),
+      minionTypes: strings(json['minionTypes']),
       school: json['school'] as String?,
       target: json['target'] as String?,
       combo: effects(json['combo']),

@@ -832,6 +832,7 @@ class _CollectionPageState extends State<CollectionPage> {
   String query = '';
   String faction = '全部';
   String type = '全部';
+  String minionType = '全部';
   String cardPool = 'all';
   int visible = 30;
 
@@ -841,7 +842,7 @@ class _CollectionPageState extends State<CollectionPage> {
       final set = cardSetDefinition(card.setId);
       final textMatch =
           needle.isEmpty ||
-          '${card.name} ${card.description} ${set.label}'
+          '${card.name} ${card.description} ${set.label} ${card.minionTypes.map((type) => minionTypeLabels[type] ?? type).join(' ')}'
               .toLowerCase()
               .contains(needle);
       final poolMatch = switch (cardPool) {
@@ -852,7 +853,8 @@ class _CollectionPageState extends State<CollectionPage> {
       return textMatch &&
           poolMatch &&
           (faction == '全部' || card.faction == faction) &&
-          (type == '全部' || card.type == type);
+          (type == '全部' || card.type == type) &&
+          (minionType == '全部' || hasMinionType(card, minionType));
     }).toList();
     if (faction != '全部') return result;
     final buckets = [
@@ -941,9 +943,18 @@ class _CollectionPageState extends State<CollectionPage> {
           const SizedBox(height: 14),
           LayoutBuilder(
             builder: (context, constraints) {
-              return Row(
+              final compactFilters = constraints.maxWidth < 620;
+              final dropdownWidth = compactFilters
+                  ? (constraints.maxWidth - 10) / 2
+                  : 135.0;
+              return Wrap(
+                spacing: 10,
+                runSpacing: 10,
                 children: [
-                  Expanded(
+                  SizedBox(
+                    width: compactFilters
+                        ? constraints.maxWidth
+                        : constraints.maxWidth - 290,
                     child: TextField(
                       decoration: const InputDecoration(
                         prefixIcon: Icon(Icons.search),
@@ -955,9 +966,8 @@ class _CollectionPageState extends State<CollectionPage> {
                       }),
                     ),
                   ),
-                  const SizedBox(width: 10),
                   SizedBox(
-                    width: 125,
+                    width: dropdownWidth,
                     child: DropdownButtonFormField<String>(
                       initialValue: type,
                       decoration: const InputDecoration(labelText: '类型'),
@@ -970,6 +980,25 @@ class _CollectionPageState extends State<CollectionPage> {
                       ],
                       onChanged: (value) => setState(() {
                         type = value ?? '全部';
+                        visible = 30;
+                      }),
+                    ),
+                  ),
+                  SizedBox(
+                    width: dropdownWidth,
+                    child: DropdownButtonFormField<String>(
+                      initialValue: minionType,
+                      decoration: const InputDecoration(labelText: '随从类型'),
+                      items: [
+                        const DropdownMenuItem(value: '全部', child: Text('全部')),
+                        for (final item in minionTypeOrder)
+                          DropdownMenuItem(
+                            value: item,
+                            child: Text(minionTypeLabels[item] ?? item),
+                          ),
+                      ],
+                      onChanged: (value) => setState(() {
+                        minionType = value ?? '全部';
                         visible = 30;
                       }),
                     ),
@@ -1109,6 +1138,11 @@ class CardTile extends StatelessWidget {
     final displayedCost = costOverride ?? card.cost;
     final isDiscounted = displayedCost < card.cost;
     final tags = <({String label, Color color})>[
+      for (final minionType in card.minionTypes)
+        (
+          label: minionTypeLabels[minionType] ?? minionType,
+          color: const Color(0xFF68A9D8),
+        ),
       for (final trait in card.traits)
         (label: traitLabels[trait] ?? trait, color: const Color(0xFF69CFC3)),
       for (final keyword in card.keywords)
@@ -4059,6 +4093,11 @@ class _BoardRow extends StatelessWidget {
                   Wrap(
                     spacing: 4,
                     children: [
+                      for (final minionType in unit.card.minionTypes.take(2))
+                        _UnitBadge(
+                          label: minionTypeLabels[minionType] ?? minionType,
+                          color: const Color(0xFF68A9D8),
+                        ),
                       if (unit.hasTaunt)
                         const _UnitBadge(label: '嘲讽', color: Color(0xFFE7BD7A)),
                       if (unit.divineShield)
@@ -5335,6 +5374,18 @@ class _OnlineBoardRow extends StatelessWidget {
                               fontWeight: FontWeight.w700,
                             ),
                           ),
+                          if (unit.minionTypes.isNotEmpty)
+                            Text(
+                              unit.minionTypes
+                                  .map((type) => minionTypeLabels[type] ?? type)
+                                  .join(' / '),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Color(0xFF68A9D8),
+                                fontSize: 8,
+                              ),
+                            ),
                           const Spacer(),
                           if (unit.isFrozen || unit.summoningSick)
                             Text(

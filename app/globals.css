@@ -1849,7 +1849,7 @@ button.resource-chip:hover {
 
 .collection-toolbar {
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) repeat(5, minmax(105px, 0.22fr));
+  grid-template-columns: minmax(260px, 2fr) repeat(3, minmax(120px, 1fr));
   gap: 10px;
   margin-bottom: 13px;
 }
@@ -2198,6 +2198,12 @@ button.game-card:not(:disabled):hover .game-card__artwork,
   border-color: rgba(166, 146, 209, 0.24);
   color: #b9a8df;
   background: rgba(166, 146, 209, 0.08);
+}
+
+.card-tag--minion-type {
+  border-color: rgba(104, 169, 216, 0.3);
+  color: #a9d8ef;
+  background: rgba(104, 169, 216, 0.1);
 }
 
 .game-card__body > p {
@@ -5111,6 +5117,12 @@ button.hero-core {
   border: 1px solid rgba(105, 207, 195, 0.24);
   border-radius: 3px;
   text-overflow: ellipsis;
+}
+
+.board-unit__keywords .board-unit__minion-type {
+  border-color: rgba(104, 169, 216, 0.4);
+  color: #b7e3f5;
+  background: rgba(40, 92, 119, 0.28);
 }
 
 .board-unit__status {
