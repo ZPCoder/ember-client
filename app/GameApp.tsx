@@ -18,6 +18,8 @@ import {
   DEFAULT_OPPONENT_DECK,
   DEFAULT_STARTER_DECK,
   drawPack,
+  ETERNAL_SCARAB_CARD_BACK_NAME,
+  ETERNAL_SCARAB_LEGEND_SEASON_TARGET,
   KEYWORD_DEFINITIONS,
   REWARD_TRACK,
   craftCost,
@@ -53,6 +55,8 @@ import {
   decodeDeckCode,
   deckRecipesForFaction,
   describeRankedRewardBundle,
+  eternalScarabCardBackEarned,
+  eternalScarabLegendProgress,
   encodeDeckCode,
   highestRankedFormat,
   ladderLabelForProgress,
@@ -7883,6 +7887,8 @@ function OperationsSection({
   const rankedRewards = normalizeRankedRewardState(player.rankedRewards);
   const currentSeasonKey = ladder.seasonKey ?? fallbackSeasonKey;
   const seasonCardBackEarned = rankedRewards.earnedCardBackSeasons.includes(currentSeasonKey);
+  const eternalScarabProgress = eternalScarabLegendProgress(rankedRewards);
+  const eternalScarabEarned = eternalScarabCardBackEarned(rankedRewards);
   const projectedSeasonReward = rankedSeasonRewardForPeak(
     ladder.seasonBestProgress ?? ladderProgress,
   );
@@ -7965,6 +7971,11 @@ function OperationsSection({
             <span><Icon name="spark" size={17} />首次段位奖励</span>
             <strong>{rankedRewards.claimedFirstTimeFloors.length} / {RANKED_FIRST_TIME_REWARD_LEVELS.length}</strong>
             <small>{nextFirstTimeReward ? `下一档 ${nextFirstTimeReward.label}：${describeRankedRewardBundle(nextFirstTimeReward.reward)}。` : "全部保护段的一次性奖励均已领取。"}</small>
+          </article>
+          <article className={`ranked-reward-card ${eternalScarabEarned ? "is-earned" : ""}`}>
+            <span><Icon name="shield" size={17} />跨赛季传说成就</span>
+            <strong>{eternalScarabEarned ? `${ETERNAL_SCARAB_CARD_BACK_NAME}已解锁` : `${eternalScarabProgress} / ${ETERNAL_SCARAB_LEGEND_SEASON_TARGET} 赛季`}</strong>
+            <small>在 2026 圣甲虫之年的六个不同赛季达到传说；标准与狂野同月只计一次，历史宝箱会自动回填。</small>
           </article>
         </div>
         <div className="ranked-rewards-history">

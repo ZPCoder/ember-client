@@ -100,6 +100,8 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(game, /赛季天梯奖励/);
   assert.match(game, /下月首次登录只结算一份/);
   assert.match(game, /任意段位赢得 5 场 Ranked/);
+  assert.match(game, /跨赛季传说成就/);
+  assert.match(game, /在 2026 圣甲虫之年的六个不同赛季达到传说/);
   assert.match(game, /天梯预备套牌/);
   assert.match(game, /activate_ladder_ready/);
   assert.match(game, /claim_ladder_ready_deck/);
@@ -189,6 +191,8 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(rankedRewards, /RANKED_FIRST_TIME_REWARD_LEVELS/);
   assert.match(rankedRewards, /applyOutstandingRankedRewards/);
   assert.match(rankedRewards, /rollRankedSeason/);
+  assert.match(rankedRewards, /ETERNAL_SCARAB_LEGEND_SEASON_TARGET = 6/);
+  assert.match(rankedRewards, /legendSeasonCardBackUnlocked/);
   assert.match(gameStore, /applyRankedMatchResult/);
   assert.match(gameStore, /rollRankedSeason/);
   assert.match(styles, /@keyframes battle-card-reveal/);
