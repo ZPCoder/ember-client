@@ -371,7 +371,10 @@ type BattleView = {
   player: BattleSide;
   ai: BattleSide;
   log: string[];
-  discover: { sourceCardId: string; choices: string[] } | null;
+  discover: {
+    sourceCardId: string;
+    choices: Array<{ cardId: string; currentCost?: number; fragment?: "left" | "right" }>;
+  } | null;
   chooseOne: { player: "player" | "ai"; sourceCardId: string; options: Array<{ label: string }>; remainingChoices: number; sourceKind: "spell" | "hero-card" } | null;
   report: BattleReport;
 };
@@ -444,7 +447,12 @@ function orientPvpMatchForLocal(state: MatchState, role: PvpRole): MatchState {
     activePlayer: swap(state.activePlayer),
     mulliganDone: [state.mulliganDone?.[1] ?? true, state.mulliganDone?.[0] ?? true],
     discover: state.discover
-      ? { ...state.discover, player: swap(state.discover.player), choices: [...state.discover.choices] }
+      ? {
+          ...state.discover,
+          player: swap(state.discover.player),
+          choices: [...state.discover.choices],
+          choiceSnapshots: state.discover.choiceSnapshots?.map((choice) => ({ ...choice })),
+        }
       : null,
     chooseOne: state.chooseOne
       ? {
@@ -1636,7 +1644,27 @@ function battleFromRaw(value: unknown): BattleView | null {
   const discover = isDiscover && rawDiscover && Array.isArray(rawDiscover.choices)
     ? {
         sourceCardId: asString(rawDiscover.sourceCardId),
-        choices: rawDiscover.choices.map((choice) => asString(choice)).filter(Boolean),
+        choices: rawDiscover.choices.map((choice, index) => {
+          const cardId = asString(choice);
+          if (!cardId) return null;
+          const snapshot = Array.isArray(rawDiscover.choiceSnapshots)
+            && rawDiscover.choiceSnapshots[index]
+            && typeof rawDiscover.choiceSnapshots[index] === "object"
+            ? rawDiscover.choiceSnapshots[index] as Record<string, unknown>
+            : null;
+          const reduction = snapshot ? Math.max(0, asNumber(snapshot.costReduction, 0)) : undefined;
+          const printedCost = CARD_BY_ID.get(cardId)?.cost;
+          const fragment = snapshot?.fragment === "left" || snapshot?.fragment === "right"
+            ? snapshot.fragment
+            : undefined;
+          return {
+            cardId,
+            ...(printedCost !== undefined && reduction !== undefined
+              ? { currentCost: Math.max(0, printedCost - reduction) }
+              : {}),
+            ...(fragment ? { fragment } : {}),
+          };
+        }).filter((choice): choice is NonNullable<typeof choice> => Boolean(choice)),
       }
     : null;
   const rawChooseOne = raw.chooseOne && typeof raw.chooseOne === "object"
@@ -4700,7 +4728,7 @@ export function GameApp({
     }
   };
 
-  const chooseDiscover = (cardId: string) => {
+  const chooseDiscover = (cardId: string, choiceIndex: number) => {
     if (battleEffectLockRef.current) {
       setBattleMessage("战况回放中，请等待选择窗口稳定。");
       return;
@@ -4710,7 +4738,7 @@ export function GameApp({
       return;
     }
     const card = CARD_BY_ID.get(cardId);
-    const next = issueCommand({ type: "choose-discover", player: 0, cardId });
+    const next = issueCommand({ type: "choose-discover", player: 0, cardId, choiceIndex });
     if (next) setBattleMessage(`已选择「${card?.name ?? "发现卡牌"}」加入手牌。`);
   };
 
@@ -7276,7 +7304,7 @@ function BattleSection({
   ) => void;
   onTradeCard: (card: BattleSide["hand"][number]) => void;
   onPrepareCard: (card: BattleSide["hand"][number]) => void;
-  onChooseDiscover: (cardId: string) => void;
+  onChooseDiscover: (cardId: string, choiceIndex: number) => void;
   onChooseOne: (optionIndex: number) => void;
   onToggleMulligan: (index: number) => void;
   onConfirmMulligan: () => void;
@@ -8098,15 +8126,16 @@ function BattleSection({
               </div>
               {battle.discover.choices.length > 0 ? (
                 <div className="discover-prompt__cards">
-                  {battle.discover.choices.map((cardId) => {
-                    const card = CARD_BY_ID.get(cardId);
+                  {battle.discover.choices.map((choice, choiceIndex) => {
+                    const card = CARD_BY_ID.get(choice.cardId);
                     if (!card) return null;
                     return (
                       <CardTile
-                        key={cardId}
+                        key={`${choice.cardId}-${choiceIndex}`}
                         card={card}
                         compact
-                        action={() => onChooseDiscover(cardId)}
+                        costOverride={choice.currentCost}
+                        action={() => onChooseDiscover(choice.cardId, choiceIndex)}
                         actionLabel={`选择${card.name}`}
                         disabled={!playerCanDiscover}
                       />

@@ -1242,7 +1242,7 @@ void main() {
   );
 
   test(
-    'mobile hidden-zone copies preserve the opponent and rebuild printed hand state',
+    'mobile hidden-zone copies preserve the opponent and current hand state',
     () async {
       final catalog = await loadCatalog();
       final handCopy = catalog.singleWhere(
@@ -1290,10 +1290,12 @@ void main() {
       expect(controller.playCard(handCopy), isTrue);
       expect(state.phase, 'discover');
       expect(state.discoverChoices, [shatter.id]);
+      expect(state.discoverCostReductions, [4]);
+      expect(state.discoverFragments, [null]);
       expect(state.discoverCopiedFrom, 'opponent-hand');
       expect(state.ai.hand, [shatter]);
       expect(state.ai.handCostReductions, [4]);
-      expect(controller.chooseDiscover(shatter.id), isTrue);
+      expect(controller.chooseDiscover(shatter.id, choiceIndex: 0), isTrue);
       expect(state.phase, 'main');
       expect(state.discoverCopiedFrom, isNull);
       expect(state.player.hand.map((card) => card.id), [
@@ -1304,9 +1306,37 @@ void main() {
         'left',
         'right',
       ]);
-      expect(state.player.handCostReductions, [0, 0]);
+      expect(state.player.handCostReductions, [4, 4]);
       expect(state.player.handStartedInDeck, [false, false]);
       expect(state.ai.hand, [shatter]);
+
+      final duplicate = catalog.singleWhere(
+        (card) => card.id == 'neutral-stonehorn',
+      );
+      state.player.hand
+        ..clear()
+        ..add(handCopy);
+      state.player.handCostReductions
+        ..clear()
+        ..add(0);
+      state.player.handFragments
+        ..clear()
+        ..add(null);
+      state.ai.hand
+        ..clear()
+        ..addAll([duplicate, duplicate]);
+      state.ai.handCostReductions
+        ..clear()
+        ..addAll([0, 3]);
+      state.ai.handFragments
+        ..clear()
+        ..addAll([null, null]);
+      expect(controller.playCard(handCopy), isTrue);
+      expect(state.discoverChoices, [duplicate.id, duplicate.id]);
+      expect(state.discoverCostReductions, [0, 3]);
+      expect(controller.chooseDiscover(duplicate.id, choiceIndex: 1), isTrue);
+      expect(state.player.hand, [duplicate]);
+      expect(state.player.handCostReductions, [3]);
 
       state.player.hand
         ..clear()
@@ -1334,7 +1364,12 @@ void main() {
       );
       expect(copied, hasLength(1));
       final copiedIndex = state.player.hand.indexOf(copied.single);
-      expect(state.player.handCostReductions[copiedIndex], 0);
+      final sourceIndex = enemyDeckBefore.indexOf(copied.single);
+      expect(
+        state.player.handCostReductions[copiedIndex],
+        copied.single.cost -
+            (enemyOverridesBefore[sourceIndex] ?? copied.single.cost),
+      );
       expect(state.player.handStartedInDeck[copiedIndex], isFalse);
       expect(state.logs.any((log) => log.contains('复制燃毁')), isTrue);
 
@@ -3786,6 +3821,9 @@ void main() {
             'player': 0,
             'sourceCardId': 'discover-card',
             'choices': ['sun-dawn-scout'],
+            'choiceSnapshots': [
+              {'cardId': 'sun-dawn-scout', 'costReduction': 1},
+            ],
           },
           'players': [
             {
@@ -3807,6 +3845,9 @@ void main() {
     expect(controller.phase, 'discover');
     expect(controller.canChooseDiscover, isTrue);
     expect(controller.discoverChoices, ['sun-dawn-scout']);
+    expect(controller.discoverChoiceCosts, [
+      catalog.singleWhere((card) => card.id == 'sun-dawn-scout').cost - 1,
+    ]);
 
     client.lastEvent = MultiplayerEvent(
       type: 'action',
@@ -5050,72 +5091,71 @@ void main() {
     },
   );
 
-  test('dynamic Discover filters by format, excludes tokens and itself', () async {
-    CardDefinition unit(String id, String setId, {bool collectible = true}) =>
-        CardDefinition(
-          id: id,
-          name: id,
-          description: '动态发现候选',
-          faction: '中立',
-          type: 'unit',
-          cost: 1,
-          rarity: '普通',
-          setId: setId,
-          attack: 1,
-          health: 1,
-          collectible: collectible,
-        );
+  test(
+    'dynamic Discover filters by format, excludes tokens and itself',
+    () async {
+      CardDefinition unit(String id, String setId, {bool collectible = true}) =>
+          CardDefinition(
+            id: id,
+            name: id,
+            description: '动态发现候选',
+            faction: '中立',
+            type: 'unit',
+            cost: 1,
+            rarity: '普通',
+            setId: setId,
+            attack: 1,
+            health: 1,
+            collectible: collectible,
+          );
 
-    final discover = CardDefinition(
-      id: 'dynamic-discover',
-      name: '动态发现',
-      description: '从当前模式的中立牌池中发现一张牌。',
-      faction: '中立',
-      type: 'spell',
-      cost: 1,
-      rarity: '稀有',
-      setId: 'scarab-2026',
-      effect: const [
-        {
-          'kind': 'discover',
-          'pool': {'faction': 'neutral'},
-        },
-      ],
-    );
-    final standard = unit('standard-choice', 'scarab-2026');
-    final wildA = unit('wild-choice-a', 'pegasus-2024');
-    final wildB = unit('wild-choice-b', 'pegasus-2024');
-    final token = unit(
-      'generated-choice',
-      'scarab-2026',
-      collectible: false,
-    );
-    final fixture = [discover, standard, wildA, wildB, token];
+      final discover = CardDefinition(
+        id: 'dynamic-discover',
+        name: '动态发现',
+        description: '从当前模式的中立牌池中发现一张牌。',
+        faction: '中立',
+        type: 'spell',
+        cost: 1,
+        rarity: '稀有',
+        setId: 'scarab-2026',
+        effect: const [
+          {
+            'kind': 'discover',
+            'pool': {'faction': 'neutral'},
+          },
+        ],
+      );
+      final standard = unit('standard-choice', 'scarab-2026');
+      final wildA = unit('wild-choice-a', 'pegasus-2024');
+      final wildB = unit('wild-choice-b', 'pegasus-2024');
+      final token = unit('generated-choice', 'scarab-2026', collectible: false);
+      final fixture = [discover, standard, wildA, wildB, token];
 
-    Future<List<String>> choicesFor(RankedFormat format) async {
-      final controller = GameController(startingPlayer: 'player')
-        ..catalog = fixture;
-      controller.setDeckFormat(format);
-      controller.startBattle();
-      await controller.confirmMulligan();
-      final state = controller.battle!;
-      state.player.mana = 10;
-      state.player.hand
-        ..clear()
-        ..add(discover);
-      expect(controller.playCard(discover), isTrue);
-      final choices = List<String>.from(state.discoverChoices);
-      controller.dispose();
-      return choices;
-    }
+      Future<List<String>> choicesFor(RankedFormat format) async {
+        final controller = GameController(startingPlayer: 'player')
+          ..catalog = fixture;
+        controller.setDeckFormat(format);
+        controller.startBattle();
+        await controller.confirmMulligan();
+        final state = controller.battle!;
+        state.player.mana = 10;
+        state.player.hand
+          ..clear()
+          ..add(discover);
+        expect(controller.playCard(discover), isTrue);
+        final choices = List<String>.from(state.discoverChoices);
+        controller.dispose();
+        return choices;
+      }
 
-    expect(await choicesFor(RankedFormat.standard), [standard.id]);
-    final wildChoices = await choicesFor(RankedFormat.wild);
-    expect(wildChoices, hasLength(3));
-    expect(wildChoices.toSet(), {standard.id, wildA.id, wildB.id});
-    expect(wildChoices, isNot(contains(discover.id)));
-    expect(wildChoices, isNot(contains(token.id)));
-  });
+      expect(await choicesFor(RankedFormat.standard), [standard.id]);
+      final wildChoices = await choicesFor(RankedFormat.wild);
+      expect(wildChoices, hasLength(3));
+      expect(wildChoices.toSet(), {standard.id, wildA.id, wildB.id});
+      expect(wildChoices, isNot(contains(discover.id)));
+      expect(wildChoices, isNot(contains(token.id)));
+    },
+  );
 
   test('choose-one and start-of-turn triggers resolve on mobile', () async {
     final branchCard = CardDefinition(

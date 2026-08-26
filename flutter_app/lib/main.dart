@@ -2735,13 +2735,23 @@ class _BattleBoardState extends State<BattleBoard> {
                           state.discoverChoices[index],
                         );
                         if (discovered == null) return const SizedBox.shrink();
+                        final reduction =
+                            index < state.discoverCostReductions.length
+                            ? state.discoverCostReductions[index]
+                            : 0;
                         return SizedBox(
                           width: 145,
                           child: CardTile(
                             card: discovered,
                             compact: true,
-                            onTap: () =>
-                                controller.chooseDiscover(discovered.id),
+                            costOverride: math.max(
+                              0,
+                              discovered.cost - reduction,
+                            ),
+                            onTap: () => controller.chooseDiscover(
+                              discovered.id,
+                              choiceIndex: index,
+                            ),
                           ),
                         );
                       },
@@ -5297,14 +5307,19 @@ class _OnlineDiscoverPanel extends StatelessWidget {
             spacing: 7,
             runSpacing: 7,
             children: [
-              for (final id in controller.discoverChoices)
+              for (final (index, id) in controller.discoverChoices.indexed)
                 Builder(
                   builder: (context) {
                     final card = controller.card(id);
                     if (card == null) return const SizedBox.shrink();
+                    final currentCost =
+                        index < controller.discoverChoiceCosts.length
+                        ? controller.discoverChoiceCosts[index]
+                        : card.cost;
                     return OutlinedButton(
-                      onPressed: () => controller.chooseDiscover(id),
-                      child: Text(card.name),
+                      onPressed: () =>
+                          controller.chooseDiscover(id, choiceIndex: index),
+                      child: Text('$currentCost · ${card.name}'),
                     );
                   },
                 ),

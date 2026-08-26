@@ -469,9 +469,13 @@ class BattleState {
     this.aiFaction = '幽潮',
     Set<int>? mulliganSelected,
     List<String>? discoverChoices,
+    List<int>? discoverCostReductions,
+    List<String?>? discoverFragments,
     List<Map<String, dynamic>>? chooseOneOptions,
   }) : mulliganSelected = mulliganSelected ?? <int>{},
        discoverChoices = discoverChoices ?? <String>[],
+       discoverCostReductions = discoverCostReductions ?? <int>[],
+       discoverFragments = discoverFragments ?? <String?>[],
        chooseOneOptions = chooseOneOptions ?? <Map<String, dynamic>>[];
 
   final BattleSide player;
@@ -497,6 +501,8 @@ class BattleState {
   bool mulliganDone = false;
   final Set<int> mulliganSelected;
   List<String> discoverChoices;
+  List<int> discoverCostReductions;
+  List<String?> discoverFragments;
   String? discoverSource;
   String discoverOwner = 'player';
   String? discoverCopiedFrom;

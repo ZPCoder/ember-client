@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/foundation.dart';
 
 import '../data/formats.dart';
@@ -118,6 +120,7 @@ class OnlineBattleController extends ChangeNotifier {
   String? winner;
   String phase = 'mulligan';
   List<String> discoverChoices = <String>[];
+  List<int> discoverChoiceCosts = <int>[];
   String? discoverSourceCardId;
   List<Map<String, dynamic>> chooseOneOptions = <Map<String, dynamic>>[];
   String? chooseOneSourceCardId;
@@ -393,11 +396,18 @@ class OnlineBattleController extends ChangeNotifier {
     _sendCommand(command);
   }
 
-  void chooseDiscover(String cardId) {
-    if (!canChooseDiscover || !discoverChoices.contains(cardId)) return;
+  void chooseDiscover(String cardId, {int? choiceIndex}) {
+    final resolvedIndex = choiceIndex ?? discoverChoices.indexOf(cardId);
+    if (!canChooseDiscover ||
+        resolvedIndex < 0 ||
+        resolvedIndex >= discoverChoices.length ||
+        discoverChoices[resolvedIndex] != cardId) {
+      return;
+    }
     _sendCommand(<String, dynamic>{
       'type': 'choose-discover',
       'cardId': cardId,
+      'choiceIndex': resolvedIndex,
     });
   }
 
@@ -551,9 +561,21 @@ class OnlineBattleController extends ChangeNotifier {
                 .where((id) => card(id) != null)
                 .toList()
           : <String>[];
+      final snapshots = discover['choiceSnapshots'];
+      discoverChoiceCosts = List<int>.generate(discoverChoices.length, (index) {
+        final definition = card(discoverChoices[index]);
+        final snapshot = snapshots is List && index < snapshots.length
+            ? snapshots[index]
+            : null;
+        final reduction = snapshot is Map
+            ? max(0, (snapshot['costReduction'] as num?)?.toInt() ?? 0)
+            : 0;
+        return max(0, (definition?.cost ?? 0) - reduction);
+      });
       discoverSourceCardId = discover['sourceCardId']?.toString();
     } else {
       discoverChoices = <String>[];
+      discoverChoiceCosts = <int>[];
       discoverSourceCardId = null;
     }
     final chooseOne = snapshot['chooseOne'];

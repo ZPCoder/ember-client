@@ -1176,32 +1176,41 @@ class GameController extends ChangeNotifier {
     BattleSide side,
     CardDefinition drawn, {
     int? costOverride,
+    int? costReduction,
+    String? fragment,
     bool startedInDeck = false,
   }) {
     final available = 10 - _occupiedHandSlots(side);
     if (available <= 0) return false;
     _syncHandCostReductions(side);
+    final retainedReduction = costReduction == null
+        ? (costOverride == null
+              ? 0
+              : max(0, drawn.cost - max(0, costOverride)).toInt())
+        : max(0, costReduction).toInt();
     if (!drawn.hasShatter) {
       side.hand.add(drawn);
-      side.handCostReductions.add(
-        costOverride == null ? 0 : max(0, drawn.cost - max(0, costOverride)),
-      );
+      side.handCostReductions.add(retainedReduction);
       side.handFragments.add(null);
       side.handStartedInDeck.add(startedInDeck);
       return true;
     }
     final groupId = 'm${_shatterGroupSequence++}';
+    if (fragment == 'left' || fragment == 'right') {
+      side.hand.add(_shatterFragmentCard(drawn, fragment!));
+      side.handCostReductions.add(retainedReduction);
+      side.handFragments.add(HandFragment(groupId: groupId, piece: fragment));
+      side.handStartedInDeck.add(startedInDeck);
+      return true;
+    }
     side.hand.insert(0, _shatterFragmentCard(drawn, 'left'));
-    final int reduction = costOverride == null
-        ? 0
-        : max(0, drawn.cost - max(0, costOverride)).toInt();
-    side.handCostReductions.insert(0, reduction);
+    side.handCostReductions.insert(0, retainedReduction);
     side.handFragments.insert(0, HandFragment(groupId: groupId, piece: 'left'));
     side.handStartedInDeck.insert(0, startedInDeck);
     var fragmentCount = 1;
     if (available >= 2) {
       side.hand.add(_shatterFragmentCard(drawn, 'right'));
-      side.handCostReductions.add(reduction);
+      side.handCostReductions.add(retainedReduction);
       side.handFragments.add(HandFragment(groupId: groupId, piece: 'right'));
       side.handStartedInDeck.add(startedInDeck);
       fragmentCount = 2;
@@ -2423,6 +2432,28 @@ class GameController extends ChangeNotifier {
     }
   }
 
+  List<({String cardId, int costReduction, String? fragment})>
+  _opponentHandCopyChoices(BattleSide side) {
+    _syncHandCostReductions(side);
+    final seen = <String>{};
+    final choices = <({String cardId, int costReduction, String? fragment})>[];
+    for (var index = 0; index < side.hand.length; index++) {
+      final cardId = side.hand[index].id;
+      final costReduction = side.handCostReductions[index];
+      final fragment = side.handFragments[index]?.piece;
+      final signature =
+          '$cardId\u0000$costReduction\u0000${fragment ?? 'full'}';
+      if (seen.add(signature)) {
+        choices.add((
+          cardId: cardId,
+          costReduction: costReduction,
+          fragment: fragment,
+        ));
+      }
+    }
+    return choices;
+  }
+
   void _syncDeckCostOverrides(BattleSide side) {
     while (side.deckCostOverrides.length > side.deck.length) {
       side.deckCostOverrides.removeLast();
@@ -2722,17 +2753,19 @@ class GameController extends ChangeNotifier {
       final factionRule = dynamicPool['faction']?.toString();
       final includeNeutral = dynamicPool['includeNeutral'] == true;
       final cardType = dynamicPool['cardType']?.toString();
-      candidates = catalog.where((candidate) {
-        if (candidate.id == sourceCardId) return false;
-        if (!candidate.collectible ||
-            !cardAvailableInRankedFormat(candidate, deckFormat)) {
-          return false;
-        }
-        if (cardType != null && candidate.type != cardType) return false;
-        if (factionRule == 'neutral') return candidate.faction == '中立';
-        return candidate.faction == source.faction ||
-            (includeNeutral && candidate.faction == '中立');
-      }).map((candidate) => candidate.id);
+      candidates = catalog
+          .where((candidate) {
+            if (candidate.id == sourceCardId) return false;
+            if (!candidate.collectible ||
+                !cardAvailableInRankedFormat(candidate, deckFormat)) {
+              return false;
+            }
+            if (cardType != null && candidate.type != cardType) return false;
+            if (factionRule == 'neutral') return candidate.faction == '中立';
+            return candidate.faction == source.faction ||
+                (includeNeutral && candidate.faction == '中立');
+          })
+          .map((candidate) => candidate.id);
     } else {
       final choices = effect['choices'];
       candidates = choices is List
@@ -2818,17 +2851,31 @@ class GameController extends ChangeNotifier {
     );
     if (discover.isNotEmpty) {
       final effect = discover.first;
-      final rawChoices = effect['kind'] == 'discover-copy-opponent-hand'
-          ? enemy.hand.map((candidate) => candidate.id)
-          : _discoverPoolForEffect(effect, source, copiedSpell.id);
-      final choices = rawChoices
-          .where((candidateId) => card(candidateId) != null)
-          .toSet()
-          .toList(growable: false);
-      if (choices.isNotEmpty) {
-        final chosen = card(choices[_random.nextInt(choices.length)]);
-        if (chosen != null && !_addCardToHand(source, chosen)) {
-          stateLog('重施放燃毁', '${chosen.name} 因手牌已满被销毁。');
+      if (effect['kind'] == 'discover-copy-opponent-hand') {
+        final choices = _opponentHandCopyChoices(enemy);
+        if (choices.isNotEmpty) {
+          final snapshot = choices[_random.nextInt(choices.length)];
+          final chosen = card(snapshot.cardId);
+          if (chosen != null &&
+              !_addCardToHand(
+                source,
+                chosen,
+                costReduction: snapshot.costReduction,
+                fragment: snapshot.fragment,
+              )) {
+            stateLog('重施放燃毁', '${chosen.name} 因手牌已满被销毁。');
+          }
+        }
+      } else {
+        final choices = _discoverPoolForEffect(effect, source, copiedSpell.id)
+            .where((candidateId) => card(candidateId) != null)
+            .toSet()
+            .toList(growable: false);
+        if (choices.isNotEmpty) {
+          final chosen = card(choices[_random.nextInt(choices.length)]);
+          if (chosen != null && !_addCardToHand(source, chosen)) {
+            stateLog('重施放燃毁', '${chosen.name} 因手牌已满被销毁。');
+          }
         }
       }
     } else if (chooseOne.isNotEmpty) {
@@ -2961,6 +3008,14 @@ class GameController extends ChangeNotifier {
               if (validChoices.isNotEmpty) {
                 state.phase = 'discover';
                 state.discoverChoices = validChoices;
+                state.discoverCostReductions = List<int>.filled(
+                  validChoices.length,
+                  0,
+                );
+                state.discoverFragments = List<String?>.filled(
+                  validChoices.length,
+                  null,
+                );
                 state.discoverSource = sourceCard?.id ?? sourceName;
                 state.discoverOwner = _ownerOf(source);
                 state.discoverCopiedFrom = null;
@@ -2979,15 +3034,20 @@ class GameController extends ChangeNotifier {
           case 'discover-copy-opponent-hand':
             final state = battle;
             if (state != null) {
-              final pool = <String>[];
-              for (final candidate in enemy.hand) {
-                if (!pool.contains(candidate.id)) pool.add(candidate.id);
-              }
+              final pool = _opponentHandCopyChoices(enemy);
               if (pool.length > 3) pool.shuffle(_random);
               final choices = pool.take(3).toList(growable: false);
               if (choices.isNotEmpty) {
                 state.phase = 'discover';
-                state.discoverChoices = choices;
+                state.discoverChoices = choices
+                    .map((choice) => choice.cardId)
+                    .toList(growable: false);
+                state.discoverCostReductions = choices
+                    .map((choice) => choice.costReduction)
+                    .toList(growable: false);
+                state.discoverFragments = choices
+                    .map((choice) => choice.fragment)
+                    .toList(growable: false);
                 state.discoverSource = sourceCard?.id ?? sourceName;
                 state.discoverOwner = _ownerOf(source);
                 state.discoverCopiedFrom = 'opponent-hand';
@@ -3004,13 +3064,25 @@ class GameController extends ChangeNotifier {
             }
             break;
           case 'copy-random-opponent-deck':
-            final pool = List<CardDefinition>.from(enemy.deck);
+            _syncDeckCostOverrides(enemy);
+            final pool = List.generate(
+              enemy.deck.length,
+              (index) => (
+                card: enemy.deck[index],
+                costOverride: enemy.deckCostOverrides[index],
+              ),
+            );
             final count = (effect['count'] as num?)?.toInt() ?? 1;
             var copied = 0;
             for (var index = 0; index < count && pool.isNotEmpty; index++) {
               final chosenIndex = _random.nextInt(pool.length);
-              final copiedCard = pool.removeAt(chosenIndex);
-              if (_addCardToHand(source, copiedCard)) {
+              final copiedEntry = pool.removeAt(chosenIndex);
+              final copiedCard = copiedEntry.card;
+              if (_addCardToHand(
+                source,
+                copiedCard,
+                costOverride: copiedEntry.costOverride,
+              )) {
                 copied++;
               } else {
                 stateLog('复制燃毁', '${copiedCard.name} 因手牌已满被销毁。');
@@ -3021,7 +3093,7 @@ class GameController extends ChangeNotifier {
               _emitFx(
                 'draw',
                 '牌库复制',
-                '获得 $copied 张印刷复制',
+                '获得 $copied 张保留当前费用的复制',
                 Icons.content_copy,
                 0xFFA692D1,
                 amount: copied,
@@ -3643,11 +3715,15 @@ class GameController extends ChangeNotifier {
     return countered;
   }
 
-  bool chooseDiscover(String cardId) {
+  bool chooseDiscover(String cardId, {int? choiceIndex}) {
     final state = battle;
+    final resolvedIndex =
+        choiceIndex ?? state?.discoverChoices.indexOf(cardId) ?? -1;
     if (state == null ||
         state.phase != 'discover' ||
-        !state.discoverChoices.contains(cardId)) {
+        resolvedIndex < 0 ||
+        resolvedIndex >= state.discoverChoices.length ||
+        state.discoverChoices[resolvedIndex] != cardId) {
       return false;
     }
     final discovered = card(cardId);
@@ -3655,11 +3731,25 @@ class GameController extends ChangeNotifier {
     final owner = state.discoverOwner == 'ai' ? state.ai : state.player;
     final enemy = identical(owner, state.player) ? state.ai : state.player;
     final copiedFrom = state.discoverCopiedFrom;
-    if (!_addCardToHand(owner, discovered)) {
+    final retainedReduction =
+        resolvedIndex < state.discoverCostReductions.length
+        ? state.discoverCostReductions[resolvedIndex]
+        : 0;
+    final fragment = resolvedIndex < state.discoverFragments.length
+        ? state.discoverFragments[resolvedIndex]
+        : null;
+    if (!_addCardToHand(
+      owner,
+      discovered,
+      costReduction: retainedReduction,
+      fragment: fragment,
+    )) {
       stateLog('发现失败', '${discovered.name} 因手牌已满被燃毁。');
     }
     state.phase = 'main';
     state.discoverChoices = <String>[];
+    state.discoverCostReductions = <int>[];
+    state.discoverFragments = <String?>[];
     state.discoverSource = null;
     state.discoverOwner = 'player';
     state.discoverCopiedFrom = null;
@@ -4243,7 +4333,7 @@ class GameController extends ChangeNotifier {
       if (state.phase == 'discover' &&
           state.discoverOwner == 'ai' &&
           state.discoverChoices.isNotEmpty) {
-        chooseDiscover(state.discoverChoices.first);
+        chooseDiscover(state.discoverChoices.first, choiceIndex: 0);
       }
       while (state.phase == 'choose-one' &&
           state.chooseOneOwner == 'ai' &&
