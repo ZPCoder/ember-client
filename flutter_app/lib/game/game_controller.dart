@@ -2449,6 +2449,15 @@ class GameController extends ChangeNotifier {
     BattleSide enemy,
     BattleUnit? target,
   ) {
+    final transfersTarget = [
+      ...card.effect,
+      ...card.onPlay,
+      ...card.combo,
+    ].any((effect) => effect['kind'] == 'take-control');
+    final reservedSlots = card.isUnit ? 1 : 0;
+    if (transfersTarget && source.board.length + reservedSlots >= 7) {
+      return false;
+    }
     final targetType = card.target ?? '';
     if (!targetType.contains('unit')) return true;
     if (target == null) {
@@ -2902,6 +2911,29 @@ class GameController extends ChangeNotifier {
               );
             }
             break;
+          case 'take-control':
+            if (target != null) {
+              _takeControlOfUnit(
+                source: source,
+                enemy: enemy,
+                unit: target,
+                sourceName: sourceName,
+              );
+            }
+            break;
+          case 'take-control-random-enemy':
+            if (source.board.length >= 7) break;
+            final candidates = enemy.board
+                .where((unit) => unit.health > 0)
+                .toList(growable: false);
+            if (candidates.isEmpty) break;
+            _takeControlOfUnit(
+              source: source,
+              enemy: enemy,
+              unit: candidates[_random.nextInt(candidates.length)],
+              sourceName: sourceName,
+            );
+            break;
           case 'discard-random':
             _discardRandomCards(
               source: source,
@@ -3326,6 +3358,38 @@ class GameController extends ChangeNotifier {
   BattleSide _sideFor(BattleUnit unit) {
     final state = battle!;
     return unit.owner == 'player' ? state.player : state.ai;
+  }
+
+  bool _takeControlOfUnit({
+    required BattleSide source,
+    required BattleSide enemy,
+    required BattleUnit unit,
+    required String sourceName,
+  }) {
+    if (source.board.length >= 7 ||
+        unit.health <= 0 ||
+        !enemy.board.contains(unit)) {
+      return false;
+    }
+    enemy.board.remove(unit);
+    unit.owner = _ownerOf(source);
+    unit.attacksMade = 0;
+    unit.hasAttacked = false;
+    unit.summoningSick = !unit.hasCharge && !unit.hasRush;
+    unit.rushOnly = !unit.hasCharge && unit.hasRush;
+    unit.freezeBlocked = unit.frozenTurns > 0;
+    source.board.add(unit);
+    stateLog(sourceName, '获得 ${unit.card.name} 的控制权。');
+    _emitFx(
+      'summon',
+      '控制权转移',
+      '${unit.card.name} 加入新的战场',
+      Icons.swap_horiz,
+      0xFFA692D1,
+      sourceId: unit.instanceId,
+      targetId: unit.instanceId,
+    );
+    return true;
   }
 
   String _ownerOf(BattleSide side) {
@@ -3922,7 +3986,23 @@ class GameController extends ChangeNotifier {
       return null;
     }
     if (type.startsWith('enemy') && type.contains('unit')) {
-      return state.player.board.isEmpty ? null : state.player.board.first;
+      final visible = state.player.board
+          .where((unit) => !unit.stealthActive && unit.health > 0)
+          .toList();
+      if (visible.isEmpty) return null;
+      final takesControl = [
+        ...card.effect,
+        ...card.onPlay,
+        ...card.combo,
+      ].any((effect) => effect['kind'] == 'take-control');
+      if (takesControl) {
+        visible.sort(
+          (left, right) => (right.attack + right.health).compareTo(
+            left.attack + left.health,
+          ),
+        );
+      }
+      return visible.first;
     }
     return null;
   }

@@ -257,7 +257,7 @@ class BattleUnit {
 
   final String instanceId;
   final CardDefinition card;
-  final String owner;
+  String owner;
   int attack;
   int health;
   int maxHealth;

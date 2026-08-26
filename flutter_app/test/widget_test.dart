@@ -167,6 +167,20 @@ void main() {
             .single['kind'],
         'recover-discarded',
       );
+      expect(
+        catalog
+            .singleWhere((card) => card.id == 'dream-season-spell-08')
+            .effect
+            .single['kind'],
+        'take-control',
+      );
+      expect(
+        catalog
+            .singleWhere((card) => card.id == 'dream-season-35')
+            .onDeath
+            .single['kind'],
+        'take-control-random-enemy',
+      );
       expect(generatedBattleCards, hasLength(18));
       expect(
         generatedBattleCards
@@ -979,6 +993,179 @@ void main() {
       expect(state.player.board.last.card.id, generated.id);
       expect(state.player.board.last.attack, 2);
       expect(state.player.board.last.health, 4);
+      controller.dispose();
+    },
+  );
+
+  test(
+    'mobile control transfer preserves the unit and random Deathrattle uses the freed slot',
+    () async {
+      final filler = CardDefinition(
+        id: 'control-filler',
+        name: '控制占位单位',
+        description: '测试占位。',
+        faction: '梦境',
+        type: 'unit',
+        cost: 1,
+        rarity: '普通',
+        attack: 1,
+        health: 1,
+      );
+      final victim = CardDefinition(
+        id: 'control-victim',
+        name: '控制目标',
+        description: '测试目标。',
+        faction: '曜光',
+        type: 'unit',
+        cost: 3,
+        rarity: '普通',
+        attack: 3,
+        health: 4,
+        keywords: const ['taunt'],
+      );
+      final control = CardDefinition(
+        id: 'control-spell',
+        name: '夺取控制',
+        description: '获得一个敌方单位的控制权。',
+        faction: '梦境',
+        type: 'spell',
+        cost: 1,
+        rarity: '史诗',
+        target: 'enemy-unit',
+        effect: const [
+          {'kind': 'take-control'},
+        ],
+      );
+      final randomController = CardDefinition(
+        id: 'random-controller',
+        name: '随机摄政者',
+        description: '亡语：随机获得敌方单位。',
+        faction: '梦境',
+        type: 'unit',
+        cost: 1,
+        rarity: '传说',
+        attack: 1,
+        health: 1,
+        keywords: const ['deathrattle'],
+        onDeath: const [
+          {'kind': 'take-control-random-enemy'},
+        ],
+      );
+      final settle = CardDefinition(
+        id: 'control-settle',
+        name: '结算控制亡语',
+        description: '触发死亡结算。',
+        faction: '梦境',
+        type: 'spell',
+        cost: 0,
+        rarity: '普通',
+        effect: const [
+          {'kind': 'armor', 'amount': 0},
+        ],
+      );
+      final controller = GameController(startingPlayer: 'player')
+        ..catalog = [filler, victim, control, randomController, settle]
+        ..deckIds.addAll(List.filled(30, filler.id));
+      controller.startBattle();
+      await controller.confirmMulligan();
+      final state = controller.battle!;
+      final target = BattleUnit(
+        instanceId: 'mobile-control-target',
+        card: victim,
+        owner: 'ai',
+        attack: 8,
+        health: 2,
+        maxHealth: 7,
+        permanentAttackBonus: 5,
+        permanentHealthBonus: 3,
+      );
+      state.ai.board
+        ..clear()
+        ..add(target);
+      state.player.hand
+        ..clear()
+        ..add(control);
+      state.player.handCostReductions
+        ..clear()
+        ..add(0);
+      state.player.handFragments
+        ..clear()
+        ..add(null);
+      state.player.mana = 10;
+
+      expect(controller.playCard(control, target: target), isTrue);
+      expect(state.ai.board, isEmpty);
+      expect(state.player.board.single, same(target));
+      expect(target.owner, 'player');
+      expect(target.attack, 8);
+      expect(target.health, 2);
+      expect(target.maxHealth, 7);
+      expect(target.summoningSick, isTrue);
+
+      state.player.board.addAll(
+        List.generate(
+          6,
+          (index) => BattleUnit(
+            instanceId: 'mobile-full-$index',
+            card: filler,
+            owner: 'player',
+            attack: 1,
+            health: 1,
+            maxHealth: 1,
+          ),
+        ),
+      );
+      final blockedTarget = BattleUnit(
+        instanceId: 'mobile-blocked-target',
+        card: victim,
+        owner: 'ai',
+        attack: 3,
+        health: 4,
+        maxHealth: 4,
+      );
+      state.ai.board.add(blockedTarget);
+      state.player.hand
+        ..clear()
+        ..add(control);
+      state.player.handCostReductions
+        ..clear()
+        ..add(0);
+      state.player.handFragments
+        ..clear()
+        ..add(null);
+      expect(controller.playCard(control, target: blockedTarget), isFalse);
+      expect(state.player.hand.single, control);
+      expect(state.ai.board, contains(blockedTarget));
+
+      state.player.board
+        ..clear()
+        ..add(
+          BattleUnit(
+            instanceId: 'mobile-random-controller',
+            card: randomController,
+            owner: 'player',
+            attack: 1,
+            health: 0,
+            maxHealth: 1,
+          ),
+        );
+      state.ai.board
+        ..clear()
+        ..add(blockedTarget);
+      state.player.hand
+        ..clear()
+        ..add(settle);
+      state.player.handCostReductions
+        ..clear()
+        ..add(0);
+      state.player.handFragments
+        ..clear()
+        ..add(null);
+      expect(controller.playCard(settle), isTrue);
+      expect(state.player.board.single, same(blockedTarget));
+      expect(blockedTarget.owner, 'player');
+      expect(state.ai.board, isEmpty);
+      expect(state.player.deathHistory.single.cardId, randomController.id);
       controller.dispose();
     },
   );

@@ -20149,25 +20149,31 @@
   },
   {
     "id": "dream-season-35",
-    "name": "睡莲入梦师·35",
-    "description": "stealth。 梦境的战线单位。",
+    "name": "梦潮摄政·35",
+    "description": "亡语：随机获得一个敌方单位的控制权。",
     "faction": "梦境",
     "type": "unit",
-    "cost": 3,
+    "cost": 6,
     "rarity": "传说",
-    "attack": 3,
-    "health": 7,
+    "attack": 5,
+    "health": 5,
     "keywords": [
-      "stealth"
+      "deathrattle"
     ],
     "traits": [
       "swift",
       "craft"
     ],
-    "onDeath": [],
+    "onDeath": [
+      {
+        "kind": "take-control-random-enemy"
+      }
+    ],
     "effect": [],
     "set": "scarab-2026",
-    "minionTypes": []
+    "minionTypes": [],
+    "target": "none",
+    "onPlay": []
   },
   {
     "id": "dream-season-spell-01",
@@ -20340,18 +20346,17 @@
   },
   {
     "id": "dream-season-spell-08",
-    "name": "梦境回响·08",
-    "description": "抽两张牌。",
+    "name": "梦潮夺心",
+    "description": "获得一个敌方单位的控制权。你的战场必须有空位。",
     "faction": "梦境",
     "type": "spell",
     "cost": 8,
     "rarity": "普通",
     "school": "astral",
-    "target": "none",
+    "target": "enemy-unit",
     "effect": [
       {
-        "kind": "draw",
-        "count": 2
+        "kind": "take-control"
       }
     ],
     "keywords": [],
