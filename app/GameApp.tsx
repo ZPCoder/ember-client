@@ -89,6 +89,12 @@ import {
   RETURN_QUEST_STAGES,
   returnQuestStageReady,
   EMPTY_TRAINING_PROGRESS,
+  TRAINING_MATCH_SEED,
+  TRAINING_OPPONENT_ARCHETYPE_ID,
+  TRAINING_PLAYER_DECK,
+  TRAINING_STARTING_PLAYER,
+  currentTrainingStage,
+  trainingCommandAllowed,
   trainingProgressForFacts,
   planAiTurnReplay,
   previewDeckCode,
@@ -987,11 +993,15 @@ function applyLocalAction(
     return { ok: true, player, localFallback: true };
   }
   if (action === "create_ai_match") {
+    const training = body.training === true;
     const ladderReadyDeckId = asString(body.ladderReadyDeckId);
     const offer = ladderReadyDeckId ? getLadderReadyDeck(ladderReadyDeckId) : undefined;
     let playerDeck: readonly string[];
     let rankedFormat: RankedFormat;
-    if (offer) {
+    if (training) {
+      playerDeck = TRAINING_PLAYER_DECK;
+      rankedFormat = "standard";
+    } else if (offer) {
       const trial = current.ladderReady;
       if (!trial?.activatedAt || !trial.expiresAt) throw new Error("请先激活七日试玩。");
       if (trial.claimedDeckId) throw new Error("永久领取后，其他套牌试玩已经结束。");
@@ -1016,7 +1026,9 @@ function applyLocalAction(
     }
     const validation = validateDeckForFormat(playerDeck, rankedFormat);
     if (!validation.valid) throw new Error(validation.errors[0]?.message ?? "卡组不符合组牌规则。");
-    const archetypeId = asString(body.opponentArchetypeId);
+    const archetypeId = training
+      ? TRAINING_OPPONENT_ARCHETYPE_ID
+      : asString(body.opponentArchetypeId);
     if (!AI_ARCHETYPES.some((candidate) => candidate.id === archetypeId)) {
       throw new Error("AI 对手原型不存在。");
     }
@@ -1026,8 +1038,8 @@ function applyLocalAction(
       player: current,
       aiMatch: {
         token: `local-${crypto.randomUUID()}`,
-        seed: (randomness[0] ?? 0) & 0x7fffffff,
-        startingPlayer: ((randomness[1] ?? 0) & 1) as 0 | 1,
+        seed: training ? TRAINING_MATCH_SEED : (randomness[0] ?? 0) & 0x7fffffff,
+        startingPlayer: training ? TRAINING_STARTING_PLAYER : ((randomness[1] ?? 0) & 1) as 0 | 1,
         rankedFormat,
         playerDeck: [...playerDeck],
         opponentArchetypeId: archetypeId,
@@ -4357,15 +4369,15 @@ export function GameApp({
   const startBattle = async (training = false) => {
     if (aiMatchStartingRef.current) return;
     const requestedOpponent = training
-      ? AI_ARCHETYPES.find((candidate) => candidate.faction === "曜光") ?? AI_ARCHETYPES[0]
+      ? AI_ARCHETYPES.find((candidate) => candidate.id === TRAINING_OPPONENT_ARCHETYPE_ID) ?? AI_ARCHETYPES[0]
       : selectedAiArchetype ?? AI_ARCHETYPES[0];
     const savedDeckId = editingDeckId;
-    if (!selectedLadderReadyDeckId && !savedDeckId) {
+    if (!training && !selectedLadderReadyDeckId && !savedDeckId) {
       switchSection("deck");
       setNotice({ tone: "warning", text: "请先保存当前卡组，再开始 AI 演算。" });
       return;
     }
-    if (!selectedLadderReadyDeckId && !deckPlayable) {
+    if (!training && !selectedLadderReadyDeckId && !deckPlayable) {
       switchSection("deck");
       setNotice({
         tone: "warning",
@@ -4378,9 +4390,11 @@ export function GameApp({
     aiMatchStartingRef.current = true;
     try {
       const payload = await postAction("create_ai_match", {
-        ...(selectedLadderReadyDeckId
-          ? { ladderReadyDeckId: selectedLadderReadyDeckId }
-          : { deckId: savedDeckId }),
+        ...(training
+          ? { training: true }
+          : selectedLadderReadyDeckId
+            ? { ladderReadyDeckId: selectedLadderReadyDeckId }
+            : { deckId: savedDeckId }),
         opponentArchetypeId: requestedOpponent?.id ?? "tide-control",
       });
       const ticket = payload?.aiMatch;
@@ -4443,6 +4457,27 @@ export function GameApp({
         ...(command.commandId ? command : { ...command, commandId: makeId("command") }),
         expectedVersion: command.expectedVersion ?? previous.version,
       } as BattleCommand;
+      if (trainingActive && preparedCommand.player === 0) {
+        const liveProgress = trainingProgressForFacts(trainingProgress, {
+          status: battleView?.status ?? previous.status,
+          cardsPlayed: battleView?.report.cardsPlayed[0] ?? 0,
+          attacks: battleView?.report.attacks[0] ?? 0,
+          log: battleView?.log ?? previous.log,
+        });
+        if (!trainingCommandAllowed(liveProgress, preparedCommand.type)) {
+          const stage = currentTrainingStage(liveProgress);
+          const instruction = stage === "mulligan"
+            ? "先确认起手。"
+            : stage === "play-card"
+              ? "先使用一张牌。"
+              : stage === "end-turn"
+                ? "现在结束回合。"
+                : "先发动一次攻击。";
+          setBattleMessage(`训练步骤尚未完成：${instruction}`);
+          playSound("error");
+          return null;
+        }
+      }
       // The room transport can briefly remain in `ready` while the match-start
       // snapshot is being applied. The authoritative match state already
       // carries the active player and phase, so only a disconnected/error
@@ -4490,7 +4525,7 @@ export function GameApp({
       playSound("error");
       return null;
     }
-  }, [battle, onlineMatch, playSound, pvp, showBattleEffects]);
+  }, [battle, battleView, onlineMatch, playSound, pvp, showBattleEffects, trainingActive, trainingProgress]);
 
   const scheduleLocalAiTurn = useCallback((initialState: MatchState): boolean => {
     if (
@@ -5850,11 +5885,11 @@ function OverviewSection({
           <h2 id="training-callout-title">第一次指挥？先完成一场三分钟训练</h2>
           <p>从换牌、能量、部署到攻击，战场会逐步标记你当前应该关注的行动。</p>
         </div>
-        <div className="training-callout__route" aria-label="训练路线：换牌、部署、攻击、结束回合">
+        <div className="training-callout__route" aria-label="训练路线：换牌、部署、结束回合、攻击">
           <span><i>1</i>换牌</span><b />
           <span><i>2</i>部署</span><b />
-          <span><i>3</i>攻击</span><b />
-          <span><i>4</i>回合</span>
+          <span><i>3</i>回合</span><b />
+          <span><i>4</i>攻击</span>
         </div>
         <button className="button button--accent" type="button" onClick={onOpenTraining}>
           开始新手训练 <Icon name="arrow" />
@@ -7804,14 +7839,14 @@ function BattleSection({
       done: trainingProgress.cardPlayed || battle.report.cardsPlayed[0] > 0,
     },
     {
-      label: "发动一次攻击",
-      detail: "可行动单位会亮起；先选单位，再选目标。",
-      done: trainingProgress.attack || battle.report.attacks[0] > 0,
+      label: "结束一个回合",
+      detail: "部署完成后结束回合；固定演练会把行动权交回给你。",
+      done: trainingProgress.turnEnded || battle.log.some((line) => line.includes("我方结束了回合")),
     },
     {
-      label: "结束一个回合",
-      detail: "行动完成后结束回合，能量会在下回合补满。",
-      done: trainingProgress.turnEnded || battle.log.some((line) => line.includes("我方结束了回合")),
+      label: "发动一次攻击",
+      detail: "下回合用已经准备好的单位攻击；先选单位，再选目标。",
+      done: trainingProgress.attack || battle.report.attacks[0] > 0,
     },
   ];
   const completedTrainingSteps = trainingSteps.filter((step) => step.done).length;
