@@ -7689,6 +7689,82 @@ function PvpLobby({
   );
 }
 
+type BattlefieldTheme = "ember" | "mist" | "prism" | "tide";
+
+const BATTLEFIELD_TOY_LABELS: Readonly<Record<BattlefieldTheme, readonly [string, string, string, string]>> = {
+  ember: ["点亮信标", "调节反应炉", "转动星盘", "开启档案匣"],
+  mist: ["点亮雾灯", "校准门锁", "转动风向仪", "开启信标匣"],
+  prism: ["点亮折光镜", "旋转棱镜环", "调节焦距盘", "开启光谱匣"],
+  tide: ["点亮潮汐灯", "调节压舱阀", "转动航向罗盘", "开启潮汐档案"],
+};
+
+function BattlefieldToys({ theme }: { theme: BattlefieldTheme }) {
+  const labels = BATTLEFIELD_TOY_LABELS[theme];
+  const [beaconLit, setBeaconLit] = useState(false);
+  const [reactorLevel, setReactorLevel] = useState(0);
+  const [compassStep, setCompassStep] = useState(0);
+  const [archiveOpen, setArchiveOpen] = useState(false);
+  const [announcement, setAnnouncement] = useState("战场机关待命。");
+  const resonant = beaconLit && reactorLevel > 0 && compassStep > 0 && archiveOpen;
+
+  return (
+    <div className={`battlefield-toys battlefield-toys--${theme} ${resonant ? "is-resonant" : ""}`} role="group" aria-label="可交互战场机关">
+      <div className="battlefield-toys__group battlefield-toys__group--left">
+        <button
+          className={`battlefield-toy battlefield-toy--beacon ${beaconLit ? "is-active" : ""}`}
+          type="button"
+          aria-label={labels[0]}
+          aria-pressed={beaconLit}
+          title={labels[0]}
+          onClick={() => {
+            setBeaconLit((current) => !current);
+            setAnnouncement(beaconLit ? "场景信标已经熄灭。" : "场景信标被点亮了。");
+          }}
+        ><span>◈</span></button>
+        <button
+          className={`battlefield-toy battlefield-toy--reactor ${reactorLevel > 0 ? "is-active" : ""}`}
+          type="button"
+          aria-label={`${labels[1]}，当前 ${reactorLevel} 档`}
+          title={labels[1]}
+          data-level={reactorLevel}
+          onClick={() => {
+            const next = (reactorLevel + 1) % 4;
+            setReactorLevel(next);
+            setAnnouncement(next === 0 ? "场景反应炉已经归零。" : `场景反应炉升至 ${next} 档。`);
+          }}
+        ><span>✦</span></button>
+      </div>
+      <div className="battlefield-toys__group battlefield-toys__group--right">
+        <button
+          className={`battlefield-toy battlefield-toy--compass ${compassStep > 0 ? "is-active" : ""}`}
+          type="button"
+          aria-label={`${labels[2]}，当前方位 ${compassStep + 1}`}
+          title={labels[2]}
+          style={{ "--toy-rotation": `${compassStep * 90}deg` } as CSSProperties}
+          onClick={() => {
+            const next = (compassStep + 1) % 4;
+            setCompassStep(next);
+            setAnnouncement(`场景指针转向第 ${next + 1} 方位。`);
+          }}
+        ><span>⌁</span></button>
+        <button
+          className={`battlefield-toy battlefield-toy--archive ${archiveOpen ? "is-active" : ""}`}
+          type="button"
+          aria-label={labels[3]}
+          aria-pressed={archiveOpen}
+          title={labels[3]}
+          onClick={() => {
+            setArchiveOpen((current) => !current);
+            setAnnouncement(archiveOpen ? "场景档案匣已经闭合。" : "场景档案匣展开了一组隐藏纹章。");
+          }}
+        ><span>▤</span></button>
+      </div>
+      {resonant && <span className="battlefield-toys__resonance" aria-hidden="true">场景共鸣</span>}
+      <span className="sr-only" role="status" aria-live="polite">{announcement}</span>
+    </div>
+  );
+}
+
 function BattleSection({
   battle,
   message,
@@ -7913,6 +7989,15 @@ function BattleSection({
   const currentTrainingObjective = trainingChapter?.objectives[currentTrainingIndex];
   const trainingDialogue = trainingChapter?.dialogue[Math.min(currentTrainingIndex, trainingTotal)];
   const trainingSteps = trainingChapter?.objectives ?? [];
+  const battlefieldTheme: BattlefieldTheme = trainingChapterId === "mist-gate"
+    ? "mist"
+    : trainingChapterId === "prism-wall"
+      ? "prism"
+      : trainingChapterId === "tide-archive" || opponentName?.includes("潮")
+        ? "tide"
+        : opponentName?.includes("棱镜")
+          ? "prism"
+          : "ember";
   const pendingDefinition = pendingCard ? CARD_BY_ID.get(pendingCard.cardId) : undefined;
   const pendingRuleCard = pendingCard ? cardRuleForHandSlot(pendingCard) : undefined;
   const targetRule = pendingHeroPower
@@ -8216,7 +8301,7 @@ function BattleSection({
       </header>
 
       <div className="battle-layout">
-        <div className={`battlefield ${effect ? `battlefield--fx-${effect.kind}` : ""}`}>
+        <div className={`battlefield battlefield--theme-${battlefieldTheme} ${effect ? `battlefield--fx-${effect.kind}` : ""}`}>
           <div className="battlefield__grid" aria-hidden="true" />
           {effect && <BattleEffectLayer key={effect.id} effect={effect} />}
           <div className="battlefield__enemy-zone">
@@ -8285,6 +8370,7 @@ function BattleSection({
           </div>
 
           <div className="battlefield__divider">
+            <BattlefieldToys key={`${battlefieldTheme}-${battle.seed}`} theme={battlefieldTheme} />
             <span />
             <strong>TURN {battle.turn}</strong>
             <span />

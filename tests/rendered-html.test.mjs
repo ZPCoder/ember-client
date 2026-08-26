@@ -94,6 +94,9 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(game, /保留进度并重试/);
   assert.match(game, /训练对局不计入正式战绩与奖励/);
   assert.match(game, /三关首领教学/);
+  assert.match(game, /可交互战场机关/);
+  assert.match(game, /BATTLEFIELD_TOY_LABELS/);
+  assert.match(game, /场景共鸣/);
   assert.match(game, /trainingChapterProgressForCommands/);
   assert.match(game, /trainingChapterCommandAllowed/);
   assert.match(game, /trainingActive && trainingChapterId && preparedCommand\.player === 0/);
@@ -222,6 +225,11 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(styles, /\.screen\.battle-room/);
   assert.match(styles, /@keyframes battle-room-enter/);
   assert.match(styles, /\.battle-fx__card-reveal/);
+  assert.match(styles, /\.battlefield-toys/);
+  assert.match(styles, /\.battlefield--theme-mist/);
+  assert.match(styles, /\.battlefield--theme-prism/);
+  assert.match(styles, /\.battlefield--theme-tide/);
+  assert.match(styles, /@keyframes board-resonance-enter/);
   assert.match(worker, /pvp_queue_format_pool_joined_idx/);
   assert.match(worker, /pvp_queue_format_pool_rating_joined_idx/);
   assert.match(worker, /q\.pool = \?/);

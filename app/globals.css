@@ -4107,6 +4107,40 @@ button.game-card:not(:disabled):hover .game-card__artwork,
     linear-gradient(#0d1d19, #0a1513);
   isolation: isolate;
   --battle-lunge: 24px;
+  --board-accent: #d8a251;
+  --board-accent-soft: rgba(216, 162, 81, 0.16);
+  --board-accent-glow: rgba(216, 162, 81, 0.48);
+}
+
+.battlefield--theme-mist {
+  --board-accent: #9dd9c9;
+  --board-accent-soft: rgba(105, 194, 174, 0.15);
+  --board-accent-glow: rgba(105, 194, 174, 0.5);
+  background:
+    radial-gradient(ellipse at 10% 48%, rgba(126, 203, 180, 0.12), transparent 20rem),
+    radial-gradient(ellipse at 90% 42%, rgba(175, 209, 191, 0.08), transparent 19rem),
+    linear-gradient(#10231e, #081612);
+}
+
+.battlefield--theme-prism {
+  --board-accent: #c9a8ff;
+  --board-accent-soft: rgba(174, 122, 239, 0.16);
+  --board-accent-glow: rgba(190, 139, 255, 0.52);
+  background:
+    linear-gradient(125deg, transparent 33%, rgba(102, 211, 214, 0.055) 34% 35%, transparent 36%),
+    linear-gradient(55deg, transparent 58%, rgba(213, 159, 255, 0.07) 59% 60%, transparent 61%),
+    radial-gradient(circle at 50% 50%, rgba(145, 94, 207, 0.12), transparent 24rem),
+    linear-gradient(#171b26, #0c1119);
+}
+
+.battlefield--theme-tide {
+  --board-accent: #74c7ed;
+  --board-accent-soft: rgba(71, 156, 210, 0.17);
+  --board-accent-glow: rgba(71, 177, 226, 0.54);
+  background:
+    radial-gradient(ellipse at 50% 100%, rgba(40, 137, 174, 0.2), transparent 35rem),
+    repeating-radial-gradient(ellipse at 50% 115%, transparent 0 34px, rgba(105, 190, 218, 0.035) 35px 37px),
+    linear-gradient(#0c2025, #071318);
 }
 
 .battlefield::after {
@@ -5541,6 +5575,150 @@ button.hero-core {
   color: #66746d;
   font-size: 8px;
   letter-spacing: 0.14em;
+}
+
+.battlefield-toys {
+  position: absolute;
+  z-index: 5;
+  inset: 0;
+  pointer-events: none;
+}
+
+.battlefield-toys__group {
+  position: absolute;
+  top: 50%;
+  display: flex;
+  gap: 6px;
+  transform: translateY(-50%);
+  pointer-events: auto;
+}
+
+.battlefield-toys__group--left {
+  left: 18px;
+}
+
+.battlefield-toys__group--right {
+  right: 18px;
+}
+
+.battlefield-toy {
+  position: relative;
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--board-accent) 34%, transparent);
+  border-radius: 50%;
+  color: color-mix(in srgb, var(--board-accent) 66%, #63746d);
+  background:
+    radial-gradient(circle at 36% 30%, rgba(255, 255, 255, 0.08), transparent 35%),
+    rgba(5, 14, 13, 0.92);
+  box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.018), 0 4px 13px rgba(0, 0, 0, 0.32);
+  font: inherit;
+  cursor: pointer;
+  transition: border-color 160ms ease, color 160ms ease, box-shadow 160ms ease, transform 120ms ease;
+}
+
+.battlefield-toy::after {
+  position: absolute;
+  inset: -5px;
+  border: 1px solid transparent;
+  border-radius: inherit;
+  content: "";
+  transition: border-color 160ms ease, transform 220ms ease;
+}
+
+.battlefield-toy:hover,
+.battlefield-toy:focus-visible {
+  border-color: var(--board-accent);
+  color: var(--board-accent);
+  box-shadow: 0 0 16px var(--board-accent-glow), inset 0 0 0 3px rgba(255, 255, 255, 0.025);
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.battlefield-toy:focus-visible::after {
+  border-color: var(--board-accent);
+}
+
+.battlefield-toy:active {
+  transform: translateY(1px) scale(0.94);
+}
+
+.battlefield-toy.is-active {
+  color: #f5fff9;
+  border-color: var(--board-accent);
+  background: radial-gradient(circle, var(--board-accent-soft), rgba(5, 14, 13, 0.94) 68%);
+  box-shadow: 0 0 18px var(--board-accent-glow), inset 0 0 9px var(--board-accent-soft);
+}
+
+.battlefield-toy--beacon.is-active span {
+  animation: board-beacon-pulse 1200ms ease-in-out infinite;
+}
+
+.battlefield-toy--reactor::after {
+  transform: rotate(calc(var(--toy-level, 0) * 45deg));
+}
+
+.battlefield-toy--reactor[data-level="1"]::after,
+.battlefield-toy--reactor[data-level="2"]::after,
+.battlefield-toy--reactor[data-level="3"]::after {
+  border-top-color: var(--board-accent);
+  border-right-color: var(--board-accent);
+}
+
+.battlefield-toy--reactor[data-level="1"]::after {
+  transform: rotate(45deg);
+}
+
+.battlefield-toy--reactor[data-level="2"]::after {
+  transform: rotate(135deg);
+}
+
+.battlefield-toy--reactor[data-level="3"]::after {
+  transform: rotate(225deg);
+}
+
+.battlefield-toy--reactor[data-level="2"] span,
+.battlefield-toy--reactor[data-level="3"] span {
+  filter: drop-shadow(0 0 5px var(--board-accent));
+}
+
+.battlefield-toy--reactor[data-level="3"] {
+  animation: board-reactor-hum 760ms ease-in-out infinite alternate;
+}
+
+.battlefield-toy--compass span {
+  display: block;
+  transform: rotate(var(--toy-rotation));
+  transition: transform 260ms cubic-bezier(0.2, 0.8, 0.2, 1.25);
+}
+
+.battlefield-toy--archive.is-active {
+  border-radius: 8px;
+}
+
+.battlefield-toy--archive.is-active::after {
+  border-color: color-mix(in srgb, var(--board-accent) 46%, transparent);
+  border-radius: 10px;
+  transform: rotate(45deg);
+}
+
+.battlefield-toys__resonance {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  padding: 3px 8px;
+  border: 1px solid color-mix(in srgb, var(--board-accent) 42%, transparent);
+  border-radius: 999px;
+  color: var(--board-accent);
+  background: rgba(4, 13, 12, 0.9);
+  box-shadow: 0 0 18px var(--board-accent-soft);
+  font-size: 7px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  transform: translate(-50%, -50%);
+  animation: board-resonance-enter 320ms ease-out both;
 }
 
 .battlefield__divider::before,
@@ -8135,6 +8313,30 @@ button.hero-core {
   }
 }
 
+@keyframes board-beacon-pulse {
+  50% {
+    opacity: 0.68;
+    filter: drop-shadow(0 0 7px var(--board-accent));
+    transform: scale(1.16);
+  }
+}
+
+@keyframes board-reactor-hum {
+  from { box-shadow: 0 0 12px var(--board-accent-glow); }
+  to { box-shadow: 0 0 23px var(--board-accent-glow); }
+}
+
+@keyframes board-resonance-enter {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.72);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
 @media (max-width: 1180px) {
   :root {
     --sidebar: 220px;
@@ -8510,6 +8712,27 @@ button.hero-core {
 }
 
 @media (max-width: 640px) {
+  .battlefield-toys__group {
+    gap: 3px;
+  }
+
+  .battlefield-toys__group--left {
+    left: 7px;
+  }
+
+  .battlefield-toys__group--right {
+    right: 7px;
+  }
+
+  .battlefield-toy {
+    width: 27px;
+    height: 27px;
+  }
+
+  .battlefield-toys__resonance {
+    display: none;
+  }
+
   .deck-recipes {
     padding: 14px;
   }
