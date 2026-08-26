@@ -51,6 +51,22 @@ class OnlineUnit {
       attack > 0 && !summoningSick && !isFrozen && attacksMade < attackLimit;
 }
 
+class OnlineLocation {
+  const OnlineLocation({
+    required this.entityId,
+    required this.card,
+    required this.durability,
+    required this.maxDurability,
+    required this.readyOnTurn,
+  });
+
+  final String entityId;
+  final CardDefinition card;
+  final int durability;
+  final int maxDurability;
+  final int readyOnTurn;
+}
+
 /// Thin Flutter projection of the authoritative web-worker match.
 ///
 /// The server owns the reducer, hidden information and turn clock. This class
@@ -81,6 +97,8 @@ class OnlineBattleController extends ChangeNotifier {
   List<String> handEntityIds = <String>[];
   List<OnlineUnit> localBoard = <OnlineUnit>[];
   List<OnlineUnit> remoteBoard = <OnlineUnit>[];
+  List<OnlineLocation> localLocations = <OnlineLocation>[];
+  List<OnlineLocation> remoteLocations = <OnlineLocation>[];
   final List<String> logs = <String>[];
   int localHealth = 30;
   int remoteHealth = 30;
@@ -225,11 +243,17 @@ class OnlineBattleController extends ChangeNotifier {
       return;
     }
     final recipientBoard = placement == 'enemy' ? remoteBoard : localBoard;
+    final recipientLocations = placement == 'enemy'
+        ? remoteLocations
+        : localLocations;
     if (card.isUnit &&
-        recipientBoard.length >= 7 &&
+        recipientBoard.length + recipientLocations.length >= 7 &&
         !recipientBoard.any(
           (unit) => unit.card.id == card.id && unit.stars == 1,
         )) {
+      return;
+    }
+    if (card.isLocation && localBoard.length + localLocations.length >= 7) {
       return;
     }
     final targetType = card.target ?? 'none';
@@ -364,6 +388,18 @@ class OnlineBattleController extends ChangeNotifier {
       'type': 'prepare-card',
       'cardId': card.id,
       'handIndex': resolvedHandIndex,
+    });
+  }
+
+  void activateLocation(OnlineLocation location) {
+    if (!canAct ||
+        !localLocations.contains(location) ||
+        turn < location.readyOnTurn) {
+      return;
+    }
+    _sendCommand(<String, dynamic>{
+      'type': 'activate-location',
+      'locationId': location.entityId,
     });
   }
 
@@ -560,6 +596,8 @@ class OnlineBattleController extends ChangeNotifier {
     handEntityIds = _parseHandEntityIds(local['handEntityIds'], hand);
     localBoard = _parseBoard(local['board']);
     remoteBoard = _parseBoard(remote['board']);
+    localLocations = _parseLocations(local['locations']);
+    remoteLocations = _parseLocations(remote['locations']);
     final discover = snapshot['discover'];
     if (discover is Map && discover['player'] == viewer) {
       discoverChoices = (discover['choices'] is List)
@@ -940,6 +978,29 @@ class OnlineBattleController extends ChangeNotifier {
         })
         .whereType<OnlineUnit>()
         .toList();
+  }
+
+  List<OnlineLocation> _parseLocations(Object? raw) {
+    if (raw is! List) return <OnlineLocation>[];
+    return raw
+        .whereType<Map>()
+        .map((item) {
+          final location = Map<String, dynamic>.from(item);
+          final definition = card(location['cardId']?.toString() ?? '');
+          if (definition == null || !definition.isLocation) return null;
+          return OnlineLocation(
+            entityId: location['entityId']?.toString() ?? definition.id,
+            card: definition,
+            durability: (location['durability'] as num?)?.toInt() ?? 1,
+            maxDurability:
+                (location['maxDurability'] as num?)?.toInt() ??
+                definition.durability ??
+                1,
+            readyOnTurn: (location['readyOnTurn'] as num?)?.toInt() ?? 0,
+          );
+        })
+        .whereType<OnlineLocation>()
+        .toList(growable: false);
   }
 
   List<OnlineUnit> get _visibleRemoteTaunts => remoteBoard

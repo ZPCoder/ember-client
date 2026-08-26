@@ -197,7 +197,7 @@ type CatalogCard = {
   id: string;
   name: string;
   cost: number;
-  type: "unit" | "spell" | "weapon" | "hero";
+  type: "unit" | "spell" | "weapon" | "hero" | "location";
   faction: Faction;
   rarity: string;
   description: string;
@@ -383,6 +383,16 @@ type BattleUnit = {
   temporaryHealthBonus: number;
 };
 
+type BattleLocation = {
+  id: string;
+  cardId: string;
+  name: string;
+  durability: number;
+  maxDurability: number;
+  readyOnTurn: number;
+  canActivate: boolean;
+};
+
 type BattleSide = {
   health: number;
   maxHealth: number;
@@ -440,6 +450,7 @@ type BattleSide = {
     enteredTurn: number;
   }>;
   board: BattleUnit[];
+  locations: BattleLocation[];
 };
 
 type BattleReport = {
@@ -531,6 +542,10 @@ function orientPvpMatchForLocal(state: MatchState, role: PvpRole): MatchState {
       ...unit,
       owner: swap(unit.owner),
       minionTypes: [...(unit.minionTypes ?? [])],
+    })),
+    locations: (player.locations ?? []).map((location) => ({
+      ...location,
+      owner: swap(location.owner),
     })),
   })) as [MatchState["players"][0], MatchState["players"][1]];
   return {
@@ -637,6 +652,7 @@ const TYPE_LABEL: Record<string, string> = {
   spell: "战术",
   weapon: "武器",
   hero: "英雄",
+  location: "地点",
 };
 
 const SPELL_SCHOOL_LABEL: Record<SpellSchool, string> = {
@@ -2141,6 +2157,28 @@ function normalizeBoard(value: unknown, turn: number): BattleUnit[] {
   });
 }
 
+function normalizeLocations(value: unknown, turn: number): BattleLocation[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((entry, index) => {
+    const item = (entry ?? {}) as Record<string, unknown>;
+    const cardId = asString(item.cardId);
+    const card = CARD_BY_ID.get(cardId);
+    if (!card || card.type !== "location") return [];
+    const maxDurability = Math.max(1, asNumber(item.maxDurability, card.durability ?? 1));
+    const durability = Math.max(0, Math.min(maxDurability, asNumber(item.durability, maxDurability)));
+    const readyOnTurn = Math.max(0, asNumber(item.readyOnTurn, 0));
+    return [{
+      id: asString(item.entityId, `location-${index}-${cardId}`),
+      cardId,
+      name: asString(item.name, card.name),
+      durability,
+      maxDurability,
+      readyOnTurn,
+      canActivate: durability > 0 && turn >= readyOnTurn,
+    }];
+  });
+}
+
 function battleFromRaw(value: unknown): BattleView | null {
   if (!value || typeof value !== "object") return null;
   const wrapper = value as Record<string, unknown>;
@@ -2279,6 +2317,7 @@ function battleFromRaw(value: unknown): BattleView | null {
       side.handEntityIds,
     ),
     board: normalizeBoard(side.board ?? side.units, turn),
+    locations: normalizeLocations(side.locations, turn),
   });
   const statusRaw = asString(raw.status ?? raw.phase, "playing").toLowerCase();
   const isMulligan = statusRaw === "mulligan";
@@ -2525,12 +2564,12 @@ function ProgressBar({
 }
 
 function Sigil({ card }: { card: CatalogCard }) {
-  const type = card.type === "spell" ? "spell" : card.type === "weapon" ? "weapon" : card.type === "hero" ? "hero" : "unit";
+  const type = card.type === "spell" ? "spell" : card.type === "weapon" ? "weapon" : card.type === "hero" ? "hero" : card.type === "location" ? "location" : "unit";
   return (
     <div className={`card-sigil card-sigil--${type}`} aria-hidden="true">
       <span className="card-sigil__orbit card-sigil__orbit--outer" />
       <span className="card-sigil__orbit card-sigil__orbit--inner" />
-      <span className="card-sigil__glyph">{type === "unit" ? "◇" : type === "weapon" ? "⚔" : type === "hero" ? "♛" : "✦"}</span>
+      <span className="card-sigil__glyph">{type === "unit" ? "◇" : type === "weapon" ? "⚔" : type === "hero" ? "♛" : type === "location" ? "⌂" : "✦"}</span>
     </div>
   );
 }
@@ -2673,6 +2712,10 @@ function CardTile({
             </div>
           ) : card.type === "hero" ? (
             <span className="game-card__type">英雄替换 · 护甲</span>
+          ) : card.type === "location" ? (
+            <div className="game-card__stats" aria-label={`地点耐久 ${card.durability ?? 0}`}>
+              <span className="game-card__health">⌂ {card.durability ?? 0}</span>
+            </div>
           ) : (
             <span className="game-card__type">即时战术</span>
           )}
@@ -5593,6 +5636,32 @@ export function GameApp({
     }
   };
 
+  const activateLocation = (location: BattleLocation) => {
+    if (battleEffectLockRef.current) {
+      setBattleMessage("战况回放中，请等待行动窗口稳定。");
+      return;
+    }
+    if (!battleView || battleView.status !== "playing" || battleView.currentPlayer !== "player") {
+      setBattleMessage("当前不是你的行动窗口。");
+      return;
+    }
+    if (!location.canActivate) {
+      setBattleMessage(`「${location.name}」尚未完成冷却。`);
+      return;
+    }
+    const next = issueCommand({
+      type: "activate-location",
+      player: 0,
+      locationId: location.id,
+    });
+    if (next) {
+      setSelectedAttacker(null);
+      setPendingCard(null);
+      setPendingHeroPower(false);
+      setBattleMessage(`已激活「${location.name}」，消耗 1 点耐久。`);
+    }
+  };
+
   const chooseDiscover = (cardId: string, choiceIndex: number) => {
     if (battleEffectLockRef.current) {
       setBattleMessage("战况回放中，请等待选择窗口稳定。");
@@ -6216,6 +6285,7 @@ export function GameApp({
                   onPlayCard={playCard}
                   onTradeCard={tradeCard}
                   onPrepareCard={prepareCard}
+                  onActivateLocation={activateLocation}
                   onChooseDiscover={chooseDiscover}
                   onChooseOne={chooseOne}
                   onToggleMulligan={toggleMulliganCard}
@@ -7127,6 +7197,7 @@ function CollectionSection({
             <option value="spell">战术</option>
             <option value="weapon">武器</option>
             <option value="hero">英雄</option>
+            <option value="location">地点</option>
           </select>
         </label>
         <label className="filter-field">
@@ -8441,6 +8512,46 @@ function BoardUnit({
   );
 }
 
+function BoardLocation({
+  location,
+  enemy = false,
+  canAct = false,
+  onActivate,
+  onInspect,
+}: {
+  location: BattleLocation;
+  enemy?: boolean;
+  canAct?: boolean;
+  onActivate?: () => void;
+  onInspect?: () => void;
+}) {
+  const card = CARD_BY_ID.get(location.cardId);
+  const cooldown = Math.max(0, location.readyOnTurn);
+  return (
+    <div className={`board-location ${enemy ? "board-location--enemy" : ""} ${location.canActivate ? "is-ready" : "is-cooling"}`}>
+      <button
+        className="board-location__activate"
+        type="button"
+        disabled={!canAct || !location.canActivate || !onActivate}
+        onClick={onActivate}
+        aria-label={`${location.name}，耐久 ${location.durability}/${location.maxDurability}，${location.canActivate ? "可以激活" : `冷却至第 ${cooldown} 回合`}`}
+        title={card?.description}
+      >
+        <span className="board-location__art">
+          {card && <CardArtwork card={card} className="board-location__artwork" />}
+          <i>⌂</i>
+        </span>
+        <strong>{location.name}</strong>
+        <span className="board-location__status">{location.canActivate ? "激活" : `冷却 · T${cooldown}`}</span>
+        <span className="board-location__durability">◈ {location.durability}/{location.maxDurability}</span>
+      </button>
+      {onInspect && (
+        <button className="board-location__inspect" type="button" onClick={onInspect} aria-label={`查看${location.name}卡牌详情`}>i</button>
+      )}
+    </div>
+  );
+}
+
 function BattleEffectLayer({ effect }: { effect: BattleVisualEffect }) {
   const revealCard = effect.cardId ? CARD_BY_ID.get(effect.cardId) : undefined;
   const cardName = revealCard?.name;
@@ -8750,6 +8861,7 @@ function BattleSection({
   onPlayCard,
   onTradeCard,
   onPrepareCard,
+  onActivateLocation,
   onChooseDiscover,
   onChooseOne,
   onToggleMulligan,
@@ -8819,6 +8931,7 @@ function BattleSection({
   ) => void;
   onTradeCard: (card: BattleSide["hand"][number]) => void;
   onPrepareCard: (card: BattleSide["hand"][number]) => void;
+  onActivateLocation: (location: BattleLocation) => void;
   onChooseDiscover: (cardId: string, choiceIndex: number) => void;
   onChooseOne: (optionIndex: number) => void;
   onToggleMulligan: (index: number) => void;
@@ -9480,11 +9593,22 @@ function BattleSection({
             <ZoneHistoryTray side={battle.ai} enemy />
             <div
               className={`board-row board-row--enemy ${cardDragActive && draggedCardDefinition?.disguised ? "board-row--drop-ready" : ""}`}
-              aria-label={`敌方战场 ${battle.ai.board.length}/${BOARD_SLOT_COUNT}`}
+              aria-label={`敌方战场 ${battle.ai.board.length + battle.ai.locations.length}/${BOARD_SLOT_COUNT}`}
               data-battle-drop="enemy-board"
               onDragOver={cardDragActive && draggedCardDefinition?.disguised ? allowDrop : undefined}
               onDrop={cardDragActive && draggedCardDefinition?.disguised ? (event) => dropCard(event, "enemy") : undefined}
             >
+              {battle.ai.locations.map((location) => (
+                <BoardLocation
+                  key={location.id}
+                  location={location}
+                  enemy
+                  onInspect={() => {
+                    const card = CARD_BY_ID.get(location.cardId);
+                    if (card) onInspectCard(card);
+                  }}
+                />
+              ))}
               {battle.ai.board.length > 0 ? battle.ai.board.map((unit) => (
                 <BoardUnit
                   key={unit.id}
@@ -9506,8 +9630,8 @@ function BattleSection({
                     if (card) onInspectCard(card);
                   }}
                 />
-              )) : <span className="board-row__empty">敌方阵地空置</span>}
-              {Array.from({ length: Math.max(0, BOARD_SLOT_COUNT - battle.ai.board.length) }, (_, index) => (
+              )) : battle.ai.locations.length === 0 ? <span className="board-row__empty">敌方阵地空置</span> : null}
+              {Array.from({ length: Math.max(0, BOARD_SLOT_COUNT - battle.ai.board.length - battle.ai.locations.length) }, (_, index) => (
                 <span className="board-slot" key={`enemy-slot-${index}`} aria-hidden="true"><i /></span>
               ))}
             </div>
@@ -9523,11 +9647,23 @@ function BattleSection({
           <div className="battlefield__player-zone">
             <div
               className={`board-row board-row--player ${cardDragActive ? "board-row--drop-ready" : ""}`}
-              aria-label={`我方战场 ${battle.player.board.length}/${BOARD_SLOT_COUNT}`}
+              aria-label={`我方战场 ${battle.player.board.length + battle.player.locations.length}/${BOARD_SLOT_COUNT}`}
               data-battle-drop="friendly-board"
               onDragOver={cardDragActive ? allowDrop : undefined}
               onDrop={cardDragActive ? (event) => dropCard(event, "friendly") : undefined}
             >
+              {battle.player.locations.map((location) => (
+                <BoardLocation
+                  key={location.id}
+                  location={location}
+                  canAct={playerCanAct && !effectsLocked && !trainingActive}
+                  onActivate={() => onActivateLocation(location)}
+                  onInspect={() => {
+                    const card = CARD_BY_ID.get(location.cardId);
+                    if (card) onInspectCard(card);
+                  }}
+                />
+              ))}
               {battle.player.board.length > 0 ? battle.player.board.map((unit) => (
                 <BoardUnit
                   key={unit.id}
@@ -9559,8 +9695,8 @@ function BattleSection({
                     if (card) onInspectCard(card);
                   }}
                 />
-              )) : <span className="board-row__empty">选择手牌，部署你的首个单位</span>}
-              {Array.from({ length: Math.max(0, BOARD_SLOT_COUNT - battle.player.board.length) }, (_, index) => (
+              )) : battle.player.locations.length === 0 ? <span className="board-row__empty">选择手牌，部署你的首个单位或地点</span> : null}
+              {Array.from({ length: Math.max(0, BOARD_SLOT_COUNT - battle.player.board.length - battle.player.locations.length) }, (_, index) => (
                 <span className="board-slot" key={`player-slot-${index}`} aria-hidden="true"><i /></span>
               ))}
             </div>

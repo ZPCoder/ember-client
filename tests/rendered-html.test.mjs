@@ -63,6 +63,7 @@ test("ships the complete product surface and removes starter assets", async () =
     readFile(new URL("../public/card-art-imagegen.json", import.meta.url), "utf8"),
   ]);
   const cardIds = CARD_CATALOG.map((card) => card.id);
+  const locationCard = CARD_CATALOG.find((card) => card.id === "sun-daybreak-order");
   const cardArt = await Promise.all(
     cardIds.map(async (cardId) => {
       const assetUrl = new URL(`../public/cards/${cardId}.webp`, import.meta.url);
@@ -165,6 +166,10 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(game, /AI 与在线对战均可使用/);
   assert.match(game, /预备 · 全部能量/);
   assert.match(game, /type: "prepare-card"/);
+  assert.match(game, /type: "activate-location"/);
+  assert.match(game, /function BoardLocation/);
+  assert.equal(locationCard?.type, "location");
+  assert.equal(locationCard?.durability, 3);
   assert.match(game, /伪装 · 敌方战场/);
   assert.match(game, /fragmentLabel/);
   assert.match(game, /card\.shatter/);
@@ -236,6 +241,7 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(styles, /\.game-card__cost\.is-discounted/);
   assert.match(styles, /\.turn-clock/);
   assert.match(styles, /\.board-slot/);
+  assert.match(styles, /\.board-location__activate/);
   assert.match(styles, /battle-target-pulse/);
   assert.match(styles, /battle-target-impact/);
   assert.match(styles, /board-unit__target-preview/);

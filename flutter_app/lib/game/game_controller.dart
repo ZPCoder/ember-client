@@ -1483,9 +1483,10 @@ class GameController extends ChangeNotifier {
     final recipient = placement == 'enemy' ? state.ai : state.player;
     if (resolvedHandIndex < 0 ||
         (card.isUnit &&
-            recipient.board.length >= 7 &&
+            _battlefieldSize(recipient) >= 7 &&
             _findUpgradeTarget(recipient, card) == null) ||
-        (state.player.board.length >= 7 &&
+        (card.isLocation && _battlefieldSize(state.player) >= 7) ||
+        (_battlefieldSize(state.player) >= 7 &&
             _isPureSummonSpell(card, state.player)) ||
         !_validTarget(card, state.player, state.ai, target)) {
       return false;
@@ -1500,6 +1501,52 @@ class GameController extends ChangeNotifier {
       targetHero: targetHero,
       placement: placement,
     );
+    _checkFinished();
+    notifyListeners();
+    return true;
+  }
+
+  int _battlefieldSize(BattleSide side) =>
+      side.board.length + side.locations.length;
+
+  bool activateLocation(BattleLocation location) {
+    final state = battle;
+    if (state == null ||
+        state.finished ||
+        state.phase != 'main' ||
+        state.activePlayer != 'player' ||
+        !state.player.locations.contains(location) ||
+        state.actionWindow < location.readyOnTurn) {
+      return false;
+    }
+    location.durability--;
+    location.readyOnTurn = state.actionWindow + 4;
+    stateLog(location.card.name, '地点能力激活，消耗 1 点耐久。');
+    _emitFx(
+      'location',
+      '${location.card.name} 激活',
+      '剩余 ${location.durability} 点耐久',
+      Icons.location_city,
+      factionColors[location.card.faction] ?? 0xFF69CFC3,
+      sourceId: location.entityId,
+    );
+    _resolveEffects(
+      location.card.effect,
+      source: state.player,
+      enemy: state.ai,
+      sourceName: location.card.name,
+    );
+    if (location.durability <= 0) {
+      state.player.locations.remove(location);
+      _sendCardToGraveyard(
+        state.player,
+        location.card,
+        location.entityId,
+        fromZone: 'location',
+        reason: 'durability',
+      );
+      stateLog(location.card.name, '耐久耗尽，地点离开战场。');
+    }
     _checkFinished();
     notifyListeners();
     return true;
@@ -1732,7 +1779,7 @@ class GameController extends ChangeNotifier {
     required bool targetHero,
   }) {
     if (source.mana < power.cost) return false;
-    if (power.effect['kind'] == 'summon' && source.board.length >= 7) {
+    if (power.effect['kind'] == 'summon' && _battlefieldSize(source) >= 7) {
       return false;
     }
     final targetType = power.target ?? 'none';
@@ -1857,7 +1904,7 @@ class GameController extends ChangeNotifier {
         final summonCard = cardId == null ? null : card(cardId);
         final count = (effect['count'] as num?)?.toInt() ?? 1;
         if (summonCard == null || !summonCard.isUnit) return false;
-        for (var i = 0; i < count && source.board.length < 7; i++) {
+        for (var i = 0; i < count && _battlefieldSize(source) < 7; i++) {
           final unit = _summonUnit(summonCard, owner: owner, side: source);
           source.board.add(unit);
           _summonColossalParts(
@@ -2201,7 +2248,7 @@ class GameController extends ChangeNotifier {
     required int multiplier,
     required bool soldier,
   }) {
-    if (source.board.length >= 7) return null;
+    if (_battlefieldSize(source) >= 7) return null;
     final tokenCard = _colossalTokenCard(colossal, part, soldier: soldier);
     final unit = _summonUnit(tokenCard, owner: owner);
     unit.attack *= multiplier;
@@ -2514,6 +2561,27 @@ class GameController extends ChangeNotifier {
         source: source,
         enemy: enemy,
         owner: owner,
+      );
+    } else if (card.isLocation) {
+      final maxDurability = max(1, card.durability ?? 1);
+      source.locations.add(
+        BattleLocation(
+          entityId: handEntityId,
+          card: card,
+          owner: owner,
+          durability: maxDurability,
+          maxDurability: maxDurability,
+          readyOnTurn: (battle?.actionWindow ?? 0) + 2,
+        ),
+      );
+      stateLog(owner == 'player' ? '${card.name} 已部署。' : '敌方部署 ${card.name}。');
+      _emitFx(
+        'location',
+        '${card.name} 部署',
+        '$maxDurability 耐久 · 下个己方回合可激活',
+        Icons.location_city,
+        factionColors[card.faction] ?? 0xFF69CFC3,
+        sourceId: handEntityId,
       );
     } else if (card.type == 'weapon') {
       final previousWeapon = source.weapon;
@@ -3568,7 +3636,7 @@ class GameController extends ChangeNotifier {
           case 'summon-copy-of-unit':
             if (target == null ||
                 target.health <= 0 ||
-                source.board.length >= 7) {
+                _battlefieldSize(source) >= 7) {
               break;
             }
             final copiedUnit = _copyUnitForBattlefield(
@@ -3728,7 +3796,7 @@ class GameController extends ChangeNotifier {
                 .toList(growable: false);
             var resurrected = 0;
             for (final record in eligible) {
-              if (source.board.length >= 7) break;
+              if (_battlefieldSize(source) >= 7) break;
               final definition = card(record.cardId);
               if (definition == null || !definition.isUnit) continue;
               final unit = _summonUnit(
@@ -3990,7 +4058,7 @@ class GameController extends ChangeNotifier {
             }
             break;
           case 'take-control-random-enemy':
-            if (source.board.length >= 7) break;
+            if (_battlefieldSize(source) >= 7) break;
             final candidates = enemy.board
                 .where((unit) => unit.health > 0)
                 .toList(growable: false);
@@ -4052,7 +4120,7 @@ class GameController extends ChangeNotifier {
             final summonCard = cardId == null ? null : card(cardId);
             final count = (effect['count'] as num?)?.toInt() ?? 1;
             if (summonCard != null && summonCard.isUnit) {
-              for (var i = 0; i < count && source.board.length < 7; i++) {
+              for (var i = 0; i < count && _battlefieldSize(source) < 7; i++) {
                 final unit = _summonUnit(
                   summonCard,
                   owner: _ownerOf(source),
@@ -4466,7 +4534,7 @@ class GameController extends ChangeNotifier {
     required BattleUnit unit,
     required String sourceName,
   }) {
-    if (source.board.length >= 7 ||
+    if (_battlefieldSize(source) >= 7 ||
         unit.health <= 0 ||
         !enemy.board.contains(unit)) {
       return false;
@@ -4610,7 +4678,7 @@ class GameController extends ChangeNotifier {
 
         if (rebornIndex >= rebornQueue.length) break;
         final entry = rebornQueue[rebornIndex++];
-        if (entry.side.board.length >= 7) continue;
+        if (_battlefieldSize(entry.side) >= 7) continue;
         final unit = entry.unit;
         final reborn = _summonUnit(
           unit.card,
@@ -4708,6 +4776,29 @@ class GameController extends ChangeNotifier {
 
   Future<void> _aiTurn(BattleState state) async {
     if (state.finished) return;
+    for (final location in List<BattleLocation>.from(state.ai.locations)) {
+      if (state.actionWindow < location.readyOnTurn) continue;
+      location.durability--;
+      location.readyOnTurn = state.actionWindow + 4;
+      stateLog(location.card.name, '敌方激活地点，剩余 ${location.durability} 点耐久。');
+      _resolveEffects(
+        location.card.effect,
+        source: state.ai,
+        enemy: state.player,
+        sourceName: location.card.name,
+      );
+      if (location.durability <= 0) {
+        state.ai.locations.remove(location);
+        _sendCardToGraveyard(
+          state.ai,
+          location.card,
+          location.entityId,
+          fromZone: 'location',
+          reason: 'durability',
+        );
+      }
+      if (state.finished) return;
+    }
     if (state.ai.hand.any((card) => card.id == 'the-coin') &&
         state.ai.hand.any(
           (card) => card.cost > state.ai.mana && card.cost <= state.ai.mana + 1,
@@ -4772,9 +4863,10 @@ class GameController extends ChangeNotifier {
             : state.ai;
         if (_effectiveHandCost(state.ai, candidateIndex) > state.ai.mana ||
             (candidate.isUnit &&
-                recipient.board.length >= 7 &&
+                _battlefieldSize(recipient) >= 7 &&
                 _findUpgradeTarget(recipient, candidate) == null) ||
-            (state.ai.board.length >= 7 &&
+            (candidate.isLocation && _battlefieldSize(state.ai) >= 7) ||
+            (_battlefieldSize(state.ai) >= 7 &&
                 _isPureSummonSpell(candidate, state.ai))) {
           continue;
         }
@@ -4903,9 +4995,10 @@ class GameController extends ChangeNotifier {
   String _chooseAiCardPlacement(BattleState state, CardDefinition card) {
     if (!card.isUnit || !card.disguised) return 'friendly';
     final canPlaceFriendly =
-        state.ai.board.length < 7 || _findUpgradeTarget(state.ai, card) != null;
+        _battlefieldSize(state.ai) < 7 ||
+        _findUpgradeTarget(state.ai, card) != null;
     final canPlaceEnemy =
-        state.player.board.length < 7 ||
+        _battlefieldSize(state.player) < 7 ||
         _findUpgradeTarget(state.player, card) != null;
     if (!canPlaceFriendly && canPlaceEnemy) return 'enemy';
     if (!canPlaceEnemy) return 'friendly';

@@ -159,19 +159,18 @@
   },
   {
     "id": "sun-daybreak-order",
-    "name": "破晓号令",
-    "description": "使一个友方单位获得 +2/+2。",
+    "name": "晨曦档案馆",
+    "description": "地点。耐久度 3。激活：抽一张牌。使用后冷却 1 回合。",
     "faction": "曜光",
-    "type": "spell",
-    "cost": 3,
+    "type": "location",
+    "cost": 2,
     "rarity": "稀有",
-    "school": "radiance",
-    "target": "friendly-unit",
+    "durability": 3,
+    "target": "none",
     "effect": [
       {
-        "kind": "buff",
-        "attack": 2,
-        "health": 2
+        "kind": "draw",
+        "count": 1
       }
     ],
     "keywords": [],

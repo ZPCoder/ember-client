@@ -32,6 +32,10 @@ void main() {
       expect(factionOrder, hasLength(20));
       expect(catalog.where((card) => card.type == 'weapon'), hasLength(20));
       expect(catalog.where((card) => card.type == 'hero'), hasLength(1));
+      expect(catalog.where((card) => card.type == 'location'), hasLength(1));
+      final location = catalog.singleWhere((card) => card.isLocation);
+      expect(location.id, 'sun-daybreak-order');
+      expect(location.durability, 3);
       expect(
         catalog.singleWhere((card) => card.type == 'hero').heroCard,
         isNotNull,
@@ -381,6 +385,91 @@ void main() {
     expect(state.player.spellsPlayedEntityIds.last, 'mobile-opening-coin');
     controller.dispose();
   });
+
+  test(
+    'mobile Location shares board space, cools down and expires by durability',
+    () {
+      final filler = CardDefinition(
+        id: 'location-filler',
+        name: '占位单位',
+        description: '测试单位。',
+        faction: '曜光',
+        type: 'unit',
+        cost: 1,
+        rarity: '普通',
+        attack: 1,
+        health: 1,
+      );
+      final location = CardDefinition(
+        id: 'test-location',
+        name: '测试地点',
+        description: '激活：抽一张牌。',
+        faction: '曜光',
+        type: 'location',
+        cost: 2,
+        rarity: '稀有',
+        durability: 3,
+        effect: const [
+          <String, dynamic>{'kind': 'draw', 'count': 1},
+        ],
+      );
+      final controller = GameController(startingPlayer: 'player')
+        ..catalog = [filler, location]
+        ..deckIds.addAll(List.filled(30, filler.id));
+      controller.startBattle();
+      controller.confirmMulligan();
+      final state = controller.battle!;
+      state.player.hand
+        ..clear()
+        ..add(location);
+      state.player.handCostReductions
+        ..clear()
+        ..add(0);
+      state.player.handFragments
+        ..clear()
+        ..add(null);
+      state.player.handStartedInDeck
+        ..clear()
+        ..add(true);
+      state.player.handEnteredTurns
+        ..clear()
+        ..add(0);
+      state.player.handEntityIds
+        ..clear()
+        ..add('flutter-location-1');
+      state.player.mana = 10;
+
+      expect(controller.playCard(location, handIndex: 0), isTrue);
+      final entity = state.player.locations.single;
+      expect(entity.entityId, 'flutter-location-1');
+      expect(entity.readyOnTurn, state.actionWindow + 2);
+      expect(controller.activateLocation(entity), isFalse);
+
+      state.actionWindow = entity.readyOnTurn;
+      final deckBefore = state.player.deck.length;
+      expect(controller.activateLocation(entity), isTrue);
+      expect(entity.durability, 2);
+      expect(state.player.deck.length, deckBefore - 1);
+      final nextReady = entity.readyOnTurn;
+      state.actionWindow = nextReady - 2;
+      expect(controller.activateLocation(entity), isFalse);
+      state.actionWindow = nextReady;
+      expect(controller.activateLocation(entity), isTrue);
+      state.actionWindow = entity.readyOnTurn;
+      expect(controller.activateLocation(entity), isTrue);
+      expect(state.player.locations, isEmpty);
+      expect(
+        state.player.cardGraveyard.any(
+          (record) =>
+              record.entityId == 'flutter-location-1' &&
+              record.fromZone == 'location' &&
+              record.reason == 'durability',
+        ),
+        isTrue,
+      );
+      controller.dispose();
+    },
+  );
 
   test('mobile Prepare discounts only the selected hand instance once', () {
     final filler = CardDefinition(

@@ -979,6 +979,7 @@ class _CollectionPageState extends State<CollectionPage> {
                         DropdownMenuItem(value: 'spell', child: Text('战术')),
                         DropdownMenuItem(value: 'weapon', child: Text('武器')),
                         DropdownMenuItem(value: 'hero', child: Text('英雄')),
+                        DropdownMenuItem(value: 'location', child: Text('地点')),
                       ],
                       onChanged: (value) => setState(() {
                         type = value ?? '全部';
@@ -1325,6 +1326,8 @@ class CardTile extends StatelessWidget {
                         ? '武器'
                         : card.isHero
                         ? '英雄'
+                        : card.isLocation
+                        ? '地点'
                         : '战术'}',
                     style: const TextStyle(
                       color: Color(0xFF84938A),
@@ -1375,10 +1378,14 @@ class CardTile extends StatelessWidget {
                       ],
                     ),
                   ),
-                  if (card.isUnit || card.type == 'weapon') ...[
+                  if (card.isUnit ||
+                      card.type == 'weapon' ||
+                      card.isLocation) ...[
                     const SizedBox(width: 4),
                     Text(
-                      card.type == 'weapon'
+                      card.isLocation
+                          ? '耐久 ${card.durability ?? 0}'
+                          : card.type == 'weapon'
                           ? '${card.attack ?? 0} / ${card.durability ?? card.health ?? 0}'
                           : '${card.attack} / ${card.health}',
                       style: const TextStyle(
@@ -2896,6 +2903,13 @@ class _BattleBoardState extends State<BattleBoard> {
                         ai: true,
                       ),
                       const SizedBox(height: 13),
+                      if (state.ai.locations.isNotEmpty) ...[
+                        _LocationRow(
+                          locations: state.ai.locations,
+                          actionWindow: state.actionWindow,
+                        ),
+                        const SizedBox(height: 8),
+                      ],
                       _BoardRow(
                         units: state.ai.board,
                         enemy: true,
@@ -2912,6 +2926,18 @@ class _BattleBoardState extends State<BattleBoard> {
                             ? (unit) => _attack(context, unit)
                             : null,
                       ),
+                      if (state.player.locations.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        _LocationRow(
+                          locations: state.player.locations,
+                          actionWindow: state.actionWindow,
+                          onActivate:
+                              state.phase == 'main' &&
+                                  state.activePlayer == 'player'
+                              ? controller.activateLocation
+                              : null,
+                        ),
+                      ],
                       const SizedBox(height: 13),
                       _HeroBar(
                         name: state.player.heroName == '远征指挥官'
@@ -4109,6 +4135,40 @@ class _HeroBar extends StatelessWidget {
   );
 }
 
+class _LocationRow extends StatelessWidget {
+  const _LocationRow({
+    required this.locations,
+    required this.actionWindow,
+    this.onActivate,
+  });
+
+  final List<BattleLocation> locations;
+  final int actionWindow;
+  final ValueChanged<BattleLocation>? onActivate;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: locations
+          .map((location) {
+            final ready = actionWindow >= location.readyOnTurn;
+            return OutlinedButton.icon(
+              onPressed: ready && onActivate != null
+                  ? () => onActivate!(location)
+                  : null,
+              icon: const Icon(Icons.location_city, size: 16),
+              label: Text(
+                '${location.card.name} · ${location.durability}/${location.maxDurability} · ${ready ? "激活" : "冷却"}',
+              ),
+            );
+          })
+          .toList(growable: false),
+    );
+  }
+}
+
 class _BoardRow extends StatelessWidget {
   const _BoardRow({
     required this.units,
@@ -5113,6 +5173,20 @@ class OnlineBattlePanel extends StatelessWidget {
                 _OnlineDiscoverPanel(controller: controller),
               if (controller.phase == 'choose-one')
                 _OnlineChooseOnePanel(controller: controller),
+              if (controller.remoteLocations.isNotEmpty)
+                Wrap(
+                  spacing: 7,
+                  children: controller.remoteLocations
+                      .map(
+                        (location) => Chip(
+                          avatar: const Icon(Icons.location_city, size: 15),
+                          label: Text(
+                            '${location.card.name} · ${location.durability}/${location.maxDurability}',
+                          ),
+                        ),
+                      )
+                      .toList(growable: false),
+                ),
               _OnlineBoardRow(
                 title: '对手战场',
                 units: controller.remoteBoard,
@@ -5127,6 +5201,25 @@ class OnlineBattlePanel extends StatelessWidget {
                     ? (unit) => _attack(context, unit)
                     : null,
               ),
+              if (controller.localLocations.isNotEmpty)
+                Wrap(
+                  spacing: 7,
+                  children: controller.localLocations
+                      .map(
+                        (location) => OutlinedButton.icon(
+                          onPressed:
+                              controller.canAct &&
+                                  controller.turn >= location.readyOnTurn
+                              ? () => controller.activateLocation(location)
+                              : null,
+                          icon: const Icon(Icons.location_city, size: 15),
+                          label: Text(
+                            '${location.card.name} · ${location.durability}/${location.maxDurability} · ${controller.turn >= location.readyOnTurn ? "激活" : "冷却"}',
+                          ),
+                        ),
+                      )
+                      .toList(growable: false),
+                ),
               const SizedBox(height: 13),
               Row(
                 children: [
@@ -5793,7 +5886,11 @@ class OperationsPage extends StatelessWidget {
                       style: const TextStyle(fontSize: 12),
                     ),
                     subtitle: Text(
-                      '${card.faction} · ${card.type == 'unit' ? '单位' : '战术'}',
+                      '${card.faction} · ${card.type == 'unit'
+                          ? '单位'
+                          : card.isLocation
+                          ? '地点'
+                          : '战术'}',
                       style: const TextStyle(
                         color: Color(0xFF84938A),
                         fontSize: 10,

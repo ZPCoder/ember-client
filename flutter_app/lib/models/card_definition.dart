@@ -79,6 +79,7 @@ class CardDefinition {
 
   bool get isUnit => type == 'unit';
   bool get isHero => type == 'hero';
+  bool get isLocation => type == 'location';
   bool get hasShatter => shatter != null;
   bool get hasHerald => herald != null;
   bool get hasColossal => colossal != null;
@@ -370,6 +371,7 @@ class BattleSide {
     List<int>? handEnteredTurns,
     List<String>? handEntityIds,
     required this.board,
+    List<BattleLocation>? locations,
     this.coinAvailable = false,
     this.coinEntityId,
     this.weapon,
@@ -415,6 +417,7 @@ class BattleSide {
                (index) => 'legacy-hand-$index-${hand[index].id}',
              ),
        ),
+       locations = locations ?? <BattleLocation>[],
        spellSchoolsPlayedThisTurn = spellSchoolsPlayedThisTurn ?? <String>[],
        spellSchoolsPlayedLastTurn = spellSchoolsPlayedLastTurn ?? <String>[],
        spellsPlayedThisGame = spellsPlayedThisGame ?? <String>[],
@@ -443,6 +446,7 @@ class BattleSide {
   final List<int> handEnteredTurns;
   final List<String> handEntityIds;
   final List<BattleUnit> board;
+  final List<BattleLocation> locations;
   bool coinAvailable;
   String? coinEntityId;
   BattleWeapon? weapon;
@@ -464,6 +468,24 @@ class BattleSide {
   final List<BattleGraveyardRecord> cardGraveyard;
   bool heroHasAttacked = false;
   final List<BattleSecret> secrets;
+}
+
+class BattleLocation {
+  BattleLocation({
+    required this.entityId,
+    required this.card,
+    required this.owner,
+    required this.durability,
+    required this.maxDurability,
+    required this.readyOnTurn,
+  });
+
+  final String entityId;
+  final CardDefinition card;
+  final String owner;
+  int durability;
+  final int maxDurability;
+  int readyOnTurn;
 }
 
 class BattleWeapon {
