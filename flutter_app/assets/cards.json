@@ -3397,17 +3397,15 @@
   },
   {
     "id": "astral-infinite-observer",
-    "name": "无垠观测者",
-    "description": "嘲讽，护盾。登场时抽一张牌。它的凝视横跨无数纪元。",
+    "name": "无垠回响议长",
+    "description": "战吼：重新施放你本局使用过且未始于起始牌组的每张战术（每局一次，目标随机选择）。",
     "faction": "星穹",
     "type": "unit",
-    "cost": 8,
+    "cost": 9,
     "rarity": "传说",
-    "attack": 8,
-    "health": 8,
+    "attack": 5,
+    "health": 7,
     "keywords": [
-      "taunt",
-      "shield",
       "battlecry"
     ],
     "traits": [
@@ -3416,14 +3414,16 @@
     ],
     "onPlay": [
       {
-        "kind": "draw",
-        "count": 1
+        "kind": "recast-nondeck-spells-once"
       }
     ],
     "onDeath": [],
     "effect": [],
     "set": "raptor-2025",
-    "minionTypes": []
+    "minionTypes": [],
+    "target": "none",
+    "onTurnStart": [],
+    "onTurnEnd": []
   },
   {
     "id": "astral-glimmer-echo",

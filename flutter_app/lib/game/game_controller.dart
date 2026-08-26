@@ -883,27 +883,35 @@ class GameController extends ChangeNotifier {
       state.player,
       state.mulliganSelected,
     );
-    final returned = <CardDefinition>[];
+    final returned = <({CardDefinition card, bool startedInDeck})>[];
     final returnedGroups = <String>{};
     _syncHandCostReductions(state.player);
     for (final index in selected.reversed) {
       if (index >= 0 && index < state.player.hand.length) {
         final fragment = state.player.handFragments[index];
+        final startedInDeck = state.player.handStartedInDeck[index];
         final removed = state.player.hand.removeAt(index);
         if (fragment == null || returnedGroups.add(fragment.groupId)) {
-          returned.add(card(removed.id) ?? removed);
+          returned.add((
+            card: card(removed.id) ?? removed,
+            startedInDeck: startedInDeck,
+          ));
         }
         state.player.handCostReductions.removeAt(index);
         state.player.handFragments.removeAt(index);
+        state.player.handStartedInDeck.removeAt(index);
       }
     }
     for (var i = 0; i < returned.length; i++) {
       if (state.player.deck.isNotEmpty) _draw(state.player);
     }
     if (returned.isNotEmpty) {
-      state.player.deck.addAll(returned);
+      state.player.deck.addAll(returned.map((entry) => entry.card));
       state.player.deckCostOverrides.addAll(
         List<int?>.filled(returned.length, null),
+      );
+      state.player.deckStartedInDeck.addAll(
+        returned.map((entry) => entry.startedInDeck),
       );
       _shuffleDeck(state.player);
     }
@@ -967,7 +975,7 @@ class GameController extends ChangeNotifier {
       keep.add(entry.key);
     }
     if (keep.isEmpty && indexed.isNotEmpty) keep.add(indexed.first.key);
-    final returned = <CardDefinition>[];
+    final returned = <({CardDefinition card, bool startedInDeck})>[];
     _syncHandCostReductions(side);
     final returnIndexes = _expandedMulliganIndexes(
       side,
@@ -976,18 +984,24 @@ class GameController extends ChangeNotifier {
     final returnedGroups = <String>{};
     for (final index in returnIndexes.reversed) {
       final fragment = side.handFragments[index];
+      final startedInDeck = side.handStartedInDeck[index];
       final removed = side.hand.removeAt(index);
       if (fragment == null || returnedGroups.add(fragment.groupId)) {
-        returned.add(card(removed.id) ?? removed);
+        returned.add((
+          card: card(removed.id) ?? removed,
+          startedInDeck: startedInDeck,
+        ));
       }
       side.handCostReductions.removeAt(index);
       side.handFragments.removeAt(index);
+      side.handStartedInDeck.removeAt(index);
     }
     for (var i = 0; i < returned.length; i++) {
       if (side.deck.isNotEmpty) _draw(side);
     }
-    side.deck.addAll(returned);
+    side.deck.addAll(returned.map((entry) => entry.card));
     side.deckCostOverrides.addAll(List<int?>.filled(returned.length, null));
+    side.deckStartedInDeck.addAll(returned.map((entry) => entry.startedInDeck));
     _shuffleDeck(side);
   }
 
@@ -1051,7 +1065,13 @@ class GameController extends ChangeNotifier {
       _syncDeckCostOverrides(side);
       final drawn = side.deck.removeLast();
       final costOverride = side.deckCostOverrides.removeLast();
-      if (_addCardToHand(side, drawn, costOverride: costOverride)) {
+      final startedInDeck = side.deckStartedInDeck.removeLast();
+      if (_addCardToHand(
+        side,
+        drawn,
+        costOverride: costOverride,
+        startedInDeck: startedInDeck,
+      )) {
         return;
       }
       stateLog(
@@ -1096,7 +1116,15 @@ class GameController extends ChangeNotifier {
     if (matchIndex < 0) return false;
     final drawn = side.deck.removeAt(matchIndex);
     final costOverride = side.deckCostOverrides.removeAt(matchIndex);
-    if (_addCardToHand(side, drawn, costOverride: costOverride)) return true;
+    final startedInDeck = side.deckStartedInDeck.removeAt(matchIndex);
+    if (_addCardToHand(
+      side,
+      drawn,
+      costOverride: costOverride,
+      startedInDeck: startedInDeck,
+    )) {
+      return true;
+    }
     stateLog(
       _ownerOf(side) == 'player' ? '手牌已满' : '敌方手牌已满',
       ' ${drawn.name} 被燃毁。',
@@ -1112,7 +1140,15 @@ class GameController extends ChangeNotifier {
     if (matchIndex < 0) return false;
     final drawn = side.deck.removeAt(matchIndex);
     final costOverride = side.deckCostOverrides.removeAt(matchIndex);
-    if (_addCardToHand(side, drawn, costOverride: costOverride)) return true;
+    final startedInDeck = side.deckStartedInDeck.removeAt(matchIndex);
+    if (_addCardToHand(
+      side,
+      drawn,
+      costOverride: costOverride,
+      startedInDeck: startedInDeck,
+    )) {
+      return true;
+    }
     stateLog(
       _ownerOf(side) == 'player' ? '手牌已满' : '敌方手牌已满',
       ' ${drawn.name} 被燃毁。',
@@ -1138,6 +1174,7 @@ class GameController extends ChangeNotifier {
     BattleSide side,
     CardDefinition drawn, {
     int? costOverride,
+    bool startedInDeck = false,
   }) {
     final available = 10 - _occupiedHandSlots(side);
     if (available <= 0) return false;
@@ -1148,6 +1185,7 @@ class GameController extends ChangeNotifier {
         costOverride == null ? 0 : max(0, drawn.cost - max(0, costOverride)),
       );
       side.handFragments.add(null);
+      side.handStartedInDeck.add(startedInDeck);
       return true;
     }
     final groupId = 'm${_shatterGroupSequence++}';
@@ -1157,11 +1195,13 @@ class GameController extends ChangeNotifier {
         : max(0, drawn.cost - max(0, costOverride)).toInt();
     side.handCostReductions.insert(0, reduction);
     side.handFragments.insert(0, HandFragment(groupId: groupId, piece: 'left'));
+    side.handStartedInDeck.insert(0, startedInDeck);
     var fragmentCount = 1;
     if (available >= 2) {
       side.hand.add(_shatterFragmentCard(drawn, 'right'));
       side.handCostReductions.add(reduction);
       side.handFragments.add(HandFragment(groupId: groupId, piece: 'right'));
+      side.handStartedInDeck.add(startedInDeck);
       fragmentCount = 2;
     } else {
       stateLog('破碎片燃毁', '${drawn.name} 的右片因手牌空间不足被销毁。');
@@ -1194,6 +1234,7 @@ class GameController extends ChangeNotifier {
       final removed = source.hand.removeAt(index);
       source.handCostReductions.removeAt(index);
       final fragment = source.handFragments.removeAt(index);
+      source.handStartedInDeck.removeAt(index);
       final state = battle!;
       final discardId = 'discard-${_discardSequence++}';
       source.discardHistory.add(
@@ -1323,9 +1364,12 @@ class GameController extends ChangeNotifier {
     }
     final index = _resolveHandIndex(state.player, card, handIndex);
     if (index < 0) return false;
+    _syncHandCostReductions(state.player);
+    final startedInDeck = state.player.handStartedInDeck[index];
     state.player.hand.removeAt(index);
     state.player.handCostReductions.removeAt(index);
     state.player.handFragments.removeAt(index);
+    state.player.handStartedInDeck.removeAt(index);
     state.player.mana--;
     // Tradeable draws from the original deck before the physical card is
     // inserted, so a trade can never immediately redraw itself. Preserve the
@@ -1335,6 +1379,7 @@ class GameController extends ChangeNotifier {
     _syncDeckCostOverrides(state.player);
     state.player.deck.insert(insertionIndex, this.card(card.id) ?? card);
     state.player.deckCostOverrides.insert(insertionIndex, null);
+    state.player.deckStartedInDeck.insert(insertionIndex, startedInDeck);
     state.logs.insert(0, '${card.name} 已交易，抽取一张替代档案。');
     _emitFx(
       'trade',
@@ -2133,10 +2178,13 @@ class GameController extends ChangeNotifier {
   }) {
     final resolvedHandIndex = _resolveHandIndex(source, card, handIndex);
     if (resolvedHandIndex < 0) return;
+    _syncHandCostReductions(source);
+    final startedInDeck = source.handStartedInDeck[resolvedHandIndex];
     final effectiveCost = _effectiveHandCost(source, resolvedHandIndex);
     source.hand.removeAt(resolvedHandIndex);
     source.handCostReductions.removeAt(resolvedHandIndex);
     source.handFragments.removeAt(resolvedHandIndex);
+    source.handStartedInDeck.removeAt(resolvedHandIndex);
     _reassembleAdjacentFragments(source);
     source.mana -= effectiveCost;
     final comboActive = source.cardsPlayedThisTurn > 0;
@@ -2154,7 +2202,12 @@ class GameController extends ChangeNotifier {
       return;
     }
     if (card.type == 'spell') {
+      while (source.spellsPlayedFromStartingDeck.length <
+          source.spellsPlayedThisGame.length) {
+        source.spellsPlayedFromStartingDeck.add(true);
+      }
       source.spellsPlayedThisGame.add(card.id);
+      source.spellsPlayedFromStartingDeck.add(startedInDeck);
       if (card.school != null) {
         source.spellSchoolsPlayedThisTurn.add(card.school!);
       }
@@ -2315,6 +2368,12 @@ class GameController extends ChangeNotifier {
     while (side.handFragments.length < side.hand.length) {
       side.handFragments.add(null);
     }
+    while (side.handStartedInDeck.length > side.hand.length) {
+      side.handStartedInDeck.removeLast();
+    }
+    while (side.handStartedInDeck.length < side.hand.length) {
+      side.handStartedInDeck.add(true);
+    }
   }
 
   void _syncDeckCostOverrides(BattleSide side) {
@@ -2324,13 +2383,23 @@ class GameController extends ChangeNotifier {
     while (side.deckCostOverrides.length < side.deck.length) {
       side.deckCostOverrides.add(null);
     }
+    while (side.deckStartedInDeck.length > side.deck.length) {
+      side.deckStartedInDeck.removeLast();
+    }
+    while (side.deckStartedInDeck.length < side.deck.length) {
+      side.deckStartedInDeck.add(true);
+    }
   }
 
   void _shuffleDeck(BattleSide side) {
     _syncDeckCostOverrides(side);
     final entries = List.generate(
       side.deck.length,
-      (index) => (card: side.deck[index], cost: side.deckCostOverrides[index]),
+      (index) => (
+        card: side.deck[index],
+        cost: side.deckCostOverrides[index],
+        startedInDeck: side.deckStartedInDeck[index],
+      ),
     )..shuffle(_random);
     side.deck
       ..clear()
@@ -2338,6 +2407,9 @@ class GameController extends ChangeNotifier {
     side.deckCostOverrides
       ..clear()
       ..addAll(entries.map((entry) => entry.cost));
+    side.deckStartedInDeck
+      ..clear()
+      ..addAll(entries.map((entry) => entry.startedInDeck));
   }
 
   List<int> _expandedMulliganIndexes(BattleSide side, Iterable<int> requested) {
@@ -2405,6 +2477,9 @@ class GameController extends ChangeNotifier {
       side.handCostReductions.removeAt(index + 1);
       side.handFragments[index] = null;
       side.handFragments.removeAt(index + 1);
+      side.handStartedInDeck[index] =
+          side.handStartedInDeck[index] && side.handStartedInDeck[index + 1];
+      side.handStartedInDeck.removeAt(index + 1);
       stateLog('破碎重组', '${restored.name} 的两片重新相接。');
       _emitFx(
         'buff',
@@ -2589,6 +2664,20 @@ class GameController extends ChangeNotifier {
       stateLog(sourceName, '没有可重施放的敌方战术。');
       return;
     }
+    _recastSpellCopy(
+      copiedSpell,
+      source: source,
+      enemy: enemy,
+      sourceName: sourceName,
+    );
+  }
+
+  void _recastSpellCopy(
+    CardDefinition copiedSpell, {
+    required BattleSide source,
+    required BattleSide enemy,
+    required String sourceName,
+  }) {
     final selection = _randomRecastTarget(
       copiedSpell,
       source: source,
@@ -2680,6 +2769,42 @@ class GameController extends ChangeNotifier {
       );
     }
     _resolveSpellTriggers(source: source, enemy: enemy);
+  }
+
+  void _recastNonDeckSpellsOnce({
+    required BattleSide source,
+    required BattleSide enemy,
+    required String sourceName,
+  }) {
+    if (source.nonDeckSpellRecastUsed) {
+      stateLog(sourceName, '本局已经释放过非起始牌组战术回响。');
+      return;
+    }
+    source.nonDeckSpellRecastUsed = true;
+    while (source.spellsPlayedFromStartingDeck.length <
+        source.spellsPlayedThisGame.length) {
+      source.spellsPlayedFromStartingDeck.add(true);
+    }
+    final cardIds = <String>[];
+    for (var index = 0; index < source.spellsPlayedThisGame.length; index++) {
+      if (!source.spellsPlayedFromStartingDeck[index]) {
+        cardIds.add(source.spellsPlayedThisGame[index]);
+      }
+    }
+    if (cardIds.isEmpty) {
+      stateLog(sourceName, '没有未始于起始牌组的战术可重施放。');
+      return;
+    }
+    for (final cardId in cardIds) {
+      final copiedSpell = card(cardId);
+      if (copiedSpell == null || copiedSpell.type != 'spell') continue;
+      _recastSpellCopy(
+        copiedSpell,
+        source: source,
+        enemy: enemy,
+        sourceName: sourceName,
+      );
+    }
   }
 
   void _resolveEffects(
@@ -2808,6 +2933,13 @@ class GameController extends ChangeNotifier {
             break;
           case 'recast-last-opponent-spell':
             _recastLastOpponentSpell(
+              source: source,
+              enemy: enemy,
+              sourceName: sourceName,
+            );
+            break;
+          case 'recast-nondeck-spells-once':
+            _recastNonDeckSpellsOnce(
               source: source,
               enemy: enemy,
               sourceName: sourceName,
@@ -3003,6 +3135,7 @@ class GameController extends ChangeNotifier {
               final insertionIndex = _random.nextInt(source.deck.length + 1);
               source.deck.insert(insertionIndex, generated);
               source.deckCostOverrides.insert(insertionIndex, fixedCost);
+              source.deckStartedInDeck.insert(insertionIndex, false);
             }
             stateLog(sourceName, '将 $count 张传说龙裔洗入牌库。');
             break;
@@ -3149,6 +3282,7 @@ class GameController extends ChangeNotifier {
               targetSide.hand.add(target.card);
               targetSide.handCostReductions.add(0);
               targetSide.handFragments.add(null);
+              targetSide.handStartedInDeck.add(false);
               stateLog(sourceName, '${target.card.name} 返回其控制者的手牌并移除全部增益。');
               _emitFx(
                 'draw',

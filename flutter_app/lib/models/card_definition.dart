@@ -345,9 +345,11 @@ class BattleSide {
     this.fatigue = 0,
     required this.deck,
     List<int?>? deckCostOverrides,
+    List<bool>? deckStartedInDeck,
     required this.hand,
     List<int>? handCostReductions,
     List<HandFragment?>? handFragments,
+    List<bool>? handStartedInDeck,
     required this.board,
     this.coinAvailable = false,
     this.weapon,
@@ -359,15 +361,24 @@ class BattleSide {
     List<String>? spellSchoolsPlayedThisTurn,
     List<String>? spellSchoolsPlayedLastTurn,
     List<String>? spellsPlayedThisGame,
+    List<bool>? spellsPlayedFromStartingDeck,
+    this.nonDeckSpellRecastUsed = false,
     List<BattleDeathRecord>? deathHistory,
     List<BattleDiscardRecord>? discardHistory,
     List<BattleSecret>? secrets,
   }) : deckCostOverrides = List<int?>.from(deckCostOverrides ?? const <int?>[]),
+       deckStartedInDeck = List<bool>.from(
+         deckStartedInDeck ?? List<bool>.filled(deck.length, true),
+       ),
        handCostReductions = handCostReductions ?? <int>[],
        handFragments = handFragments ?? <HandFragment?>[],
+       handStartedInDeck = List<bool>.from(
+         handStartedInDeck ?? List<bool>.filled(hand.length, true),
+       ),
        spellSchoolsPlayedThisTurn = spellSchoolsPlayedThisTurn ?? <String>[],
        spellSchoolsPlayedLastTurn = spellSchoolsPlayedLastTurn ?? <String>[],
        spellsPlayedThisGame = spellsPlayedThisGame ?? <String>[],
+       spellsPlayedFromStartingDeck = spellsPlayedFromStartingDeck ?? <bool>[],
        deathHistory = deathHistory ?? <BattleDeathRecord>[],
        discardHistory = discardHistory ?? <BattleDiscardRecord>[],
        secrets = secrets ?? <BattleSecret>[];
@@ -380,9 +391,11 @@ class BattleSide {
   int fatigue;
   final List<CardDefinition> deck;
   final List<int?> deckCostOverrides;
+  final List<bool> deckStartedInDeck;
   final List<CardDefinition> hand;
   final List<int> handCostReductions;
   final List<HandFragment?> handFragments;
+  final List<bool> handStartedInDeck;
   final List<BattleUnit> board;
   bool coinAvailable;
   BattleWeapon? weapon;
@@ -395,6 +408,8 @@ class BattleSide {
   final List<String> spellSchoolsPlayedThisTurn;
   final List<String> spellSchoolsPlayedLastTurn;
   final List<String> spellsPlayedThisGame;
+  final List<bool> spellsPlayedFromStartingDeck;
+  bool nonDeckSpellRecastUsed;
   final List<BattleDeathRecord> deathHistory;
   final List<BattleDiscardRecord> discardHistory;
   bool heroHasAttacked = false;

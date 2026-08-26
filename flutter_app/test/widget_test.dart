@@ -209,6 +209,13 @@ void main() {
             .single['kind'],
         'recast-last-opponent-spell',
       );
+      expect(
+        catalog
+            .singleWhere((card) => card.id == 'astral-infinite-observer')
+            .onPlay
+            .single['kind'],
+        'recast-nondeck-spells-once',
+      );
       expect(generatedBattleCards, hasLength(18));
       expect(
         generatedBattleCards
@@ -1262,6 +1269,7 @@ void main() {
         'right',
       ]);
       expect(state.player.handCostReductions, [0, 0]);
+      expect(state.player.handStartedInDeck, [false, false]);
       expect(state.ai.hand, [shatter]);
 
       state.player.hand
@@ -1291,6 +1299,7 @@ void main() {
       expect(copied, hasLength(1));
       final copiedIndex = state.player.hand.indexOf(copied.single);
       expect(state.player.handCostReductions[copiedIndex], 0);
+      expect(state.player.handStartedInDeck[copiedIndex], isFalse);
       expect(state.logs.any((log) => log.contains('复制燃毁')), isTrue);
 
       state.player.hand
@@ -1348,6 +1357,81 @@ void main() {
       expect(state.player.spellsPlayedThisGame, isEmpty);
       expect(state.ai.spellsPlayedThisGame, [damageSpell.id]);
       expect(state.logs.any((log) => log.contains('重施放')), isTrue);
+      controller.dispose();
+    },
+  );
+
+  test(
+    'mobile recasts only non-starting-deck spells and enforces once per game',
+    () async {
+      final catalog = await loadCatalog();
+      final recaster = catalog.singleWhere(
+        (card) => card.id == 'astral-infinite-observer',
+      );
+      final generatedSpell = catalog.singleWhere(
+        (card) => card.id == 'sun-focused-ray',
+      );
+      final startingSpell = catalog.singleWhere(
+        (card) => card.id == 'ember-leaping-spark',
+      );
+      final filler = catalog.singleWhere((card) => card.id == 'sun-dawn-scout');
+      final controller = GameController(startingPlayer: 'player')
+        ..catalog = catalog
+        ..deckIds.addAll(List.filled(30, filler.id));
+      controller.startBattle();
+      await controller.confirmMulligan();
+      final state = controller.battle!;
+      state.player.spellsPlayedThisGame
+        ..clear()
+        ..add(startingSpell.id);
+      state.player.spellsPlayedFromStartingDeck
+        ..clear()
+        ..add(true);
+      state.player.hand
+        ..clear()
+        ..addAll([generatedSpell, recaster]);
+      state.player.handCostReductions
+        ..clear()
+        ..addAll([0, 0]);
+      state.player.handFragments
+        ..clear()
+        ..addAll([null, null]);
+      state.player.handStartedInDeck
+        ..clear()
+        ..addAll([false, true]);
+      state.player.mana = 10;
+      state.ai.heroHealth = 30;
+      state.ai.board.clear();
+
+      expect(
+        controller.playCard(generatedSpell, handIndex: 0, targetHero: true),
+        isTrue,
+      );
+      expect(state.player.spellsPlayedThisGame, [
+        startingSpell.id,
+        generatedSpell.id,
+      ]);
+      expect(state.player.spellsPlayedFromStartingDeck, [true, false]);
+      expect(controller.playCard(recaster, handIndex: 0), isTrue);
+      expect(state.ai.heroHealth, 26);
+      expect(state.player.nonDeckSpellRecastUsed, isTrue);
+
+      state.player.hand
+        ..clear()
+        ..add(recaster);
+      state.player.handCostReductions
+        ..clear()
+        ..add(0);
+      state.player.handFragments
+        ..clear()
+        ..add(null);
+      state.player.handStartedInDeck
+        ..clear()
+        ..add(true);
+      state.player.mana = 9;
+      expect(controller.playCard(recaster), isTrue);
+      expect(state.ai.heroHealth, 26);
+      expect(state.logs.any((log) => log.contains('本局已经释放过')), isTrue);
       controller.dispose();
     },
   );
@@ -4824,6 +4908,7 @@ void main() {
         isTrue,
       );
       expect(state.player.deckCostOverrides, everyElement(1));
+      expect(state.player.deckStartedInDeck, everyElement(false));
 
       expect(controller.chooseOne(0), isTrue);
       expect(state.phase, 'main');
@@ -4833,6 +4918,7 @@ void main() {
       );
       expect(generatedIndex, greaterThanOrEqualTo(0));
       expect(controller.playerHandCost(generatedIndex), 1);
+      expect(state.player.handStartedInDeck[generatedIndex], isFalse);
       controller.dispose();
     },
   );
