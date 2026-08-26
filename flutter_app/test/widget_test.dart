@@ -61,6 +61,12 @@ void main() {
       );
       expect(catalog.any((card) => card.overload > 0), isTrue);
       expect(catalog.any((card) => card.tradeable), isTrue);
+      final quickdraw = catalog.singleWhere(
+        (card) => card.id == 'neutral-season-05',
+      );
+      expect(quickdraw.keywords, contains('quickdraw'));
+      expect(quickdraw.quickdraw.single['kind'], 'draw');
+      expect(quickdraw.quickdraw.single['count'], 1);
       expect(catalog.where((card) => card.preparable), hasLength(22));
       expect(catalog.where((card) => card.bribe), hasLength(20));
       expect(catalog.where((card) => card.disguised), hasLength(20));
@@ -3028,6 +3034,66 @@ void main() {
     },
   );
 
+  test('mobile Quickdraw follows each physical hand entry turn', () async {
+    final catalog = await loadCatalog();
+    final quickdraw = catalog.singleWhere(
+      (card) => card.id == 'neutral-season-05',
+    );
+    final filler = catalog.singleWhere((card) => card.id == 'sun-focused-ray');
+    final controller = GameController(startingPlayer: 'player')
+      ..catalog = catalog
+      ..deckIds.addAll(List.filled(30, filler.id));
+    controller.startBattle();
+    await controller.confirmMulligan();
+    final state = controller.battle!;
+    state.player.hand
+      ..clear()
+      ..addAll([quickdraw, quickdraw]);
+    state.player.handCostReductions
+      ..clear()
+      ..addAll([0, 0]);
+    state.player.handFragments
+      ..clear()
+      ..addAll([null, null]);
+    state.player.handStartedInDeck
+      ..clear()
+      ..addAll([true, false]);
+    state.player.handEnteredTurns
+      ..clear()
+      ..addAll([0, state.turn]);
+    state.player.deck
+      ..clear()
+      ..add(filler);
+    state.player.deckCostOverrides
+      ..clear()
+      ..add(null);
+    state.player.deckStartedInDeck
+      ..clear()
+      ..add(true);
+    state.player.mana = 3;
+
+    expect(controller.playCard(quickdraw, handIndex: 1), isTrue);
+    expect(state.player.hand.map((card) => card.id), [quickdraw.id, filler.id]);
+    expect(state.player.handEnteredTurns, [0, state.turn]);
+    expect(state.logs.where((log) => log.contains('快枪触发')), hasLength(1));
+
+    state.player.deck
+      ..clear()
+      ..add(filler);
+    state.player.deckCostOverrides
+      ..clear()
+      ..add(null);
+    state.player.deckStartedInDeck
+      ..clear()
+      ..add(true);
+    state.player.mana = 3;
+    expect(controller.playCard(quickdraw, handIndex: 0), isTrue);
+    expect(state.player.hand.map((card) => card.id), [filler.id]);
+    expect(state.player.deck.map((card) => card.id), [filler.id]);
+    expect(state.logs.where((log) => log.contains('快枪触发')), hasLength(1));
+    controller.dispose();
+  });
+
   test('Coin pays excess overload debt before creating temporary mana', () {
     final card = CardDefinition(
       id: 'coin-filler',
@@ -3928,6 +3994,61 @@ void main() {
     final payload = client.actions.single['payload'] as Map<String, dynamic>;
     expect(payload['rankedFormat'], 'wild');
     expect(payload['deckIds'], deck);
+    controller.dispose();
+    client.dispose();
+  });
+
+  test('online Quickdraw readiness uses the redacted hand timestamp', () async {
+    final catalog = await loadCatalog();
+    final quickdraw = catalog.singleWhere(
+      (card) => card.id == 'neutral-season-05',
+    );
+    final client = _RecordingMultiplayerClient()
+      ..playerId = 'p-local'
+      ..isHost = true;
+    final controller = OnlineBattleController(catalog: catalog, client: client);
+
+    void sync(int version, int enteredTurn) {
+      client.lastEvent = MultiplayerEvent(
+        type: 'action',
+        playerId: 'p-local',
+        action: 'command',
+        payload: {
+          'state': {
+            'version': version,
+            'turn': 3,
+            'phase': 'main',
+            'activePlayer': 0,
+            'players': [
+              {
+                'hero': {'health': 30},
+                'mana': 3,
+                'maxMana': 3,
+                'hand': [quickdraw.id],
+                'handCostReductions': [0],
+                'handEnteredTurns': [enteredTurn],
+                'board': [],
+              },
+              {
+                'hero': {'health': 30},
+                'hand': ['__hidden-card__'],
+                'handCostReductions': [0],
+                'handEnteredTurns': [0],
+                'board': [],
+              },
+            ],
+          },
+        },
+      );
+      client.eventSequence++;
+      client.notifyListeners();
+    }
+
+    sync(1, 3);
+    expect(controller.handEnteredTurns, [3]);
+    expect(controller.quickdrawActive(0), isTrue);
+    sync(2, 2);
+    expect(controller.quickdrawActive(0), isFalse);
     controller.dispose();
     client.dispose();
   });

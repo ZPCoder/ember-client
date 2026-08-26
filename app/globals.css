@@ -5668,6 +5668,20 @@ button.hero-core {
   cursor: default;
 }
 
+.hand-card--quickdraw .game-card {
+  box-shadow: 0 0 0 2px rgba(255, 207, 82, 0.82), 0 0 22px rgba(255, 167, 54, 0.46);
+}
+
+.hand-card__quickdraw {
+  display: block;
+  margin-top: 0.35rem;
+  color: #ffd873;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-align: center;
+  text-shadow: 0 1px 8px rgba(255, 145, 35, 0.72);
+}
+
 .hand-card__prepare span {
   font-size: 10px;
   line-height: 1;

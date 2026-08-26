@@ -77,6 +77,7 @@ class OnlineBattleController extends ChangeNotifier {
   List<CardDefinition> hand = <CardDefinition>[];
   List<int> handCostReductions = <int>[];
   List<HandFragment?> handFragments = <HandFragment?>[];
+  List<int> handEnteredTurns = <int>[];
   List<OnlineUnit> localBoard = <OnlineUnit>[];
   List<OnlineUnit> remoteBoard = <OnlineUnit>[];
   final List<String> logs = <String>[];
@@ -551,6 +552,10 @@ class OnlineBattleController extends ChangeNotifier {
       hand.length,
     );
     handFragments = _parseHandFragments(local['handFragments'], hand.length);
+    handEnteredTurns = _parseHandEnteredTurns(
+      local['handEnteredTurns'],
+      hand.length,
+    );
     localBoard = _parseBoard(local['board']);
     remoteBoard = _parseBoard(remote['board']);
     final discover = snapshot['discover'];
@@ -773,10 +778,26 @@ class OnlineBattleController extends ChangeNotifier {
     });
   }
 
+  List<int> _parseHandEnteredTurns(Object? raw, int handLength) {
+    final values = raw is List ? raw : const <Object?>[];
+    return List<int>.generate(handLength, (index) {
+      if (index >= values.length || values[index] is! num) return 0;
+      return max(0, (values[index] as num).toInt());
+    });
+  }
+
   HandFragment? handFragment(int handIndex) =>
       handIndex >= 0 && handIndex < handFragments.length
       ? handFragments[handIndex]
       : null;
+
+  bool quickdrawActive(int handIndex) =>
+      phase == 'main' &&
+      handIndex >= 0 &&
+      handIndex < hand.length &&
+      handIndex < handEnteredTurns.length &&
+      hand[handIndex].quickdraw.isNotEmpty &&
+      handEnteredTurns[handIndex] == turn;
 
   CardDefinition handDisplayCard(int handIndex) {
     final definition = hand[handIndex];

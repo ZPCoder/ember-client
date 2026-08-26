@@ -150,6 +150,7 @@ type CatalogCard = {
   shatter?: boolean;
   herald?: boolean;
   colossal?: boolean;
+  quickdraw?: boolean;
   heroCard?: boolean;
   target: CardTargetRule;
   keywords: Keyword[];
@@ -348,6 +349,7 @@ type BattleSide = {
     costReduction: number;
     fragment?: "left" | "right";
     fragmentGroupId?: string;
+    enteredTurn: number;
   }>;
   board: BattleUnit[];
 };
@@ -642,6 +644,7 @@ function cardFromRaw(raw: Record<string, unknown>): CatalogCard {
     shatter: Boolean(raw.shatter),
     herald: Boolean(raw.herald),
     colossal: Boolean(raw.colossal),
+    quickdraw: Array.isArray(raw.quickdraw) && raw.quickdraw.length > 0,
     heroCard: Boolean(raw.heroCard),
     target: asString(raw.target, "none") as CardTargetRule,
     keywords: Array.isArray(raw.keywords)
@@ -1402,10 +1405,12 @@ function normalizeHand(
   value: unknown,
   reductionsValue?: unknown,
   fragmentsValue?: unknown,
+  enteredTurnsValue?: unknown,
 ): BattleSide["hand"] {
   if (!Array.isArray(value)) return [];
   const reductions = Array.isArray(reductionsValue) ? reductionsValue : [];
   const fragments = Array.isArray(fragmentsValue) ? fragmentsValue : [];
+  const enteredTurns = Array.isArray(enteredTurnsValue) ? enteredTurnsValue : [];
   return value.map((entry, index) => {
     const rawReduction = reductions[index];
     const costReduction = typeof rawReduction === "number" && Number.isFinite(rawReduction)
@@ -1419,6 +1424,7 @@ function normalizeHand(
       ? fragment.piece
       : undefined;
     const fragmentGroupId = piece ? asString(fragment?.groupId) || undefined : undefined;
+    const enteredTurn = Math.max(0, Math.floor(asNumber(enteredTurns[index], 0)));
     if (typeof entry === "string") return {
       instanceId: `${entry}-${index}`,
       cardId: entry,
@@ -1426,6 +1432,7 @@ function normalizeHand(
       costReduction,
       fragment: piece,
       fragmentGroupId,
+      enteredTurn,
     };
     const item = (entry ?? {}) as Record<string, unknown>;
     return {
@@ -1435,6 +1442,7 @@ function normalizeHand(
       costReduction,
       fragment: piece,
       fragmentGroupId,
+      enteredTurn,
     };
   });
 }
@@ -1631,7 +1639,12 @@ function battleFromRaw(value: unknown): BattleView | null {
     deckCount: Array.isArray(side.deck)
       ? side.deck.length
       : asNumber(side.deckCount ?? side.remainingDeck),
-    hand: normalizeHand(side.hand, side.handCostReductions, side.handFragments),
+    hand: normalizeHand(
+      side.hand,
+      side.handCostReductions,
+      side.handFragments,
+      side.handEnteredTurns,
+    ),
     board: normalizeBoard(side.board ?? side.units, turn),
   });
   const statusRaw = asString(raw.status ?? raw.phase, "playing").toLowerCase();
@@ -7921,6 +7934,9 @@ function BattleSection({
                     }
                   : card;
                 const effectiveCost = Math.max(0, card.cost - handCard.costReduction);
+                const quickdrawActive = Boolean(
+                  !mulliganActive && card.quickdraw && handCard.enteredTurn === battle.turn,
+                );
                 const selectedForMulligan = mulliganSelection.includes(handIndex)
                   || Boolean(handCard.fragmentGroupId && battle.player.hand.some((entry, index) =>
                     entry.fragmentGroupId === handCard.fragmentGroupId && mulliganSelection.includes(index)));
@@ -7931,7 +7947,7 @@ function BattleSection({
                   : !playerCanAct || effectiveCost > battle.player.mana || pendingHeroPower;
                 return (
                   <div
-                    className={`hand-card ${handCard.fragment ? `hand-card--fragment hand-card--fragment-${handCard.fragment}` : card.shatter ? "hand-card--reassembled" : ""} ${disabled ? "hand-card--disabled" : ""} ${pendingCard?.instanceId === handCard.instanceId || selectedForMulligan ? "hand-card--selected" : ""}`}
+                    className={`hand-card ${handCard.fragment ? `hand-card--fragment hand-card--fragment-${handCard.fragment}` : card.shatter ? "hand-card--reassembled" : ""} ${quickdrawActive ? "hand-card--quickdraw" : ""} ${disabled ? "hand-card--disabled" : ""} ${pendingCard?.instanceId === handCard.instanceId || selectedForMulligan ? "hand-card--selected" : ""}`}
                     key={handCard.instanceId}
                   >
                     <CardTile
@@ -7955,6 +7971,11 @@ function BattleSection({
                     {fragmentLabel && (
                       <span className="hand-card__fragment" aria-label={`${card.name}${fragmentLabel}`}>
                         {handCard.fragment === "left" ? "◀" : "▶"} {fragmentLabel}
+                      </span>
+                    )}
+                    {quickdrawActive && (
+                      <span className="hand-card__quickdraw" aria-label={`${card.name}快枪效果已激活`}>
+                        ⚡ 快枪就绪
                       </span>
                     )}
                     {!mulliganActive && card.tradeable && (

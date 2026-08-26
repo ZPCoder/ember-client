@@ -1134,6 +1134,31 @@ class _ShatterBadge extends StatelessWidget {
   );
 }
 
+class _QuickdrawBadge extends StatelessWidget {
+  const _QuickdrawBadge();
+
+  @override
+  Widget build(BuildContext context) => DecoratedBox(
+    decoration: BoxDecoration(
+      color: const Color(0xE64A3515),
+      borderRadius: BorderRadius.circular(999),
+      border: Border.all(color: const Color(0xFFFFC857)),
+      boxShadow: const [BoxShadow(color: Color(0x66FFC857), blurRadius: 9)],
+    ),
+    child: const Padding(
+      padding: EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      child: Text(
+        '⚡ 快枪就绪',
+        style: TextStyle(
+          color: Color(0xFFFFE6A6),
+          fontSize: 9,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    ),
+  );
+}
+
 class CardTile extends StatelessWidget {
   const CardTile({
     super.key,
@@ -3028,6 +3053,11 @@ class _BattleBoardState extends State<BattleBoard> {
                 final fragment = controller.playerHandFragment(index);
                 final effectiveCost = controller.playerHandCost(index);
                 final selected = state.mulliganSelected.contains(index);
+                final quickdrawActive =
+                    state.phase == 'main' &&
+                    handCard.quickdraw.isNotEmpty &&
+                    index < state.player.handEnteredTurns.length &&
+                    state.player.handEnteredTurns[index] == state.turn;
                 return SizedBox(
                   width: 145,
                   child: AnimatedContainer(
@@ -3094,6 +3124,12 @@ class _BattleBoardState extends State<BattleBoard> {
                             top: 5,
                             left: 38,
                             child: _ShatterBadge(fragment: fragment),
+                          ),
+                        if (quickdrawActive)
+                          const Positioned(
+                            right: 5,
+                            bottom: 5,
+                            child: _QuickdrawBadge(),
                           ),
                       ],
                     ),
@@ -5130,6 +5166,7 @@ class OnlineBattlePanel extends StatelessWidget {
                     final card = controller.handDisplayCard(index);
                     final fragment = controller.handFragment(index);
                     final effectiveCost = controller.handCost(index);
+                    final quickdrawActive = controller.quickdrawActive(index);
                     return SizedBox(
                       width: 142,
                       child: Stack(
@@ -5154,6 +5191,12 @@ class OnlineBattlePanel extends StatelessWidget {
                               top: 5,
                               left: 36,
                               child: _ShatterBadge(fragment: fragment),
+                            ),
+                          if (quickdrawActive)
+                            const Positioned(
+                              right: 5,
+                              bottom: 5,
+                              child: _QuickdrawBadge(),
                             ),
                         ],
                       ),

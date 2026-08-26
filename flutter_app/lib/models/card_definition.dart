@@ -32,6 +32,7 @@ class CardDefinition {
     this.onTurnEnd = const [],
     this.onSpellPlayed = const [],
     this.onDiscard = const [],
+    this.quickdraw = const [],
     this.onPlay = const [],
     this.onDeath = const [],
     this.effect = const [],
@@ -69,6 +70,7 @@ class CardDefinition {
   final List<Map<String, dynamic>> onTurnEnd;
   final List<Map<String, dynamic>> onSpellPlayed;
   final List<Map<String, dynamic>> onDiscard;
+  final List<Map<String, dynamic>> quickdraw;
   final List<Map<String, dynamic>> onPlay;
   final List<Map<String, dynamic>> onDeath;
   final List<Map<String, dynamic>> effect;
@@ -93,6 +95,7 @@ class CardDefinition {
     List<Map<String, dynamic>>? onTurnEnd,
     List<Map<String, dynamic>>? onSpellPlayed,
     List<Map<String, dynamic>>? onDiscard,
+    List<Map<String, dynamic>>? quickdraw,
     List<Map<String, dynamic>>? onPlay,
     List<Map<String, dynamic>>? onDeath,
     List<Map<String, dynamic>>? effect,
@@ -134,6 +137,7 @@ class CardDefinition {
       onTurnEnd: onTurnEnd ?? this.onTurnEnd,
       onSpellPlayed: onSpellPlayed ?? this.onSpellPlayed,
       onDiscard: onDiscard ?? this.onDiscard,
+      quickdraw: quickdraw ?? this.quickdraw,
       onPlay: onPlay ?? this.onPlay,
       onDeath: onDeath ?? this.onDeath,
       effect: effect ?? this.effect,
@@ -197,6 +201,7 @@ class CardDefinition {
       onTurnEnd: effects(json['onTurnEnd']),
       onSpellPlayed: effects(json['onSpellPlayed']),
       onDiscard: effects(json['onDiscard']),
+      quickdraw: effects(json['quickdraw']),
       onPlay: effects(json['onPlay']),
       onDeath: effects(json['onDeath']),
       effect: effects(json['effect']),
@@ -355,6 +360,7 @@ class BattleSide {
     List<int>? handCostReductions,
     List<HandFragment?>? handFragments,
     List<bool>? handStartedInDeck,
+    List<int>? handEnteredTurns,
     required this.board,
     this.coinAvailable = false,
     this.weapon,
@@ -380,6 +386,9 @@ class BattleSide {
        handStartedInDeck = List<bool>.from(
          handStartedInDeck ?? List<bool>.filled(hand.length, true),
        ),
+       handEnteredTurns = List<int>.from(
+         handEnteredTurns ?? List<int>.filled(hand.length, 0),
+       ),
        spellSchoolsPlayedThisTurn = spellSchoolsPlayedThisTurn ?? <String>[],
        spellSchoolsPlayedLastTurn = spellSchoolsPlayedLastTurn ?? <String>[],
        spellsPlayedThisGame = spellsPlayedThisGame ?? <String>[],
@@ -402,6 +411,7 @@ class BattleSide {
   final List<int> handCostReductions;
   final List<HandFragment?> handFragments;
   final List<bool> handStartedInDeck;
+  final List<int> handEnteredTurns;
   final List<BattleUnit> board;
   bool coinAvailable;
   BattleWeapon? weapon;

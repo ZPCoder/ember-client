@@ -902,6 +902,7 @@ class GameController extends ChangeNotifier {
         state.player.handCostReductions.removeAt(index);
         state.player.handFragments.removeAt(index);
         state.player.handStartedInDeck.removeAt(index);
+        state.player.handEnteredTurns.removeAt(index);
       }
     }
     for (var i = 0; i < returned.length; i++) {
@@ -997,6 +998,7 @@ class GameController extends ChangeNotifier {
       side.handCostReductions.removeAt(index);
       side.handFragments.removeAt(index);
       side.handStartedInDeck.removeAt(index);
+      side.handEnteredTurns.removeAt(index);
     }
     for (var i = 0; i < returned.length; i++) {
       if (side.deck.isNotEmpty) _draw(side);
@@ -1183,6 +1185,7 @@ class GameController extends ChangeNotifier {
     final available = 10 - _occupiedHandSlots(side);
     if (available <= 0) return false;
     _syncHandCostReductions(side);
+    final enteredTurn = battle?.phase == 'mulligan' ? 0 : battle?.turn ?? 0;
     final retainedReduction = costReduction == null
         ? (costOverride == null
               ? 0
@@ -1193,6 +1196,7 @@ class GameController extends ChangeNotifier {
       side.handCostReductions.add(retainedReduction);
       side.handFragments.add(null);
       side.handStartedInDeck.add(startedInDeck);
+      side.handEnteredTurns.add(enteredTurn);
       return true;
     }
     final groupId = 'm${_shatterGroupSequence++}';
@@ -1201,18 +1205,21 @@ class GameController extends ChangeNotifier {
       side.handCostReductions.add(retainedReduction);
       side.handFragments.add(HandFragment(groupId: groupId, piece: fragment));
       side.handStartedInDeck.add(startedInDeck);
+      side.handEnteredTurns.add(enteredTurn);
       return true;
     }
     side.hand.insert(0, _shatterFragmentCard(drawn, 'left'));
     side.handCostReductions.insert(0, retainedReduction);
     side.handFragments.insert(0, HandFragment(groupId: groupId, piece: 'left'));
     side.handStartedInDeck.insert(0, startedInDeck);
+    side.handEnteredTurns.insert(0, enteredTurn);
     var fragmentCount = 1;
     if (available >= 2) {
       side.hand.add(_shatterFragmentCard(drawn, 'right'));
       side.handCostReductions.add(retainedReduction);
       side.handFragments.add(HandFragment(groupId: groupId, piece: 'right'));
       side.handStartedInDeck.add(startedInDeck);
+      side.handEnteredTurns.add(enteredTurn);
       fragmentCount = 2;
     } else {
       stateLog('破碎片燃毁', '${drawn.name} 的右片因手牌空间不足被销毁。');
@@ -1246,6 +1253,7 @@ class GameController extends ChangeNotifier {
       source.handCostReductions.removeAt(index);
       final fragment = source.handFragments.removeAt(index);
       source.handStartedInDeck.removeAt(index);
+      source.handEnteredTurns.removeAt(index);
       final state = battle!;
       final discardId = 'discard-${_discardSequence++}';
       source.discardHistory.add(
@@ -1381,6 +1389,7 @@ class GameController extends ChangeNotifier {
     state.player.handCostReductions.removeAt(index);
     state.player.handFragments.removeAt(index);
     state.player.handStartedInDeck.removeAt(index);
+    state.player.handEnteredTurns.removeAt(index);
     state.player.mana--;
     // Tradeable draws from the original deck before the physical card is
     // inserted, so a trade can never immediately redraw itself. Preserve the
@@ -2228,11 +2237,17 @@ class GameController extends ChangeNotifier {
     if (resolvedHandIndex < 0) return;
     _syncHandCostReductions(source);
     final startedInDeck = source.handStartedInDeck[resolvedHandIndex];
+    final enteredTurn = source.handEnteredTurns[resolvedHandIndex];
+    final quickdrawActive =
+        card.quickdraw.isNotEmpty &&
+        battle?.phase == 'main' &&
+        enteredTurn == battle?.turn;
     final effectiveCost = _effectiveHandCost(source, resolvedHandIndex);
     source.hand.removeAt(resolvedHandIndex);
     source.handCostReductions.removeAt(resolvedHandIndex);
     source.handFragments.removeAt(resolvedHandIndex);
     source.handStartedInDeck.removeAt(resolvedHandIndex);
+    source.handEnteredTurns.removeAt(resolvedHandIndex);
     _reassembleAdjacentFragments(source);
     source.mana -= effectiveCost;
     final comboActive = source.cardsPlayedThisTurn > 0;
@@ -2403,12 +2418,60 @@ class GameController extends ChangeNotifier {
           sourceCard: card,
         );
       }
+      if (quickdrawActive) {
+        _resolveQuickdraw(
+          card: card,
+          source: source,
+          enemy: enemy,
+          target: target,
+          targetHero: targetHero,
+        );
+      }
       if (battle?.phase == 'main') {
         _resolveSpellTriggers(source: source, enemy: enemy);
       }
       stateLog(card.name, card.description);
     }
+    if (quickdrawActive && card.type != 'spell') {
+      _resolveQuickdraw(
+        card: card,
+        source: source,
+        enemy: enemy,
+        target: target,
+        targetHero: targetHero,
+      );
+    }
     _processDeaths();
+  }
+
+  void _resolveQuickdraw({
+    required CardDefinition card,
+    required BattleSide source,
+    required BattleSide enemy,
+    BattleUnit? target,
+    bool targetHero = false,
+  }) {
+    if (card.quickdraw.isEmpty) return;
+    stateLog(card.name, '快枪触发。');
+    _emitFx(
+      'buff',
+      '${card.name} · 快枪',
+      '这张牌在进入手牌的同一回合被使用',
+      Icons.flash_on,
+      0xFFFFC857,
+      sourceId: card.id,
+    );
+    _resolveEffects(
+      card.quickdraw,
+      source: source,
+      enemy: enemy,
+      target: target,
+      targetHero: targetHero,
+      targetFriendlyHero:
+          targetHero && (card.target ?? '').startsWith('friendly'),
+      sourceName: '${card.name} · 快枪',
+      sourceCard: card,
+    );
   }
 
   void _syncHandCostReductions(BattleSide side) {
@@ -2429,6 +2492,12 @@ class GameController extends ChangeNotifier {
     }
     while (side.handStartedInDeck.length < side.hand.length) {
       side.handStartedInDeck.add(true);
+    }
+    while (side.handEnteredTurns.length > side.hand.length) {
+      side.handEnteredTurns.removeLast();
+    }
+    while (side.handEnteredTurns.length < side.hand.length) {
+      side.handEnteredTurns.add(0);
     }
   }
 
@@ -2558,6 +2627,11 @@ class GameController extends ChangeNotifier {
       side.handStartedInDeck[index] =
           side.handStartedInDeck[index] && side.handStartedInDeck[index + 1];
       side.handStartedInDeck.removeAt(index + 1);
+      side.handEnteredTurns[index] = max(
+        side.handEnteredTurns[index],
+        side.handEnteredTurns[index + 1],
+      );
+      side.handEnteredTurns.removeAt(index + 1);
       stateLog('破碎重组', '${restored.name} 的两片重新相接。');
       _emitFx(
         'buff',
@@ -3526,6 +3600,7 @@ class GameController extends ChangeNotifier {
               targetSide.handCostReductions.add(0);
               targetSide.handFragments.add(null);
               targetSide.handStartedInDeck.add(false);
+              targetSide.handEnteredTurns.add(battle!.turn);
               stateLog(sourceName, '${target.card.name} 返回其控制者的手牌并移除全部增益。');
               _emitFx(
                 'draw',
