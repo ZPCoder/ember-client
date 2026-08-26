@@ -111,7 +111,7 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(game, /claim_ladder_ready_deck/);
   assert.match(game, /claim_catch_up_pack/);
   assert.match(game, /previewCatchUpPack/);
-  assert.match(game, /每系列 1–10 · 稀有\+ ≥20%/);
+  assert.match(game, /曾获得完成度 · 每系列 1–10 · 稀有\+ ≥20%/);
   assert.match(catchUpPack, /圣甲虫回归追赶包/);
   assert.match(game, /前 50 张传说保底/);
   assert.match(gameStore, /generateCatchUpPack/);

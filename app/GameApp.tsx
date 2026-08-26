@@ -248,6 +248,7 @@ type PlayerSnapshot = {
     cardsGranted: number;
     cardsSeenBySet: Partial<Record<CardSetId, number>>;
     legendarySeenSets: CardSetId[];
+    receivedCopiesByCard: Record<string, number>;
   };
   trialCards?: { activatedAt: string | null; expiresAt: string | null };
   returnJourney?: { claimedStageIds: ReturnQuestStageId[]; matchesPlayedAtActivation: number };
@@ -835,6 +836,7 @@ function readLocalPlayer(email: string): PlayerSnapshot | null {
         cardsGranted: storedCatchUp?.cardsGranted ?? 0,
         cardsSeenBySet: storedCatchUp?.cardsSeenBySet ?? migratedCatchUpProgress.cardsSeenBySet,
         legendarySeenSets: storedCatchUp?.legendarySeenSets ?? migratedCatchUpProgress.legendarySeenSets,
+        receivedCopiesByCard: storedCatchUp?.receivedCopiesByCard ?? migratedCatchUpProgress.receivedCopiesByCard,
       },
       trialCards: parsed.trialCards ?? (
         parsed.ladderReady?.activatedAt && parsed.ladderReady.expiresAt
@@ -6512,7 +6514,7 @@ function DeckSection({
   const trialExpired = Boolean(ladderReady?.expiresAt && clockNow && Date.parse(ladderReady.expiresAt) <= clockNow);
   const trialClaimed = Boolean(ladderReady?.claimedDeckId);
   const trialPlayable = ladderReadyTrialIsActive(ladderReady, clockNow);
-  const catchUpPreview = previewCatchUpPack(realCollection);
+  const catchUpPreview = previewCatchUpPack(realCollection, catchUpPack);
   const catchUpProgress = catchUpPack ?? catchUpProgressFromCollection(realCollection);
   const legendaryGuaranteeText = CATCH_UP_PACK_SETS.map((set) => {
     const label = CARD_SET_DEFINITIONS[set].label;
@@ -6656,7 +6658,7 @@ function DeckSection({
             <Icon name="cards" size={14} />
             {catchUpPack?.claimedAt
               ? `${CATCH_UP_PACK_DEFINITIONS[CATCH_UP_PACK_VERSION_ID].label}已领取 · ${catchUpPack.cardsGranted} 张`
-              : `${CATCH_UP_PACK_DEFINITIONS[CATCH_UP_PACK_VERSION_ID].label}预估 ${catchUpPreview.cardCount} 张（每系列 1–10 · 稀有+ ≥20%）`}
+              : `${CATCH_UP_PACK_DEFINITIONS[CATCH_UP_PACK_VERSION_ID].label}预估 ${catchUpPreview.cardCount} 张（曾获得完成度 · 每系列 1–10 · 稀有+ ≥20%）`}
           </span>
           <span>
             <Icon name="spark" size={14} />
