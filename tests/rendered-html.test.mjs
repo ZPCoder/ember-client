@@ -87,6 +87,11 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(gameStore, /export async function deleteDeck/);
   assert.match(game, /战术对战/);
   assert.match(game, /运营台/);
+  assert.match(game, /批量开启/);
+  assert.match(game, /揭示下一张/);
+  assert.match(game, /全部揭示/);
+  assert.match(gameRoute, /open_packs/);
+  assert.match(gameStore, /export async function openPacks/);
   assert.match(game, /新兵晋升轨道/);
   assert.match(game, /claim_apprentice_reward/);
   assert.match(game, /APPRENTICE_MILESTONES/);
@@ -224,6 +229,8 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(styles, /board-unit__status/);
   assert.match(styles, /\.screen\.battle-room/);
   assert.match(styles, /@keyframes battle-room-enter/);
+  assert.match(styles, /\.mini-reveal--back/);
+  assert.match(styles, /@keyframes card-reveal-flip/);
   assert.match(styles, /\.battle-fx__card-reveal/);
   assert.match(styles, /\.battlefield-toys/);
   assert.match(styles, /\.battlefield--theme-mist/);

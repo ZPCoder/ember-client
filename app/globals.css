@@ -1639,6 +1639,65 @@ button.resource-chip:hover {
   animation: card-rise 260ms ease both;
 }
 
+.mini-reveal.is-revealed {
+  animation: card-reveal-flip 420ms cubic-bezier(0.2, 0.76, 0.25, 1) both;
+  transform-origin: center;
+}
+
+.mini-reveal--back {
+  display: grid;
+  place-content: center;
+  gap: 8px;
+  padding: 8px;
+  border-color: rgba(228, 109, 63, 0.28);
+  color: #c7b98e;
+  background:
+    radial-gradient(circle at 50% 35%, rgba(228, 109, 63, 0.18), transparent 34%),
+    repeating-linear-gradient(135deg, rgba(239, 228, 199, 0.04) 0 4px, transparent 4px 9px),
+    #101c18;
+  font: inherit;
+  line-height: 1.25;
+}
+
+.mini-reveal--back::after {
+  display: none;
+}
+
+.mini-reveal--back:disabled {
+  cursor: default;
+  opacity: 0.58;
+}
+
+.mini-reveal--back.is-next {
+  border-color: rgba(228, 109, 63, 0.72);
+  box-shadow: 0 0 26px rgba(228, 109, 63, 0.2);
+  animation: card-back-pulse 1.8s ease-in-out infinite;
+}
+
+.mini-reveal--back.is-next:hover,
+.mini-reveal--back.is-next:focus-visible {
+  color: var(--paper);
+  transform: translateY(-3px);
+}
+
+.pack-reveal__actions {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin: -8px 0 16px;
+}
+
+@keyframes card-reveal-flip {
+  0% { opacity: 0; transform: perspective(500px) rotateY(84deg) scale(0.92); }
+  65% { opacity: 1; transform: perspective(500px) rotateY(-8deg) scale(1.04); }
+  100% { opacity: 1; transform: perspective(500px) rotateY(0) scale(1); }
+}
+
+@keyframes card-back-pulse {
+  0%, 100% { box-shadow: 0 0 16px rgba(228, 109, 63, 0.14); }
+  50% { box-shadow: 0 0 30px rgba(228, 109, 63, 0.3); }
+}
+
 .mini-reveal::after {
   position: absolute;
   z-index: 1;

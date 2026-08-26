@@ -3361,6 +3361,7 @@ export function GameApp({
   );
   const [openedCards, setOpenedCards] = useState<Array<{ cardId: string; count: number }>>([]);
   const [openedPackCount, setOpenedPackCount] = useState(0);
+  const [revealedCardCount, setRevealedCardCount] = useState(0);
   const [search, setSearch] = useState("");
   const [collectionEnvironment, setCollectionEnvironment] = useState<"released" | "standard" | "wild-only">("released");
   const [cardSetFilter, setCardSetFilter] = useState<"全部" | CardSetId>("全部");
@@ -4157,6 +4158,8 @@ export function GameApp({
     if (payload) {
       setOpenedCards(payload.openedCards ?? []);
       setOpenedPackCount(payload.packsOpened ?? count);
+      const physicalCardCount = payload.openedCards?.reduce((sum, entry) => sum + entry.count, 0) ?? 0;
+      setRevealedCardCount((payload.packsOpened ?? count) > 1 ? physicalCardCount : 0);
       setNotice({
         tone: payload.localFallback ? "info" : "success",
         text: `${payload.packsOpened ?? count} 个标准档案包解密完成，新卡牌已归入收藏${payload.localFallback ? "（本地演示）" : ""}。`,
@@ -4343,6 +4346,7 @@ export function GameApp({
     if (payload) {
       setOpenedCards([]);
       setOpenedPackCount(0);
+      setRevealedCardCount(0);
       setSelectedLadderReadyDeckId(null);
       const firstDeck =
         payload.player.decks.find((deck) => deck.id === payload.player.activeDeckId) ??
@@ -5661,9 +5665,12 @@ export function GameApp({
                   totalOwned={totalOwned}
                   openedCards={openedCards}
                   openedPackCount={openedPackCount}
+                  revealedCardCount={revealedCardCount}
                   apiBusy={apiBusy}
                   onOpenPack={() => void openPack()}
                   onOpenPacks={(count) => void openPack(count)}
+                  onRevealNextCard={() => setRevealedCardCount((count) => Math.min(5, count + 1))}
+                  onRevealAllCards={() => setRevealedCardCount(5)}
                   onBuyPack={() => void buyPack()}
                   onClaimTask={(task) => void claimTask(task)}
                   onRerollTask={(task) => void rerollTask(task)}
@@ -5981,9 +5988,12 @@ function OverviewSection({
   totalOwned,
   openedCards,
   openedPackCount,
+  revealedCardCount,
   apiBusy,
   onOpenPack,
   onOpenPacks,
+  onRevealNextCard,
+  onRevealAllCards,
   onBuyPack,
   onClaimTask,
   onRerollTask,
@@ -5998,9 +6008,12 @@ function OverviewSection({
   totalOwned: number;
   openedCards: Array<{ cardId: string; count: number }>;
   openedPackCount: number;
+  revealedCardCount: number;
   apiBusy: string | null;
   onOpenPack: () => void;
   onOpenPacks: (count: number) => void;
+  onRevealNextCard: () => void;
+  onRevealAllCards: () => void;
   onBuyPack: () => void;
   onClaimTask: (task: PlayerTask) => void;
   onRerollTask: (task: PlayerTask) => void;
@@ -6030,6 +6043,9 @@ function OverviewSection({
     claimedApprenticeMilestones.includes(milestone.id),
   ).length;
   const apprenticeRouteComplete = apprenticeTrackComplete(apprenticeFacts);
+  const physicalOpenedCards = openedCards.flatMap((entry) =>
+    Array.from({ length: entry.count }, () => ({ ...entry, count: 1 })));
+  const singlePackReveal = openedPackCount === 1 && physicalOpenedCards.length === 5;
   const startMilestoneAction = (milestoneId: ApprenticeMilestoneId) => {
     if (milestoneId === "decode-first-pack") {
       onOpenPack();
@@ -6286,10 +6302,26 @@ function OverviewSection({
           {openedCards.length > 0 ? (
             <div className="pack-reveal">
               <div className="pack-reveal__cards">
-                {openedCards.slice(0, 20).map((entry, index) => {
+                {(singlePackReveal ? physicalOpenedCards : openedCards.slice(0, 20)).map((entry, index) => {
                   const card = CARD_BY_ID.get(entry.cardId);
+                  if (singlePackReveal && index >= revealedCardCount) {
+                    const isNext = index === revealedCardCount;
+                    return (
+                      <button
+                        className={`mini-reveal mini-reveal--back ${isNext ? "is-next" : ""}`}
+                        key={`hidden-${index}`}
+                        type="button"
+                        disabled={!isNext}
+                        onClick={onRevealNextCard}
+                        aria-label={isNext ? `揭示第 ${index + 1} 张卡牌` : `第 ${index + 1} 张卡牌尚未揭示`}
+                      >
+                        <Icon name="spark" size={22} />
+                        <span>{isNext ? "点击揭示" : "加密档案"}</span>
+                      </button>
+                    );
+                  }
                   return (
-                    <div className={`mini-reveal mini-reveal--${card?.rarity ?? "common"}`} key={`${entry.cardId}-${index}`}>
+                    <div className={`mini-reveal mini-reveal--${card?.rarity ?? "common"} is-revealed`} key={`${entry.cardId}-${index}`}>
                       {card && <CardArtwork card={card} className="mini-reveal__artwork" />}
                       <span className="mini-reveal__cost">{card?.cost ?? 0}</span>
                       <span className="mini-reveal__copy">
@@ -6300,16 +6332,28 @@ function OverviewSection({
                   );
                 })}
               </div>
-              <p>
-                {openedPackCount > 1
+              <p aria-live="polite">
+                {singlePackReveal && revealedCardCount < 5
+                  ? `已揭示 ${revealedCardCount} / 5 张；稀有度会在翻开时公开。`
+                  : openedPackCount > 1
                   ? `${openedPackCount} 包共获得 ${openedCards.reduce((sum, entry) => sum + entry.count, 0)} 张卡牌。`
                   : "新档案已同步至你的收藏。"}
                 {openedCards.length > 20 ? ` 这里展示其中 20 种，其余已直接归档。` : ""}
               </p>
+              {singlePackReveal && revealedCardCount < 5 && (
+                <div className="pack-reveal__actions" aria-label="卡牌揭示操作">
+                  <button className="button button--primary" type="button" onClick={onRevealNextCard}>
+                    揭示下一张
+                  </button>
+                  <button className="button button--ghost" type="button" onClick={onRevealAllCards}>
+                    全部揭示
+                  </button>
+                </div>
+              )}
               <button className="button button--ghost button--wide" type="button" onClick={() => onNavigate("collection")}>
                 查看收藏
               </button>
-              {player.packsAvailable > 0 && (
+              {player.packsAvailable > 0 && (!singlePackReveal || revealedCardCount >= 5) && (
                 <button
                   className="button button--primary button--wide"
                   type="button"
@@ -6320,7 +6364,7 @@ function OverviewSection({
                   {apiBusy === "open_pack" ? "解密中…" : `继续开启 1 包 · 剩余 ${player.packsAvailable}`}
                 </button>
               )}
-              {player.packsAvailable >= BULK_PACK_MIN_COUNT && (
+              {player.packsAvailable >= BULK_PACK_MIN_COUNT && (!singlePackReveal || revealedCardCount >= 5) && (
                 <button
                   className="button button--outline button--wide"
                   type="button"
