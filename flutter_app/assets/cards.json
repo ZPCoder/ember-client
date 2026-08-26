@@ -19639,16 +19639,16 @@
   },
   {
     "id": "dream-season-16",
-    "name": "星梦幻兽·16",
-    "description": "lifesteal。 梦境的战线单位。",
+    "name": "梦潮无面者",
+    "description": "战吼：选择一个单位，变形成为它的完整复制。",
     "faction": "梦境",
     "type": "unit",
-    "cost": 8,
+    "cost": 5,
     "rarity": "稀有",
-    "attack": 7,
-    "health": 10,
+    "attack": 3,
+    "health": 3,
     "keywords": [
-      "lifesteal"
+      "battlecry"
     ],
     "traits": [
       "bulwark",
@@ -19659,7 +19659,15 @@
     "set": "raptor-2025",
     "minionTypes": [
       "beast"
-    ]
+    ],
+    "target": "any-unit",
+    "onPlay": [
+      {
+        "kind": "become-copy-of-unit"
+      }
+    ],
+    "onTurnStart": [],
+    "onTurnEnd": []
   },
   {
     "id": "dream-season-17",
@@ -19737,16 +19745,16 @@
   },
   {
     "id": "dream-season-20",
-    "name": "星梦幻兽·20",
-    "description": "lifesteal。 梦境的战线单位。",
+    "name": "镜蛇档案师",
+    "description": "战吼：选择一个友方单位，将它的印刷复制置入你的手牌。",
     "faction": "梦境",
     "type": "unit",
-    "cost": 4,
+    "cost": 3,
     "rarity": "普通",
-    "attack": 4,
-    "health": 6,
+    "attack": 2,
+    "health": 2,
     "keywords": [
-      "lifesteal"
+      "battlecry"
     ],
     "traits": [
       "bulwark",
@@ -19757,7 +19765,15 @@
     "set": "raptor-2025",
     "minionTypes": [
       "beast"
-    ]
+    ],
+    "target": "friendly-unit",
+    "onPlay": [
+      {
+        "kind": "copy-unit-to-hand"
+      }
+    ],
+    "onTurnStart": [],
+    "onTurnEnd": []
   },
   {
     "id": "dream-season-21",
@@ -20475,18 +20491,17 @@
   },
   {
     "id": "dream-season-spell-14",
-    "name": "睡莲回响·14",
-    "description": "抽两张牌。",
+    "name": "梦潮映现",
+    "description": "选择一个友方单位，召唤它的完整复制。",
     "faction": "梦境",
     "type": "spell",
-    "cost": 6,
+    "cost": 4,
     "rarity": "普通",
     "school": "astral",
-    "target": "none",
+    "target": "friendly-unit",
     "effect": [
       {
-        "kind": "draw",
-        "count": 2
+        "kind": "summon-copy-of-unit"
       }
     ],
     "keywords": [],

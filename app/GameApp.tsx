@@ -4571,6 +4571,9 @@ export function GameApp({
           return battleView.ai.board.some((unit) => unit.health > 0 && !unit.stealthActive);
         case "friendly-unit":
           return battleView.player.board.some((unit) => unit.health > 0);
+        case "any-unit":
+          return battleView.player.board.some((unit) => unit.health > 0) ||
+            battleView.ai.board.some((unit) => unit.health > 0 && !unit.stealthActive);
         case "enemy-character":
           return true;
         case "friendly-character":
@@ -7428,6 +7431,7 @@ function BattleSection({
     if (targetRule === "friendly-character") return side === "player";
     if (targetRule === "enemy-unit") return side === "ai" && kind === "unit";
     if (targetRule === "friendly-unit") return side === "player" && kind === "unit";
+    if (targetRule === "any-unit") return kind === "unit";
     return false;
   };
   const effectForUnit = (unitId: string): BattleUnitEffect | undefined => {

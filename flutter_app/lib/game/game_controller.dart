@@ -1835,6 +1835,43 @@ class GameController extends ChangeNotifier {
     );
   }
 
+  BattleUnit _copyUnitForBattlefield(
+    BattleUnit original, {
+    required String owner,
+    String? instanceId,
+  }) {
+    final hasCharge =
+        !original.silenced && original.card.keywords.contains('charge');
+    final hasRush =
+        !original.silenced && original.card.keywords.contains('rush');
+    return BattleUnit(
+      instanceId:
+          instanceId ??
+          '$owner-${DateTime.now().microsecondsSinceEpoch}-${original.card.id}-${_random.nextInt(9999)}',
+      card: original.card,
+      owner: owner,
+      attack: original.attack,
+      health: original.health,
+      maxHealth: original.maxHealth,
+      hasAttacked: false,
+      stars: original.stars,
+      divineShield: original.divineShield,
+      furyTriggered: original.furyTriggered,
+      attacksMade: 0,
+      summoningSick: !hasCharge && !hasRush,
+      rushOnly: !hasCharge && hasRush,
+      stealthActive: original.stealthActive,
+      frozenTurns: original.frozenTurns,
+      freezeBlocked: original.frozenTurns > 0,
+      rebornUsed: original.rebornUsed,
+      permanentAttackBonus: original.permanentAttackBonus,
+      permanentHealthBonus: original.permanentHealthBonus,
+      temporaryAttackBonus: original.temporaryAttackBonus,
+      temporaryHealthBonus: original.temporaryHealthBonus,
+      silenced: original.silenced,
+    );
+  }
+
   int _heraldMultiplier(BattleSide side) {
     if (side.heraldCount >= 4) return 4;
     if (side.heraldCount >= 2) return 2;
@@ -2244,7 +2281,6 @@ class GameController extends ChangeNotifier {
           _summonUnit(card, owner: recipientOwner, side: recipient);
       if (upgradeTarget == null) {
         recipient.board.add(unit);
-        _triggerSecrets(enemy, 'opponent-summons-unit', triggeringSide: source);
         _summonColossalParts(
           card: card,
           source: recipient,
@@ -2306,6 +2342,15 @@ class GameController extends ChangeNotifier {
           sourceName: '${card.name} · 连击',
           sourceCard: card,
         );
+      }
+      if (upgradeTarget == null &&
+          recipient.board.any(
+            (entry) => entry.instanceId == unit.instanceId && entry.health > 0,
+          )) {
+        // Hearthstone's after-play Secret window opens after Battlecries.
+        // A self-transforming copy is therefore observed in its final form,
+        // while a unit that died during its Battlecry no longer triggers it.
+        _triggerSecrets(enemy, 'opponent-summons-unit', triggeringSide: source);
       }
       _resolveHeraldPlay(
         card: card,
@@ -2527,7 +2572,11 @@ class GameController extends ChangeNotifier {
       if (source.cardsPlayedThisTurn > 0) ...card.combo,
     ];
     return resolvedEffects.isNotEmpty &&
-        resolvedEffects.every((effect) => effect['kind'] == 'summon');
+        resolvedEffects.every(
+          (effect) =>
+              effect['kind'] == 'summon' ||
+              effect['kind'] == 'summon-copy-of-unit',
+        );
   }
 
   bool _validTarget(
@@ -2550,11 +2599,14 @@ class GameController extends ChangeNotifier {
     if (target == null) {
       return false;
     }
-    if (target.stealthActive) return false;
+    if (targetType == 'any-unit') {
+      return source.board.contains(target) ||
+          (enemy.board.contains(target) && !target.stealthActive);
+    }
     final friendly = targetType.startsWith('friendly');
     return friendly
         ? source.board.contains(target)
-        : enemy.board.contains(target);
+        : enemy.board.contains(target) && !target.stealthActive;
   }
 
   int _spellDamageBonus(BattleSide side) => side.board
@@ -2607,6 +2659,14 @@ class GameController extends ChangeNotifier {
         if (friendlyUnits.isEmpty) return null;
         return (
           target: friendlyUnits[_random.nextInt(friendlyUnits.length)],
+          targetHero: false,
+          targetFriendlyHero: false,
+        );
+      case 'any-unit':
+        final candidates = <BattleUnit>[...friendlyUnits, ...enemyUnits];
+        if (candidates.isEmpty) return null;
+        return (
+          target: candidates[_random.nextInt(candidates.length)],
           targetHero: false,
           targetFriendlyHero: false,
         );
@@ -2944,6 +3004,80 @@ class GameController extends ChangeNotifier {
               enemy: enemy,
               sourceName: sourceName,
             );
+            break;
+          case 'become-copy-of-unit':
+            if (sourceUnit == null ||
+                target == null ||
+                identical(sourceUnit, target)) {
+              break;
+            }
+            final sourceBoard = source.board.contains(sourceUnit)
+                ? source
+                : enemy.board.contains(sourceUnit)
+                ? enemy
+                : null;
+            if (sourceBoard == null || target.health <= 0) break;
+            final sourceIndex = sourceBoard.board.indexOf(sourceUnit);
+            if (sourceIndex < 0) break;
+            final replacement = _copyUnitForBattlefield(
+              target,
+              owner: sourceUnit.owner,
+              instanceId: sourceUnit.instanceId,
+            );
+            sourceBoard.board[sourceIndex] = replacement;
+            stateLog(sourceName, '变形成为 ${target.card.name} 的完整复制。');
+            _emitFx(
+              'transform',
+              '${sourceUnit.card.name} 完整复制',
+              '继承 ${target.card.name} 的当前状态与增益',
+              Icons.copy_all,
+              factionColors[target.card.faction] ?? 0xFFA692D1,
+              sourceId: replacement.instanceId,
+              targetId: target.instanceId,
+            );
+            break;
+          case 'summon-copy-of-unit':
+            if (target == null ||
+                target.health <= 0 ||
+                source.board.length >= 7) {
+              break;
+            }
+            final copiedUnit = _copyUnitForBattlefield(
+              target,
+              owner: _ownerOf(source),
+            );
+            source.board.add(copiedUnit);
+            stateLog(sourceName, '召唤 ${target.card.name} 的完整复制。');
+            _emitFx(
+              'summon',
+              '${target.card.name} 完整复制',
+              '保留当前状态与增益，不触发战吼',
+              Icons.copy_all,
+              factionColors[target.card.faction] ?? 0xFFA692D1,
+              sourceId: copiedUnit.instanceId,
+              targetId: target.instanceId,
+            );
+            _triggerSecrets(
+              enemy,
+              'opponent-summons-unit',
+              triggeringSide: source,
+            );
+            break;
+          case 'copy-unit-to-hand':
+            if (target == null || target.health <= 0) break;
+            if (_addCardToHand(source, target.card)) {
+              stateLog(sourceName, '将 ${target.card.name} 的印刷复制置入手牌。');
+              _emitFx(
+                'draw',
+                '${target.card.name} 已复制',
+                '战场增益不随逆向区域复制保留',
+                Icons.content_copy,
+                factionColors[target.card.faction] ?? 0xFFA692D1,
+                sourceId: target.instanceId,
+              );
+            } else {
+              stateLog(sourceName, '${target.card.name} 的复制因手牌已满而燃毁。');
+            }
             break;
           case 'damage':
             if (target != null &&
@@ -4374,6 +4508,20 @@ class GameController extends ChangeNotifier {
 
   BattleUnit? _aiTarget(CardDefinition card, BattleState state) {
     final type = card.target ?? '';
+    if (type == 'any-unit') {
+      final candidates =
+          <BattleUnit>[
+            ...state.ai.board.where((unit) => unit.health > 0),
+            ...state.player.board.where(
+              (unit) => unit.health > 0 && !unit.stealthActive,
+            ),
+          ]..sort(
+            (left, right) => (right.attack + right.health).compareTo(
+              left.attack + left.health,
+            ),
+          );
+      return candidates.isEmpty ? null : candidates.first;
+    }
     if (type.startsWith('friendly')) {
       if (type.contains('unit')) {
         return state.ai.board.isEmpty ? null : state.ai.board.first;

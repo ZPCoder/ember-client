@@ -2451,15 +2451,19 @@ class _BattleBoardState extends State<BattleBoard> {
     final targetType = card.target ?? '';
     _BattleTargetChoice? choice;
     if (targetType.contains('unit') || targetType.contains('character')) {
-      final targetUnits =
-          (targetType.startsWith('friendly')
-                  ? state.player.board
-                  : state.ai.board)
-              .where(
-                (unit) =>
-                    !targetType.startsWith('enemy') || !unit.stealthActive,
-              )
-              .toList();
+      final targetUnits = targetType == 'any-unit'
+          ? <BattleUnit>[
+              ...state.player.board,
+              ...state.ai.board.where((unit) => !unit.stealthActive),
+            ]
+          : (targetType.startsWith('friendly')
+                    ? state.player.board
+                    : state.ai.board)
+                .where(
+                  (unit) =>
+                      !targetType.startsWith('enemy') || !unit.stealthActive,
+                )
+                .toList();
       choice = await _pickBattleTarget(
         context,
         card,
@@ -4715,7 +4719,12 @@ class OnlineBattlePanel extends StatelessWidget {
       return;
     }
     final friendly = targetType.startsWith('friendly');
-    final units = friendly
+    final units = targetType == 'any-unit'
+        ? <OnlineUnit>[
+            ...controller.localBoard,
+            ...controller.remoteBoard.where((unit) => !unit.stealthActive),
+          ]
+        : friendly
         ? controller.localBoard
         : controller.remoteBoard
               .where((unit) => !unit.stealthActive)

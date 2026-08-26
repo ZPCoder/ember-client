@@ -78,6 +78,31 @@ void main() {
         isTrue,
       );
       expect(
+        catalog.singleWhere((card) => card.id == 'dream-season-16').target,
+        'any-unit',
+      );
+      expect(
+        catalog
+            .singleWhere((card) => card.id == 'dream-season-16')
+            .onPlay
+            .single['kind'],
+        'become-copy-of-unit',
+      );
+      expect(
+        catalog
+            .singleWhere((card) => card.id == 'dream-season-20')
+            .onPlay
+            .single['kind'],
+        'copy-unit-to-hand',
+      );
+      expect(
+        catalog
+            .singleWhere((card) => card.id == 'dream-season-spell-14')
+            .effect
+            .single['kind'],
+        'summon-copy-of-unit',
+      );
+      expect(
         catalog
             .where((card) => card.hasShatter)
             .every(
@@ -1357,6 +1382,188 @@ void main() {
       expect(state.player.spellsPlayedThisGame, isEmpty);
       expect(state.ai.spellsPlayedThisGame, [damageSpell.id]);
       expect(state.logs.any((log) => log.contains('重施放')), isTrue);
+      controller.dispose();
+    },
+  );
+
+  test(
+    'mobile battlefield copies preserve exact state while hand copies reset it',
+    () async {
+      final catalog = await loadCatalog();
+      final faceless = catalog.singleWhere(
+        (card) => card.id == 'dream-season-16',
+      );
+      final summoningCopy = catalog.singleWhere(
+        (card) => card.id == 'dream-season-spell-14',
+      );
+      final handCopy = catalog.singleWhere(
+        (card) => card.id == 'dream-season-20',
+      );
+      final targetCard = catalog.singleWhere(
+        (card) => card.id == 'astral-season-01',
+      );
+      final filler = catalog.singleWhere((card) => card.id == 'sun-dawn-scout');
+      final controller = GameController(startingPlayer: 'player')
+        ..catalog = catalog
+        ..deckIds.addAll(List.filled(30, filler.id));
+      controller.startBattle();
+      await controller.confirmMulligan();
+      final state = controller.battle!;
+      final target = BattleUnit(
+        instanceId: 'mobile-exact-copy-target',
+        card: targetCard,
+        owner: 'ai',
+        attack: 8,
+        health: 2,
+        maxHealth: 7,
+        divineShield: true,
+        furyTriggered: true,
+        attacksMade: 1,
+        summoningSick: false,
+        frozenTurns: 1,
+        freezeBlocked: true,
+        rebornUsed: true,
+        permanentAttackBonus: 4,
+        permanentHealthBonus: 3,
+        temporaryAttackBonus: 2,
+        temporaryHealthBonus: 1,
+      );
+      state.ai.board
+        ..clear()
+        ..add(target);
+      state.player.board.clear();
+      state.player.hand
+        ..clear()
+        ..add(faceless);
+      state.player.handCostReductions
+        ..clear()
+        ..add(0);
+      state.player.handFragments
+        ..clear()
+        ..add(null);
+      state.player.handStartedInDeck
+        ..clear()
+        ..add(true);
+      state.player.mana = 10;
+      final deckBefore = state.player.deck.length;
+
+      expect(controller.playCard(faceless, target: target), isTrue);
+      expect(
+        state.player.deck.length,
+        deckBefore,
+        reason: 'copied Battlecry must not repeat',
+      );
+      final transformed = state.player.board.single;
+      expect(transformed.card.id, targetCard.id);
+      expect(transformed.instanceId, isNot(target.instanceId));
+      expect(transformed.owner, 'player');
+      expect(
+        [transformed.attack, transformed.health, transformed.maxHealth],
+        [8, 2, 7],
+      );
+      expect(transformed.divineShield, isTrue);
+      expect(transformed.furyTriggered, isTrue);
+      expect(transformed.rebornUsed, isTrue);
+      expect(transformed.permanentAttackBonus, 4);
+      expect(transformed.temporaryAttackBonus, 2);
+      expect(transformed.attacksMade, 0);
+      expect(transformed.summoningSick, isTrue);
+      expect(transformed.freezeBlocked, isTrue);
+      expect(state.ai.board.single, same(target));
+
+      state.player.hand
+        ..clear()
+        ..add(summoningCopy);
+      state.player.handCostReductions
+        ..clear()
+        ..add(0);
+      state.player.handFragments
+        ..clear()
+        ..add(null);
+      state.player.handStartedInDeck
+        ..clear()
+        ..add(true);
+      state.player.mana = 10;
+      expect(controller.playCard(summoningCopy, target: transformed), isTrue);
+      expect(state.player.board, hasLength(2));
+      final summoned = state.player.board.last;
+      expect(summoned.instanceId, isNot(transformed.instanceId));
+      expect(
+        [
+          summoned.card.id,
+          summoned.attack,
+          summoned.health,
+          summoned.maxHealth,
+        ],
+        [targetCard.id, 8, 2, 7],
+      );
+      expect(summoned.divineShield, isTrue);
+      expect(summoned.rebornUsed, isTrue);
+      expect(summoned.temporaryHealthBonus, 1);
+      expect(summoned.attacksMade, 0);
+
+      state.player.hand
+        ..clear()
+        ..add(handCopy);
+      state.player.handCostReductions
+        ..clear()
+        ..add(0);
+      state.player.handFragments
+        ..clear()
+        ..add(null);
+      state.player.handStartedInDeck
+        ..clear()
+        ..add(true);
+      state.player.mana = 10;
+      expect(controller.playCard(handCopy, target: transformed), isTrue);
+      expect(state.player.hand.single.id, targetCard.id);
+      expect(state.player.handCostReductions.single, 0);
+      expect(state.player.handStartedInDeck.single, isFalse);
+
+      state.player.board.clear();
+      state.player.mana = 10;
+      expect(controller.playCard(targetCard), isTrue);
+      final printed = state.player.board.single;
+      expect(
+        [printed.attack, printed.maxHealth],
+        [targetCard.attack, targetCard.health],
+      );
+      expect(printed.permanentAttackBonus, 0);
+      expect(printed.temporaryAttackBonus, 0);
+
+      state.player.board
+        ..clear()
+        ..addAll(
+          List.generate(
+            7,
+            (index) => BattleUnit(
+              instanceId: 'mobile-copy-full-$index',
+              card: filler,
+              owner: 'player',
+              attack: 1,
+              health: 1,
+              maxHealth: 1,
+            ),
+          ),
+        );
+      state.player.hand
+        ..clear()
+        ..add(summoningCopy);
+      state.player.handCostReductions
+        ..clear()
+        ..add(0);
+      state.player.handFragments
+        ..clear()
+        ..add(null);
+      state.player.handStartedInDeck
+        ..clear()
+        ..add(true);
+      state.player.mana = 10;
+      expect(
+        controller.playCard(summoningCopy, target: state.player.board.first),
+        isFalse,
+      );
+      expect(state.player.hand.single, summoningCopy);
       controller.dispose();
     },
   );
@@ -3788,6 +3995,109 @@ void main() {
     controller.dispose();
     client.dispose();
   });
+
+  test(
+    'online any-unit targeting accepts both boards but protects enemy Stealth',
+    () async {
+      final catalog = await loadCatalog();
+      final faceless = catalog.singleWhere(
+        (card) => card.id == 'dream-season-16',
+      );
+      final client = _RecordingMultiplayerClient()
+        ..playerId = 'p-local'
+        ..isHost = true;
+      final controller = OnlineBattleController(
+        catalog: catalog,
+        client: client,
+      );
+      client.lastEvent = MultiplayerEvent(
+        type: 'action',
+        playerId: 'p-local',
+        action: 'command',
+        payload: {
+          'state': {
+            'version': 1,
+            'turn': 3,
+            'phase': 'main',
+            'activePlayer': 0,
+            'players': [
+              {
+                'hero': {'health': 30},
+                'mana': 5,
+                'maxMana': 5,
+                'hand': [faceless.id],
+                'handCostReductions': [0],
+                'board': [
+                  {
+                    'entityId': 'friendly-copy-target',
+                    'cardId': 'sun-dawn-scout',
+                    'attack': 2,
+                    'health': 1,
+                    'maxHealth': 1,
+                  },
+                ],
+              },
+              {
+                'hero': {'health': 30},
+                'hand': ['__hidden-card__'],
+                'handCostReductions': [0],
+                'board': [
+                  {
+                    'entityId': 'enemy-copy-target',
+                    'cardId': 'sun-mirror-warden',
+                    'attack': 2,
+                    'health': 3,
+                    'maxHealth': 3,
+                  },
+                  {
+                    'entityId': 'enemy-stealth-copy-target',
+                    'cardId': 'void-mist-lurker',
+                    'attack': 2,
+                    'health': 1,
+                    'maxHealth': 1,
+                    'stealthActive': true,
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      );
+      client.eventSequence++;
+      client.notifyListeners();
+
+      controller.playCard(
+        faceless,
+        handIndex: 0,
+        target: controller.localBoard.single,
+      );
+      controller.playCard(
+        faceless,
+        handIndex: 0,
+        target: controller.remoteBoard.first,
+      );
+      controller.playCard(
+        faceless,
+        handIndex: 0,
+        target: controller.remoteBoard.last,
+      );
+
+      expect(client.actions, hasLength(2));
+      final friendlyPayload =
+          client.actions[0]['payload'] as Map<String, dynamic>;
+      final enemyPayload = client.actions[1]['payload'] as Map<String, dynamic>;
+      expect((friendlyPayload['command'] as Map<String, dynamic>)['target'], {
+        'kind': 'unit',
+        'entityId': 'friendly-copy-target',
+      });
+      expect((enemyPayload['command'] as Map<String, dynamic>)['target'], {
+        'kind': 'unit',
+        'entityId': 'enemy-copy-target',
+      });
+      controller.dispose();
+      client.dispose();
+    },
+  );
 
   test(
     'online Shatter snapshot exposes fragment target and preserves hand index',

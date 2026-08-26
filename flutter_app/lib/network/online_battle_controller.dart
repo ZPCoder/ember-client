@@ -233,9 +233,12 @@ class OnlineBattleController extends ChangeNotifier {
       final friendly = targetType.startsWith('friendly');
       final unitIsValid =
           target != null &&
-          ((friendly ? localBoard : remoteBoard).contains(target));
+          (targetType == 'any-unit'
+              ? localBoard.contains(target) ||
+                    (remoteBoard.contains(target) && !target.stealthActive)
+              : (friendly ? localBoard : remoteBoard).contains(target));
       final heroIsValid = targetHero && targetType.contains('character');
-      if (unitIsValid && !friendly && target.stealthActive) {
+      if (unitIsValid && !localBoard.contains(target) && target.stealthActive) {
         _log('${card.name} 不能直接选择潜行单位。');
         return;
       }
