@@ -20,7 +20,9 @@ import {
   AI_ARCHETYPES,
   DEFAULT_OPPONENT_DECK,
   DEFAULT_STARTER_DECK,
-  drawPack,
+  BULK_PACK_MAX_COUNT,
+  BULK_PACK_MIN_COUNT,
+  drawPackBatch,
   ETERNAL_SCARAB_CARD_BACK_NAME,
   ETERNAL_SCARAB_LEGEND_SEASON_TARGET,
   KEYWORD_DEFINITIONS,
@@ -278,6 +280,7 @@ type GamePayload = {
   identity?: { email: string; displayName: string; isDemo: boolean; isAnonymous?: boolean; canLinkDevice?: boolean };
   player: PlayerSnapshot;
   openedCards?: Array<{ cardId: string; count: number }>;
+  packsOpened?: number;
   claimedTaskId?: string;
   rewardGold?: number;
   costGold?: number;
@@ -1331,21 +1334,26 @@ function applyLocalAction(
     if (!targetId || reason.length < 2) throw new Error("举报信息不完整。");
     return { ok: true, player: { ...current, updatedAt: now }, targetId, localFallback: true };
   }
-  if (action === "open_pack") {
-    if (current.packsAvailable < 1) throw new Error("没有可开启的卡包。");
+  if (action === "open_pack" || action === "open_packs") {
+    const packCount = action === "open_packs" ? asNumber(body.count) : 1;
+    if (!Number.isInteger(packCount) || packCount < 1 || packCount > BULK_PACK_MAX_COUNT) {
+      throw new Error(`开包数量必须是 1–${BULK_PACK_MAX_COUNT} 的整数。`);
+    }
+    if (action === "open_packs" && packCount < BULK_PACK_MIN_COUNT) {
+      throw new Error(`至少持有并开启 ${BULK_PACK_MIN_COUNT} 个同类卡包才能批量解密。`);
+    }
+    if (current.packsAvailable < packCount) throw new Error(`当前只有 ${current.packsAvailable} 个可开启标准包。`);
     const seed = current.stats.matchesPlayed + current.packsAvailable + current.currencies.gold;
     const packPity = current.packPity ?? { packsOpened: 0, packsSinceLegendary: 0 };
-    const opened = drawPack(
+    const batch = drawPackBatch(
       current.collection,
-      [seed, seed + 7, seed + 14, seed + 21, seed + 28],
-      { guaranteeLegendary: packPity.packsSinceLegendary >= 39 },
+      packPity,
+      packCount,
+      {
+        randomValuesByPack: Array.from({ length: packCount }, (_, packIndex) =>
+          Array.from({ length: 5 }, (_, slotIndex) => seed + packIndex * 131 + slotIndex * 7)),
+      },
     );
-    const openedMap = new Map(opened.map((entry) => [entry.cardId, entry.count]));
-    const openedLegendary = opened.some((entry) => CARD_BY_ID.get(entry.cardId)?.rarity === "legendary");
-    const collection = { ...current.collection };
-    openedMap.forEach((count, id) => {
-      collection[id] = (collection[id] ?? 0) + count;
-    });
     const currentCatchUp = current.catchUpPack ?? {
       claimedAt: null,
       cardsGranted: 0,
@@ -1353,20 +1361,22 @@ function applyLocalAction(
     };
     const catchUpProgress = recordCatchUpCards(
       currentCatchUp,
-      opened.flatMap((entry) => Array.from({ length: entry.count }, () => entry.cardId)),
+      batch.openedCards.flatMap((entry) => Array.from({ length: entry.count }, () => entry.cardId)),
     );
+    const progressionXp = (current.progression?.xp ?? 0) + packCount * 50;
     const player = {
       ...current,
-      packsAvailable: Math.max(0, current.packsAvailable - 1),
+      packsAvailable: Math.max(0, current.packsAvailable - packCount),
       packPity: {
-        packsOpened: packPity.packsOpened + 1,
-        packsSinceLegendary: openedLegendary ? 0 : packPity.packsSinceLegendary + 1,
+        packsOpened: batch.packsOpened,
+        packsSinceLegendary: batch.packsSinceLegendary,
       },
       catchUpPack: { ...currentCatchUp, ...catchUpProgress },
-      collection,
+      collection: batch.collection,
+      progression: { xp: progressionXp, level: Math.floor(progressionXp / 1000) + 1 },
       tasks: current.tasks.map((task) =>
         task.id.includes("pack") || task.description.includes("卡包")
-          ? { ...task, progress: Math.min(task.target, task.progress + 1) }
+          ? { ...task, progress: Math.min(task.target, task.progress + packCount) }
           : task,
       ),
       updatedAt: now,
@@ -1374,7 +1384,8 @@ function applyLocalAction(
     return {
       ok: true,
       player,
-      openedCards: Array.from(openedMap, ([cardId, count]) => ({ cardId, count })),
+      openedCards: batch.openedCards,
+      packsOpened: packCount,
       localFallback: true,
     };
   }
@@ -3349,6 +3360,7 @@ export function GameApp({
     null,
   );
   const [openedCards, setOpenedCards] = useState<Array<{ cardId: string; count: number }>>([]);
+  const [openedPackCount, setOpenedPackCount] = useState(0);
   const [search, setSearch] = useState("");
   const [collectionEnvironment, setCollectionEnvironment] = useState<"released" | "standard" | "wild-only">("released");
   const [cardSetFilter, setCardSetFilter] = useState<"全部" | CardSetId>("全部");
@@ -4127,21 +4139,27 @@ export function GameApp({
     createBlankDeck();
   };
 
-  const openPack = async () => {
-    if (player.packsAvailable <= 0) {
-      setNotice({ tone: "info", text: "今日免费卡包已领取，明日 04:00 刷新。" });
+  const openPack = async (count = 1) => {
+    if (player.packsAvailable < count) {
+      setNotice({
+        tone: "info",
+        text: count > 1
+          ? `当前只有 ${player.packsAvailable} 个可开启标准包。`
+          : "当前没有可开启标准包；可前往商店购买或等待奖励。",
+      });
       return;
     }
-    const payload = await postAction("open_pack", {
-      idempotencyKey: makeId("pack"),
+    const bulk = count >= BULK_PACK_MIN_COUNT;
+    const payload = await postAction(bulk ? "open_packs" : "open_pack", {
+      idempotencyKey: makeId(bulk ? "packs" : "pack"),
+      ...(bulk ? { count } : {}),
     });
     if (payload) {
       setOpenedCards(payload.openedCards ?? []);
+      setOpenedPackCount(payload.packsOpened ?? count);
       setNotice({
         tone: payload.localFallback ? "info" : "success",
-        text: payload.localFallback
-          ? "标准档案包已在本地演示档案中解密。"
-          : "标准档案包解密完成，新卡牌已归入收藏。",
+        text: `${payload.packsOpened ?? count} 个标准档案包解密完成，新卡牌已归入收藏${payload.localFallback ? "（本地演示）" : ""}。`,
       });
     }
   };
@@ -4324,6 +4342,7 @@ export function GameApp({
     const payload = await postAction("reset_demo", {});
     if (payload) {
       setOpenedCards([]);
+      setOpenedPackCount(0);
       setSelectedLadderReadyDeckId(null);
       const firstDeck =
         payload.player.decks.find((deck) => deck.id === payload.player.activeDeckId) ??
@@ -5641,8 +5660,10 @@ export function GameApp({
                   uniqueOwned={uniqueOwned}
                   totalOwned={totalOwned}
                   openedCards={openedCards}
+                  openedPackCount={openedPackCount}
                   apiBusy={apiBusy}
                   onOpenPack={() => void openPack()}
+                  onOpenPacks={(count) => void openPack(count)}
                   onBuyPack={() => void buyPack()}
                   onClaimTask={(task) => void claimTask(task)}
                   onRerollTask={(task) => void rerollTask(task)}
@@ -5959,8 +5980,10 @@ function OverviewSection({
   uniqueOwned,
   totalOwned,
   openedCards,
+  openedPackCount,
   apiBusy,
   onOpenPack,
+  onOpenPacks,
   onBuyPack,
   onClaimTask,
   onRerollTask,
@@ -5974,8 +5997,10 @@ function OverviewSection({
   uniqueOwned: number;
   totalOwned: number;
   openedCards: Array<{ cardId: string; count: number }>;
+  openedPackCount: number;
   apiBusy: string | null;
   onOpenPack: () => void;
+  onOpenPacks: (count: number) => void;
   onBuyPack: () => void;
   onClaimTask: (task: PlayerTask) => void;
   onRerollTask: (task: PlayerTask) => void;
@@ -6261,7 +6286,7 @@ function OverviewSection({
           {openedCards.length > 0 ? (
             <div className="pack-reveal">
               <div className="pack-reveal__cards">
-                {openedCards.map((entry, index) => {
+                {openedCards.slice(0, 20).map((entry, index) => {
                   const card = CARD_BY_ID.get(entry.cardId);
                   return (
                     <div className={`mini-reveal mini-reveal--${card?.rarity ?? "common"}`} key={`${entry.cardId}-${index}`}>
@@ -6275,10 +6300,39 @@ function OverviewSection({
                   );
                 })}
               </div>
-              <p>新档案已同步至你的收藏。</p>
+              <p>
+                {openedPackCount > 1
+                  ? `${openedPackCount} 包共获得 ${openedCards.reduce((sum, entry) => sum + entry.count, 0)} 张卡牌。`
+                  : "新档案已同步至你的收藏。"}
+                {openedCards.length > 20 ? ` 这里展示其中 20 种，其余已直接归档。` : ""}
+              </p>
               <button className="button button--ghost button--wide" type="button" onClick={() => onNavigate("collection")}>
                 查看收藏
               </button>
+              {player.packsAvailable > 0 && (
+                <button
+                  className="button button--primary button--wide"
+                  type="button"
+                  onClick={onOpenPack}
+                  disabled={apiBusy === "open_pack" || apiBusy === "open_packs"}
+                >
+                  <Icon name="pack" />
+                  {apiBusy === "open_pack" ? "解密中…" : `继续开启 1 包 · 剩余 ${player.packsAvailable}`}
+                </button>
+              )}
+              {player.packsAvailable >= BULK_PACK_MIN_COUNT && (
+                <button
+                  className="button button--outline button--wide"
+                  type="button"
+                  onClick={() => onOpenPacks(Math.min(BULK_PACK_MAX_COUNT, player.packsAvailable))}
+                  disabled={apiBusy === "open_pack" || apiBusy === "open_packs"}
+                >
+                  <Icon name="cards" />
+                  {apiBusy === "open_packs"
+                    ? "批量解密中…"
+                    : `批量开启 ${Math.min(BULK_PACK_MAX_COUNT, player.packsAvailable)} 包`}
+                </button>
+              )}
               <button className="button button--outline button--wide" type="button" onClick={onBuyPack} disabled={apiBusy === "buy_pack" || player.currencies.gold < 100}>
                 <Icon name="coin" />
                 {apiBusy === "buy_pack" ? "购买中…" : "100 金币购买标准包"}
@@ -6290,7 +6344,7 @@ function OverviewSection({
                 className="pack-object"
                 type="button"
                 onClick={onOpenPack}
-                disabled={apiBusy === "open_pack" || player.packsAvailable <= 0}
+                disabled={apiBusy === "open_pack" || apiBusy === "open_packs" || player.packsAvailable <= 0}
                 aria-label="开启标准档案包"
               >
                 <span className="pack-object__halo" />
@@ -6305,11 +6359,24 @@ function OverviewSection({
                 className="button button--primary button--wide"
                 type="button"
                 onClick={onOpenPack}
-                disabled={apiBusy === "open_pack" || player.packsAvailable <= 0}
+                disabled={apiBusy === "open_pack" || apiBusy === "open_packs" || player.packsAvailable <= 0}
               >
                 <Icon name="pack" />
                 {apiBusy === "open_pack" ? "解密中…" : player.packsAvailable > 0 ? "免费开启" : "明日再来"}
               </button>
+              {player.packsAvailable >= BULK_PACK_MIN_COUNT && (
+                <button
+                  className="button button--outline button--wide"
+                  type="button"
+                  onClick={() => onOpenPacks(Math.min(BULK_PACK_MAX_COUNT, player.packsAvailable))}
+                  disabled={apiBusy === "open_pack" || apiBusy === "open_packs"}
+                >
+                  <Icon name="cards" />
+                  {apiBusy === "open_packs"
+                    ? "批量解密中…"
+                    : `批量开启 ${Math.min(BULK_PACK_MAX_COUNT, player.packsAvailable)} 包`}
+                </button>
+              )}
               <button
                 className="button button--outline button--wide"
                 type="button"
