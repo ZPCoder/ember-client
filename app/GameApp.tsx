@@ -11,6 +11,7 @@ import {
   type ReactNode,
 } from "react";
 import {
+  APPRENTICE_MILESTONES,
   CARD_CATALOG,
   AI_ARCHETYPES,
   DEFAULT_OPPONENT_DECK,
@@ -23,6 +24,8 @@ import {
   TRAIT_DEFINITIONS,
   TRAIT_ORDER,
   applyCommand,
+  apprenticeMilestoneComplete,
+  apprenticeMilestoneProgress,
   battleEventsToEffects,
   chooseAiMulliganIndexes,
   createMatch,
@@ -49,6 +52,7 @@ import {
   type Trait,
   type BattleVisualEffect,
   type AiArchetype,
+  type ApprenticeMilestoneId,
 } from "@/lib/game";
 
 type SectionKey = "overview" | "collection" | "deck" | "battle" | "operations";
@@ -150,6 +154,7 @@ type PlayerSnapshot = {
   chatMessages?: Array<{ id: string; senderId: string; recipientId: string; text: string; createdAt: string }>;
   blockedPlayerIds?: string[];
   rewardTrack?: { claimedLevels: number[] };
+  apprenticeTrack?: { claimedMilestones: ApprenticeMilestoneId[] };
   recentMatches: RecentMatch[];
   stats: { wins: number; losses: number; matchesPlayed: number };
   updatedAt: string;
@@ -166,6 +171,7 @@ type GamePayload = {
   task?: PlayerTask;
   level?: number;
   reward?: { title: string; kind: "gold" | "pack" | "dust"; amount: number };
+  apprenticeMilestoneId?: ApprenticeMilestoneId;
   displayName?: string;
   friendId?: string;
   message?: { id: string; senderId: string; recipientId: string; text: string; createdAt: string };
@@ -700,6 +706,7 @@ function makeDemoPlayer(identity?: {
     taskCycle: { dayKey: new Date().toISOString().slice(0, 10), weekKey: "demo", dailyRerollsRemaining: 1, packsBoughtToday: 0, aiRewardsToday: 0, weeklyFreePackClaimed: false },
     progression: { xp: 850, level: 1 },
     rewardTrack: { claimedLevels: [] },
+    apprenticeTrack: { claimedMilestones: [] },
     ladder: { seasonKey: new Date().toISOString().slice(0, 7), rating: LADDER_START_RATING, tier: ladderTierForRating(LADDER_START_RATING), stars: ladderStarsForRating(LADDER_START_RATING), wins: 7, losses: 3, highestRating: LADDER_START_RATING, winStreak: 0 },
     recentMatches: [
       {
@@ -936,6 +943,39 @@ function applyLocalAction(
       updatedAt: now,
     };
     return { ok: true, player, level, reward, localFallback: true };
+  }
+
+  if (action === "claim_apprentice_reward") {
+    const milestoneId = asString(body.milestoneId) as ApprenticeMilestoneId;
+    const milestone = APPRENTICE_MILESTONES.find((item) => item.id === milestoneId);
+    if (!milestone) throw new Error("新兵里程碑不存在。");
+    const claimed = current.apprenticeTrack?.claimedMilestones ?? [];
+    if (claimed.includes(milestone.id)) throw new Error("该新兵奖励已经领取。");
+    const complete = apprenticeMilestoneComplete(milestone, {
+      packsOpened: current.packPity?.packsOpened ?? 0,
+      matchesPlayed: current.stats.matchesPlayed,
+      wins: current.stats.wins,
+      level: current.progression?.level ?? 1,
+    });
+    if (!complete) throw new Error("新兵里程碑尚未完成。");
+    const player = {
+      ...current,
+      apprenticeTrack: { claimedMilestones: [...claimed, milestone.id] },
+      currencies: {
+        ...current.currencies,
+        gold: current.currencies.gold + (milestone.reward.kind === "gold" ? milestone.reward.amount : 0),
+        dust: current.currencies.dust + (milestone.reward.kind === "dust" ? milestone.reward.amount : 0),
+      },
+      packsAvailable: current.packsAvailable + (milestone.reward.kind === "pack" ? milestone.reward.amount : 0),
+      updatedAt: now,
+    };
+    return {
+      ok: true,
+      player,
+      apprenticeMilestoneId: milestone.id,
+      reward: milestone.reward,
+      localFallback: true,
+    };
   }
 
   if (action === "save_deck") {
@@ -3138,6 +3178,19 @@ export function GameApp({
     }
   };
 
+  const claimApprenticeReward = async (milestoneId: ApprenticeMilestoneId) => {
+    const payload = await postAction("claim_apprentice_reward", {
+      idempotencyKey: makeId(`apprentice-${milestoneId}`),
+      milestoneId,
+    });
+    if (payload) {
+      setNotice({
+        tone: payload.localFallback ? "info" : "success",
+        text: `新兵里程碑已结算：${payload.reward?.title ?? "成长奖励"}。`,
+      });
+    }
+  };
+
   const claimTask = async (task: PlayerTask) => {
     if (task.claimed || task.progress < task.target) return;
     const payload = await postAction("claim_task", {
@@ -4347,6 +4400,7 @@ export function GameApp({
                   onNavigate={switchSection}
                   onStartBattle={startStandardBattle}
                   onOpenTraining={() => setTrainingBriefingOpen(true)}
+                  onClaimApprenticeReward={(milestoneId) => void claimApprenticeReward(milestoneId)}
                 />
               )}
               {section === "collection" && (
@@ -4592,6 +4646,7 @@ function OverviewSection({
   onNavigate,
   onStartBattle,
   onOpenTraining,
+  onClaimApprenticeReward,
 }: {
   player: PlayerSnapshot;
   winRate: number;
@@ -4606,6 +4661,7 @@ function OverviewSection({
   onNavigate: (section: SectionKey) => void;
   onStartBattle: () => void;
   onOpenTraining: () => void;
+  onClaimApprenticeReward: (milestoneId: ApprenticeMilestoneId) => void;
 }) {
   const [clockNow, setClockNow] = useState(0);
   useEffect(() => {
@@ -4614,6 +4670,37 @@ function OverviewSection({
     const timer = window.setInterval(tick, 1000);
     return () => window.clearInterval(timer);
   }, []);
+  const apprenticeFacts = {
+    packsOpened: player.packPity?.packsOpened ?? 0,
+    matchesPlayed: player.stats.matchesPlayed,
+    wins: player.stats.wins,
+    level: player.progression?.level ?? 1,
+  };
+  const claimedApprenticeMilestones = player.apprenticeTrack?.claimedMilestones ?? [];
+  const completedApprenticeMilestones = APPRENTICE_MILESTONES.filter((milestone) =>
+    apprenticeMilestoneComplete(milestone, apprenticeFacts),
+  ).length;
+  const settledApprenticeMilestones = APPRENTICE_MILESTONES.filter((milestone) =>
+    claimedApprenticeMilestones.includes(milestone.id),
+  ).length;
+  const apprenticeRouteComplete = settledApprenticeMilestones === APPRENTICE_MILESTONES.length;
+  const startMilestoneAction = (milestoneId: ApprenticeMilestoneId) => {
+    if (milestoneId === "decode-first-pack") {
+      onOpenPack();
+      return;
+    }
+    if (milestoneId === "reach-level-two") {
+      onNavigate("operations");
+      return;
+    }
+    onStartBattle();
+  };
+  const apprenticeActionLabel = (milestoneId: ApprenticeMilestoneId) => {
+    if (milestoneId === "decode-first-pack") return "打开卡包";
+    if (milestoneId === "reach-level-two") return "查看任务";
+    if (milestoneId === "win-first-match") return "挑战 AI";
+    return "开始对战";
+  };
 
   return (
     <section className="screen screen--overview" aria-labelledby="overview-title">
@@ -4645,6 +4732,59 @@ function OverviewSection({
         <button className="button button--accent" type="button" onClick={onOpenTraining}>
           开始新手训练 <Icon name="arrow" />
         </button>
+      </section>
+
+      <section className={`apprentice-track ${apprenticeRouteComplete ? "is-complete" : ""}`} aria-labelledby="apprentice-track-title">
+        <div className="apprentice-track__header">
+          <div>
+            <span className="panel__eyebrow">CADET ASCENSION / SERVER VERIFIED</span>
+            <h2 id="apprentice-track-title">新兵晋升轨道</h2>
+            <p>{apprenticeRouteComplete ? "全部成长奖励已结算。你已准备好进入常规任务与天梯。" : "训练之后继续完成四个实战目标；每份奖励都由当前档案进度校验。"}</p>
+          </div>
+          <div className="apprentice-track__summary">
+            <strong>{settledApprenticeMilestones}<i> / {APPRENTICE_MILESTONES.length}</i></strong>
+            <span>奖励已领取 · {completedApprenticeMilestones} 项达成</span>
+          </div>
+        </div>
+        <ProgressBar
+          value={settledApprenticeMilestones}
+          max={APPRENTICE_MILESTONES.length}
+          label="新兵晋升轨道奖励领取进度"
+        />
+        <ol className="apprentice-track__steps">
+          {APPRENTICE_MILESTONES.map((milestone, index) => {
+            const progress = apprenticeMilestoneProgress(milestone, apprenticeFacts);
+            const complete = apprenticeMilestoneComplete(milestone, apprenticeFacts);
+            const claimed = claimedApprenticeMilestones.includes(milestone.id);
+            const rewardLabel = milestone.reward.kind === "gold"
+              ? "金币"
+              : milestone.reward.kind === "pack"
+                ? "档案包"
+                : "星尘";
+            return (
+              <li className={`apprentice-step ${claimed ? "is-claimed" : complete ? "is-ready" : ""}`} key={milestone.id}>
+                <span className="apprentice-step__index">{claimed ? <Icon name="check" size={16} /> : String(index + 1).padStart(2, "0")}</span>
+                <div className="apprentice-step__body">
+                  <span>{complete ? claimed ? "REWARD SECURED" : "OBJECTIVE COMPLETE" : "CADET OBJECTIVE"}</span>
+                  <h3>{milestone.title}</h3>
+                  <p>{milestone.description}</p>
+                  <div className="apprentice-step__progress">
+                    <span style={{ width: `${Math.min(100, (progress / milestone.target) * 100)}%` }} />
+                  </div>
+                  <small>{progress} / {milestone.target} · 奖励 {rewardLabel} × {milestone.reward.amount}</small>
+                </div>
+                <button
+                  className={`button button--small ${complete && !claimed ? "button--accent" : "button--muted"}`}
+                  type="button"
+                  disabled={claimed || apiBusy === "claim_apprentice_reward"}
+                  onClick={() => complete ? onClaimApprenticeReward(milestone.id) : startMilestoneAction(milestone.id)}
+                >
+                  {claimed ? "已领取" : complete ? "领取奖励" : apprenticeActionLabel(milestone.id)}
+                </button>
+              </li>
+            );
+          })}
+        </ol>
       </section>
 
       <div className="overview-hero">

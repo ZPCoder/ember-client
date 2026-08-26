@@ -64,6 +64,9 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(game, /卡组工坊/);
   assert.match(game, /战术对战/);
   assert.match(game, /运营台/);
+  assert.match(game, /新兵晋升轨道/);
+  assert.match(game, /claim_apprentice_reward/);
+  assert.match(game, /APPRENTICE_MILESTONES/);
   assert.match(game, /\/api\/game/);
   assert.match(game, /\/cards\/\$\{card\.id\}\.webp/);
   assert.match(game, /<Image[\s\S]*?\bunoptimized\b[\s\S]*?\/>/);
@@ -106,6 +109,8 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(game, /AI_ARCHETYPES/);
   assert.match(game, /选择演算对手/);
   assert.match(styles, /\.ai-archetype-picker/);
+  assert.match(styles, /\.apprentice-track/);
+  assert.match(styles, /\.apprentice-step\.is-ready/);
   assert.match(styles, /\.turn-clock/);
   assert.match(styles, /\.board-slot/);
   assert.match(styles, /battle-target-pulse/);
