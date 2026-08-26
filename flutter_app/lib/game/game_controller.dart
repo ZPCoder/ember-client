@@ -1832,6 +1832,7 @@ class GameController extends ChangeNotifier {
             'resurrect-friendly-unit',
             'discard-random',
             'recover-discarded',
+            'copy-random-opponent-deck',
             'summon',
           }.contains(kind)) {
             effect['count'] =
@@ -2552,6 +2553,7 @@ class GameController extends ChangeNotifier {
                 state.discoverChoices = validChoices;
                 state.discoverSource = sourceCard?.id ?? sourceName;
                 state.discoverOwner = _ownerOf(source);
+                state.discoverCopiedFrom = null;
                 stateLog(sourceName, '从候选档案中发现一张卡牌。');
                 _emitFx(
                   'discover',
@@ -2562,6 +2564,58 @@ class GameController extends ChangeNotifier {
                 );
                 return;
               }
+            }
+            break;
+          case 'discover-copy-opponent-hand':
+            final state = battle;
+            if (state != null) {
+              final pool = <String>[];
+              for (final candidate in enemy.hand) {
+                if (!pool.contains(candidate.id)) pool.add(candidate.id);
+              }
+              if (pool.length > 3) pool.shuffle(_random);
+              final choices = pool.take(3).toList(growable: false);
+              if (choices.isNotEmpty) {
+                state.phase = 'discover';
+                state.discoverChoices = choices;
+                state.discoverSource = sourceCard?.id ?? sourceName;
+                state.discoverOwner = _ownerOf(source);
+                state.discoverCopiedFrom = 'opponent-hand';
+                stateLog(sourceName, '从对手手牌中发现一张复制。');
+                _emitFx(
+                  'discover',
+                  '窥视手牌',
+                  '从 ${choices.length} 张敌方手牌中选择复制',
+                  Icons.visibility,
+                  0xFFA692D1,
+                );
+                return;
+              }
+            }
+            break;
+          case 'copy-random-opponent-deck':
+            final pool = List<CardDefinition>.from(enemy.deck);
+            final count = (effect['count'] as num?)?.toInt() ?? 1;
+            var copied = 0;
+            for (var index = 0; index < count && pool.isNotEmpty; index++) {
+              final chosenIndex = _random.nextInt(pool.length);
+              final copiedCard = pool.removeAt(chosenIndex);
+              if (_addCardToHand(source, copiedCard)) {
+                copied++;
+              } else {
+                stateLog('复制燃毁', '${copiedCard.name} 因手牌已满被销毁。');
+              }
+            }
+            stateLog(sourceName, '从对手牌库复制了 $copied 张牌；原牌库保持不变。');
+            if (copied > 0) {
+              _emitFx(
+                'draw',
+                '牌库复制',
+                '获得 $copied 张印刷复制',
+                Icons.content_copy,
+                0xFFA692D1,
+                amount: copied,
+              );
             }
             break;
           case 'damage':
@@ -3090,6 +3144,7 @@ class GameController extends ChangeNotifier {
     if (discovered == null) return false;
     final owner = state.discoverOwner == 'ai' ? state.ai : state.player;
     final enemy = identical(owner, state.player) ? state.ai : state.player;
+    final copiedFrom = state.discoverCopiedFrom;
     if (!_addCardToHand(owner, discovered)) {
       stateLog('发现失败', '${discovered.name} 因手牌已满被燃毁。');
     }
@@ -3097,7 +3152,8 @@ class GameController extends ChangeNotifier {
     state.discoverChoices = <String>[];
     state.discoverSource = null;
     state.discoverOwner = 'player';
-    stateLog('发现完成', '${discovered.name} 已加入手牌。');
+    state.discoverCopiedFrom = null;
+    stateLog(copiedFrom == null ? '发现完成' : '复制完成', '${discovered.name} 已加入手牌。');
     _resolveSpellTriggers(source: owner, enemy: enemy);
     _emitFx(
       'discover',

@@ -14244,14 +14244,14 @@
   },
   {
     "id": "dusk-season-07",
-    "name": "无光影卫·07",
-    "description": "stealth。 暮影的战线单位。 登场时抽一张牌。",
+    "name": "暗巷窥牌者",
+    "description": "战吼：随机复制对手牌库中的一张牌并置入你的手牌。",
     "faction": "暮影",
     "type": "unit",
-    "cost": 7,
+    "cost": 1,
     "rarity": "稀有",
-    "attack": 8,
-    "health": 11,
+    "attack": 1,
+    "health": 1,
     "keywords": [
       "stealth",
       "battlecry"
@@ -14262,7 +14262,7 @@
     ],
     "onPlay": [
       {
-        "kind": "draw",
+        "kind": "copy-random-opponent-deck",
         "count": 1
       }
     ],
@@ -15196,25 +15196,22 @@
   },
   {
     "id": "dusk-season-spell-06",
-    "name": "无光发现·06",
-    "description": "从三张本体系卡牌中发现一张。",
+    "name": "暗巷既视",
+    "description": "从对手手牌中发现一张牌的复制。",
     "faction": "暮影",
     "type": "spell",
-    "cost": 6,
+    "cost": 2,
     "rarity": "普通",
     "school": "tide",
     "target": "none",
     "effect": [
       {
-        "kind": "discover",
-        "choices": [
-          "dusk-season-06",
-          "dusk-season-07",
-          "dusk-season-08"
-        ]
+        "kind": "discover-copy-opponent-hand"
       }
     ],
-    "keywords": [],
+    "keywords": [
+      "discover"
+    ],
     "onDeath": [],
     "set": "pegasus-2024"
   },
@@ -15325,22 +15322,18 @@
   },
   {
     "id": "dusk-season-spell-12",
-    "name": "暮影发现·12",
-    "description": "从三张本体系卡牌中发现一张。",
+    "name": "无光窃思",
+    "description": "随机复制对手牌库中的两张牌并置入你的手牌。",
     "faction": "暮影",
     "type": "spell",
-    "cost": 4,
+    "cost": 2,
     "rarity": "普通",
     "school": "tide",
     "target": "none",
     "effect": [
       {
-        "kind": "discover",
-        "choices": [
-          "dusk-season-12",
-          "dusk-season-13",
-          "dusk-season-14"
-        ]
+        "kind": "copy-random-opponent-deck",
+        "count": 2
       }
     ],
     "keywords": [],

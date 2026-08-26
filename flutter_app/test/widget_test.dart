@@ -42,7 +42,7 @@ void main() {
       );
       expect(
         catalog.where((card) => card.keywords.contains('discover')),
-        hasLength(7),
+        hasLength(8),
       );
       expect(
         catalog.where((card) => card.keywords.contains('choose-one')),
@@ -180,6 +180,27 @@ void main() {
             .onDeath
             .single['kind'],
         'take-control-random-enemy',
+      );
+      expect(
+        catalog
+            .singleWhere((card) => card.id == 'dusk-season-spell-06')
+            .effect
+            .single['kind'],
+        'discover-copy-opponent-hand',
+      );
+      expect(
+        catalog
+            .singleWhere((card) => card.id == 'dusk-season-07')
+            .onPlay
+            .single['kind'],
+        'copy-random-opponent-deck',
+      );
+      expect(
+        catalog
+            .singleWhere((card) => card.id == 'dusk-season-spell-12')
+            .effect
+            .single['count'],
+        2,
       );
       expect(generatedBattleCards, hasLength(18));
       expect(
@@ -1166,6 +1187,117 @@ void main() {
       expect(blockedTarget.owner, 'player');
       expect(state.ai.board, isEmpty);
       expect(state.player.deathHistory.single.cardId, randomController.id);
+      controller.dispose();
+    },
+  );
+
+  test(
+    'mobile hidden-zone copies preserve the opponent and rebuild printed hand state',
+    () async {
+      final catalog = await loadCatalog();
+      final handCopy = catalog.singleWhere(
+        (card) => card.id == 'dusk-season-spell-06',
+      );
+      final deckCopy = catalog.singleWhere(
+        (card) => card.id == 'dusk-season-spell-12',
+      );
+      final shatter = catalog.singleWhere(
+        (card) => card.id == 'storm-emergency-plating',
+      );
+      final filler = catalog.singleWhere((card) => card.id == 'sun-dawn-scout');
+      final deckCandidateA = catalog.singleWhere(
+        (card) => card.id == 'sun-mirror-warden',
+      );
+      final deckCandidateB = catalog.singleWhere(
+        (card) => card.id == 'void-echo-mimic',
+      );
+      final controller = GameController(startingPlayer: 'player')
+        ..catalog = catalog
+        ..deckIds.addAll(List.filled(30, filler.id));
+      controller.startBattle();
+      await controller.confirmMulligan();
+      final state = controller.battle!;
+      state.player.mana = 10;
+      state.player.hand
+        ..clear()
+        ..add(handCopy);
+      state.player.handCostReductions
+        ..clear()
+        ..add(0);
+      state.player.handFragments
+        ..clear()
+        ..add(null);
+      state.ai.hand
+        ..clear()
+        ..add(shatter);
+      state.ai.handCostReductions
+        ..clear()
+        ..add(4);
+      state.ai.handFragments
+        ..clear()
+        ..add(null);
+
+      expect(controller.playCard(handCopy), isTrue);
+      expect(state.phase, 'discover');
+      expect(state.discoverChoices, [shatter.id]);
+      expect(state.discoverCopiedFrom, 'opponent-hand');
+      expect(state.ai.hand, [shatter]);
+      expect(state.ai.handCostReductions, [4]);
+      expect(controller.chooseDiscover(shatter.id), isTrue);
+      expect(state.phase, 'main');
+      expect(state.discoverCopiedFrom, isNull);
+      expect(state.player.hand.map((card) => card.id), [shatter.id, shatter.id]);
+      expect(
+        state.player.handFragments.map((fragment) => fragment?.piece),
+        ['left', 'right'],
+      );
+      expect(state.player.handCostReductions, [0, 0]);
+      expect(state.ai.hand, [shatter]);
+
+      state.player.hand
+        ..clear()
+        ..addAll([deckCopy, ...List.filled(9, filler)]);
+      state.player.handCostReductions
+        ..clear()
+        ..addAll(List.filled(10, 0));
+      state.player.handFragments
+        ..clear()
+        ..addAll(List.filled(10, null));
+      state.ai.deck
+        ..clear()
+        ..addAll([deckCandidateA, deckCandidateB]);
+      state.ai.deckCostOverrides
+        ..clear()
+        ..addAll([0, 1]);
+      final enemyDeckBefore = List<CardDefinition>.from(state.ai.deck);
+      final enemyOverridesBefore = List<int?>.from(state.ai.deckCostOverrides);
+
+      expect(controller.playCard(deckCopy, handIndex: 0), isTrue);
+      expect(state.ai.deck, enemyDeckBefore);
+      expect(state.ai.deckCostOverrides, enemyOverridesBefore);
+      final copied = state.player.hand.where(
+        (card) => card.id == deckCandidateA.id || card.id == deckCandidateB.id,
+      );
+      expect(copied, hasLength(1));
+      final copiedIndex = state.player.hand.indexOf(copied.single);
+      expect(state.player.handCostReductions[copiedIndex], 0);
+      expect(state.logs.any((log) => log.contains('复制燃毁')), isTrue);
+
+      state.player.hand
+        ..clear()
+        ..add(handCopy);
+      state.player.handCostReductions
+        ..clear()
+        ..add(0);
+      state.player.handFragments
+        ..clear()
+        ..add(null);
+      state.ai.hand.clear();
+      state.ai.handCostReductions.clear();
+      state.ai.handFragments.clear();
+      expect(controller.playCard(handCopy), isTrue);
+      expect(state.phase, 'main');
+      expect(state.discoverChoices, isEmpty);
       controller.dispose();
     },
   );

@@ -475,6 +475,7 @@ class BattleState {
   List<String> discoverChoices;
   String? discoverSource;
   String discoverOwner = 'player';
+  String? discoverCopiedFrom;
   List<Map<String, dynamic>> chooseOneOptions;
   String? chooseOneSource;
   String chooseOneOwner = 'player';
