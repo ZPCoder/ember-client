@@ -44,6 +44,7 @@ import {
   LADDER_READY_TRIAL_DAYS,
   LADDER_READY_TRIAL_MS,
   LADDER_START_RATING,
+  MAX_SAVED_DECKS,
   createRankedSnapshot,
   createRankedLadders,
   describeRankedRewardBundle,
@@ -898,8 +899,8 @@ function applyLocalAction(
       format: "standard",
       updatedAt: now,
     };
-    if (current.decks.length >= 20 && !current.decks.some((deck) => deck.id === claimedLadderReadyDeck.id)) {
-      throw new Error("已保存卡组已达 20 套上限，请先整理卡组。");
+    if (current.decks.length >= MAX_SAVED_DECKS && !current.decks.some((deck) => deck.id === claimedLadderReadyDeck.id)) {
+      throw new Error(`已保存卡组已达 ${MAX_SAVED_DECKS} 套上限，请先整理卡组。`);
     }
     const required = new Map<string, number>();
     offer.deck.forEach((cardId) => required.set(cardId, (required.get(cardId) ?? 0) + 1));
@@ -1148,8 +1149,8 @@ function applyLocalAction(
       }
     }
     const existing = current.decks.findIndex((deck) => deck.id === id);
-    if (existing < 0 && current.decks.length >= 20) {
-      throw new Error("最多只能保存 20 套卡组。");
+    if (existing < 0 && current.decks.length >= MAX_SAVED_DECKS) {
+      throw new Error(`最多只能保存 ${MAX_SAVED_DECKS} 套卡组。`);
     }
     const decks = [...current.decks];
     if (existing >= 0) decks[existing] = savedDeck;
@@ -3293,6 +3294,10 @@ export function GameApp({
   };
 
   const createNewDeck = () => {
+    if (player.decks.length >= MAX_SAVED_DECKS) {
+      setNotice({ tone: "warning", text: `已使用全部 ${MAX_SAVED_DECKS} 个卡组栏位，请先整理现有卡组。` });
+      return;
+    }
     setEditingDeckId(null);
     setSelectedLadderReadyDeckId(null);
     setDeckIds([...DEFAULT_STARTER_DECK]);
@@ -5665,6 +5670,7 @@ function DeckSection({
     .filter((item) => item.count > 0);
   const deckFaction = factionForDeck(deckIds);
   const deckHeroPower = getHeroPower(deckFaction);
+  const deckSlotsFull = decks.length >= MAX_SAVED_DECKS;
 
   const encodeDeckCode = () => {
     const raw = `ASTRA1|${deckIds.join(",")}`;
@@ -5804,17 +5810,17 @@ function DeckSection({
           </label>
           <div className="deck-loadout">
             <label>
-              <span>已保存卡组</span>
+              <span>已保存卡组 · {decks.length}/{MAX_SAVED_DECKS}</span>
               <select
                 value={editingDeckId ?? ""}
                 onChange={(event) => event.target.value ? onSelectDeck(event.target.value) : onNewDeck()}
                 aria-label="选择已保存卡组"
               >
-                <option value="">新建卡组草稿</option>
+                <option value="" disabled={deckSlotsFull}>新建卡组草稿</option>
                 {decks.map((deck) => <option value={deck.id} key={deck.id}>{rankedFormatLabel(deck.format ?? "standard")} · {deck.name}</option>)}
               </select>
             </label>
-            <button className="button button--outline" type="button" onClick={onNewDeck}>
+            <button className="button button--outline" type="button" onClick={onNewDeck} disabled={deckSlotsFull} title={deckSlotsFull ? `已使用全部 ${MAX_SAVED_DECKS} 个卡组栏位` : undefined}>
               新建
             </button>
           </div>
