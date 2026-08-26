@@ -6,4 +6,4 @@
 - 字体许可：SIL Open Font License 1.1
 - 许可全文：https://scripts.sil.org/OFL
 
-该字体仅用于保证 ASTRA PROTOCOL Flutter 客户端在 Web、桌面和移动端正确显示中文界面。
+该字体仅用于保证 EMBER PROTOCOL Flutter 客户端在 Web、桌面和移动端正确显示中文界面。

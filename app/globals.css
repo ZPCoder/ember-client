@@ -804,6 +804,211 @@ button.resource-chip:hover {
   margin-top: 25px;
 }
 
+.training-callout {
+  display: grid;
+  grid-template-columns: auto minmax(260px, 1fr) auto auto;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 18px;
+  padding: 17px 18px;
+  border: 1px solid rgba(216, 162, 81, 0.3);
+  border-radius: 16px;
+  background:
+    linear-gradient(105deg, rgba(216, 162, 81, 0.12), rgba(85, 185, 173, 0.035) 58%, transparent),
+    rgba(12, 25, 21, 0.86);
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.18);
+}
+
+.training-callout__sigil {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  border: 1px solid rgba(233, 188, 108, 0.42);
+  border-radius: 14px;
+  color: #efc77f;
+  background: rgba(216, 162, 81, 0.11);
+  box-shadow: inset 0 0 20px rgba(216, 162, 81, 0.06);
+}
+
+.training-callout__copy > span {
+  display: block;
+  color: #d7ae68;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+}
+
+.training-callout__copy h2 {
+  margin: 4px 0 2px;
+  font-size: 14px;
+}
+
+.training-callout__copy p {
+  margin: 0;
+  color: #86978e;
+  font-size: 9px;
+}
+
+.training-callout__route {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.training-callout__route span {
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+  color: #89988f;
+  font-size: 7px;
+}
+
+.training-callout__route i {
+  display: grid;
+  width: 23px;
+  height: 23px;
+  place-items: center;
+  border: 1px solid rgba(216, 162, 81, 0.32);
+  border-radius: 50%;
+  color: #e9be75;
+  background: rgba(216, 162, 81, 0.09);
+  font-size: 8px;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.training-callout__route b {
+  width: 14px;
+  height: 1px;
+  margin-bottom: 12px;
+  background: rgba(216, 162, 81, 0.22);
+}
+
+.training-briefing-backdrop {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow: auto;
+  padding: 24px;
+  background:
+    radial-gradient(circle at 50% 40%, rgba(216, 162, 81, 0.12), transparent 34rem),
+    rgba(2, 8, 7, 0.82);
+  backdrop-filter: blur(12px);
+}
+
+.training-briefing {
+  width: min(780px, 100%);
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+  padding: clamp(22px, 4vw, 38px);
+  border: 1px solid rgba(216, 162, 81, 0.34);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 86% 8%, rgba(228, 109, 63, 0.12), transparent 20rem),
+    linear-gradient(145deg, rgba(17, 37, 31, 0.98), rgba(7, 18, 15, 0.98));
+  box-shadow: 0 30px 100px rgba(0, 0, 0, 0.58);
+  animation: battle-result-enter 220ms ease-out both;
+}
+
+.training-briefing__heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.training-briefing__heading span {
+  color: #ddb36b;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.17em;
+}
+
+.training-briefing__heading h2 {
+  margin: 7px 0 7px;
+  font-family: "Songti SC", serif;
+  font-size: clamp(25px, 4vw, 38px);
+}
+
+.training-briefing__heading p {
+  max-width: 570px;
+  margin: 0;
+  color: #92a198;
+  font-size: 11px;
+}
+
+.training-briefing__heading > button {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid var(--line-strong);
+  border-radius: 9px;
+  color: var(--paper-soft);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.training-briefing__lessons {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 24px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.training-lesson {
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  gap: 11px;
+  min-height: 112px;
+  padding: 16px;
+  border: 1px solid rgba(226, 217, 186, 0.11);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.training-lesson > span {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 1px solid rgba(85, 185, 173, 0.28);
+  border-radius: 9px;
+  color: #8ed2c8;
+  background: rgba(85, 185, 173, 0.08);
+  font-size: 8px;
+  font-weight: 900;
+}
+
+.training-lesson--core > span,
+.training-lesson--trait > span {
+  border-color: rgba(228, 109, 63, 0.32);
+  color: #efa081;
+  background: rgba(228, 109, 63, 0.08);
+}
+
+.training-lesson strong {
+  font-size: 12px;
+}
+
+.training-lesson p {
+  margin: 5px 0 0;
+  color: #83928a;
+  font-size: 9px;
+  line-height: 1.55;
+}
+
+.training-briefing__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
 .eyebrow-tag,
 .live-badge {
   display: inline-flex;
@@ -4536,6 +4741,130 @@ button.hero-core {
   letter-spacing: 0.04em;
 }
 
+.battle-training {
+  padding: 11px 12px 10px;
+  border-bottom: 1px solid rgba(216, 162, 81, 0.2);
+  background:
+    linear-gradient(135deg, rgba(216, 162, 81, 0.11), rgba(85, 185, 173, 0.035)),
+    rgba(5, 15, 12, 0.68);
+}
+
+.battle-training--complete {
+  border-color: rgba(126, 185, 134, 0.25);
+  background: rgba(126, 185, 134, 0.07);
+}
+
+.battle-training__heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.battle-training__heading span,
+.battle-training__heading strong {
+  display: block;
+}
+
+.battle-training__heading div > span {
+  color: #bb9457;
+  font-size: 6px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+}
+
+.battle-training__heading strong {
+  margin-top: 2px;
+  color: #f1d8aa;
+  font-size: 9px;
+}
+
+.battle-training__heading > span {
+  padding: 3px 6px;
+  border: 1px solid rgba(216, 162, 81, 0.27);
+  border-radius: 999px;
+  color: #d9b579;
+  font-size: 7px;
+}
+
+.battle-training ol {
+  display: grid;
+  gap: 4px;
+  margin: 9px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.battle-training li {
+  display: grid;
+  grid-template-columns: 20px 1fr;
+  align-items: start;
+  gap: 6px;
+  padding: 4px 5px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: #6f7d75;
+}
+
+.battle-training li > span {
+  display: grid;
+  width: 17px;
+  height: 17px;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 50%;
+  font-size: 6px;
+}
+
+.battle-training li strong,
+.battle-training li small {
+  display: block;
+}
+
+.battle-training li strong {
+  font-size: 7px;
+}
+
+.battle-training li small {
+  margin-top: 2px;
+  color: #a89572;
+  font-size: 6px;
+  line-height: 1.4;
+}
+
+.battle-training li.is-current {
+  border-color: rgba(216, 162, 81, 0.22);
+  color: #e8c98f;
+  background: rgba(216, 162, 81, 0.065);
+}
+
+.battle-training li.is-current > span {
+  border-color: rgba(216, 162, 81, 0.46);
+  color: #f2ca83;
+}
+
+.battle-training li.is-done {
+  color: #75a99a;
+  opacity: 0.7;
+}
+
+.battle-training li.is-done > span {
+  border-color: rgba(85, 185, 173, 0.3);
+  color: var(--cyan);
+  background: rgba(85, 185, 173, 0.07);
+}
+
+.battle-training > button {
+  width: 100%;
+  margin-top: 8px;
+  padding: 5px;
+  border: 1px solid rgba(226, 217, 186, 0.1);
+  border-radius: 6px;
+  color: #7b8b82;
+  background: rgba(255, 255, 255, 0.02);
+  font-size: 6px;
+}
+
 .mulligan-prompt {
   display: flex;
   align-items: center;
@@ -6389,6 +6718,14 @@ button.hero-core {
     grid-template-columns: 1fr;
   }
 
+  .training-callout {
+    grid-template-columns: auto minmax(220px, 1fr) auto;
+  }
+
+  .training-callout__route {
+    display: none;
+  }
+
   .battle-layout {
     grid-template-columns: 1fr;
   }
@@ -6505,6 +6842,51 @@ button.hero-core {
 
   .main-content {
     padding: 26px 18px 50px;
+  }
+
+  .training-callout {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .training-callout > .button {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .battle-training {
+    position: fixed;
+    z-index: 58;
+    right: 12px;
+    bottom: calc(82px + env(safe-area-inset-bottom));
+    left: 12px;
+    padding: 8px 10px;
+    border: 1px solid rgba(216, 162, 81, 0.34);
+    border-radius: 12px;
+    box-shadow: 0 14px 38px rgba(0, 0, 0, 0.48);
+    backdrop-filter: blur(16px);
+  }
+
+  .battle-training ol {
+    margin-top: 5px;
+  }
+
+  .battle-training li {
+    display: none;
+  }
+
+  .battle-training li.is-current {
+    display: grid;
+    padding: 4px;
+  }
+
+  .battle-training--complete ol {
+    display: none;
+  }
+
+  .battle-training > button {
+    min-height: 22px;
+    margin-top: 5px;
+    padding: 3px 6px;
   }
 
   .overview-hero {
@@ -6670,6 +7052,40 @@ button.hero-core {
   .section-heading {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .training-callout {
+    gap: 12px;
+    padding: 14px;
+  }
+
+  .training-callout__sigil {
+    width: 42px;
+    height: 42px;
+  }
+
+  .training-briefing-backdrop {
+    align-items: start;
+    padding: 10px;
+  }
+
+  .training-briefing {
+    max-height: calc(100dvh - 20px);
+    padding: 20px 16px;
+    border-radius: 18px;
+  }
+
+  .training-briefing__lessons {
+    grid-template-columns: 1fr;
+  }
+
+  .training-lesson {
+    min-height: 0;
+  }
+
+  .training-briefing__actions {
+    display: grid;
+    grid-template-columns: 1fr;
   }
 
   .section-heading__action,

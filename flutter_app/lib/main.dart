@@ -27,7 +27,7 @@ class AstraProtocolApp extends StatelessWidget {
     const paper = Color(0xFFF1E6C8);
     const ink = Color(0xFF06110F);
     return MaterialApp(
-      title: '星骇协议 · ASTRA PROTOCOL',
+      title: '余烬协议 · EMBER PROTOCOL',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.dark,
@@ -151,7 +151,7 @@ class _AppShellState extends State<AppShell> {
                 title: Row(
                   children: [
                     const Text(
-                      'ASTRA PROTOCOL',
+                      'EMBER PROTOCOL',
                       style: TextStyle(letterSpacing: 2, fontSize: 15),
                     ),
                     const SizedBox(width: 12),
@@ -259,7 +259,7 @@ class _DesktopRail extends StatelessWidget {
                   const SizedBox(width: 11),
                   const Expanded(
                     child: Text(
-                      '星骇协议\nASTRA',
+                      '余烬协议\nEMBER',
                       style: TextStyle(
                         fontSize: 13,
                         height: 1.25,
@@ -504,7 +504,7 @@ class OverviewPage extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           PageHeader(
-            eyebrow: 'COMMAND / ASTRA PROTOCOL',
+            eyebrow: 'COMMAND / EMBER PROTOCOL',
             title: '战情总览',
             description: '构筑你的回合，改写整片星图的战局。',
             action: FilledButton.icon(

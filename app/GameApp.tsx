@@ -2554,6 +2554,8 @@ export function GameApp({
   const [battleEffectsLocked, setBattleEffectsLocked] = useState(false);
   const [battleReplaySlow, setBattleReplaySlow] = useState(false);
   const [battleTurnClockSeconds, setBattleTurnClockSeconds] = useState<number | null>(null);
+  const [trainingBriefingOpen, setTrainingBriefingOpen] = useState(false);
+  const [trainingActive, setTrainingActive] = useState(false);
   const recordedBattleRef = useRef<string | null>(null);
   const aiMatchProofRef = useRef<AiMatchProofPayload | null>(null);
   const aiMatchStartingRef = useRef(false);
@@ -3381,6 +3383,17 @@ export function GameApp({
     }
   };
 
+  const startStandardBattle = () => {
+    setTrainingActive(false);
+    void startBattle();
+  };
+
+  const startTrainingBattle = () => {
+    setTrainingActive(true);
+    setTrainingBriefingOpen(false);
+    void startBattle();
+  };
+
   // In PVP the server reducer is authoritative. The local client only sends a
   // command and renders the resulting snapshot that the server broadcasts.
   const issueCommand = useCallback((command: BattleCommand, broadcast = true) => {
@@ -4176,8 +4189,8 @@ export function GameApp({
             <span />
           </span>
           <div>
-            <strong>星骸协议</strong>
-            <span>ASTRA PROTOCOL</span>
+            <strong>余烬协议</strong>
+            <span>EMBER PROTOCOL</span>
           </div>
           <button
             className="icon-button sidebar__close"
@@ -4332,7 +4345,8 @@ export function GameApp({
                   onClaimTask={(task) => void claimTask(task)}
                   onRerollTask={(task) => void rerollTask(task)}
                   onNavigate={switchSection}
-                  onStartBattle={startBattle}
+                  onStartBattle={startStandardBattle}
+                  onOpenTraining={() => setTrainingBriefingOpen(true)}
                 />
               )}
               {section === "collection" && (
@@ -4381,7 +4395,7 @@ export function GameApp({
                   onRemove={removeCard}
                   onSave={() => void saveDeck()}
                   onImport={importDeck}
-                  onBattle={startBattle}
+                  onBattle={startStandardBattle}
                 />
               )}
               {section === "battle" && (
@@ -4402,7 +4416,7 @@ export function GameApp({
                   turnClockSeconds={battleTurnClockSeconds}
                   soundEnabled={soundEnabled}
                   replaySlow={battleReplaySlow}
-                  onStart={startBattle}
+                  onStart={startStandardBattle}
                   onRematch={requestOnlineRematch}
                   onReturnLobby={returnToBattleLobby}
                   onPlayCard={playCard}
@@ -4434,6 +4448,8 @@ export function GameApp({
                   onOpenDeck={() => switchSection("deck")}
                   onToggleSound={toggleSound}
                   onToggleReplaySpeed={toggleBattleReplaySpeed}
+                  trainingActive={trainingActive}
+                  onExitTraining={() => setTrainingActive(false)}
                   pvp={pvp.state}
                   aiArchetypes={AI_ARCHETYPES}
                   aiArchetypeId={aiArchetypeId}
@@ -4479,7 +4495,85 @@ export function GameApp({
             </>
           )}
         </main>
+        {trainingBriefingOpen && (
+          <TrainingBriefing
+            onClose={() => setTrainingBriefingOpen(false)}
+            onStart={startTrainingBattle}
+          />
+        )}
       </div>
+    </div>
+  );
+}
+
+function TrainingBriefing({
+  onClose,
+  onStart,
+}: {
+  onClose: () => void;
+  onStart: () => void;
+}) {
+  const lessons = [
+    {
+      number: "01",
+      title: "守住核心",
+      copy: "双方核心拥有 30 点生命。让敌方核心归零，即可赢得对局。",
+      accent: "core",
+    },
+    {
+      number: "02",
+      title: "规划能量",
+      copy: "每回合能量上限增加 1 点并补满。先部署低费单位，避免浪费行动窗口。",
+      accent: "mana",
+    },
+    {
+      number: "03",
+      title: "建立战线",
+      copy: "单位通常要等待一回合才能攻击；嘲讽会保护其他目标，护盾能抵消一次伤害。",
+      accent: "board",
+    },
+    {
+      number: "04",
+      title: "读懂协议",
+      copy: "同名单位可升为二星；部署 2/4 个不同同类单位，会启动更强的特质联动。",
+      accent: "trait",
+    },
+  ] as const;
+
+  return (
+    <div className="training-briefing-backdrop" role="presentation" onClick={onClose}>
+      <section
+        className="training-briefing"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="training-briefing-title"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="training-briefing__heading">
+          <div>
+            <span>CADET BRIEFING / 4 STEPS</span>
+            <h2 id="training-briefing-title">三分钟掌握第一场对局</h2>
+            <p>训练模式会在战场侧边持续提示下一步，但不会替你做决定。</p>
+          </div>
+          <button type="button" onClick={onClose} aria-label="关闭新手训练说明">
+            <Icon name="close" size={18} />
+          </button>
+        </div>
+        <ol className="training-briefing__lessons">
+          {lessons.map((lesson) => (
+            <li className={`training-lesson training-lesson--${lesson.accent}`} key={lesson.number}>
+              <span>{lesson.number}</span>
+              <div><strong>{lesson.title}</strong><p>{lesson.copy}</p></div>
+            </li>
+          ))}
+        </ol>
+        <div className="training-briefing__actions">
+          <button className="button button--ghost" type="button" onClick={onClose}>稍后再看</button>
+          <button className="button button--primary button--large" type="button" onClick={onStart}>
+            <Icon name="swords" />进入引导对局
+          </button>
+        </div>
+      </section>
     </div>
   );
 }
@@ -4497,6 +4591,7 @@ function OverviewSection({
   onRerollTask,
   onNavigate,
   onStartBattle,
+  onOpenTraining,
 }: {
   player: PlayerSnapshot;
   winRate: number;
@@ -4510,6 +4605,7 @@ function OverviewSection({
   onRerollTask: (task: PlayerTask) => void;
   onNavigate: (section: SectionKey) => void;
   onStartBattle: () => void;
+  onOpenTraining: () => void;
 }) {
   const [clockNow, setClockNow] = useState(0);
   useEffect(() => {
@@ -4532,6 +4628,24 @@ function OverviewSection({
           </button>
         }
       />
+
+      <section className="training-callout" aria-labelledby="training-callout-title">
+        <span className="training-callout__sigil" aria-hidden="true"><Icon name="shield" size={26} /></span>
+        <div className="training-callout__copy">
+          <span>CADET ROUTE · 随时重练</span>
+          <h2 id="training-callout-title">第一次指挥？先完成一场三分钟训练</h2>
+          <p>从换牌、能量、部署到攻击，战场会逐步标记你当前应该关注的行动。</p>
+        </div>
+        <div className="training-callout__route" aria-label="训练路线：换牌、部署、攻击、结束回合">
+          <span><i>1</i>换牌</span><b />
+          <span><i>2</i>部署</span><b />
+          <span><i>3</i>攻击</span><b />
+          <span><i>4</i>回合</span>
+        </div>
+        <button className="button button--accent" type="button" onClick={onOpenTraining}>
+          开始新手训练 <Icon name="arrow" />
+        </button>
+      </section>
 
       <div className="overview-hero">
         <div className="overview-hero__copy">
@@ -5545,7 +5659,7 @@ function BattleEffectLayer({ effect }: { effect: BattleVisualEffect }) {
           </span>
         )}
         <span className="battle-fx__copy">
-          <small>{cardName ?? "ASTRA COMBAT LINK"}</small>
+          <small>{cardName ?? "EMBER COMBAT LINK"}</small>
           <strong>{effect.label}</strong>
         </span>
       </span>
@@ -5715,6 +5829,8 @@ function BattleSection({
   onOpenDeck,
   onToggleSound,
   onToggleReplaySpeed,
+  trainingActive,
+  onExitTraining,
   pvp,
   aiArchetypes,
   aiArchetypeId,
@@ -5771,6 +5887,8 @@ function BattleSection({
   onOpenDeck: () => void;
   onToggleSound: () => void;
   onToggleReplaySpeed: () => void;
+  trainingActive: boolean;
+  onExitTraining: () => void;
   pvp: PvpState;
   aiArchetypes: readonly AiArchetype[];
   aiArchetypeId: string;
@@ -5871,6 +5989,29 @@ function BattleSection({
   const playerCanAct = playerTurn && !effectsLocked && onlineTransportReady;
   const playerCanDiscover = discoverActive && battle.currentPlayer === "player" && !effectsLocked && onlineTransportReady;
   const playerCanChooseOne = chooseOneActive && battle.currentPlayer === "player" && !effectsLocked && onlineTransportReady;
+  const trainingSteps = [
+    {
+      label: "确认起手",
+      detail: "点击不想保留的牌，再确认起手。",
+      done: !mulliganActive,
+    },
+    {
+      label: "使用一张牌",
+      detail: "观察费用；若费用差 1，可先使用幸运币，再部署一张牌。",
+      done: battle.report.cardsPlayed[0] > 0,
+    },
+    {
+      label: "发动一次攻击",
+      detail: "可行动单位会亮起；先选单位，再选目标。",
+      done: battle.report.attacks[0] > 0,
+    },
+    {
+      label: "结束一个回合",
+      detail: "行动完成后结束回合，能量会在下回合补满。",
+      done: battle.log.some((line) => line.includes("我方结束了回合")),
+    },
+  ];
+  const completedTrainingSteps = trainingSteps.filter((step) => step.done).length;
   const pendingDefinition = pendingCard ? CARD_BY_ID.get(pendingCard.cardId) : undefined;
   const pendingRuleCard = pendingDefinition ? CARD_RULE_BY_ID.get(pendingDefinition.id) : undefined;
   const targetRule = pendingHeroPower
@@ -6441,6 +6582,33 @@ function BattleSection({
               )}
             </p>
           </div>
+          {trainingActive && (
+            <section className={`battle-training ${completedTrainingSteps === trainingSteps.length ? "battle-training--complete" : ""}`} aria-labelledby="battle-training-title">
+              <div className="battle-training__heading">
+                <div>
+                  <span>CADET ROUTE</span>
+                  <strong id="battle-training-title">
+                    {completedTrainingSteps === trainingSteps.length ? "基础训练完成" : "新手训练进行中"}
+                  </strong>
+                </div>
+                <span>{completedTrainingSteps} / {trainingSteps.length}</span>
+              </div>
+              <ol>
+                {trainingSteps.map((step, index) => {
+                  const current = !step.done && trainingSteps.slice(0, index).every((item) => item.done);
+                  return (
+                    <li className={`${step.done ? "is-done" : ""} ${current ? "is-current" : ""}`} key={step.label}>
+                      <span>{step.done ? <Icon name="check" size={12} /> : index + 1}</span>
+                      <div><strong>{step.label}</strong>{current && <small>{step.detail}</small>}</div>
+                    </li>
+                  );
+                })}
+              </ol>
+              <button type="button" onClick={onExitTraining}>
+                {completedTrainingSteps === trainingSteps.length ? "完成并继续对局" : "退出引导"}
+              </button>
+            </section>
+          )}
           {mulliganActive && (
             <div className="mulligan-prompt" role="status">
               <div>
