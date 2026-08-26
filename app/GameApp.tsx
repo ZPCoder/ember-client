@@ -24,8 +24,10 @@ import {
   TRAIT_DEFINITIONS,
   TRAIT_ORDER,
   applyCommand,
+  apprenticeMatchPoolForFacts,
   apprenticeMilestoneComplete,
   apprenticeMilestoneProgress,
+  apprenticeTrackComplete,
   battleEventsToEffects,
   chooseAiMulliganIndexes,
   createMatch,
@@ -58,6 +60,7 @@ import {
   type Trait,
   type BattleVisualEffect,
   type AiArchetype,
+  type ApprenticeMatchPool,
   type ApprenticeMilestoneId,
 } from "@/lib/game";
 
@@ -297,6 +300,7 @@ type PvpState = {
   roomCode: string | null;
   role: PvpRole | null;
   format: PvpFormat;
+  matchPool: ApprenticeMatchPool | null;
   peerName: string | null;
   localReady: boolean;
   remoteReady: boolean;
@@ -2085,6 +2089,7 @@ function useWebPvp(displayName: string) {
     roomCode: null,
     role: null,
     format: "ranked",
+    matchPool: null,
     peerName: null,
     localReady: false,
     remoteReady: false,
@@ -2127,16 +2132,26 @@ function useWebPvp(displayName: string) {
     }
     if (type === "queue_joined") {
       const format: PvpFormat = message.format === "casual" ? "casual" : "ranked";
-      setState((current) => ({ ...current, status: "queue", roomCode: null, role: null, format, peerName: null, localReady: false, remoteReady: false, remoteReadyDeck: null, message: asString(message.message, "正在寻找同模式对手…") }));
+      const matchPool: ApprenticeMatchPool | null = message.pool === "apprentice"
+        ? "apprentice"
+        : message.pool === "standard"
+          ? "standard"
+          : null;
+      setState((current) => ({ ...current, status: "queue", roomCode: null, role: null, format, matchPool: matchPool ?? current.matchPool, peerName: null, localReady: false, remoteReady: false, remoteReadyDeck: null, message: asString(message.message, "正在寻找同模式对手…") }));
       return;
     }
     if (type === "queue_left") {
-      setState((current) => ({ ...current, status: "connected", roomCode: null, role: null, peerName: null, message: asString(message.message, "已取消匹配。") }));
+      setState((current) => ({ ...current, status: "connected", roomCode: null, role: null, matchPool: null, peerName: null, message: asString(message.message, "已取消匹配。") }));
       return;
     }
     if (type === "room_created" || type === "room_joined") {
       const roomCode = asString(message.room);
       const format: PvpFormat = message.format === "casual" ? "casual" : "ranked";
+      const matchPool: ApprenticeMatchPool | null = message.pool === "apprentice"
+        ? "apprentice"
+        : message.pool === "standard"
+          ? "standard"
+          : null;
       lastSequenceRef.current = 0;
       incomingQueueRef.current = [];
       setIncoming(null);
@@ -2146,6 +2161,7 @@ function useWebPvp(displayName: string) {
         roomCode: roomCode || null,
         role: type === "room_created" ? "host" : "guest",
         format,
+        matchPool: matchPool ?? current.matchPool,
         localReady: false,
         remoteReady: false,
         remoteReadyDeck: null,
@@ -2307,6 +2323,7 @@ function useWebPvp(displayName: string) {
       roomCode: null,
       role: null,
       format: "ranked",
+      matchPool: null,
       peerName: null,
       localReady: false,
       remoteReady: false,
@@ -2473,7 +2490,7 @@ function useWebPvp(displayName: string) {
         return;
       }
       socketRef.current = null;
-      setState((current) => ({ ...current, status: "offline", roomCode: null, role: null, format: "ranked", peerName: null, localReady: false, remoteReady: false, remoteReadyDeck: null, message: "联机大厅连接已断开。" }));
+      setState((current) => ({ ...current, status: "offline", roomCode: null, role: null, format: "ranked", matchPool: null, peerName: null, localReady: false, remoteReady: false, remoteReadyDeck: null, message: "联机大厅连接已断开。" }));
     };
     if (canFallbackToPolling(parsed)) {
       fallbackTimerRef.current = window.setTimeout(() => {
@@ -4376,6 +4393,12 @@ export function GameApp({
     player.stats.matchesPlayed > 0
       ? Math.round((player.stats.wins / player.stats.matchesPlayed) * 100)
       : 0;
+  const apprenticePool = apprenticeMatchPoolForFacts({
+    packsOpened: player.packPity?.packsOpened ?? 0,
+    matchesPlayed: player.stats.matchesPlayed,
+    wins: player.stats.wins,
+    level: player.progression?.level ?? 1,
+  }) === "apprentice";
 
   return (
     <div className={`game-shell ${section === "battle" && battleView ? "game-shell--battle-focus" : ""}`}>
@@ -4658,6 +4681,7 @@ export function GameApp({
                   trainingActive={trainingActive}
                   onExitTraining={() => setTrainingActive(false)}
                   pvp={pvp.state}
+                  apprenticePool={apprenticePool}
                   aiArchetypes={AI_ARCHETYPES}
                   aiArchetypeId={aiArchetypeId}
                   onAiArchetype={setAiArchetypeId}
@@ -4669,6 +4693,10 @@ export function GameApp({
                   onPvpCreate={(format) => pvp.createRoom(format)}
                   onPvpQueue={(format) => pvp.queue(format)}
                   onPvpLeaveQueue={() => pvp.leaveQueue()}
+                  onPvpFallbackAi={() => {
+                    pvp.disconnect();
+                    void startStandardBattle();
+                  }}
                   onPvpJoin={() => pvp.joinRoom(pvpRoomInput)}
                   onPvpReady={() => pvp.ready(deckIds)}
                   onPvpDisconnect={() => pvp.disconnect()}
@@ -4836,7 +4864,7 @@ function OverviewSection({
   const settledApprenticeMilestones = APPRENTICE_MILESTONES.filter((milestone) =>
     claimedApprenticeMilestones.includes(milestone.id),
   ).length;
-  const apprenticeRouteComplete = settledApprenticeMilestones === APPRENTICE_MILESTONES.length;
+  const apprenticeRouteComplete = apprenticeTrackComplete(apprenticeFacts);
   const startMilestoneAction = (milestoneId: ApprenticeMilestoneId) => {
     if (milestoneId === "decode-first-pack") {
       onOpenPack();
@@ -4892,11 +4920,20 @@ function OverviewSection({
           <div>
             <span className="panel__eyebrow">CADET ASCENSION / SERVER VERIFIED</span>
             <h2 id="apprentice-track-title">新兵晋升轨道</h2>
-            <p>{apprenticeRouteComplete ? "全部成长奖励已结算。你已准备好进入常规任务与天梯。" : "训练之后继续完成四个实战目标；每份奖励都由当前档案进度校验。"}</p>
+            <p>{apprenticeRouteComplete
+              ? "四个成长目标已经完成，快速匹配已自动转入常规水平池；未领取奖励仍可随时补领。"
+              : "快速匹配由服务器锁定在新兵保护池；完成四个实战目标后自动毕业，不受奖励是否领取影响。"}</p>
+          </div>
+          <div className={`apprentice-track__pool ${apprenticeRouteComplete ? "is-standard" : "is-protected"}`}>
+            <Icon name={apprenticeRouteComplete ? "check" : "shield"} size={18} />
+            <span>
+              <small>{apprenticeRouteComplete ? "MATCH POOL · GRADUATED" : "MATCH POOL · PROTECTED"}</small>
+              <strong>{apprenticeRouteComplete ? "常规水平匹配" : "新兵专属匹配"}</strong>
+            </span>
           </div>
           <div className="apprentice-track__summary">
             <strong>{settledApprenticeMilestones}<i> / {APPRENTICE_MILESTONES.length}</i></strong>
-            <span>奖励已领取 · {completedApprenticeMilestones} 项达成</span>
+            <span>奖励已领取 · {completedApprenticeMilestones} 项目标达成</span>
           </div>
         </div>
         <ProgressBar
@@ -6126,6 +6163,7 @@ function BattleTraitProtocol({
 
 function PvpLobby({
   state,
+  apprenticePool,
   url,
   roomInput,
   onUrl,
@@ -6134,11 +6172,13 @@ function PvpLobby({
   onCreate,
   onQueue,
   onLeaveQueue,
+  onFallbackAi,
   onJoin,
   onReady,
   onDisconnect,
 }: {
   state: PvpState;
+  apprenticePool: boolean;
   url: string;
   roomInput: string;
   onUrl: (value: string) => void;
@@ -6147,18 +6187,24 @@ function PvpLobby({
   onCreate: (format: PvpFormat) => void;
   onQueue: (format: PvpFormat) => void;
   onLeaveQueue: () => void;
+  onFallbackAi: () => void;
   onJoin: () => void;
   onReady: () => void;
   onDisconnect: () => void;
 }) {
   const connected = state.status !== "offline" && state.status !== "error" && state.status !== "connecting";
   const [selectedFormat, setSelectedFormat] = useState<PvpFormat>(state.format);
+  const protectedPool = state.matchPool ? state.matchPool === "apprentice" : apprenticePool;
   return (
     <section className="pvp-lobby" aria-label="基础 PVP 联机大厅">
       <div className="pvp-lobby__heading">
         <div>
           <span className="panel__eyebrow">LIVE PVP / ROOM LINK</span>
           <h3>基础联机对战</h3>
+          <span className={`pvp-lobby__pool ${protectedPool ? "is-protected" : "is-standard"}`}>
+            <Icon name={protectedPool ? "shield" : "signal"} size={13} />
+            {protectedPool ? "新兵专属匹配池" : "常规水平匹配池"}
+          </span>
         </div>
         <span className={`pvp-lobby__status pvp-lobby__status--${state.status}`}><i />{state.status === "offline" ? "未连接" : state.status === "connecting" ? "连接中" : state.status === "error" ? "连接异常" : state.status === "queue" ? "匹配中" : state.status === "playing" ? "对战中" : "大厅在线"}</span>
       </div>
@@ -6172,7 +6218,17 @@ function PvpLobby({
       {connected && (
         <div className="pvp-lobby__room">
       {state.status === "queue" ? (
-            <div className="pvp-lobby__queue"><div><span className="panel__eyebrow">SERVER MATCHMAKING</span><strong>{state.format === "casual" ? "休闲匹配" : "天梯匹配"}</strong><small>只会匹配同模式玩家；匹配成功后自动建立房间。</small></div><button className="button button--outline" type="button" onClick={onLeaveQueue}>取消匹配</button></div>
+            <div className={`pvp-lobby__queue ${protectedPool ? "is-protected" : ""}`}>
+              <div>
+                <span className="panel__eyebrow">SERVER MATCHMAKING · {protectedPool ? "CADET" : "STANDARD"}</span>
+                <strong>{protectedPool ? "新兵保护匹配" : state.format === "casual" ? "休闲匹配" : "天梯匹配"}</strong>
+                <small>{protectedPool ? "服务器只会配对仍在晋升轨道的新玩家；毕业后自动转入常规池。" : "只会匹配同模式玩家，并优先寻找相近水平的对手。"}</small>
+              </div>
+              <div className="pvp-lobby__queue-actions">
+                {protectedPool && <button className="button button--primary" type="button" onClick={onFallbackAi}>改打 AI 演算</button>}
+                <button className="button button--outline" type="button" onClick={onLeaveQueue}>取消匹配</button>
+              </div>
+            </div>
           ) : !state.roomCode ? (
             <>
               <label><span>匹配模式</span><select value={selectedFormat} onChange={(event) => setSelectedFormat(event.target.value === "casual" ? "casual" : "ranked")} aria-label="选择联机模式"><option value="ranked">Ranked 天梯</option><option value="casual">Casual 休闲</option></select></label>
@@ -6236,6 +6292,7 @@ function BattleSection({
   trainingActive,
   onExitTraining,
   pvp,
+  apprenticePool,
   aiArchetypes,
   aiArchetypeId,
   onAiArchetype,
@@ -6247,6 +6304,7 @@ function BattleSection({
   onPvpCreate,
   onPvpQueue,
   onPvpLeaveQueue,
+  onPvpFallbackAi,
   onPvpJoin,
   onPvpReady,
   onPvpDisconnect,
@@ -6294,6 +6352,7 @@ function BattleSection({
   trainingActive: boolean;
   onExitTraining: () => void;
   pvp: PvpState;
+  apprenticePool: boolean;
   aiArchetypes: readonly AiArchetype[];
   aiArchetypeId: string;
   onAiArchetype: (id: string) => void;
@@ -6305,6 +6364,7 @@ function BattleSection({
   onPvpCreate: (format: PvpFormat) => void;
   onPvpQueue: (format: PvpFormat) => void;
   onPvpLeaveQueue: () => void;
+  onPvpFallbackAi: () => void;
   onPvpJoin: () => void;
   onPvpReady: () => void;
   onPvpDisconnect: () => void;
@@ -6362,6 +6422,7 @@ function BattleSection({
           </div>
           <PvpLobby
             state={pvp}
+            apprenticePool={apprenticePool}
             url={pvpUrl}
             roomInput={pvpRoomInput}
             onUrl={onPvpUrl}
@@ -6370,6 +6431,7 @@ function BattleSection({
             onCreate={onPvpCreate}
             onQueue={onPvpQueue}
             onLeaveQueue={onPvpLeaveQueue}
+            onFallbackAi={onPvpFallbackAi}
             onJoin={onPvpJoin}
             onReady={onPvpReady}
             onDisconnect={onPvpDisconnect}

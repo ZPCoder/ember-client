@@ -31,10 +31,11 @@ test("build emits a deployable worker, D1 metadata, and migration", async () => 
 });
 
 test("ships the complete product surface and removes starter assets", async () => {
-  const [page, game, styles, layout, packageJson, og, artManifest, imageGenManifest] = await Promise.all([
+  const [page, game, styles, worker, layout, packageJson, og, artManifest, imageGenManifest] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/GameApp.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+    readFile(new URL("../worker/index.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
     stat(new URL("../public/og.png", import.meta.url)),
@@ -67,6 +68,9 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(game, /新兵晋升轨道/);
   assert.match(game, /claim_apprentice_reward/);
   assert.match(game, /APPRENTICE_MILESTONES/);
+  assert.match(game, /新兵专属匹配池/);
+  assert.match(game, /改打 AI 演算/);
+  assert.match(game, /apprenticeMatchPoolForFacts/);
   assert.match(game, /天梯预备套牌/);
   assert.match(game, /activate_ladder_ready/);
   assert.match(game, /claim_ladder_ready_deck/);
@@ -115,6 +119,9 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(game, /选择演算对手/);
   assert.match(styles, /\.ai-archetype-picker/);
   assert.match(styles, /\.apprentice-track/);
+  assert.match(styles, /\.apprentice-track__pool/);
+  assert.match(styles, /\.pvp-lobby__pool/);
+  assert.match(styles, /\.pvp-lobby__queue\.is-protected/);
   assert.match(styles, /\.apprentice-step\.is-ready/);
   assert.match(styles, /\.ladder-ready__grid/);
   assert.match(styles, /\.ladder-ready-card\.is-claimed/);
@@ -128,6 +135,10 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(styles, /\.screen\.battle-room/);
   assert.match(styles, /@keyframes battle-room-enter/);
   assert.match(styles, /\.battle-fx__card-reveal/);
+  assert.match(worker, /pvp_queue_format_pool_joined_idx/);
+  assert.match(worker, /COALESCE\(q\.pool, 'standard'\) = \?/);
+  assert.match(worker, /apprenticeMatchPoolForFacts/);
+  assert.match(worker, /新兵保护匹配中，只寻找仍在晋升轨道的对手/);
   assert.match(styles, /@keyframes battle-card-reveal/);
   assert.match(styles, /\.battlefield__fx-layer/);
   assert.match(styles, /battle-banner-enter 840ms/);

@@ -944,6 +944,41 @@ button.resource-chip:hover {
   font-size: 10px;
 }
 
+.apprentice-track__pool {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+  min-width: 156px;
+  padding: 8px 10px;
+  border: 1px solid rgba(85, 185, 173, 0.26);
+  border-radius: 11px;
+  color: #73cfc3;
+  background: rgba(85, 185, 173, 0.07);
+}
+
+.apprentice-track__pool.is-standard {
+  border-color: rgba(216, 162, 81, 0.28);
+  color: #e2bd78;
+  background: rgba(216, 162, 81, 0.07);
+}
+
+.apprentice-track__pool span {
+  display: grid;
+  gap: 2px;
+}
+
+.apprentice-track__pool small {
+  color: #64877f;
+  font-size: 7px;
+  letter-spacing: 0.07em;
+}
+
+.apprentice-track__pool strong {
+  color: currentColor;
+  font-size: 10px;
+}
+
 .apprentice-track__summary {
   flex: 0 0 auto;
   text-align: right;
@@ -3240,6 +3275,26 @@ button.game-card:not(:disabled):hover .game-card__artwork,
   font-size: 15px;
 }
 
+.pvp-lobby__pool {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 7px;
+  padding: 4px 7px;
+  border: 1px solid rgba(89, 211, 207, 0.24);
+  border-radius: 999px;
+  color: #77d0c7;
+  background: rgba(89, 211, 207, 0.06);
+  font-size: 8px;
+  font-weight: 800;
+}
+
+.pvp-lobby__pool.is-standard {
+  border-color: rgba(216, 162, 81, 0.24);
+  color: #d8b16b;
+  background: rgba(216, 162, 81, 0.06);
+}
+
 .pvp-lobby p {
   margin: 8px 0 13px;
   color: var(--muted);
@@ -3343,6 +3398,11 @@ button.game-card:not(:disabled):hover .game-card__artwork,
   background: rgba(89, 211, 207, 0.06);
 }
 
+.pvp-lobby__queue.is-protected {
+  border-color: rgba(89, 211, 207, 0.4);
+  background: linear-gradient(100deg, rgba(89, 211, 207, 0.1), rgba(89, 211, 207, 0.035));
+}
+
 .pvp-lobby__queue > div {
   display: grid;
   gap: 3px;
@@ -3356,6 +3416,13 @@ button.game-card:not(:disabled):hover .game-card__artwork,
 .pvp-lobby__queue small {
   color: var(--muted);
   font-size: 9px;
+}
+
+.pvp-lobby__queue > .pvp-lobby__queue-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
 }
 
 .sound-toggle {
@@ -7358,6 +7425,10 @@ button.hero-core {
     align-items: flex-end;
   }
 
+  .apprentice-track__pool {
+    width: 100%;
+  }
+
   .battle-training {
     position: fixed;
     z-index: 58;
@@ -7462,6 +7533,19 @@ button.hero-core {
   .pvp-lobby__room {
     align-items: stretch;
     flex-wrap: wrap;
+  }
+
+  .pvp-lobby__queue {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .pvp-lobby__queue > .pvp-lobby__queue-actions {
+    width: 100%;
+  }
+
+  .pvp-lobby__queue-actions .button {
+    flex: 1;
   }
 
   .pvp-lobby__connect .button,
