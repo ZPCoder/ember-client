@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:astra_protocol/data/catalog.dart';
 import 'package:astra_protocol/data/formats.dart';
 import 'package:astra_protocol/game/game_controller.dart';
 import 'package:astra_protocol/main.dart';
 import 'package:astra_protocol/models/card_definition.dart';
+import 'package:astra_protocol/models/local_saved_deck.dart';
 import 'package:astra_protocol/network/multiplayer_client.dart';
 import 'package:astra_protocol/network/online_battle_controller.dart';
 
@@ -1265,6 +1267,108 @@ void main() {
   );
 
   test(
+    'mobile deck library creates, copies, switches and deletes safely',
+    () async {
+      final catalog = await loadCatalog();
+      final initialCards = catalog
+          .where(
+            (card) =>
+                card.faction == '曜光' &&
+                cardAvailableInRankedFormat(card, RankedFormat.standard),
+          )
+          .take(15)
+          .expand((card) => [card.id, card.id])
+          .toList();
+      final controller = GameController(startingPlayer: 'player')
+        ..catalog = catalog
+        ..deckName = '第一套'
+        ..deckIds.addAll(initialCards);
+
+      expect(await controller.saveDeck(), isTrue);
+      final firstId = controller.activeDeckId;
+      expect(firstId, isNotNull);
+      expect(controller.savedDecks, hasLength(1));
+      expect(controller.savedDecks.single.name, '第一套');
+
+      expect(await controller.duplicateActiveDeck(), isTrue);
+      final copyId = controller.activeDeckId;
+      expect(copyId, isNot(firstId));
+      expect(controller.savedDecks, hasLength(2));
+      expect(controller.deckName, '第一套 副本');
+      expect(controller.deckIds, initialCards);
+
+      controller.setDeckName('复制后改名');
+      expect(await controller.selectDeck(firstId!), isTrue);
+      expect(controller.deckName, '第一套');
+      expect(
+        controller.savedDecks.singleWhere((deck) => deck.id == copyId).name,
+        '复制后改名',
+      );
+
+      expect(await controller.createNewDeck(), isTrue);
+      expect(controller.savedDecks, hasLength(3));
+      expect(controller.deckFormat, RankedFormat.standard);
+      expect(controller.deckIds, hasLength(30));
+      final newId = controller.activeDeckId!;
+      expect(await controller.deleteDeck(newId), isTrue);
+      expect(controller.savedDecks, hasLength(2));
+      expect(controller.activeDeckId, isNot(newId));
+
+      expect(await controller.deleteDeck(firstId), isTrue);
+      expect(controller.savedDecks, hasLength(1));
+      expect(await controller.deleteDeck(copyId!), isTrue);
+      expect(controller.savedDecks, hasLength(1));
+      expect(controller.deckName, '新建战术卡组');
+      expect(controller.deckIds, hasLength(30));
+      controller.dispose();
+    },
+  );
+
+  test('mobile deck library enforces all 27 local slots', () async {
+    final catalog = await loadCatalog();
+    final cards = catalog
+        .where((card) => card.faction == '曜光')
+        .take(15)
+        .expand((card) => [card.id, card.id])
+        .toList();
+    final controller = GameController()
+      ..catalog = catalog
+      ..deckIds.addAll(cards);
+    expect(await controller.saveDeck(), isTrue);
+    while (controller.savedDecks.length < maxSavedDecks) {
+      expect(await controller.duplicateActiveDeck(), isTrue);
+    }
+    expect(controller.savedDecks, hasLength(maxSavedDecks));
+    expect(controller.canCreateDeck, isFalse);
+    expect(await controller.createNewDeck(), isFalse);
+    expect(await controller.duplicateActiveDeck(), isFalse);
+    controller.dispose();
+  });
+
+  test(
+    'legacy single mobile deck migrates into the saved deck library',
+    () async {
+      final legacyIds = List<String>.filled(30, 'sun-dawn-scout');
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'deck_ids': legacyIds,
+        'deck_format': 'wild',
+      });
+      final controller = GameController();
+      await controller.initialize();
+
+      expect(controller.savedDecks, hasLength(1));
+      expect(controller.savedDecks.single.name, '迁移牌组');
+      expect(controller.savedDecks.single.format, RankedFormat.wild);
+      expect(controller.savedDecks.single.cardIds, legacyIds);
+      expect(controller.activeDeckId, controller.savedDecks.single.id);
+      final preferences = await SharedPreferences.getInstance();
+      expect(preferences.getString('saved_decks'), isNotNull);
+      controller.dispose();
+      SharedPreferences.setMockInitialValues(<String, Object>{});
+    },
+  );
+
+  test(
     'drawing with a full hand burns the drawn card instead of hiding it',
     () {
       final drawCard = CardDefinition(
@@ -2374,6 +2478,43 @@ void main() {
       AstraProtocolApp(controller: GameController(startingPlayer: 'player')),
     );
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
+  });
+
+  testWidgets('deck workshop exposes the 27-slot mobile library controls', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final catalog = (await tester.runAsync(loadCatalog))!;
+    final ids = catalog
+        .where((card) => card.faction == '曜光')
+        .take(15)
+        .expand((card) => [card.id, card.id])
+        .toList();
+    final controller = GameController()
+      ..catalog = catalog
+      ..isLoading = false
+      ..deckIds.addAll(ids);
+    for (final id in ids) {
+      controller.collection[id] = 2;
+    }
+    await controller.saveDeck();
+
+    await tester.pumpWidget(AstraProtocolApp(controller: controller));
+    await tester.tap(find.text('卡组'));
+    await tester.pump();
+
+    expect(find.text('本机牌组库'), findsOneWidget);
+    expect(find.text('1 / 27 栏位'), findsOneWidget);
+    expect(find.text('新建'), findsOneWidget);
+    expect(find.text('复制'), findsOneWidget);
+    expect(find.text('删除'), findsOneWidget);
+    expect(find.byKey(const ValueKey('deck-format-selector')), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    controller.dispose();
   });
 }
 

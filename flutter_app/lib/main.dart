@@ -8,6 +8,7 @@ import 'data/catalog.dart';
 import 'data/formats.dart';
 import 'game/game_controller.dart';
 import 'models/card_definition.dart';
+import 'models/local_saved_deck.dart';
 import 'network/multiplayer_client.dart';
 import 'network/online_battle_controller.dart';
 
@@ -151,9 +152,13 @@ class _AppShellState extends State<AppShell> {
               appBar: AppBar(
                 title: Row(
                   children: [
-                    const Text(
-                      'EMBER PROTOCOL',
-                      style: TextStyle(letterSpacing: 2, fontSize: 15),
+                    const Flexible(
+                      child: Text(
+                        'EMBER PROTOCOL',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(letterSpacing: 2, fontSize: 15),
+                      ),
                     ),
                     const SizedBox(width: 12),
                     Container(
@@ -1054,6 +1059,16 @@ class CardTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = Color(factionColors[card.faction] ?? 0xFF86AAA3);
     final rarity = Color(rarityColors[card.rarity] ?? 0xFF87958D);
+    final tags = <({String label, Color color})>[
+      for (final trait in card.traits)
+        (label: traitLabels[trait] ?? trait, color: const Color(0xFF69CFC3)),
+      for (final keyword in card.keywords)
+        (
+          label: keywordLabels[keyword] ?? keyword,
+          color: const Color(0xFFE7BD7A),
+        ),
+    ];
+    final visibleTags = tags.take(compact ? 1 : 2).toList(growable: false);
     final content = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1203,18 +1218,23 @@ class CardTile extends StatelessWidget {
               const SizedBox(height: 7),
               Row(
                 children: [
-                  for (final trait in card.traits.take(2))
-                    _TinyTag(
-                      label: traitLabels[trait] ?? trait,
-                      color: const Color(0xFF69CFC3),
+                  Expanded(
+                    child: Wrap(
+                      spacing: 3,
+                      runSpacing: 3,
+                      children: [
+                        for (final tag in visibleTags)
+                          _TinyTag(label: tag.label, color: tag.color),
+                        if (tags.length > visibleTags.length)
+                          _TinyTag(
+                            label: '+${tags.length - visibleTags.length}',
+                            color: const Color(0xFF84938A),
+                          ),
+                      ],
                     ),
-                  for (final keyword in card.keywords.take(3))
-                    _TinyTag(
-                      label: keywordLabels[keyword] ?? keyword,
-                      color: const Color(0xFFE7BD7A),
-                    ),
+                  ),
                   if (card.isUnit || card.type == 'weapon') ...[
-                    const Spacer(),
+                    const SizedBox(width: 4),
                     Text(
                       card.type == 'weapon'
                           ? '${card.attack ?? 0} / ${card.durability ?? card.health ?? 0}'
@@ -1278,14 +1298,23 @@ class DeckPage extends StatelessWidget {
             eyebrow: 'ARSENAL / DECK FORGE',
             title: '卡组工坊',
             description: '编排 30 张战术档案，同名双份用于对局内二星共鸣。',
-            action: Row(
+            action: Wrap(
+              spacing: 8,
+              runSpacing: 8,
               children: [
                 OutlinedButton.icon(
-                  onPressed: controller.saveDeck,
+                  onPressed: () async {
+                    final saved = await controller.saveDeck();
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(saved ? '牌组已保存' : '27 个牌组栏位已全部使用'),
+                      ),
+                    );
+                  },
                   icon: const Icon(Icons.save_outlined),
                   label: const Text('保存'),
                 ),
-                const SizedBox(width: 8),
                 FilledButton.icon(
                   onPressed: controller.deckValid
                       ? () {
@@ -1298,6 +1327,149 @@ class DeckPage extends StatelessWidget {
               ],
             ),
           ),
+          GlassPanel(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Text(
+                      '本机牌组库',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      '${controller.savedDecks.length} / $maxSavedDecks 栏位',
+                      style: const TextStyle(
+                        color: Color(0xFF84938A),
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final deckSelector = DropdownButtonFormField<String>(
+                      key: ValueKey(
+                        'saved-deck-selector-${controller.activeDeckId}',
+                      ),
+                      initialValue: controller.activeDeckId,
+                      decoration: const InputDecoration(labelText: '当前牌组'),
+                      items: [
+                        for (final deck in controller.savedDecks)
+                          DropdownMenuItem(
+                            value: deck.id,
+                            child: Text(
+                              '${deck.format.label} · ${deck.name}',
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                      ],
+                      onChanged: (deckId) {
+                        if (deckId != null) {
+                          controller.selectDeck(deckId);
+                        }
+                      },
+                    );
+                    final nameField = TextFormField(
+                      key: ValueKey(
+                        'saved-deck-name-${controller.activeDeckId}',
+                      ),
+                      initialValue: controller.deckName,
+                      maxLength: 32,
+                      decoration: const InputDecoration(
+                        labelText: '牌组名称',
+                        counterText: '',
+                      ),
+                      onChanged: controller.setDeckName,
+                      onFieldSubmitted: (_) => controller.saveDeck(),
+                    );
+                    if (constraints.maxWidth < 620) {
+                      return Column(
+                        children: [
+                          deckSelector,
+                          const SizedBox(height: 10),
+                          nameField,
+                        ],
+                      );
+                    }
+                    return Row(
+                      children: [
+                        Expanded(child: deckSelector),
+                        const SizedBox(width: 10),
+                        Expanded(child: nameField),
+                      ],
+                    );
+                  },
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    OutlinedButton.icon(
+                      onPressed: controller.canCreateDeck
+                          ? () async {
+                              await controller.createNewDeck();
+                            }
+                          : null,
+                      icon: const Icon(Icons.add, size: 17),
+                      label: const Text('新建'),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed:
+                          controller.canCreateDeck &&
+                              controller.activeSavedDeck != null
+                          ? () async {
+                              await controller.duplicateActiveDeck();
+                            }
+                          : null,
+                      icon: const Icon(Icons.copy_outlined, size: 17),
+                      label: const Text('复制'),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: controller.activeDeckId == null
+                          ? null
+                          : () async {
+                              final confirmed = await showDialog<bool>(
+                                context: context,
+                                builder: (dialogContext) => AlertDialog(
+                                  title: const Text('删除牌组？'),
+                                  content: Text(
+                                    '将删除「${controller.deckName}」，收藏中的卡牌不会受到影响。',
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.pop(dialogContext, false),
+                                      child: const Text('取消'),
+                                    ),
+                                    FilledButton(
+                                      onPressed: () =>
+                                          Navigator.pop(dialogContext, true),
+                                      child: const Text('确认删除'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                              final deckId = controller.activeDeckId;
+                              if (confirmed == true && deckId != null) {
+                                await controller.deleteDeck(deckId);
+                              }
+                            },
+                      icon: const Icon(Icons.delete_outline, size: 17),
+                      label: const Text('删除'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
           GlassPanel(
             child: LayoutBuilder(
               builder: (context, constraints) {
@@ -4440,6 +4612,12 @@ class OperationsPage extends StatelessWidget {
                     value:
                         '${rankedFormatCardCount(controller.catalog, RankedFormat.wild)}',
                     sub: '全部系列',
+                  ),
+                  _MetricCard(
+                    icon: Icons.layers_outlined,
+                    label: '牌组栏位',
+                    value: '${controller.savedDecks.length}/$maxSavedDecks',
+                    sub: '本机档案',
                   ),
                 ],
               );

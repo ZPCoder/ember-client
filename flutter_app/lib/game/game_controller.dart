@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../data/catalog.dart';
 import '../data/formats.dart';
 import '../models/card_definition.dart';
+import '../models/local_saved_deck.dart';
 
 const int maxBattleActionWindows = 89;
 
@@ -36,6 +37,9 @@ class GameController extends ChangeNotifier {
   List<CardDefinition> catalog = const [];
   final Map<String, int> collection = <String, int>{};
   final List<String> deckIds = <String>[];
+  final List<LocalSavedDeck> savedDecks = <LocalSavedDeck>[];
+  String? activeDeckId;
+  String deckName = '曜光先锋';
   RankedFormat deckFormat = RankedFormat.standard;
   BattleState? battle;
   bool isLoading = true;
@@ -56,6 +60,8 @@ class GameController extends ChangeNotifier {
   int _effectResolutionDepth = 0;
   SharedPreferences? _prefs;
   Timer? _turnTimer;
+  int _deckIdSequence = 0;
+  Future<void> _deckPersistQueue = Future<void>.value();
 
   Map<String, CardDefinition> get cardsById => {
     for (final card in catalog) card.id: card,
@@ -66,7 +72,11 @@ class GameController extends ChangeNotifier {
       catalog = await loadCatalog();
       _prefs = await SharedPreferences.getInstance();
       _restoreState();
-      if (deckIds.isEmpty) _seedStarterDeck();
+      if (savedDecks.isEmpty) {
+        if (deckIds.isEmpty) _seedStarterDeck();
+        _createInitialSavedDeck();
+        await _queueDeckPersistence();
+      }
       if (collection.isEmpty) {
         for (final card in catalog) {
           collection[card.id] =
@@ -85,8 +95,38 @@ class GameController extends ChangeNotifier {
   }
 
   void _restoreState() {
-    final storedDeck = _prefs?.getStringList('deck_ids');
-    if (storedDeck != null) deckIds.addAll(storedDeck);
+    deckFormat = rankedFormatFromWire(_prefs?.getString('deck_format'));
+    final storedDecks = _prefs?.getString('saved_decks');
+    if (storedDecks != null) {
+      try {
+        final decoded = jsonDecode(storedDecks);
+        if (decoded is List) {
+          final seenIds = <String>{};
+          for (final raw in decoded) {
+            final deck = LocalSavedDeck.tryParse(raw);
+            if (deck != null &&
+                seenIds.add(deck.id) &&
+                savedDecks.length < maxSavedDecks) {
+              savedDecks.add(deck);
+            }
+          }
+        }
+      } catch (_) {
+        savedDecks.clear();
+      }
+    }
+    if (savedDecks.isNotEmpty) {
+      final storedActiveDeckId = _prefs?.getString('active_deck_id');
+      final selected = savedDecks.firstWhere(
+        (deck) => deck.id == storedActiveDeckId,
+        orElse: () => savedDecks.first,
+      );
+      _loadDeck(selected);
+    } else {
+      final storedDeck = _prefs?.getStringList('deck_ids');
+      if (storedDeck != null) deckIds.addAll(storedDeck);
+      deckName = '迁移牌组';
+    }
     final storedCollection = _prefs?.getString('collection');
     if (storedCollection != null) {
       final decoded = jsonDecode(storedCollection);
@@ -105,10 +145,10 @@ class GameController extends ChangeNotifier {
     wins = _prefs?.getInt('wins') ?? wins;
     losses = _prefs?.getInt('losses') ?? losses;
     matchesPlayed = _prefs?.getInt('matches') ?? matchesPlayed;
-    deckFormat = rankedFormatFromWire(_prefs?.getString('deck_format'));
   }
 
   void _seedStarterDeck() {
+    deckIds.clear();
     final starter = catalog
         .where(
           (card) =>
@@ -122,6 +162,27 @@ class GameController extends ChangeNotifier {
     }
   }
 
+  void _createInitialSavedDeck() {
+    final deck = LocalSavedDeck(
+      id: 'mobile-starter',
+      name: deckName,
+      format: deckFormat,
+      cardIds: List<String>.from(deckIds),
+      updatedAt: DateTime.now().toIso8601String(),
+    );
+    savedDecks.add(deck);
+    activeDeckId = deck.id;
+  }
+
+  void _loadDeck(LocalSavedDeck deck) {
+    activeDeckId = deck.id;
+    deckName = deck.name;
+    deckFormat = deck.format;
+    deckIds
+      ..clear()
+      ..addAll(deck.cardIds);
+  }
+
   CardDefinition? card(String id) => cardsById[id];
 
   List<CardDefinition> get cardsAvailableForDeck => catalog
@@ -131,10 +192,27 @@ class GameController extends ChangeNotifier {
   bool cardAllowedInDeck(CardDefinition card) =>
       cardAvailableInRankedFormat(card, deckFormat);
 
+  bool get canCreateDeck => savedDecks.length < maxSavedDecks;
+
+  LocalSavedDeck? get activeSavedDeck {
+    final id = activeDeckId;
+    if (id == null) return null;
+    for (final deck in savedDecks) {
+      if (deck.id == id) return deck;
+    }
+    return null;
+  }
+
   void setDeckFormat(RankedFormat format) {
     if (deckFormat == format) return;
     deckFormat = format;
-    _prefs?.setString('deck_format', format.wireValue);
+    _stageActiveDeck();
+    unawaited(_queueDeckPersistence());
+    notifyListeners();
+  }
+
+  void setDeckName(String value) {
+    deckName = value;
     notifyListeners();
   }
 
@@ -153,6 +231,8 @@ class GameController extends ChangeNotifier {
       return false;
     }
     deckIds.add(card.id);
+    _stageActiveDeck();
+    unawaited(_queueDeckPersistence());
     notifyListeners();
     return true;
   }
@@ -161,6 +241,8 @@ class GameController extends ChangeNotifier {
     final index = deckIds.lastIndexOf(id);
     if (index >= 0) {
       deckIds.removeAt(index);
+      _stageActiveDeck();
+      unawaited(_queueDeckPersistence());
       notifyListeners();
     }
   }
@@ -212,11 +294,138 @@ class GameController extends ChangeNotifier {
   String get deckStatus =>
       _deckValidationError ?? '${deckFormat.fullLabel}卡组协议有效';
 
-  Future<void> saveDeck() async {
-    await _prefs?.setStringList('deck_ids', deckIds);
-    await _prefs?.setString('deck_format', deckFormat.wireValue);
-    await _prefs?.setString('commander_name', commanderName);
+  Future<bool> saveDeck() async {
+    deckName = _normalizeDeckName(deckName);
+    final active = activeSavedDeck;
+    if (active == null) {
+      if (!canCreateDeck) return false;
+      final deck = _currentDeckSnapshot(id: _newDeckId());
+      savedDecks.add(deck);
+      activeDeckId = deck.id;
+    } else {
+      _stageActiveDeck();
+    }
+    await _queueDeckPersistence();
     notifyListeners();
+    return true;
+  }
+
+  Future<bool> selectDeck(String deckId) async {
+    _stageActiveDeck();
+    LocalSavedDeck? selected;
+    for (final deck in savedDecks) {
+      if (deck.id == deckId) {
+        selected = deck;
+        break;
+      }
+    }
+    if (selected == null) return false;
+    _loadDeck(selected);
+    await _queueDeckPersistence();
+    notifyListeners();
+    return true;
+  }
+
+  Future<bool> createNewDeck() async {
+    if (!canCreateDeck) return false;
+    _stageActiveDeck();
+    deckFormat = RankedFormat.standard;
+    deckName = '新建战术卡组 ${savedDecks.length + 1}';
+    _seedStarterDeck();
+    final deck = _currentDeckSnapshot(id: _newDeckId());
+    savedDecks.add(deck);
+    activeDeckId = deck.id;
+    await _queueDeckPersistence();
+    notifyListeners();
+    return true;
+  }
+
+  Future<bool> duplicateActiveDeck() async {
+    if (!canCreateDeck || activeSavedDeck == null) return false;
+    _stageActiveDeck();
+    deckName = _normalizeDeckName('${_normalizeDeckName(deckName)} 副本');
+    final deck = _currentDeckSnapshot(id: _newDeckId());
+    savedDecks.add(deck);
+    activeDeckId = deck.id;
+    await _queueDeckPersistence();
+    notifyListeners();
+    return true;
+  }
+
+  Future<bool> deleteDeck(String deckId) async {
+    final index = savedDecks.indexWhere((deck) => deck.id == deckId);
+    if (index < 0) return false;
+    _stageActiveDeck();
+    savedDecks.removeAt(index);
+    if (savedDecks.isEmpty) {
+      deckFormat = RankedFormat.standard;
+      deckName = '新建战术卡组';
+      _seedStarterDeck();
+      final replacement = _currentDeckSnapshot(id: _newDeckId());
+      savedDecks.add(replacement);
+      activeDeckId = replacement.id;
+    } else if (activeDeckId == deckId || activeSavedDeck == null) {
+      final nextIndex = index >= savedDecks.length
+          ? savedDecks.length - 1
+          : index;
+      _loadDeck(savedDecks[nextIndex]);
+    }
+    await _queueDeckPersistence();
+    notifyListeners();
+    return true;
+  }
+
+  LocalSavedDeck _currentDeckSnapshot({required String id}) => LocalSavedDeck(
+    id: id,
+    name: _normalizeDeckName(deckName),
+    format: deckFormat,
+    cardIds: List<String>.from(deckIds),
+    updatedAt: DateTime.now().toIso8601String(),
+  );
+
+  String _normalizeDeckName(String value) {
+    final trimmed = value.trim();
+    final normalized = trimmed.isEmpty ? '未命名卡组' : trimmed;
+    return normalized.length <= 32 ? normalized : normalized.substring(0, 32);
+  }
+
+  void _stageActiveDeck() {
+    final index = savedDecks.indexWhere((deck) => deck.id == activeDeckId);
+    if (index < 0) return;
+    savedDecks[index] = _currentDeckSnapshot(id: savedDecks[index].id);
+  }
+
+  String _newDeckId() {
+    String candidate;
+    do {
+      candidate =
+          'mobile-deck-${DateTime.now().microsecondsSinceEpoch}-${_deckIdSequence++}';
+    } while (savedDecks.any((deck) => deck.id == candidate));
+    return candidate;
+  }
+
+  Future<void> _queueDeckPersistence() {
+    _deckPersistQueue = _deckPersistQueue
+        .catchError((Object _) {})
+        .then((_) => _persistDecks());
+    return _deckPersistQueue;
+  }
+
+  Future<void> _persistDecks() async {
+    final prefs = _prefs;
+    if (prefs == null) return;
+    await prefs.setString(
+      'saved_decks',
+      jsonEncode(savedDecks.map((deck) => deck.toJson()).toList()),
+    );
+    if (activeDeckId != null) {
+      await prefs.setString('active_deck_id', activeDeckId!);
+    } else {
+      await prefs.remove('active_deck_id');
+    }
+    await prefs.setStringList('deck_ids', deckIds);
+    await prefs.setString('deck_format', deckFormat.wireValue);
+    await prefs.setString('commander_name', commanderName);
   }
 
   void openPack() {
