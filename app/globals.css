@@ -5494,6 +5494,41 @@ button.hero-core {
   line-height: 1;
 }
 
+.hand-card__disguise {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  margin-top: 4px;
+  padding: 4px 5px;
+  border: 1px solid rgba(181, 136, 255, 0.42);
+  border-radius: 5px;
+  color: #dfc8ff;
+  background: rgba(74, 43, 112, 0.6);
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: 140ms ease;
+}
+
+.hand-card__disguise:hover:not(:disabled) {
+  border-color: rgba(210, 176, 255, 0.84);
+  background: rgba(104, 59, 155, 0.78);
+  box-shadow: 0 0 14px rgba(166, 118, 225, 0.25);
+}
+
+.hand-card__disguise:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
+.hand-card__disguise span {
+  font-size: 10px;
+  line-height: 1;
+}
+
 .hand-card__inspect {
   position: absolute;
   z-index: 7;

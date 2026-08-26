@@ -121,6 +121,7 @@ const keywordLabels = <String, String>{
   'tradeable': '可交易',
   'prepare': '预备',
   'bribe': '贿赂',
+  'disguised': '伪装',
   'spell-damage': '法术伤害',
   'secret': '奥秘',
   'discover': '发现',

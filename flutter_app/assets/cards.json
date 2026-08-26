@@ -4858,7 +4858,7 @@
   {
     "id": "sun-season-03",
     "name": "白昼旗手·03",
-    "description": "charge。 曜光的战线单位。",
+    "description": "伪装。可部署到任一方战场。回合结束：对其控制者的核心造成 1 点伤害。charge。 曜光的战线单位。",
     "faction": "曜光",
     "type": "unit",
     "cost": 3,
@@ -4866,7 +4866,9 @@
     "attack": 4,
     "health": 4,
     "keywords": [
-      "charge"
+      "charge",
+      "disguised",
+      "end-of-turn"
     ],
     "traits": [
       "swift",
@@ -4874,6 +4876,13 @@
     ],
     "onDeath": [],
     "effect": [],
+    "onTurnEnd": [
+      {
+        "kind": "damage-friendly-hero",
+        "amount": 1
+      }
+    ],
+    "disguised": true,
     "set": "scarab-2026"
   },
   {
@@ -5351,7 +5360,7 @@
   {
     "id": "void-season-03",
     "name": "夜鳍掠夺者·03",
-    "description": "windfury。 幽潮的战线单位。",
+    "description": "伪装。可部署到任一方战场。回合结束：对其控制者的核心造成 1 点伤害。windfury。 幽潮的战线单位。",
     "faction": "幽潮",
     "type": "unit",
     "cost": 3,
@@ -5359,7 +5368,9 @@
     "attack": 2,
     "health": 5,
     "keywords": [
-      "windfury"
+      "windfury",
+      "disguised",
+      "end-of-turn"
     ],
     "traits": [
       "swift",
@@ -5367,6 +5378,13 @@
     ],
     "onDeath": [],
     "effect": [],
+    "onTurnEnd": [
+      {
+        "kind": "damage-friendly-hero",
+        "amount": 1
+      }
+    ],
+    "disguised": true,
     "set": "scarab-2026"
   },
   {
@@ -5863,7 +5881,7 @@
   {
     "id": "neutral-season-03",
     "name": "商路护卫·03",
-    "description": "taunt。 中立的战线单位。",
+    "description": "伪装。可部署到任一方战场。回合结束：对其控制者的核心造成 1 点伤害。taunt。 中立的战线单位。",
     "faction": "中立",
     "type": "unit",
     "cost": 3,
@@ -5871,7 +5889,9 @@
     "attack": 3,
     "health": 6,
     "keywords": [
-      "taunt"
+      "taunt",
+      "disguised",
+      "end-of-turn"
     ],
     "traits": [
       "swift",
@@ -5879,6 +5899,13 @@
     ],
     "onDeath": [],
     "effect": [],
+    "onTurnEnd": [
+      {
+        "kind": "damage-friendly-hero",
+        "amount": 1
+      }
+    ],
+    "disguised": true,
     "set": "scarab-2026"
   },
   {
@@ -6370,7 +6397,7 @@
   {
     "id": "ember-season-03",
     "name": "焦岩祭司·03",
-    "description": "rush。 烬火的战线单位。",
+    "description": "伪装。可部署到任一方战场。回合结束：对其控制者的核心造成 1 点伤害。rush。 烬火的战线单位。",
     "faction": "烬火",
     "type": "unit",
     "cost": 3,
@@ -6378,7 +6405,9 @@
     "attack": 4,
     "health": 7,
     "keywords": [
-      "rush"
+      "rush",
+      "disguised",
+      "end-of-turn"
     ],
     "traits": [
       "swift",
@@ -6386,6 +6415,13 @@
     ],
     "onDeath": [],
     "effect": [],
+    "onTurnEnd": [
+      {
+        "kind": "damage-friendly-hero",
+        "amount": 1
+      }
+    ],
+    "disguised": true,
     "set": "scarab-2026"
   },
   {
@@ -6843,7 +6879,7 @@
   {
     "id": "astral-season-03",
     "name": "星图守门人·03",
-    "description": "taunt。 星穹的战线单位。",
+    "description": "伪装。可部署到任一方战场。回合结束：对其控制者的核心造成 1 点伤害。taunt。 星穹的战线单位。",
     "faction": "星穹",
     "type": "unit",
     "cost": 3,
@@ -6851,7 +6887,9 @@
     "attack": 2,
     "health": 4,
     "keywords": [
-      "taunt"
+      "taunt",
+      "disguised",
+      "end-of-turn"
     ],
     "traits": [
       "swift",
@@ -6859,6 +6897,13 @@
     ],
     "onDeath": [],
     "effect": [],
+    "onTurnEnd": [
+      {
+        "kind": "damage-friendly-hero",
+        "amount": 1
+      }
+    ],
+    "disguised": true,
     "set": "scarab-2026"
   },
   {
@@ -7321,7 +7366,7 @@
   {
     "id": "verdant-season-03",
     "name": "月蕨shaman·03",
-    "description": "lifesteal。 苍林的战线单位。",
+    "description": "伪装。可部署到任一方战场。回合结束：对其控制者的核心造成 1 点伤害。lifesteal。 苍林的战线单位。",
     "faction": "苍林",
     "type": "unit",
     "cost": 3,
@@ -7329,7 +7374,9 @@
     "attack": 3,
     "health": 5,
     "keywords": [
-      "lifesteal"
+      "lifesteal",
+      "disguised",
+      "end-of-turn"
     ],
     "traits": [
       "swift",
@@ -7337,6 +7384,13 @@
     ],
     "onDeath": [],
     "effect": [],
+    "onTurnEnd": [
+      {
+        "kind": "damage-friendly-hero",
+        "amount": 1
+      }
+    ],
+    "disguised": true,
     "set": "scarab-2026"
   },
   {
@@ -7816,7 +7870,7 @@
   {
     "id": "storm-season-03",
     "name": "铜轨机师·03",
-    "description": "charge。 雷铸的战线单位。",
+    "description": "伪装。可部署到任一方战场。回合结束：对其控制者的核心造成 1 点伤害。charge。 雷铸的战线单位。",
     "faction": "雷铸",
     "type": "unit",
     "cost": 3,
@@ -7824,7 +7878,9 @@
     "attack": 4,
     "health": 6,
     "keywords": [
-      "charge"
+      "charge",
+      "disguised",
+      "end-of-turn"
     ],
     "traits": [
       "swift",
@@ -7832,6 +7888,13 @@
     ],
     "onDeath": [],
     "effect": [],
+    "onTurnEnd": [
+      {
+        "kind": "damage-friendly-hero",
+        "amount": 1
+      }
+    ],
+    "disguised": true,
     "set": "scarab-2026"
   },
   {
@@ -8933,7 +8996,7 @@
   {
     "id": "frost-season-27",
     "name": "雪脉晶龙·27",
-    "description": "shield。 霜境的战线单位。 亡语：抽一张牌。",
+    "description": "伪装。可部署到任一方战场。回合结束：对其控制者的核心造成 1 点伤害。shield。 霜境的战线单位。 亡语：抽一张牌。",
     "faction": "霜境",
     "type": "unit",
     "cost": 3,
@@ -8942,7 +9005,9 @@
     "health": 7,
     "keywords": [
       "shield",
-      "deathrattle"
+      "deathrattle",
+      "disguised",
+      "end-of-turn"
     ],
     "traits": [
       "swift",
@@ -8955,6 +9020,13 @@
       }
     ],
     "effect": [],
+    "onTurnEnd": [
+      {
+        "kind": "damage-friendly-hero",
+        "amount": 1
+      }
+    ],
+    "disguised": true,
     "set": "scarab-2026"
   },
   {
@@ -10119,7 +10191,7 @@
   {
     "id": "sand-season-27",
     "name": "黄昏掘金者·27",
-    "description": "fury。 砂海的战线单位。 亡语：抽一张牌。",
+    "description": "伪装。可部署到任一方战场。回合结束：对其控制者的核心造成 1 点伤害。fury。 砂海的战线单位。 亡语：抽一张牌。",
     "faction": "砂海",
     "type": "unit",
     "cost": 3,
@@ -10128,7 +10200,9 @@
     "health": 4,
     "keywords": [
       "fury",
-      "deathrattle"
+      "deathrattle",
+      "disguised",
+      "end-of-turn"
     ],
     "traits": [
       "swift",
@@ -10141,6 +10215,13 @@
       }
     ],
     "effect": [],
+    "onTurnEnd": [
+      {
+        "kind": "damage-friendly-hero",
+        "amount": 1
+      }
+    ],
+    "disguised": true,
     "set": "scarab-2026"
   },
   {
@@ -11321,7 +11402,7 @@
   {
     "id": "bloodmoon-season-27",
     "name": "血契血骑·27",
-    "description": "stealth。 赤月的战线单位。 亡语：抽一张牌。",
+    "description": "伪装。可部署到任一方战场。回合结束：对其控制者的核心造成 1 点伤害。stealth。 赤月的战线单位。 亡语：抽一张牌。",
     "faction": "赤月",
     "type": "unit",
     "cost": 3,
@@ -11330,7 +11411,9 @@
     "health": 5,
     "keywords": [
       "stealth",
-      "deathrattle"
+      "deathrattle",
+      "disguised",
+      "end-of-turn"
     ],
     "traits": [
       "swift",
@@ -11343,6 +11426,13 @@
       }
     ],
     "effect": [],
+    "onTurnEnd": [
+      {
+        "kind": "damage-friendly-hero",
+        "amount": 1
+      }
+    ],
+    "disguised": true,
     "set": "scarab-2026"
   },
   {
@@ -12619,7 +12709,7 @@
   {
     "id": "leyline-season-27",
     "name": "符文回路守卫·27",
-    "description": "combo。 灵脉的战线单位。 亡语：抽一张牌。 连击：使所有友方单位获得 +1/+1。",
+    "description": "伪装。可部署到任一方战场。回合结束：对其控制者的核心造成 1 点伤害。combo。 灵脉的战线单位。 亡语：抽一张牌。 连击：使所有友方单位获得 +1/+1。",
     "faction": "灵脉",
     "type": "unit",
     "cost": 3,
@@ -12628,7 +12718,9 @@
     "health": 6,
     "keywords": [
       "combo",
-      "deathrattle"
+      "deathrattle",
+      "disguised",
+      "end-of-turn"
     ],
     "traits": [
       "swift",
@@ -12648,6 +12740,13 @@
       }
     ],
     "effect": [],
+    "onTurnEnd": [
+      {
+        "kind": "damage-friendly-hero",
+        "amount": 1
+      }
+    ],
+    "disguised": true,
     "set": "scarab-2026"
   },
   {
@@ -13876,7 +13975,7 @@
   {
     "id": "dusk-season-27",
     "name": "无光影卫·27",
-    "description": "rush。 暮影的战线单位。 亡语：抽一张牌。",
+    "description": "伪装。可部署到任一方战场。回合结束：对其控制者的核心造成 1 点伤害。rush。 暮影的战线单位。 亡语：抽一张牌。",
     "faction": "暮影",
     "type": "unit",
     "cost": 3,
@@ -13885,7 +13984,9 @@
     "health": 7,
     "keywords": [
       "rush",
-      "deathrattle"
+      "deathrattle",
+      "disguised",
+      "end-of-turn"
     ],
     "traits": [
       "swift",
@@ -13898,6 +13999,13 @@
       }
     ],
     "effect": [],
+    "onTurnEnd": [
+      {
+        "kind": "damage-friendly-hero",
+        "amount": 1
+      }
+    ],
+    "disguised": true,
     "set": "scarab-2026"
   },
   {
@@ -15118,7 +15226,7 @@
   {
     "id": "cloudfall-season-27",
     "name": "天港风语者·27",
-    "description": "rush。 云瀑的战线单位。 亡语：抽一张牌。",
+    "description": "伪装。可部署到任一方战场。回合结束：对其控制者的核心造成 1 点伤害。rush。 云瀑的战线单位。 亡语：抽一张牌。",
     "faction": "云瀑",
     "type": "unit",
     "cost": 3,
@@ -15127,7 +15235,9 @@
     "health": 4,
     "keywords": [
       "rush",
-      "deathrattle"
+      "deathrattle",
+      "disguised",
+      "end-of-turn"
     ],
     "traits": [
       "swift",
@@ -15140,6 +15250,13 @@
       }
     ],
     "effect": [],
+    "onTurnEnd": [
+      {
+        "kind": "damage-friendly-hero",
+        "amount": 1
+      }
+    ],
+    "disguised": true,
     "set": "scarab-2026"
   },
   {
@@ -16320,7 +16437,7 @@
   {
     "id": "magnet-season-27",
     "name": "铁潮装配师·27",
-    "description": "登场时触发战吼。 磁风的战线单位。 亡语：抽一张牌。 战吼：抽一张牌。",
+    "description": "伪装。可部署到任一方战场。回合结束：对其控制者的核心造成 1 点伤害。登场时触发战吼。 磁风的战线单位。 亡语：抽一张牌。 战吼：抽一张牌。",
     "faction": "磁风",
     "type": "unit",
     "cost": 3,
@@ -16329,7 +16446,9 @@
     "health": 5,
     "keywords": [
       "battlecry",
-      "deathrattle"
+      "deathrattle",
+      "disguised",
+      "end-of-turn"
     ],
     "traits": [
       "swift",
@@ -16349,6 +16468,13 @@
       }
     ],
     "effect": [],
+    "onTurnEnd": [
+      {
+        "kind": "damage-friendly-hero",
+        "amount": 1
+      }
+    ],
+    "disguised": true,
     "set": "scarab-2026"
   },
   {
@@ -17558,7 +17684,7 @@
   {
     "id": "crystal-season-27",
     "name": "折光棱镜兽·27",
-    "description": "spell-damage。 晶核的战线单位。 亡语：抽一张牌。 法术伤害 +1。",
+    "description": "伪装。可部署到任一方战场。回合结束：对其控制者的核心造成 1 点伤害。spell-damage。 晶核的战线单位。 亡语：抽一张牌。 法术伤害 +1。",
     "faction": "晶核",
     "type": "unit",
     "cost": 3,
@@ -17567,7 +17693,9 @@
     "health": 6,
     "keywords": [
       "spell-damage",
-      "deathrattle"
+      "deathrattle",
+      "disguised",
+      "end-of-turn"
     ],
     "traits": [
       "swift",
@@ -17581,6 +17709,13 @@
     ],
     "spellDamage": 1,
     "effect": [],
+    "onTurnEnd": [
+      {
+        "kind": "damage-friendly-hero",
+        "amount": 1
+      }
+    ],
+    "disguised": true,
     "set": "scarab-2026"
   },
   {
@@ -18731,7 +18866,7 @@
   {
     "id": "dream-season-27",
     "name": "睡莲入梦师·27",
-    "description": "stealth。 梦境的战线单位。 亡语：抽一张牌。",
+    "description": "伪装。可部署到任一方战场。回合结束：对其控制者的核心造成 1 点伤害。stealth。 梦境的战线单位。 亡语：抽一张牌。",
     "faction": "梦境",
     "type": "unit",
     "cost": 3,
@@ -18740,7 +18875,9 @@
     "health": 7,
     "keywords": [
       "stealth",
-      "deathrattle"
+      "deathrattle",
+      "disguised",
+      "end-of-turn"
     ],
     "traits": [
       "swift",
@@ -18753,6 +18890,13 @@
       }
     ],
     "effect": [],
+    "onTurnEnd": [
+      {
+        "kind": "damage-friendly-hero",
+        "amount": 1
+      }
+    ],
+    "disguised": true,
     "set": "scarab-2026"
   },
   {
@@ -19942,7 +20086,7 @@
   {
     "id": "rift-season-27",
     "name": "断界陨石兽·27",
-    "description": "overload。 裂星的战线单位。 亡语：抽一张牌。 过载（1）。",
+    "description": "伪装。可部署到任一方战场。回合结束：对其控制者的核心造成 1 点伤害。overload。 裂星的战线单位。 亡语：抽一张牌。 过载（1）。",
     "faction": "裂星",
     "type": "unit",
     "cost": 3,
@@ -19951,7 +20095,9 @@
     "health": 4,
     "keywords": [
       "overload",
-      "deathrattle"
+      "deathrattle",
+      "disguised",
+      "end-of-turn"
     ],
     "traits": [
       "swift",
@@ -19965,6 +20111,13 @@
     ],
     "overload": 1,
     "effect": [],
+    "onTurnEnd": [
+      {
+        "kind": "damage-friendly-hero",
+        "amount": 1
+      }
+    ],
+    "disguised": true,
     "set": "scarab-2026"
   },
   {
@@ -21307,7 +21460,7 @@
   {
     "id": "timesand-season-27",
     "name": "刻度时兽·27",
-    "description": "end-of-turn。 时砂的战线单位。 亡语：抽一张牌。 回合结束：获得 +1 攻击。",
+    "description": "伪装。可部署到任一方战场。回合结束：对其控制者的核心造成 1 点伤害。end-of-turn。 时砂的战线单位。 亡语：抽一张牌。 回合结束：获得 +1 攻击。",
     "faction": "时砂",
     "type": "unit",
     "cost": 3,
@@ -21316,7 +21469,8 @@
     "health": 5,
     "keywords": [
       "end-of-turn",
-      "deathrattle"
+      "deathrattle",
+      "disguised"
     ],
     "traits": [
       "swift",
@@ -21333,9 +21487,14 @@
         "kind": "buff",
         "attack": 1,
         "health": 0
+      },
+      {
+        "kind": "damage-friendly-hero",
+        "amount": 1
       }
     ],
     "effect": [],
+    "disguised": true,
     "set": "scarab-2026"
   },
   {
@@ -22571,7 +22730,7 @@
   {
     "id": "gloomwood-season-27",
     "name": "黑根荆棘兽·27",
-    "description": "reborn。 幽森的战线单位。 亡语：抽一张牌。",
+    "description": "伪装。可部署到任一方战场。回合结束：对其控制者的核心造成 1 点伤害。reborn。 幽森的战线单位。 亡语：抽一张牌。",
     "faction": "幽森",
     "type": "unit",
     "cost": 3,
@@ -22580,7 +22739,9 @@
     "health": 6,
     "keywords": [
       "reborn",
-      "deathrattle"
+      "deathrattle",
+      "disguised",
+      "end-of-turn"
     ],
     "traits": [
       "swift",
@@ -22593,6 +22754,13 @@
       }
     ],
     "effect": [],
+    "onTurnEnd": [
+      {
+        "kind": "damage-friendly-hero",
+        "amount": 1
+      }
+    ],
+    "disguised": true,
     "set": "scarab-2026"
   },
   {
@@ -23776,7 +23944,7 @@
   {
     "id": "firmament-season-27",
     "name": "日冕穹顶龙·27",
-    "description": "shield。 天穹的战线单位。 亡语：抽一张牌。",
+    "description": "伪装。可部署到任一方战场。回合结束：对其控制者的核心造成 1 点伤害。shield。 天穹的战线单位。 亡语：抽一张牌。",
     "faction": "天穹",
     "type": "unit",
     "cost": 3,
@@ -23785,7 +23953,9 @@
     "health": 7,
     "keywords": [
       "shield",
-      "deathrattle"
+      "deathrattle",
+      "disguised",
+      "end-of-turn"
     ],
     "traits": [
       "swift",
@@ -23798,6 +23968,13 @@
       }
     ],
     "effect": [],
+    "onTurnEnd": [
+      {
+        "kind": "damage-friendly-hero",
+        "amount": 1
+      }
+    ],
+    "disguised": true,
     "set": "scarab-2026"
   },
   {

@@ -141,6 +141,7 @@ type CatalogCard = {
   spellDamage?: number;
   tradeable?: boolean;
   preparable?: boolean;
+  disguised?: boolean;
   target: CardTargetRule;
   keywords: Keyword[];
   traits: Trait[];
@@ -578,6 +579,7 @@ function cardFromRaw(raw: Record<string, unknown>): CatalogCard {
         : undefined,
     tradeable: raw.tradeable === true,
     preparable: raw.preparable === true,
+    disguised: raw.disguised === true,
     target: asString(raw.target, "none") as CardTargetRule,
     keywords: Array.isArray(raw.keywords)
       ? (raw.keywords.map(String) as Keyword[])
@@ -2829,6 +2831,7 @@ export function GameApp({
   const [inspectedCard, setInspectedCard] = useState<CatalogCard | null>(null);
   const [selectedAttacker, setSelectedAttacker] = useState<string | null>(null);
   const [pendingCard, setPendingCard] = useState<BattleSide["hand"][number] | null>(null);
+  const [pendingCardPlacement, setPendingCardPlacement] = useState<"friendly" | "enemy">("friendly");
   const [pendingHeroPower, setPendingHeroPower] = useState(false);
   const [mulliganSelection, setMulliganSelection] = useState<number[]>([]);
   const [battleMessage, setBattleMessage] = useState("准备部署你的战术卡组。");
@@ -4357,7 +4360,10 @@ export function GameApp({
     }
   };
 
-  const playCard = (handCard: BattleSide["hand"][number]) => {
+  const playCard = (
+    handCard: BattleSide["hand"][number],
+    placement: "friendly" | "enemy" = "friendly",
+  ) => {
     if (battleEffectLockRef.current) {
       setBattleMessage("战况回放中，请等待行动窗口稳定。");
       return;
@@ -4371,6 +4377,10 @@ export function GameApp({
       return;
     }
     const card = CARD_BY_ID.get(handCard.cardId);
+    if (placement === "enemy" && !card?.disguised) {
+      setBattleMessage("只有伪装单位可以部署到敌方战场。");
+      return;
+    }
     const effectiveCost = card ? Math.max(0, card.cost - handCard.costReduction) : 0;
     if (card && effectiveCost > battleView.player.mana) {
       setBattleMessage(`能量不足：部署「${card.name}」需要 ${effectiveCost} 点能量。`);
@@ -4403,6 +4413,7 @@ export function GameApp({
     // clickable target to finish it.
     if (card && targetRule !== "none" && (card.type !== "unit" || hasAvailableTarget)) {
       setPendingCard(handCard);
+      setPendingCardPlacement(placement);
       setPendingHeroPower(false);
       setSelectedAttacker(null);
       playSound("select");
@@ -4420,8 +4431,13 @@ export function GameApp({
       player: 0,
       cardId: handCard.cardId,
       handIndex: handCard.handIndex,
+      placement,
     });
-    if (next) setBattleMessage(`已部署「${card?.name ?? "战术卡"}」。`);
+    if (next) setBattleMessage(
+      placement === "enemy"
+        ? `「${card?.name ?? "伪装单位"}」已潜入敌方战场。`
+        : `已部署「${card?.name ?? "战术卡"}」。`,
+    );
   };
 
   const tradeCard = (handCard: BattleSide["hand"][number]) => {
@@ -4450,6 +4466,7 @@ export function GameApp({
     });
     if (next) {
       setPendingCard(null);
+      setPendingCardPlacement("friendly");
       setPendingHeroPower(false);
       setSelectedAttacker(null);
       setBattleMessage(`已交易「${card.name}」，抽取一张替代牌。`);
@@ -4487,6 +4504,7 @@ export function GameApp({
     });
     if (next) {
       setPendingCard(null);
+      setPendingCardPlacement("friendly");
       setPendingHeroPower(false);
       setSelectedAttacker(null);
       setBattleMessage(`已用 ${manaSpent} 点能量预备「${card.name}」，费用永久降低 ${manaSpent + 1} 点。`);
@@ -4537,10 +4555,12 @@ export function GameApp({
           player: 0,
           cardId: pendingCard?.cardId ?? "",
           handIndex: pendingCard?.handIndex,
+          placement: pendingCardPlacement,
           target: normalizedTarget,
         });
     if (next) {
       setPendingCard(null);
+      setPendingCardPlacement("friendly");
       setPendingHeroPower(false);
       setBattleMessage(pendingHeroPower
         ? `${battleView?.player.heroPowerName ?? "核心技能"} 已结算。`
@@ -5063,6 +5083,7 @@ export function GameApp({
                   onConfirmMulligan={confirmMulligan}
                   onSelectAttacker={(id) => {
                     setPendingCard(null);
+                    setPendingCardPlacement("friendly");
                     setPendingHeroPower(false);
                     setSelectedAttacker((current) => (current === id ? null : id));
                     playSound("select");
@@ -5071,6 +5092,7 @@ export function GameApp({
                   onCardTarget={playCardAtTarget}
                   onCancelTarget={() => {
                     setPendingCard(null);
+                    setPendingCardPlacement("friendly");
                     setPendingHeroPower(false);
                     setSelectedAttacker(null);
                     setBattleMessage("已取消目标选择，可继续行动。");
@@ -6897,7 +6919,10 @@ function BattleSection({
   onStart: () => void;
   onRematch: () => void;
   onReturnLobby: () => void;
-  onPlayCard: (card: BattleSide["hand"][number]) => void;
+  onPlayCard: (
+    card: BattleSide["hand"][number],
+    placement?: "friendly" | "enemy",
+  ) => void;
   onTradeCard: (card: BattleSide["hand"][number]) => void;
   onPrepareCard: (card: BattleSide["hand"][number]) => void;
   onChooseDiscover: (cardId: string) => void;
@@ -7505,6 +7530,8 @@ function BattleSection({
                 if (!card) return null;
                 const effectiveCost = Math.max(0, card.cost - handCard.costReduction);
                 const selectedForMulligan = mulliganSelection.includes(handIndex);
+                const enemyUpgradeAvailable = card.type === "unit"
+                  && battle.ai.board.some((unit) => unit.cardId === card.id && unit.stars === 1);
                 const disabled = mulliganActive
                   ? !playerCanMulligan
                   : !playerCanAct || effectiveCost > battle.player.mana || pendingHeroPower;
@@ -7558,6 +7585,22 @@ function BattleSection({
                           <span>⌄</span> 预备 · 全部能量
                         </button>
                       )
+                    )}
+                    {!mulliganActive && card.disguised && (
+                      <button
+                        className="hand-card__disguise"
+                        type="button"
+                        disabled={
+                          !playerCanAct
+                          || effectiveCost > battle.player.mana
+                          || Boolean(pendingHeroPower)
+                          || (battle.ai.board.length >= 7 && !enemyUpgradeAvailable)
+                        }
+                        onClick={() => onPlayCard(handCard, "enemy")}
+                        aria-label={`将${card.name}伪装部署到敌方战场`}
+                      >
+                        <span>◫</span> 伪装 · 敌方战场
+                      </button>
                     )}
                   </div>
                 );

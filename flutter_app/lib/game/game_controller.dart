@@ -1057,6 +1057,7 @@ class GameController extends ChangeNotifier {
     int? handIndex,
     BattleUnit? target,
     bool targetHero = false,
+    String placement = 'friendly',
   }) {
     final state = battle;
     final resolvedHandIndex = state == null
@@ -1072,8 +1073,15 @@ class GameController extends ChangeNotifier {
         state.player.mana < effectiveCost) {
       return false;
     }
+    if (placement != 'friendly' &&
+        (placement != 'enemy' || !card.isUnit || !card.disguised)) {
+      return false;
+    }
+    final recipient = placement == 'enemy' ? state.ai : state.player;
     if (resolvedHandIndex < 0 ||
-        (card.isUnit && state.player.board.length >= 7) ||
+        (card.isUnit &&
+            recipient.board.length >= 7 &&
+            _findUpgradeTarget(recipient, card) == null) ||
         (state.player.board.length >= 7 &&
             _isPureSummonSpell(card, state.player)) ||
         !_validTarget(card, state.player, state.ai, target)) {
@@ -1087,6 +1095,7 @@ class GameController extends ChangeNotifier {
       handIndex: resolvedHandIndex,
       target: target,
       targetHero: targetHero,
+      placement: placement,
     );
     _checkFinished();
     notifyListeners();
@@ -1537,6 +1546,47 @@ class GameController extends ChangeNotifier {
     );
   }
 
+  BattleUnit? _findUpgradeTarget(BattleSide side, CardDefinition card) {
+    for (final unit in side.board) {
+      if (unit.card.id == card.id && unit.stars == 1) return unit;
+    }
+    return null;
+  }
+
+  int _activeTraitTier(BattleSide side, String trait) {
+    final distinctCards = side.board
+        .where((unit) => unit.card.traits.contains(trait))
+        .map((unit) => unit.card.id)
+        .toSet()
+        .length;
+    if (distinctCards >= 4) return 2;
+    if (distinctCards >= 2) return 1;
+    return 0;
+  }
+
+  void _upgradeUnit(BattleSide side, BattleUnit unit, CardDefinition card) {
+    final craftBonus = card.traits.contains('craft')
+        ? _activeTraitTier(side, 'craft')
+        : 0;
+    final attackBonus = ((card.attack ?? 0) / 2).ceil() + craftBonus;
+    final healthBonus = ((card.health ?? 1) / 2).ceil() + craftBonus;
+    unit.attack += attackBonus;
+    unit.maxHealth += healthBonus;
+    unit.health += healthBonus;
+    unit.permanentAttackBonus += attackBonus;
+    unit.permanentHealthBonus += healthBonus;
+    unit.stars = 2;
+    stateLog('${card.name} 升阶', '同名档案共鸣，升至二星并获得 +$attackBonus/+$healthBonus。');
+    _emitFx(
+      'buff',
+      '${card.name} 升至二星',
+      '+$attackBonus/+$healthBonus',
+      Icons.upgrade,
+      factionColors[card.faction] ?? 0xFFE7BD7A,
+      sourceId: unit.instanceId,
+    );
+  }
+
   void _playCardForSide(
     CardDefinition card, {
     required BattleSide source,
@@ -1545,6 +1595,7 @@ class GameController extends ChangeNotifier {
     int? handIndex,
     BattleUnit? target,
     bool targetHero = false,
+    String placement = 'friendly',
   }) {
     final resolvedHandIndex = _resolveHandIndex(source, card, handIndex);
     if (resolvedHandIndex < 0) return;
@@ -1586,10 +1637,19 @@ class GameController extends ChangeNotifier {
         sourceId: card.id,
       );
     } else if (card.isUnit) {
-      final unit = _summonUnit(card, owner: owner);
-      source.board.add(unit);
-      _triggerSecrets(enemy, 'opponent-summons-unit', triggeringSide: source);
-      source.board.length == 1 && owner == 'player'
+      final recipient = placement == 'enemy' ? enemy : source;
+      final recipientOwner = placement == 'enemy'
+          ? (owner == 'player' ? 'ai' : 'player')
+          : owner;
+      final upgradeTarget = _findUpgradeTarget(recipient, card);
+      final unit = upgradeTarget ?? _summonUnit(card, owner: recipientOwner);
+      if (upgradeTarget == null) {
+        recipient.board.add(unit);
+        _triggerSecrets(enemy, 'opponent-summons-unit', triggeringSide: source);
+      } else {
+        _upgradeUnit(recipient, upgradeTarget, card);
+      }
+      recipient.board.length == 1 && recipientOwner == 'player'
           ? _emitFx(
               'summon',
               '${card.name} 登场',
@@ -1600,13 +1660,23 @@ class GameController extends ChangeNotifier {
             )
           : _emitFx(
               'summon',
-              owner == 'player' ? '${card.name} 登场' : '敌方部署 ${card.name}',
+              placement == 'enemy'
+                  ? '${card.name} 伪装渗透'
+                  : owner == 'player'
+                  ? '${card.name} 登场'
+                  : '敌方部署 ${card.name}',
               card.description,
               Icons.auto_awesome,
               factionColors[card.faction] ?? 0xFF69CFC3,
               sourceId: unit.instanceId,
             );
-      stateLog(owner == 'player' ? '${card.name} 登场。' : '敌方部署 ${card.name}。');
+      stateLog(
+        placement == 'enemy'
+            ? '${card.name} 伪装部署到对方战场。'
+            : owner == 'player'
+            ? '${card.name} 登场。'
+            : '敌方部署 ${card.name}。',
+      );
       _resolveEffects(
         card.onPlay,
         source: source,
@@ -1894,6 +1964,10 @@ class GameController extends ChangeNotifier {
               _draw(enemy);
             }
             stateLog(sourceName, '贿赂收益：对手抽取 $count 张牌。');
+            break;
+          case 'damage-friendly-hero':
+            final dealt = _damageHero(source, amount);
+            stateLog(sourceName, '对其控制者的核心造成 $dealt 点伤害。');
             break;
           case 'buff':
             final unit = target != null && source.board.contains(target)
@@ -2565,10 +2639,17 @@ class GameController extends ChangeNotifier {
       int? handIndex;
       CardDefinition? card;
       BattleUnit? target;
+      var placement = 'friendly';
       for (final candidateIndex in candidates) {
         final candidate = state.ai.hand[candidateIndex];
+        final candidatePlacement = _chooseAiCardPlacement(state, candidate);
+        final recipient = candidatePlacement == 'enemy'
+            ? state.player
+            : state.ai;
         if (_effectiveHandCost(state.ai, candidateIndex) > state.ai.mana ||
-            (candidate.isUnit && state.ai.board.length >= 7) ||
+            (candidate.isUnit &&
+                recipient.board.length >= 7 &&
+                _findUpgradeTarget(recipient, candidate) == null) ||
             (state.ai.board.length >= 7 &&
                 _isPureSummonSpell(candidate, state.ai))) {
           continue;
@@ -2580,6 +2661,7 @@ class GameController extends ChangeNotifier {
         handIndex = candidateIndex;
         card = candidate;
         target = candidateTarget;
+        placement = candidatePlacement;
         break;
       }
       if (handIndex == null || card == null) break;
@@ -2590,6 +2672,7 @@ class GameController extends ChangeNotifier {
         owner: 'ai',
         handIndex: handIndex,
         target: target,
+        placement: placement,
       );
       if (state.phase == 'discover' &&
           state.discoverOwner == 'ai' &&
@@ -2689,6 +2772,21 @@ class GameController extends ChangeNotifier {
     _settleFreezeAtEndOfTurn(state.ai);
     _processDeaths();
     _checkFinished();
+  }
+
+  String _chooseAiCardPlacement(BattleState state, CardDefinition card) {
+    if (!card.isUnit || !card.disguised) return 'friendly';
+    final canPlaceFriendly =
+        state.ai.board.length < 7 || _findUpgradeTarget(state.ai, card) != null;
+    final canPlaceEnemy =
+        state.player.board.length < 7 ||
+        _findUpgradeTarget(state.player, card) != null;
+    if (!canPlaceFriendly && canPlaceEnemy) return 'enemy';
+    if (!canPlaceEnemy) return 'friendly';
+    if (state.player.heroHealth <= 2 || state.player.board.length >= 6) {
+      return 'enemy';
+    }
+    return 'friendly';
   }
 
   void _aiHeroAttack(BattleState state, BattleUnit? target) {

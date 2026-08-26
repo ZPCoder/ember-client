@@ -188,9 +188,22 @@ class OnlineBattleController extends ChangeNotifier {
     int? handIndex,
     OnlineUnit? target,
     bool targetHero = false,
+    String placement = 'friendly',
   }) {
     final resolvedHandIndex = _resolveHandIndex(card, handIndex);
     if (!canAct || resolvedHandIndex < 0) return;
+    if (placement != 'friendly' &&
+        (placement != 'enemy' || !card.isUnit || !card.disguised)) {
+      return;
+    }
+    final recipientBoard = placement == 'enemy' ? remoteBoard : localBoard;
+    if (card.isUnit &&
+        recipientBoard.length >= 7 &&
+        !recipientBoard.any(
+          (unit) => unit.card.id == card.id && unit.stars == 1,
+        )) {
+      return;
+    }
     final targetType = card.target ?? 'none';
     if (targetType != 'none') {
       final needsUnit = targetType.contains('unit');
@@ -225,6 +238,7 @@ class OnlineBattleController extends ChangeNotifier {
       'type': 'play-card',
       'cardId': card.id,
       'handIndex': resolvedHandIndex,
+      'placement': placement,
     };
     if (wireTarget != null) command['target'] = wireTarget;
     _sendCommand(command);

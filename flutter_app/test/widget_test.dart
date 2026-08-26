@@ -47,6 +47,22 @@ void main() {
       expect(catalog.any((card) => card.tradeable), isTrue);
       expect(catalog.where((card) => card.preparable), hasLength(23));
       expect(catalog.where((card) => card.bribe), hasLength(20));
+      expect(catalog.where((card) => card.disguised), hasLength(20));
+      expect(
+        catalog
+            .where((card) => card.disguised)
+            .every(
+              (card) =>
+                  card.setId == 'scarab-2026' &&
+                  card.isUnit &&
+                  card.cost == 3 &&
+                  card.keywords.contains('disguised') &&
+                  card.onTurnEnd.any(
+                    (effect) => effect['kind'] == 'damage-friendly-hero',
+                  ),
+            ),
+        isTrue,
+      );
       expect(
         catalog
             .where((card) => card.preparable)
@@ -91,6 +107,7 @@ void main() {
       'health': 4,
       'preparable': true,
       'bribe': true,
+      'disguised': true,
       'keywords': ['护盾'],
       'traits': ['晨辉'],
     });
@@ -102,6 +119,7 @@ void main() {
     expect(card.setId, 'scarab-2026');
     expect(card.preparable, isTrue);
     expect(card.bribe, isTrue);
+    expect(card.disguised, isTrue);
   });
 
   test('multiplayer events parse relay payloads', () {
@@ -293,9 +311,9 @@ void main() {
         ..clear()
         ..add(bribe);
       state.player.handCostReductions.clear();
-    state.player.mana = 6;
-    state.ai.heroHealth = 30;
-    state.ai.hand.clear();
+      state.player.mana = 6;
+      state.ai.heroHealth = 30;
+      state.ai.hand.clear();
       state.ai.handCostReductions.clear();
       state.ai.deck
         ..clear()
@@ -305,6 +323,218 @@ void main() {
       expect(state.ai.heroHealth, 24);
       expect(state.ai.hand, [filler]);
       expect(state.logs.any((log) => log.contains('贿赂收益')), isTrue);
+      controller.dispose();
+    },
+  );
+
+  test(
+    'mobile Disguised deploys under the recipient and damages that controller',
+    () async {
+      final filler = CardDefinition(
+        id: 'disguised-filler',
+        name: '伪装占位牌',
+        description: '测试牌库与战场容量。',
+        faction: '曜光',
+        type: 'unit',
+        cost: 9,
+        rarity: '普通',
+        attack: 0,
+        health: 1,
+      );
+      final disguised = CardDefinition(
+        id: 'mobile-disguised',
+        name: '移动端伪装者',
+        description: '伪装。回合结束：对其控制者的核心造成 1 点伤害。',
+        faction: '曜光',
+        type: 'unit',
+        cost: 1,
+        rarity: '史诗',
+        attack: 0,
+        health: 4,
+        disguised: true,
+        keywords: const ['disguised', 'end-of-turn'],
+        onTurnEnd: const [
+          {'kind': 'damage-friendly-hero', 'amount': 1},
+        ],
+      );
+      final controller = GameController(startingPlayer: 'player')
+        ..catalog = [filler, disguised]
+        ..deckIds.addAll(List.filled(30, filler.id));
+
+      controller.startBattle();
+      await controller.confirmMulligan();
+      final state = controller.battle!;
+      state.player.hand
+        ..clear()
+        ..add(disguised);
+      state.player.handCostReductions
+        ..clear()
+        ..add(0);
+      state.player.mana = 1;
+      state.ai.deck
+        ..clear()
+        ..addAll(List.filled(3, filler));
+
+      expect(
+        controller.playCard(disguised, handIndex: 0, placement: 'enemy'),
+        isTrue,
+      );
+      expect(state.player.board, isEmpty);
+      expect(state.ai.board.single.card.id, disguised.id);
+      expect(state.ai.board.single.owner, 'ai');
+      expect(state.ai.heroHealth, 30);
+
+      await controller.endTurn();
+      expect(state.ai.heroHealth, 29);
+      expect(state.player.heroHealth, 30);
+      controller.dispose();
+    },
+  );
+
+  test('mobile AI uses Disguised to occupy the opponent final slot', () async {
+    final filler = CardDefinition(
+      id: 'ai-disguised-filler',
+      name: 'AI 伪装占位牌',
+      description: '测试 AI 敌方落点。',
+      faction: '曜光',
+      type: 'unit',
+      cost: 9,
+      rarity: '普通',
+      attack: 0,
+      health: 1,
+    );
+    final disguised = CardDefinition(
+      id: 'ai-mobile-disguised',
+      name: 'AI 移动端伪装者',
+      description: '伪装。',
+      faction: '曜光',
+      type: 'unit',
+      cost: 1,
+      rarity: '普通',
+      attack: 0,
+      health: 2,
+      disguised: true,
+      keywords: const ['disguised'],
+    );
+    final controller = GameController(startingPlayer: 'player')
+      ..catalog = [filler, disguised]
+      ..deckIds.addAll(List.filled(30, filler.id));
+    controller.startBattle();
+    await controller.confirmMulligan();
+    final state = controller.battle!;
+    state.player.board.addAll(
+      List.generate(
+        6,
+        (index) => BattleUnit(
+          instanceId: 'ai-placement-$index',
+          card: filler,
+          owner: 'player',
+          attack: 0,
+          health: 1,
+          maxHealth: 1,
+        ),
+      ),
+    );
+    state.ai.hand
+      ..clear()
+      ..add(disguised);
+    state.ai.handCostReductions
+      ..clear()
+      ..add(0);
+    state.ai.deck
+      ..clear()
+      ..add(filler);
+
+    await controller.endTurn();
+
+    expect(state.player.board, hasLength(7));
+    expect(state.player.board.last.card.id, disguised.id);
+    expect(state.player.board.last.owner, 'player');
+    expect(state.ai.board, isEmpty);
+    controller.dispose();
+  });
+
+  test(
+    'mobile rejects fake enemy placement and upgrades on a full recipient board',
+    () async {
+      final filler = CardDefinition(
+        id: 'placement-filler',
+        name: '落点占位牌',
+        description: '测试战场容量。',
+        faction: '曜光',
+        type: 'unit',
+        cost: 1,
+        rarity: '普通',
+        attack: 1,
+        health: 1,
+      );
+      final disguised = CardDefinition(
+        id: 'placement-disguised',
+        name: '满场伪装者',
+        description: '伪装。',
+        faction: '曜光',
+        type: 'unit',
+        cost: 1,
+        rarity: '普通',
+        attack: 2,
+        health: 2,
+        disguised: true,
+        keywords: const ['disguised'],
+      );
+      final controller = GameController(startingPlayer: 'player')
+        ..catalog = [filler, disguised]
+        ..deckIds.addAll(List.filled(30, filler.id));
+      controller.startBattle();
+      await controller.confirmMulligan();
+      final state = controller.battle!;
+
+      state.player.hand
+        ..clear()
+        ..add(filler);
+      state.player.handCostReductions
+        ..clear()
+        ..add(0);
+      state.player.mana = 1;
+      expect(
+        controller.playCard(filler, handIndex: 0, placement: 'enemy'),
+        isFalse,
+      );
+      expect(state.player.hand, [filler]);
+
+      state.player.hand[0] = disguised;
+      state.ai.board
+        ..clear()
+        ..add(
+          BattleUnit(
+            instanceId: 'upgrade-target',
+            card: disguised,
+            owner: 'ai',
+            attack: 2,
+            health: 2,
+            maxHealth: 2,
+          ),
+        )
+        ..addAll(
+          List.generate(
+            6,
+            (index) => BattleUnit(
+              instanceId: 'capacity-$index',
+              card: filler,
+              owner: 'ai',
+              attack: 1,
+              health: 1,
+              maxHealth: 1,
+            ),
+          ),
+        );
+      expect(
+        controller.playCard(disguised, handIndex: 0, placement: 'enemy'),
+        isTrue,
+      );
+      expect(state.ai.board, hasLength(7));
+      expect(state.ai.board.first.stars, 2);
+      expect(state.ai.board.first.attack, 3);
+      expect(state.ai.board.first.health, 3);
       controller.dispose();
     },
   );
@@ -2071,6 +2301,57 @@ void main() {
       client.dispose();
     },
   );
+
+  test('online Disguised sends the actor-relative enemy placement', () async {
+    final catalog = await loadCatalog();
+    final disguised = catalog.firstWhere((card) => card.disguised);
+    final client = _RecordingMultiplayerClient()
+      ..playerId = 'p-local'
+      ..isHost = true;
+    final controller = OnlineBattleController(catalog: catalog, client: client);
+    client.lastEvent = MultiplayerEvent(
+      type: 'action',
+      playerId: 'p-local',
+      action: 'command',
+      payload: {
+        'state': {
+          'version': 1,
+          'turn': 3,
+          'phase': 'main',
+          'activePlayer': 0,
+          'players': [
+            {
+              'hero': {'health': 30},
+              'mana': 3,
+              'maxMana': 3,
+              'hand': [disguised.id],
+              'handCostReductions': [0],
+              'board': [],
+            },
+            {
+              'hero': {'health': 30},
+              'hand': ['__hidden-card__'],
+              'handCostReductions': [0],
+              'board': [],
+            },
+          ],
+        },
+      },
+    );
+    client.eventSequence++;
+    client.notifyListeners();
+
+    controller.playCard(disguised, handIndex: 0, placement: 'enemy');
+
+    final payload = client.actions.single['payload'] as Map<String, dynamic>;
+    final command = payload['command'] as Map<String, dynamic>;
+    expect(command['type'], 'play-card');
+    expect(command['cardId'], disguised.id);
+    expect(command['handIndex'], 0);
+    expect(command['placement'], 'enemy');
+    controller.dispose();
+    client.dispose();
+  });
 
   test(
     'online units project authoritative combat state and legal attacks',

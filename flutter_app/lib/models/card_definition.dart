@@ -15,6 +15,7 @@ class CardDefinition {
     this.tradeable = false,
     this.preparable = false,
     this.bribe = false,
+    this.disguised = false,
     this.spellDamage = 0,
     this.keywords = const [],
     this.traits = const [],
@@ -44,6 +45,7 @@ class CardDefinition {
   final bool tradeable;
   final bool preparable;
   final bool bribe;
+  final bool disguised;
   final int spellDamage;
   final List<String> keywords;
   final List<String> traits;
@@ -90,6 +92,7 @@ class CardDefinition {
       tradeable: tradeable,
       preparable: preparable,
       bribe: bribe,
+      disguised: disguised,
       spellDamage: spellDamage,
       keywords: keywords ?? this.keywords,
       traits: traits,
@@ -135,6 +138,9 @@ class CardDefinition {
           strings(json['keywords']).contains('prepare'),
       bribe:
           json['bribe'] == true || strings(json['keywords']).contains('bribe'),
+      disguised:
+          json['disguised'] == true ||
+          strings(json['keywords']).contains('disguised'),
       spellDamage: (json['spellDamage'] as num?)?.toInt() ?? 0,
       keywords: strings(json['keywords']),
       traits: strings(json['traits']),

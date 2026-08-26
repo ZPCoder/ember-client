@@ -2349,6 +2349,7 @@ class _BattleBoardState extends State<BattleBoard> {
     BuildContext context,
     CardDefinition card, {
     int? handIndex,
+    String placement = 'friendly',
   }) async {
     final targetType = card.target ?? '';
     _BattleTargetChoice? choice;
@@ -2376,6 +2377,7 @@ class _BattleBoardState extends State<BattleBoard> {
       handIndex: handIndex,
       target: choice?.unit,
       targetHero: choice?.isHero ?? false,
+      placement: placement,
     );
     if (!played && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -2946,7 +2948,9 @@ class _BattleBoardState extends State<BattleBoard> {
           ),
           if (state.phase == 'main' &&
               state.activePlayer == 'player' &&
-              state.player.hand.any((card) => card.preparable)) ...[
+              state.player.hand.any(
+                (card) => card.preparable || card.disguised,
+              )) ...[
             const SizedBox(height: 8),
             Wrap(
               spacing: 7,
@@ -2987,6 +2991,28 @@ class _BattleBoardState extends State<BattleBoard> {
                                   '−${controller.playerHandCostReduction(entry.key)}'
                             : '预备 ${entry.value.name} · 全部法力',
                       ),
+                    ),
+                for (final entry in state.player.hand.asMap().entries)
+                  if (entry.value.disguised)
+                    OutlinedButton.icon(
+                      onPressed:
+                          controller.playerHandCost(entry.key) <=
+                                  state.player.mana &&
+                              (state.ai.board.length < 7 ||
+                                  state.ai.board.any(
+                                    (unit) =>
+                                        unit.card.id == entry.value.id &&
+                                        unit.stars == 1,
+                                  ))
+                          ? () => _playCard(
+                              context,
+                              entry.value,
+                              handIndex: entry.key,
+                              placement: 'enemy',
+                            )
+                          : null,
+                      icon: const Icon(Icons.theater_comedy, size: 14),
+                      label: Text('伪装 ${entry.value.name} · 敌方战场'),
                     ),
               ],
             ),
@@ -4484,10 +4510,11 @@ class OnlineBattlePanel extends StatelessWidget {
     BuildContext context,
     CardDefinition card, {
     int? handIndex,
+    String placement = 'friendly',
   }) async {
     final targetType = card.target ?? 'none';
     if (targetType == 'none') {
-      controller.playCard(card, handIndex: handIndex);
+      controller.playCard(card, handIndex: handIndex, placement: placement);
       return;
     }
     final friendly = targetType.startsWith('friendly');
@@ -4510,6 +4537,7 @@ class OnlineBattlePanel extends StatelessWidget {
       handIndex: handIndex,
       target: choice.unit,
       targetHero: choice.isHero,
+      placement: placement,
     );
   }
 
@@ -4810,7 +4838,8 @@ class OnlineBattlePanel extends StatelessWidget {
               ),
               if (controller.canAct &&
                   controller.hand.any(
-                    (card) => card.tradeable || card.preparable,
+                    (card) =>
+                        card.tradeable || card.preparable || card.disguised,
                   )) ...[
                 const SizedBox(height: 8),
                 Wrap(
@@ -4851,6 +4880,27 @@ class OnlineBattlePanel extends StatelessWidget {
                                       '−${controller.handCostReduction(entry.key)}'
                                 : '预备 ${entry.value.name} · 全部法力',
                           ),
+                        ),
+                      if (entry.value.disguised)
+                        OutlinedButton.icon(
+                          onPressed:
+                              controller.localMana >=
+                                      controller.handCost(entry.key) &&
+                                  (controller.remoteBoard.length < 7 ||
+                                      controller.remoteBoard.any(
+                                        (unit) =>
+                                            unit.card.id == entry.value.id &&
+                                            unit.stars == 1,
+                                      ))
+                              ? () => _playCard(
+                                  context,
+                                  entry.value,
+                                  handIndex: entry.key,
+                                  placement: 'enemy',
+                                )
+                              : null,
+                          icon: const Icon(Icons.theater_comedy, size: 14),
+                          label: Text('伪装 ${entry.value.name} · 敌方战场'),
                         ),
                     ],
                   ],
