@@ -13,6 +13,7 @@ import {
 import {
   APPRENTICE_MILESTONES,
   CARD_CATALOG,
+  GENERATED_CARD_DEFINITIONS,
   CARD_SET_DEFINITIONS,
   AI_ARCHETYPES,
   DEFAULT_OPPONENT_DECK,
@@ -131,7 +132,7 @@ type CatalogCard = {
   id: string;
   name: string;
   cost: number;
-  type: "unit" | "spell" | "weapon";
+  type: "unit" | "spell" | "weapon" | "hero";
   faction: Faction;
   rarity: string;
   description: string;
@@ -145,6 +146,7 @@ type CatalogCard = {
   shatter?: boolean;
   herald?: boolean;
   colossal?: boolean;
+  heroCard?: boolean;
   target: CardTargetRule;
   keywords: Keyword[];
   traits: Trait[];
@@ -288,6 +290,8 @@ type BattleSide = {
   health: number;
   maxHealth: number;
   armor: number;
+  heroId: string;
+  heroName: string;
   heroPowerUsed: boolean;
   heroPowerName: string;
   heroPowerDescription: string;
@@ -296,6 +300,7 @@ type BattleSide = {
   heroPowerEffect: HeroPowerEffect;
   coinAvailable: boolean;
   heroHasAttacked: boolean;
+  heroAttackBonus: number;
   secrets: Array<{ secretId: string; name: string; description: string }>;
   overload: number;
   overloadLocked: number;
@@ -341,7 +346,7 @@ type BattleView = {
   ai: BattleSide;
   log: string[];
   discover: { sourceCardId: string; choices: string[] } | null;
-  chooseOne: { player: "player" | "ai"; sourceCardId: string; options: Array<{ label: string }> } | null;
+  chooseOne: { player: "player" | "ai"; sourceCardId: string; options: Array<{ label: string }>; remainingChoices: number; sourceKind: "spell" | "hero-card" } | null;
   report: BattleReport;
 };
 
@@ -400,6 +405,7 @@ function orientPvpMatchForLocal(state: MatchState, role: PvpRole): MatchState {
     weapon: player.weapon ? { ...player.weapon } : null,
     secrets: (player.secrets ?? []).map((secret) => ({ ...secret, effect: { ...secret.effect } })),
     deck: [...player.deck],
+    deckCostOverrides: [...(player.deckCostOverrides ?? player.deck.map(() => null))],
     hand: [...player.hand],
     board: player.board.map((unit) => ({ ...unit, owner: swap(unit.owner) })),
   })) as [MatchState["players"][0], MatchState["players"][1]];
@@ -415,6 +421,7 @@ function orientPvpMatchForLocal(state: MatchState, role: PvpRole): MatchState {
           ...state.chooseOne,
           player: swap(state.chooseOne.player),
           options: state.chooseOne.options.map((option) => ({ ...option, effects: [...option.effects] })),
+          chosenLabels: [...(state.chooseOne.chosenLabels ?? [])],
           target: state.chooseOne.target
             ? state.chooseOne.target.kind === "hero"
               ? { ...state.chooseOne.target, player: swap(state.chooseOne.target.player) }
@@ -500,6 +507,7 @@ const TYPE_LABEL: Record<string, string> = {
   minion: "单位",
   spell: "战术",
   weapon: "武器",
+  hero: "英雄",
 };
 
 const SPELL_SCHOOL_LABEL: Record<SpellSchool, string> = {
@@ -568,7 +576,7 @@ function cardFromRaw(raw: Record<string, unknown>): CatalogCard {
     id: asString(raw.id ?? raw.cardId),
     name: asString(raw.name, "未命名协议"),
     cost: asNumber(raw.cost ?? raw.manaCost),
-    type: rawType === "weapon" ? "weapon" : rawType === "spell" ? "spell" : "unit",
+    type: rawType === "weapon" ? "weapon" : rawType === "spell" ? "spell" : rawType === "hero" ? "hero" : "unit",
     faction: asString(raw.faction ?? raw.camp, "中立") as Faction,
     rarity,
     description: asString(raw.description ?? raw.text, "战术资料尚未解密。"),
@@ -594,6 +602,7 @@ function cardFromRaw(raw: Record<string, unknown>): CatalogCard {
     shatter: Boolean(raw.shatter),
     herald: Boolean(raw.herald),
     colossal: Boolean(raw.colossal),
+    heroCard: Boolean(raw.heroCard),
     target: asString(raw.target, "none") as CardTargetRule,
     keywords: Array.isArray(raw.keywords)
       ? (raw.keywords.map(String) as Keyword[])
@@ -610,8 +619,9 @@ function cardFromRaw(raw: Record<string, unknown>): CatalogCard {
 }
 
 const CATALOG: CatalogCard[] = rawCatalog.map(cardFromRaw);
-const CARD_BY_ID = new Map(CATALOG.map((card) => [card.id, card]));
-const CARD_RULE_BY_ID = new Map(CARD_CATALOG.map((card) => [card.id, card]));
+const GENERATED_CATALOG: CatalogCard[] = (GENERATED_CARD_DEFINITIONS as readonly CardDefinition[] as unknown as ReadonlyArray<Record<string, unknown>>).map(cardFromRaw);
+const CARD_BY_ID = new Map([...CATALOG, ...GENERATED_CATALOG].map((card) => [card.id, card]));
+const CARD_RULE_BY_ID = new Map([...CARD_CATALOG, ...GENERATED_CARD_DEFINITIONS].map((card) => [card.id, card]));
 
 function cardRuleForHandSlot(
   handCard: BattleSide["hand"][number],
@@ -1469,6 +1479,8 @@ function battleFromRaw(value: unknown): BattleView | null {
       (side.hero as Record<string, unknown> | undefined)?.armor ?? side.armor,
       0,
     ),
+    heroId: asString((side.hero as Record<string, unknown> | undefined)?.id, "faction-commander"),
+    heroName: asString((side.hero as Record<string, unknown> | undefined)?.name, "远征指挥官"),
     heroPowerUsed: Boolean(side.heroPowerUsed),
     heroPowerName: asString(
       (side.heroPower as Record<string, unknown> | undefined)?.name ?? side.heroPowerName,
@@ -1493,6 +1505,7 @@ function battleFromRaw(value: unknown): BattleView | null {
     ) as HeroPowerEffect,
     coinAvailable: Boolean(side.coinAvailable),
     heroHasAttacked: Boolean(side.heroHasAttacked),
+    heroAttackBonus: asNumber(side.heroAttackBonus, 0),
     overload: asNumber(side.overload, 0),
     overloadLocked: asNumber(side.overloadLocked, 0),
     secrets: Array.isArray(side.secrets)
@@ -1554,6 +1567,8 @@ function battleFromRaw(value: unknown): BattleView | null {
             return { label: asString((option as Record<string, unknown>).label, "选择分支") };
           })
           .filter((option): option is { label: string } => Boolean(option)),
+        remainingChoices: Math.max(1, asNumber(rawChooseOne.remainingChoices, 1)),
+        sourceKind: rawChooseOne.sourceKind === "hero-card" ? "hero-card" as const : "spell" as const,
       }
     : null;
   const winnerValue = raw.winner ?? raw.winnerId;
@@ -1751,12 +1766,12 @@ function ProgressBar({
 }
 
 function Sigil({ card }: { card: CatalogCard }) {
-  const type = card.type === "spell" ? "spell" : card.type === "weapon" ? "weapon" : "unit";
+  const type = card.type === "spell" ? "spell" : card.type === "weapon" ? "weapon" : card.type === "hero" ? "hero" : "unit";
   return (
     <div className={`card-sigil card-sigil--${type}`} aria-hidden="true">
       <span className="card-sigil__orbit card-sigil__orbit--outer" />
       <span className="card-sigil__orbit card-sigil__orbit--inner" />
-      <span className="card-sigil__glyph">{type === "unit" ? "◇" : type === "weapon" ? "⚔" : "✦"}</span>
+      <span className="card-sigil__glyph">{type === "unit" ? "◇" : type === "weapon" ? "⚔" : type === "hero" ? "♛" : "✦"}</span>
     </div>
   );
 }
@@ -1884,6 +1899,8 @@ function CardTile({
               <span className="game-card__attack">⚔ {card.attack ?? 0}</span>
               <span className="game-card__health">◈ {card.durability ?? 0}</span>
             </div>
+          ) : card.type === "hero" ? (
+            <span className="game-card__type">英雄替换 · 护甲</span>
           ) : (
             <span className="game-card__type">即时战术</span>
           )}
@@ -4637,7 +4654,11 @@ export function GameApp({
   };
 
   const selectHeroAttacker = () => {
-    if (battleEffectLockRef.current || !battleView?.player.weapon) return;
+    if (
+      battleEffectLockRef.current ||
+      !battleView ||
+      (battleView.player.weapon?.attack ?? 0) + battleView.player.heroAttackBonus <= 0
+    ) return;
     if (battleView.player.heroHasAttacked) {
       setBattleMessage("英雄本回合已经攻击过。");
       return;
@@ -5832,6 +5853,7 @@ function CollectionSection({
             <option value="unit">单位</option>
             <option value="spell">战术</option>
             <option value="weapon">武器</option>
+            <option value="hero">英雄</option>
           </select>
         </label>
         <label className="filter-field">
@@ -6035,10 +6057,10 @@ function DeckSection({
   const weaponCount = deckIds.filter(
     (id) => CARD_BY_ID.get(id)?.type === "weapon",
   ).length;
-  const spellCount = deckIds.length - unitCount - weaponCount;
-  const upgradeCandidates = uniqueDeckCards.filter(
-    ({ card, count }) => card.type === "unit" && count >= 2,
+  const heroCount = deckIds.filter(
+    (id) => CARD_BY_ID.get(id)?.type === "hero",
   ).length;
+  const spellCount = deckIds.length - unitCount - weaponCount - heroCount;
   const traitStatuses = getTraitStatuses(
     uniqueDeckCards.map(({ card }) => card),
   );
@@ -6333,7 +6355,7 @@ function DeckSection({
             <span><small>单位</small><strong>{unitCount}</strong></span>
             <span><small>战术</small><strong>{spellCount}</strong></span>
             <span><small>武器</small><strong>{weaponCount}</strong></span>
-            <span><small>二星组合</small><strong>{upgradeCandidates}</strong></span>
+            <span><small>英雄</small><strong>{heroCount}</strong></span>
           </div>
 
           <div className="deck-hero-preview" aria-label={`阵营英雄技能：${deckHeroPower.name}`}>
@@ -6530,7 +6552,7 @@ function HeroCore({
         {side.armor > 0 && <small>护甲 {side.armor}</small>}
       </span>
       <span className="hero-core__copy">
-        <small>{enemy ? enemyLabel ?? "镜像演算体 K-7" : "远征指挥官"}</small>
+        <small>{side.heroName !== "远征指挥官" ? side.heroName : enemy ? enemyLabel ?? "镜像演算体 K-7" : "远征指挥官"}</small>
         <strong>{side.health}<i> / {side.maxHealth}</i></strong>
         <span
           className="hero-core__health-bar"
@@ -6551,6 +6573,11 @@ function HeroCore({
         {side.weapon && (
           <span className="hero-core__weapon" aria-label={`装备 ${side.weapon.name}，攻击 ${side.weapon.attack}，耐久 ${side.weapon.durability}/${side.weapon.maxDurability}`}>
             ⚔ {side.weapon.name} · {side.weapon.attack}/{side.weapon.durability}
+          </span>
+        )}
+        {side.heroAttackBonus > 0 && (
+          <span className="hero-core__weapon" aria-label={`英雄本回合额外获得 ${side.heroAttackBonus} 点攻击`}>
+            ⚔ 临时攻击 +{side.heroAttackBonus}
           </span>
         )}
       </span>
@@ -7203,7 +7230,7 @@ function BattleSection({
   const selectedAttackValue = selectedAttacker
     ? selectedAttackerUnit
       ? selectedAttackerUnit.attack + (selectedAttackerCard?.traits.includes("swift") ? playerSwiftTier : 0)
-      : battle.player.weapon?.attack ?? 0
+      : (battle.player.weapon?.attack ?? 0) + battle.player.heroAttackBonus
     : 0;
   const rushOnlyAttack = Boolean(selectedAttackerUnit?.rushOnly);
   const enemyHeroTargetable = selectedAttacker
@@ -7343,12 +7370,14 @@ function BattleSection({
   const targetPromptAttacker = selectedAttackerUnit
     ? `${selectedAttackerUnit.name} · ⚔ ${selectedAttackValue} · ◆ ${selectedAttackerUnit.health}`
     : selectedAttacker
-      ? `${battle.player.weapon?.name ?? "英雄攻击"} · ⚔ ${selectedAttackValue} · ◈ ${battle.player.weapon?.durability ?? 0}`
+      ? `${battle.player.weapon?.name ?? battle.player.heroName} · ⚔ ${selectedAttackValue}${battle.player.weapon ? ` · ◈ ${battle.player.weapon.durability}` : ""}`
       : undefined;
   const targetPromptPreview = selectedAttacker
     ? selectedAttackerUnit
       ? `有效攻击 ⚔ ${selectedAttackValue} · 目标卡片会显示破盾、击破与反击结果`
-      : `武器有效攻击 ⚔ ${selectedAttackValue} · 命中后耐久 −1`
+      : battle.player.weapon
+        ? `武器有效攻击 ⚔ ${selectedAttackValue} · 命中后耐久 −1`
+        : `英雄有效攻击 ⚔ ${selectedAttackValue}`
     : undefined;
   return (
     <section className="screen screen--battle battle-room" aria-labelledby="battle-room-title">
@@ -7546,16 +7575,16 @@ function BattleSection({
                   <span><strong>幸运币</strong><small>+1 临时能量</small></span>
                 </button>
               )}
-              {battle.player.weapon && (
+              {(battle.player.weapon || battle.player.heroAttackBonus > 0) && (
                 <button
                   className={`weapon-attack-button ${selectedAttacker === "hero-0" ? "weapon-attack-button--selected" : ""}`}
                   type="button"
                   disabled={!playerCanAct || battle.player.heroHasAttacked}
                   onClick={onSelectHeroAttacker}
-                  aria-label={battle.player.heroHasAttacked ? `英雄已使用${battle.player.weapon.name}攻击` : `使用${battle.player.weapon.name}进行英雄攻击`}
+                  aria-label={battle.player.heroHasAttacked ? "英雄本回合已经攻击" : `使用 ${battle.player.heroName} 发起英雄攻击`}
                 >
                   <span className="weapon-attack-button__icon">⚔</span>
-                  <span><strong>{selectedAttacker === "hero-0" ? "选择攻击目标" : "英雄攻击"}</strong><small>{battle.player.weapon.name} · {battle.player.weapon.attack} 攻击 · {battle.player.weapon.durability} 耐久</small></span>
+                  <span><strong>{selectedAttacker === "hero-0" ? "选择攻击目标" : "英雄攻击"}</strong><small>{battle.player.weapon ? `${battle.player.weapon.name} · ${battle.player.weapon.attack} 攻击 · ${battle.player.weapon.durability} 耐久` : battle.player.heroName}{battle.player.heroAttackBonus > 0 ? ` · 临时 +${battle.player.heroAttackBonus}` : ""}</small></span>
                 </button>
               )}
               <button
@@ -7816,10 +7845,10 @@ function BattleSection({
             <div className="choose-one-prompt" role="dialog" aria-label="抉择分支">
               <div className="choose-one-prompt__heading">
                 <div>
-                  <strong>{battle.chooseOne.options.length > 0 ? "选择一个战术分支" : "对手正在抉择"}</strong>
-                  <p>{battle.chooseOne.options.length > 0 ? "每张牌只能结算其中一个分支，选择后立即生效。" : "等待对手锁定抉择分支…"}</p>
+                  <strong>{battle.chooseOne.options.length > 0 ? battle.chooseOne.sourceKind === "hero-card" ? `选择灭世灾变 · 还可选 ${battle.chooseOne.remainingChoices}` : "选择一个战术分支" : "对手正在抉择"}</strong>
+                  <p>{battle.chooseOne.options.length > 0 ? battle.chooseOne.sourceKind === "hero-card" ? "选择后立即释放；已选灾变不会重复出现。" : "每张牌只能结算其中一个分支，选择后立即生效。" : "等待对手锁定抉择分支…"}</p>
                 </div>
-                <span>CHOOSE ONE</span>
+                <span>{battle.chooseOne.sourceKind === "hero-card" ? `CATACLYSM ×${battle.chooseOne.remainingChoices}` : "CHOOSE ONE"}</span>
               </div>
               {battle.chooseOne.options.length > 0 ? (
                 <div className="choose-one-prompt__options">

@@ -966,6 +966,7 @@ class _CollectionPageState extends State<CollectionPage> {
                         DropdownMenuItem(value: 'unit', child: Text('单位')),
                         DropdownMenuItem(value: 'spell', child: Text('战术')),
                         DropdownMenuItem(value: 'weapon', child: Text('武器')),
+                        DropdownMenuItem(value: 'hero', child: Text('英雄')),
                       ],
                       onChanged: (value) => setState(() {
                         type = value ?? '全部';
@@ -1134,7 +1135,11 @@ class CardTile extends StatelessWidget {
                   errorBuilder: (_, _, _) => Container(
                     color: const Color(0xFF152722),
                     child: Icon(
-                      card.isUnit ? Icons.shield_outlined : Icons.auto_awesome,
+                      card.isUnit
+                          ? Icons.shield_outlined
+                          : card.isHero
+                          ? Icons.person_4_outlined
+                          : Icons.auto_awesome,
                       color: color,
                       size: 42,
                     ),
@@ -1233,6 +1238,8 @@ class CardTile extends StatelessWidget {
                         ? '单位'
                         : card.type == 'weapon'
                         ? '武器'
+                        : card.isHero
+                        ? '英雄'
                         : '战术'}',
                     style: const TextStyle(
                       color: Color(0xFF84938A),
@@ -2447,7 +2454,7 @@ class _BattleBoardState extends State<BattleBoard> {
 
   Future<void> _heroAttack(BuildContext context) async {
     final weapon = state.player.weapon;
-    if (weapon == null) return;
+    if ((weapon?.attack ?? 0) + state.player.heroAttackBonus <= 0) return;
     final taunts = state.ai.board
         .where((unit) => unit.hasTaunt && !unit.stealthActive)
         .toList();
@@ -2696,14 +2703,18 @@ class _BattleBoardState extends State<BattleBoard> {
                         size: 19,
                       ),
                       const SizedBox(width: 8),
-                      const Expanded(
+                      Expanded(
                         child: Text(
-                          '抉择：选择一个战术分支',
+                          state.chooseOneSourceKind == 'hero-card'
+                              ? '灾变：选择一个灭世分支'
+                              : '抉择：选择一个战术分支',
                           style: TextStyle(fontWeight: FontWeight.w700),
                         ),
                       ),
                       Text(
-                        '${state.chooseOneOptions.length} 选 1',
+                        state.chooseOneSourceKind == 'hero-card'
+                            ? '还可选 ${state.chooseOneRemaining}'
+                            : '${state.chooseOneOptions.length} 选 1',
                         style: const TextStyle(
                           color: Color(0xFFA692D1),
                           fontSize: 11,
@@ -2764,7 +2775,9 @@ class _BattleBoardState extends State<BattleBoard> {
                         const SizedBox(height: 12),
                       ],
                       _HeroBar(
-                        name: '镜像演算体 K-7 · ${state.aiFaction}',
+                        name: state.ai.heroName == '远征指挥官'
+                            ? '镜像演算体 K-7 · ${state.aiFaction}'
+                            : state.ai.heroName,
                         health: state.ai.heroHealth,
                         maxHealth: state.ai.maxHeroHealth,
                         mana: state.ai.mana,
@@ -2774,6 +2787,7 @@ class _BattleBoardState extends State<BattleBoard> {
                         overloadLocked: state.ai.overloadLocked,
                         heraldCount: state.ai.heraldCount,
                         secretCount: state.ai.secrets.length,
+                        heroAttackBonus: state.ai.heroAttackBonus,
                         ai: true,
                       ),
                       const SizedBox(height: 13),
@@ -2795,7 +2809,9 @@ class _BattleBoardState extends State<BattleBoard> {
                       ),
                       const SizedBox(height: 13),
                       _HeroBar(
-                        name: '你的指挥核心',
+                        name: state.player.heroName == '远征指挥官'
+                            ? '你的指挥核心'
+                            : state.player.heroName,
                         health: state.player.heroHealth,
                         maxHealth: state.player.maxHeroHealth,
                         mana: state.player.mana,
@@ -2805,6 +2821,7 @@ class _BattleBoardState extends State<BattleBoard> {
                         overloadLocked: state.player.overloadLocked,
                         heraldCount: state.player.heraldCount,
                         secretCount: state.player.secrets.length,
+                        heroAttackBonus: state.player.heroAttackBonus,
                         ai: false,
                       ),
                       const SizedBox(height: 12),
@@ -2845,7 +2862,8 @@ class _BattleBoardState extends State<BattleBoard> {
                                   ),
                                   label: const Text('幸运币'),
                                 ),
-                              if (state.player.weapon != null)
+                              if (state.player.weapon != null ||
+                                  state.player.heroAttackBonus > 0)
                                 OutlinedButton.icon(
                                   onPressed:
                                       state.player.heroHasAttacked ||
@@ -2858,7 +2876,7 @@ class _BattleBoardState extends State<BattleBoard> {
                                   label: Text(
                                     state.player.heroHasAttacked
                                         ? '已攻击'
-                                        : '英雄攻击',
+                                        : '英雄攻击 ${(state.player.weapon?.attack ?? 0) + state.player.heroAttackBonus}',
                                   ),
                                 ),
                               OutlinedButton(
@@ -3816,6 +3834,7 @@ class _HeroBar extends StatelessWidget {
     required this.overloadLocked,
     required this.heraldCount,
     required this.secretCount,
+    this.heroAttackBonus = 0,
     required this.ai,
   });
 
@@ -3829,6 +3848,7 @@ class _HeroBar extends StatelessWidget {
   final int overloadLocked;
   final int heraldCount;
   final int secretCount;
+  final int heroAttackBonus;
   final bool ai;
 
   @override
@@ -3890,6 +3910,11 @@ class _HeroBar extends StatelessWidget {
             Text(
               '⚔ ${weapon!.card.name} · ${weapon!.attack}/${weapon!.durability}',
               style: const TextStyle(color: Color(0xFFE7BD7A), fontSize: 9),
+            ),
+          if (heroAttackBonus > 0)
+            Text(
+              '⚔ 临时攻击 +$heroAttackBonus',
+              style: const TextStyle(color: Color(0xFFE46D3F), fontSize: 9),
             ),
           if (secretCount > 0)
             Text(
@@ -4710,7 +4735,7 @@ class OnlineBattlePanel extends StatelessWidget {
               children: [
                 Expanded(
                   child: _OnlineHealth(
-                    label: '你的指挥核心',
+                    label: controller.localHeroName ?? '你的指挥核心',
                     value: controller.localHealth,
                     color: const Color(0xFF69CFC3),
                   ),
@@ -4718,7 +4743,10 @@ class OnlineBattlePanel extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _OnlineHealth(
-                    label: controller.client.peerName ?? '对手核心',
+                    label:
+                        controller.remoteHeroName ??
+                        controller.client.peerName ??
+                        '对手核心',
                     value: controller.remoteHealth,
                     color: const Color(0xFFE46D3F),
                   ),
@@ -4766,6 +4794,14 @@ class OnlineBattlePanel extends StatelessWidget {
                           fontSize: 10,
                         ),
                       ),
+                    if (controller.localHeroAttackBonus > 0)
+                      Text(
+                        '临时攻击 +${controller.localHeroAttackBonus}',
+                        style: const TextStyle(
+                          color: Color(0xFFE46D3F),
+                          fontSize: 10,
+                        ),
+                      ),
                     if (controller.localHeraldCount > 0)
                       Text(
                         '先驱 ${controller.localHeraldCount} · 巨型 ×${controller.localHeraldCount >= 4
@@ -4798,7 +4834,8 @@ class OnlineBattlePanel extends StatelessWidget {
                         icon: const Icon(Icons.monetization_on, size: 14),
                         label: const Text('幸运币'),
                       ),
-                    if (controller.localWeaponCard != null)
+                    if (controller.localWeaponCard != null ||
+                        controller.localHeroAttackBonus > 0)
                       OutlinedButton.icon(
                         onPressed:
                             controller.canAct &&
@@ -4807,7 +4844,9 @@ class OnlineBattlePanel extends StatelessWidget {
                             : null,
                         icon: const Icon(Icons.gavel, size: 14),
                         label: Text(
-                          '英雄攻击 ${controller.localWeaponAttack}/${controller.localWeaponDurability}',
+                          controller.localWeaponCard != null
+                              ? '英雄攻击 ${controller.localWeaponAttack + controller.localHeroAttackBonus}/${controller.localWeaponDurability}'
+                              : '英雄攻击 ${controller.localHeroAttackBonus}',
                         ),
                       ),
                     if (controller.localHeroPower != null)
@@ -5121,16 +5160,22 @@ class _OnlineChooseOnePanel extends StatelessWidget {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          '抉择分支',
-          style: TextStyle(
+        Text(
+          controller.chooseOneSourceKind == 'hero-card'
+              ? '灭世灾变 · 还可选 ${controller.chooseOneRemaining}'
+              : '抉择分支',
+          style: const TextStyle(
             color: Color(0xFFE7D9FF),
             fontWeight: FontWeight.w700,
           ),
         ),
         const SizedBox(height: 4),
         Text(
-          controller.canChooseOne ? '选择一个分支结算。' : '等待对手完成抉择。',
+          controller.canChooseOne
+              ? controller.chooseOneSourceKind == 'hero-card'
+                    ? '选择后立即释放；已选灾变不会重复出现。'
+                    : '选择一个分支结算。'
+              : '等待对手完成抉择。',
           style: const TextStyle(color: Color(0xFFB9A8D5), fontSize: 10),
         ),
         if (controller.canChooseOne) ...[

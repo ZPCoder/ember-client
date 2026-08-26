@@ -19,6 +19,7 @@ class CardDefinition {
     this.shatter,
     this.herald,
     this.colossal,
+    this.heroCard,
     this.spellDamage = 0,
     this.keywords = const [],
     this.traits = const [],
@@ -52,6 +53,7 @@ class CardDefinition {
   final Map<String, dynamic>? shatter;
   final Map<String, dynamic>? herald;
   final Map<String, dynamic>? colossal;
+  final Map<String, dynamic>? heroCard;
   final int spellDamage;
   final List<String> keywords;
   final List<String> traits;
@@ -66,6 +68,7 @@ class CardDefinition {
   final List<Map<String, dynamic>> effect;
 
   bool get isUnit => type == 'unit';
+  bool get isHero => type == 'hero';
   bool get hasShatter => shatter != null;
   bool get hasHerald => herald != null;
   bool get hasColossal => colossal != null;
@@ -88,6 +91,7 @@ class CardDefinition {
     Map<String, dynamic>? shatter,
     Map<String, dynamic>? herald,
     Map<String, dynamic>? colossal,
+    Map<String, dynamic>? heroCard,
   }) {
     return CardDefinition(
       id: id,
@@ -109,6 +113,7 @@ class CardDefinition {
       shatter: shatter ?? this.shatter,
       herald: herald ?? this.herald,
       colossal: colossal ?? this.colossal,
+      heroCard: heroCard ?? this.heroCard,
       spellDamage: spellDamage,
       keywords: keywords ?? this.keywords,
       traits: traits,
@@ -165,6 +170,9 @@ class CardDefinition {
           : null,
       colossal: json['colossal'] is Map
           ? Map<String, dynamic>.from(json['colossal'] as Map)
+          : null,
+      heroCard: json['heroCard'] is Map
+          ? Map<String, dynamic>.from(json['heroCard'] as Map)
           : null,
       spellDamage: (json['spellDamage'] as num?)?.toInt() ?? 0,
       keywords: strings(json['keywords']),
@@ -286,6 +294,7 @@ class BattleSide {
     this.armor = 0,
     this.fatigue = 0,
     required this.deck,
+    List<int?>? deckCostOverrides,
     required this.hand,
     List<int>? handCostReductions,
     List<HandFragment?>? handFragments,
@@ -294,8 +303,12 @@ class BattleSide {
     this.weapon,
     this.overloadLocked = 0,
     this.heraldCount = 0,
+    this.heroId = 'faction-commander',
+    this.heroName = '远征指挥官',
+    this.heroAttackBonus = 0,
     List<BattleSecret>? secrets,
-  }) : handCostReductions = handCostReductions ?? <int>[],
+  }) : deckCostOverrides = List<int?>.from(deckCostOverrides ?? const <int?>[]),
+       handCostReductions = handCostReductions ?? <int>[],
        handFragments = handFragments ?? <HandFragment?>[],
        secrets = secrets ?? <BattleSecret>[];
 
@@ -306,6 +319,7 @@ class BattleSide {
   int armor;
   int fatigue;
   final List<CardDefinition> deck;
+  final List<int?> deckCostOverrides;
   final List<CardDefinition> hand;
   final List<int> handCostReductions;
   final List<HandFragment?> handFragments;
@@ -314,6 +328,9 @@ class BattleSide {
   BattleWeapon? weapon;
   int overloadLocked;
   int heraldCount;
+  String heroId;
+  String heroName;
+  int heroAttackBonus;
   int cardsPlayedThisTurn = 0;
   bool heroHasAttacked = false;
   final List<BattleSecret> secrets;
@@ -373,8 +390,8 @@ class BattleState {
 
   final BattleSide player;
   final BattleSide ai;
-  final HeroPowerDefinition playerHeroPower;
-  final HeroPowerDefinition aiHeroPower;
+  HeroPowerDefinition playerHeroPower;
+  HeroPowerDefinition aiHeroPower;
   int turn;
   String activePlayer;
   String phase;
@@ -400,6 +417,9 @@ class BattleState {
   String? chooseOneSource;
   String chooseOneOwner = 'player';
   BattleUnit? chooseOneTarget;
+  int chooseOneRemaining = 1;
+  String chooseOneSourceKind = 'spell';
+  final List<String> chooseOneChosenLabels = <String>[];
   BattleFxEvent? fx;
   int fxSequence = 0;
 }

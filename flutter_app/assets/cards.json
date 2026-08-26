@@ -6129,34 +6129,89 @@
   },
   {
     "id": "neutral-season-08",
-    "name": "荒原策士·08",
-    "description": "预备。spell-damage。 中立的战线单位。 登场时对一个敌方角色造成伤害。 法术伤害 +1。",
+    "name": "赤曜灭世者",
+    "description": "英雄牌。战吼：选择要释放的灭世灾变。每使用两次先驱，额外选择一个；四次后释放全部四个灾变。",
     "faction": "中立",
-    "type": "unit",
-    "cost": 8,
-    "rarity": "普通",
-    "attack": 7,
-    "health": 9,
-    "keywords": [
-      "spell-damage",
-      "battlecry",
-      "prepare"
-    ],
-    "traits": [
-      "bulwark",
-      "craft"
-    ],
-    "target": "enemy-character",
-    "onPlay": [
-      {
-        "kind": "damage",
-        "amount": 3
-      }
-    ],
-    "spellDamage": 1,
+    "type": "hero",
+    "cost": 10,
+    "rarity": "传说",
+    "keywords": [],
+    "traits": [],
+    "target": "none",
+    "onPlay": [],
     "onDeath": [],
     "effect": [],
-    "preparable": true,
+    "combo": [],
+    "onTurnStart": [],
+    "onTurnEnd": [],
+    "onSpellPlayed": [],
+    "tradeable": false,
+    "preparable": false,
+    "bribe": false,
+    "disguised": false,
+    "heroCard": {
+      "heroId": "hero-scarlet-worldbreaker",
+      "heroName": "赤曜灭世者",
+      "armor": 12,
+      "heroPower": {
+        "id": "hero-power-ruthless-rend",
+        "faction": "中立",
+        "name": "残酷撕裂",
+        "description": "本回合获得 +5 攻击。",
+        "cost": 2,
+        "effect": {
+          "kind": "gain-attack",
+          "amount": 5
+        }
+      },
+      "options": [
+        {
+          "label": "崩岳：摧毁生命最高的敌方单位",
+          "effects": [
+            {
+              "kind": "destroy-highest-health-enemy"
+            }
+          ]
+        },
+        {
+          "label": "焚世：对所有敌方单位造成 4 点伤害",
+          "effects": [
+            {
+              "kind": "damage-all-enemy-units",
+              "amount": 4
+            }
+          ]
+        },
+        {
+          "label": "役龙：洗入五张费用为 1 的随机传说龙裔",
+          "effects": [
+            {
+              "kind": "shuffle-random-into-deck",
+              "cardIds": [
+                "generated-emberwing-matriarch",
+                "generated-tidecoil-leviathan",
+                "generated-thundercrown-drake",
+                "generated-riftmaw-tyrant",
+                "generated-skyvault-guardian"
+              ],
+              "count": 5,
+              "cost": 1
+            }
+          ]
+        },
+        {
+          "label": "龙裔君临：召唤一个 12/12 的灭世龙裔",
+          "effects": [
+            {
+              "kind": "summon",
+              "cardId": "generated-worldbreaker-progeny",
+              "count": 1
+            }
+          ]
+        }
+      ],
+      "scalesWithHerald": true
+    },
     "set": "scarab-2026"
   },
   {

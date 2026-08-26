@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../data/formats.dart';
+import '../data/catalog.dart';
 import '../models/card_definition.dart';
 import 'multiplayer_client.dart';
 
@@ -86,6 +87,10 @@ class OnlineBattleController extends ChangeNotifier {
   int localOverloadLocked = 0;
   int localHeraldCount = 0;
   int remoteHeraldCount = 0;
+  String? localHeroName;
+  String? remoteHeroName;
+  int localHeroAttackBonus = 0;
+  int remoteHeroAttackBonus = 0;
   bool localCoinAvailable = false;
   bool localHeroPowerUsed = false;
   bool localHeroHasAttacked = false;
@@ -106,6 +111,8 @@ class OnlineBattleController extends ChangeNotifier {
   String? discoverSourceCardId;
   List<Map<String, dynamic>> chooseOneOptions = <Map<String, dynamic>>[];
   String? chooseOneSourceCardId;
+  int chooseOneRemaining = 1;
+  String chooseOneSourceKind = 'spell';
   int _lastSequence = 0;
   int _commandSequence = 0;
   int? _viewer;
@@ -128,6 +135,9 @@ class OnlineBattleController extends ChangeNotifier {
 
   CardDefinition? card(String id) {
     for (final item in catalog) {
+      if (item.id == id) return item;
+    }
+    for (final item in generatedBattleCards) {
       if (item.id == id) return item;
     }
     return null;
@@ -284,8 +294,8 @@ class OnlineBattleController extends ChangeNotifier {
 
   void heroAttack({OnlineUnit? target, bool targetHero = false}) {
     if (!canAct ||
-        localWeaponCard == null ||
-        localWeaponDurability <= 0 ||
+        localWeaponAttack + localHeroAttackBonus <= 0 ||
+        (localWeaponCard != null && localWeaponDurability <= 0) ||
         localHeroHasAttacked) {
       return;
     }
@@ -542,9 +552,16 @@ class OnlineBattleController extends ChangeNotifier {
                 .toList()
           : <Map<String, dynamic>>[];
       chooseOneSourceCardId = chooseOne['sourceCardId']?.toString();
+      chooseOneRemaining =
+          (chooseOne['remainingChoices'] as num?)?.toInt() ?? 1;
+      chooseOneSourceKind = chooseOne['sourceKind']?.toString() == 'hero-card'
+          ? 'hero-card'
+          : 'spell';
     } else {
       chooseOneOptions = <Map<String, dynamic>>[];
       chooseOneSourceCardId = null;
+      chooseOneRemaining = 1;
+      chooseOneSourceKind = 'spell';
     }
     final result = snapshot['result'];
     if (result is Map) {
@@ -574,11 +591,15 @@ class OnlineBattleController extends ChangeNotifier {
     final mana = (side['mana'] as num?)?.toInt() ?? 0;
     final maxMana = (side['maxMana'] as num?)?.toInt() ?? 0;
     final armor = (hero is Map ? (hero['armor'] as num?)?.toInt() : null) ?? 0;
+    final heroName = hero is Map ? hero['name']?.toString() : null;
+    final heroAttackBonus = (side['heroAttackBonus'] as num?)?.toInt() ?? 0;
     final heraldCount = (side['heraldCount'] as num?)?.toInt() ?? 0;
     if (localSide) {
       localMana = mana;
       localMaxMana = maxMana;
       localArmor = armor;
+      localHeroName = heroName;
+      localHeroAttackBonus = heroAttackBonus;
       localOverloadLocked = (side['overloadLocked'] as num?)?.toInt() ?? 0;
       localHeraldCount = heraldCount;
       localCoinAvailable = side['coinAvailable'] == true;
@@ -616,6 +637,8 @@ class OnlineBattleController extends ChangeNotifier {
       remoteMana = mana;
       remoteMaxMana = maxMana;
       remoteArmor = armor;
+      remoteHeroName = heroName;
+      remoteHeroAttackBonus = heroAttackBonus;
       remoteHeraldCount = heraldCount;
     }
   }
@@ -806,8 +829,8 @@ class OnlineBattleController extends ChangeNotifier {
 
   bool get canHeroAttackEnemyHero =>
       canAct &&
-      localWeaponCard != null &&
-      localWeaponDurability > 0 &&
+      localWeaponAttack + localHeroAttackBonus > 0 &&
+      (localWeaponCard == null || localWeaponDurability > 0) &&
       !localHeroHasAttacked &&
       _visibleRemoteTaunts.isEmpty;
 

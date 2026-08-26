@@ -31,6 +31,11 @@ void main() {
       );
       expect(factionOrder, hasLength(20));
       expect(catalog.where((card) => card.type == 'weapon'), hasLength(20));
+      expect(catalog.where((card) => card.type == 'hero'), hasLength(1));
+      expect(
+        catalog.singleWhere((card) => card.type == 'hero').heroCard,
+        isNotNull,
+      );
       expect(
         catalog.where((card) => card.keywords.contains('secret')),
         isNotEmpty,
@@ -45,7 +50,7 @@ void main() {
       );
       expect(catalog.any((card) => card.overload > 0), isTrue);
       expect(catalog.any((card) => card.tradeable), isTrue);
-      expect(catalog.where((card) => card.preparable), hasLength(23));
+      expect(catalog.where((card) => card.preparable), hasLength(22));
       expect(catalog.where((card) => card.bribe), hasLength(20));
       expect(catalog.where((card) => card.disguised), hasLength(20));
       expect(catalog.where((card) => card.hasShatter), hasLength(5));
@@ -2451,7 +2456,9 @@ void main() {
           'result': null,
           'chooseOne': {
             'player': 0,
-            'sourceCardId': 'neutral-field-reinforcement',
+            'sourceCardId': 'neutral-season-08',
+            'remainingChoices': 2,
+            'sourceKind': 'hero-card',
             'options': [
               {'label': '护甲协议', 'effects': []},
               {'label': '抽取协议', 'effects': []},
@@ -2459,12 +2466,13 @@ void main() {
           },
           'players': [
             {
-              'hero': {'health': 28, 'armor': 1},
-              'hand': ['sun-dawn-scout'],
+              'hero': {'health': 28, 'armor': 12, 'name': '赤曜灭世者'},
+              'heroAttackBonus': 5,
+              'hand': ['generated-emberwing-matriarch'],
               'board': [],
             },
             {
-              'hero': {'health': 24, 'armor': 0},
+              'hero': {'health': 24, 'armor': 0, 'name': '敌方英雄'},
               'hand': ['__hidden-card__'],
               'board': [],
             },
@@ -2477,6 +2485,12 @@ void main() {
     expect(controller.phase, 'choose-one');
     expect(controller.canChooseOne, isTrue);
     expect(controller.chooseOneOptions, hasLength(2));
+    expect(controller.chooseOneRemaining, 2);
+    expect(controller.chooseOneSourceKind, 'hero-card');
+    expect(controller.localHeroName, '赤曜灭世者');
+    expect(controller.remoteHeroName, '敌方英雄');
+    expect(controller.localHeroAttackBonus, 5);
+    expect(controller.hand.single.id, 'generated-emberwing-matriarch');
     controller.dispose();
     client.dispose();
   });
@@ -3644,6 +3658,121 @@ void main() {
     expect(state.player.armor, greaterThanOrEqualTo(3));
     controller.dispose();
   });
+
+  test(
+    'mobile Hero Card transforms, replaces its power and attacks without a weapon',
+    () async {
+      final catalog = await loadCatalog();
+      final heroCard = catalog.singleWhere(
+        (card) => card.id == 'neutral-season-08',
+      );
+      final filler = catalog.firstWhere(
+        (card) => card.isUnit && card.cost <= 2 && card.rarity != '传说',
+      );
+      final controller = GameController(startingPlayer: 'player')
+        ..catalog = catalog
+        ..deckIds.addAll(List.filled(30, filler.id));
+      controller.startBattle();
+      await controller.confirmMulligan();
+      final state = controller.battle!;
+      state.player.hand
+        ..clear()
+        ..add(heroCard);
+      state.player.handCostReductions
+        ..clear()
+        ..add(0);
+      state.player.handFragments
+        ..clear()
+        ..add(null);
+      state.player.mana = 12;
+      state.ai.heroHealth = 30;
+      state.ai.board.clear();
+
+      expect(controller.playCard(heroCard), isTrue);
+      expect(state.player.heroName, '赤曜灭世者');
+      expect(state.player.armor, 12);
+      expect(state.playerHeroPower.name, '残酷撕裂');
+      expect(state.phase, 'choose-one');
+      expect(state.chooseOneRemaining, 1);
+      expect(state.chooseOneSourceKind, 'hero-card');
+
+      final summonIndex = state.chooseOneOptions.indexWhere(
+        (option) => option['label']?.toString().contains('龙裔君临') ?? false,
+      );
+      expect(controller.chooseOne(summonIndex), isTrue);
+      expect(state.phase, 'main');
+      expect(state.player.board.single.attack, 12);
+      expect(controller.useHeroPower(), isTrue);
+      expect(state.player.heroAttackBonus, 5);
+      expect(state.player.weapon, isNull);
+      expect(controller.heroAttack(targetHero: true), isTrue);
+      expect(state.ai.heroHealth, 25);
+      controller.dispose();
+    },
+  );
+
+  test(
+    'two mobile Heralds grant two unique Cataclysms and one-cost dragon draws',
+    () async {
+      final catalog = await loadCatalog();
+      final heroCard = catalog.singleWhere(
+        (card) => card.id == 'neutral-season-08',
+      );
+      final filler = catalog.firstWhere(
+        (card) => card.isUnit && card.cost <= 2 && card.rarity != '传说',
+      );
+      final controller = GameController(startingPlayer: 'player')
+        ..catalog = catalog
+        ..deckIds.addAll(List.filled(30, filler.id));
+      controller.startBattle();
+      await controller.confirmMulligan();
+      final state = controller.battle!;
+      state.player.heraldCount = 2;
+      state.player.deck.clear();
+      state.player.deckCostOverrides.clear();
+      state.player.hand
+        ..clear()
+        ..add(heroCard);
+      state.player.handCostReductions
+        ..clear()
+        ..add(0);
+      state.player.handFragments
+        ..clear()
+        ..add(null);
+      state.player.mana = 10;
+
+      expect(controller.playCard(heroCard), isTrue);
+      expect(state.chooseOneRemaining, 2);
+      final shuffleIndex = state.chooseOneOptions.indexWhere(
+        (option) => option['label']?.toString().contains('役龙') ?? false,
+      );
+      final chosenLabel = state.chooseOneOptions[shuffleIndex]['label'];
+      expect(controller.chooseOne(shuffleIndex), isTrue);
+      expect(state.phase, 'choose-one');
+      expect(state.chooseOneRemaining, 1);
+      expect(state.chooseOneOptions, hasLength(3));
+      expect(
+        state.chooseOneOptions.any((option) => option['label'] == chosenLabel),
+        isFalse,
+      );
+      expect(state.player.deck, hasLength(5));
+      expect(
+        state.player.deck.every((card) => card.id.startsWith('generated-')),
+        isTrue,
+      );
+      expect(state.player.deckCostOverrides, everyElement(1));
+
+      expect(controller.chooseOne(0), isTrue);
+      expect(state.phase, 'main');
+      await controller.endTurn();
+      final generatedIndex = state.player.hand.indexWhere(
+        (card) => card.id.startsWith('generated-'),
+      );
+      expect(generatedIndex, greaterThanOrEqualTo(0));
+      expect(controller.playerHandCost(generatedIndex), 1);
+      controller.dispose();
+    },
+  );
 
   testWidgets('app shows the loading shell before catalog initialization', (
     tester,

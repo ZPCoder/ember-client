@@ -72,6 +72,7 @@ class GameController extends ChangeNotifier {
 
   Map<String, CardDefinition> get cardsById => {
     for (final card in catalog) card.id: card,
+    for (final card in generatedBattleCards) card.id: card,
   };
 
   Future<void> initialize() async {
@@ -797,6 +798,7 @@ class GameController extends ChangeNotifier {
       mana: 1,
       maxMana: 1,
       deck: playerDeck,
+      deckCostOverrides: List<int?>.filled(playerDeck.length, null),
       hand: [],
       board: [],
       coinAvailable: playerIsSecond,
@@ -807,6 +809,7 @@ class GameController extends ChangeNotifier {
       mana: 1,
       maxMana: 1,
       deck: aiDeck,
+      deckCostOverrides: List<int?>.filled(aiDeck.length, null),
       hand: [],
       board: [],
       coinAvailable: aiIsSecond,
@@ -898,7 +901,8 @@ class GameController extends ChangeNotifier {
     }
     if (returned.isNotEmpty) {
       state.player.deck.addAll(returned);
-      state.player.deck.shuffle(_random);
+      state.player.deckCostOverrides.addAll(List<int?>.filled(returned.length, null));
+      _shuffleDeck(state.player);
     }
     state.mulliganSelected.clear();
     state.mulliganDone = true;
@@ -980,7 +984,8 @@ class GameController extends ChangeNotifier {
       if (side.deck.isNotEmpty) _draw(side);
     }
     side.deck.addAll(returned);
-    side.deck.shuffle(_random);
+    side.deckCostOverrides.addAll(List<int?>.filled(returned.length, null));
+    _shuffleDeck(side);
   }
 
   void _beginSideTurn(BattleState state, {required String owner}) {
@@ -1040,8 +1045,10 @@ class GameController extends ChangeNotifier {
 
   void _draw(BattleSide side) {
     if (side.deck.isNotEmpty) {
+      _syncDeckCostOverrides(side);
       final drawn = side.deck.removeLast();
-      if (_addCardToHand(side, drawn)) {
+      final costOverride = side.deckCostOverrides.removeLast();
+      if (_addCardToHand(side, drawn, costOverride: costOverride)) {
         return;
       }
       stateLog(
@@ -1076,24 +1083,33 @@ class GameController extends ChangeNotifier {
     }
   }
 
-  bool _addCardToHand(BattleSide side, CardDefinition drawn) {
+  bool _addCardToHand(
+    BattleSide side,
+    CardDefinition drawn, {
+    int? costOverride,
+  }) {
     final available = 10 - _occupiedHandSlots(side);
     if (available <= 0) return false;
     _syncHandCostReductions(side);
     if (!drawn.hasShatter) {
       side.hand.add(drawn);
-      side.handCostReductions.add(0);
+      side.handCostReductions.add(
+        costOverride == null ? 0 : max(0, drawn.cost - max(0, costOverride)),
+      );
       side.handFragments.add(null);
       return true;
     }
     final groupId = 'm${_shatterGroupSequence++}';
     side.hand.insert(0, _shatterFragmentCard(drawn, 'left'));
-    side.handCostReductions.insert(0, 0);
+    final int reduction = costOverride == null
+        ? 0
+        : max(0, drawn.cost - max(0, costOverride)).toInt();
+    side.handCostReductions.insert(0, reduction);
     side.handFragments.insert(0, HandFragment(groupId: groupId, piece: 'left'));
     var fragmentCount = 1;
     if (available >= 2) {
       side.hand.add(_shatterFragmentCard(drawn, 'right'));
-      side.handCostReductions.add(0);
+      side.handCostReductions.add(reduction);
       side.handFragments.add(HandFragment(groupId: groupId, piece: 'right'));
       fragmentCount = 2;
     } else {
@@ -1182,10 +1198,13 @@ class GameController extends ChangeNotifier {
     // inserted, so a trade can never immediately redraw itself. Preserve the
     // remaining deck order and choose only the insertion position at random.
     _draw(state.player);
+    final insertionIndex = _random.nextInt(state.player.deck.length + 1);
+    _syncDeckCostOverrides(state.player);
     state.player.deck.insert(
-      _random.nextInt(state.player.deck.length + 1),
+      insertionIndex,
       this.card(card.id) ?? card,
     );
+    state.player.deckCostOverrides.insert(insertionIndex, null);
     state.logs.insert(0, '${card.name} 已交易，抽取一张替代档案。');
     _emitFx(
       'trade',
@@ -1258,12 +1277,12 @@ class GameController extends ChangeNotifier {
   bool heroAttack({BattleUnit? target, bool targetHero = false}) {
     final state = battle;
     final weapon = state?.player.weapon;
+    final attack = (weapon?.attack ?? 0) + (state?.player.heroAttackBonus ?? 0);
     if (state == null ||
         state.finished ||
         state.phase != 'main' ||
         state.activePlayer != 'player' ||
-        weapon == null ||
-        weapon.durability <= 0 ||
+        attack <= 0 ||
         state.player.heroHasAttacked) {
       return false;
     }
@@ -1291,8 +1310,8 @@ class GameController extends ChangeNotifier {
     final defenderAttack = target?.attack ?? 0;
     final defenderHasLifesteal = target?.hasLifesteal ?? false;
     final dealt = target == null
-        ? _damageHero(state.ai, weapon.attack)
-        : _damageUnit(target, weapon.attack, combat: true);
+        ? _damageHero(state.ai, attack)
+        : _damageUnit(target, attack, combat: true);
     if (target != null) {
       final reflected = _damageHero(state.player, defenderAttack);
       if (defenderHasLifesteal && reflected > 0) {
@@ -1300,12 +1319,13 @@ class GameController extends ChangeNotifier {
       }
     }
     state.player.heroHasAttacked = true;
-    weapon.durability--;
+    if (weapon != null) weapon.durability--;
+    final attackSource = weapon?.card.name ?? state.player.heroName;
     state.logs.insert(
       0,
       target == null
-          ? '英雄使用 ${weapon.card.name} 攻击敌方核心，造成 $dealt 点伤害。'
-          : '英雄使用 ${weapon.card.name} 攻击 ${target.card.name}。',
+          ? '英雄使用 $attackSource 攻击敌方核心，造成 $dealt 点伤害。'
+          : '英雄使用 $attackSource 攻击 ${target.card.name}。',
     );
     _emitFx(
       'attack',
@@ -1317,7 +1337,7 @@ class GameController extends ChangeNotifier {
       targetId: target?.instanceId ?? 'ai-hero',
       amount: dealt,
     );
-    if (weapon.durability <= 0) {
+    if (weapon != null && weapon.durability <= 0) {
       state.logs.insert(0, '${weapon.card.name} 耐久耗尽。');
       state.player.weapon = null;
       _emitFx(
@@ -1526,6 +1546,20 @@ class GameController extends ChangeNotifier {
           Icons.shield,
           0xFFE7BD7A,
           sourceId: sourceId,
+          amount: amount,
+        );
+        break;
+      case 'gain-attack':
+        source.heroAttackBonus += amount;
+        stateLog(power.name, '英雄本回合获得 +$amount 攻击。');
+        _emitFx(
+          'hero-power',
+          power.name,
+          '英雄本回合获得 +$amount 攻击',
+          Icons.flash_on,
+          0xFFE46D3F,
+          sourceId: sourceId,
+          targetId: '$owner-hero',
           amount: amount,
         );
         break;
@@ -1835,6 +1869,101 @@ class GameController extends ChangeNotifier {
     );
   }
 
+  HeroPowerDefinition? _heroPowerFromMap(Object? raw) {
+    if (raw is! Map) return null;
+    final map = Map<String, dynamic>.from(raw);
+    final effect = map['effect'];
+    if (effect is! Map) return null;
+    return HeroPowerDefinition(
+      id: map['id']?.toString() ?? 'generated-hero-power',
+      faction: map['faction']?.toString() ?? '中立',
+      name: map['name']?.toString() ?? '英雄技能',
+      description: map['description']?.toString() ?? '',
+      cost: (map['cost'] as num?)?.toInt() ?? 2,
+      target: map['target']?.toString(),
+      effect: Map<String, dynamic>.from(effect),
+    );
+  }
+
+  void _playHeroCard({
+    required CardDefinition card,
+    required BattleSide source,
+    required BattleSide enemy,
+    required String owner,
+  }) {
+    final state = battle;
+    final definition = card.heroCard;
+    if (state == null || definition == null) return;
+    final heroPower = _heroPowerFromMap(definition['heroPower']);
+    final rawOptions = definition['options'];
+    if (heroPower == null || rawOptions is! List) return;
+    final options = rawOptions
+        .whereType<Map>()
+        .map((option) => Map<String, dynamic>.from(option))
+        .toList(growable: false);
+    if (options.length < 2) return;
+
+    source.heroId = definition['heroId']?.toString() ?? card.id;
+    source.heroName = definition['heroName']?.toString() ?? card.name;
+    final armor = (definition['armor'] as num?)?.toInt() ?? 0;
+    source.armor += max(0, armor);
+    if (owner == 'player') {
+      state.playerHeroPower = heroPower;
+      state.heroPowerUsed = false;
+    } else {
+      state.aiHeroPower = heroPower;
+      state.aiHeroPowerUsed = false;
+    }
+    stateLog(card.name, '化身为 ${source.heroName}，获得 $armor 点护甲。');
+    _emitFx(
+      'hero-transform',
+      source.heroName,
+      '获得 $armor 点护甲并替换英雄技能',
+      Icons.whatshot,
+      0xFFE46D3F,
+      sourceId: card.id,
+      amount: armor,
+    );
+
+    final choiceCount = definition['scalesWithHerald'] == true
+        ? source.heraldCount >= 4
+              ? 4
+              : source.heraldCount >= 2
+              ? 2
+              : 1
+        : 1;
+    if (choiceCount >= options.length) {
+      for (final option in options) {
+        final effects = option['effects'];
+        if (effects is! List) continue;
+        final parsed = effects
+            .whereType<Map>()
+            .map((effect) => Map<String, dynamic>.from(effect))
+            .toList(growable: false);
+        final label = option['label']?.toString() ?? '灭世灾变';
+        stateLog('灭世灾变', label);
+        _resolveEffects(
+          parsed,
+          source: source,
+          enemy: enemy,
+          sourceName: label,
+        );
+        if (state.finished) break;
+      }
+      return;
+    }
+
+    state.phase = 'choose-one';
+    state.chooseOneOptions = List<Map<String, dynamic>>.from(options);
+    state.chooseOneSource = card.name;
+    state.chooseOneOwner = owner;
+    state.chooseOneTarget = null;
+    state.chooseOneRemaining = choiceCount;
+    state.chooseOneSourceKind = 'hero-card';
+    state.chooseOneChosenLabels.clear();
+    stateLog(card.name, '从 ${options.length} 个灭世灾变中选择 $choiceCount 个。');
+  }
+
   void _playCardForSide(
     CardDefinition card, {
     required BattleSide source,
@@ -1868,7 +1997,9 @@ class GameController extends ChangeNotifier {
       return;
     }
     source.overloadLocked += card.overload;
-    if (card.type == 'weapon') {
+    if (card.isHero) {
+      _playHeroCard(card: card, source: source, enemy: enemy, owner: owner);
+    } else if (card.type == 'weapon') {
       final maxDurability = max(1, card.durability ?? card.health ?? 1);
       source.weapon = BattleWeapon(
         card: card,
@@ -2012,6 +2143,29 @@ class GameController extends ChangeNotifier {
     while (side.handFragments.length < side.hand.length) {
       side.handFragments.add(null);
     }
+  }
+
+  void _syncDeckCostOverrides(BattleSide side) {
+    while (side.deckCostOverrides.length > side.deck.length) {
+      side.deckCostOverrides.removeLast();
+    }
+    while (side.deckCostOverrides.length < side.deck.length) {
+      side.deckCostOverrides.add(null);
+    }
+  }
+
+  void _shuffleDeck(BattleSide side) {
+    _syncDeckCostOverrides(side);
+    final entries = List.generate(
+      side.deck.length,
+      (index) => (card: side.deck[index], cost: side.deckCostOverrides[index]),
+    )..shuffle(_random);
+    side.deck
+      ..clear()
+      ..addAll(entries.map((entry) => entry.card));
+    side.deckCostOverrides
+      ..clear()
+      ..addAll(entries.map((entry) => entry.cost));
   }
 
   List<int> _expandedMulliganIndexes(BattleSide side, Iterable<int> requested) {
@@ -2258,6 +2412,23 @@ class GameController extends ChangeNotifier {
               '对敌方核心和战场造成 $damageAmount 点范围伤害（核心实际 $dealt）。',
             );
             break;
+          case 'damage-all-enemy-units':
+            for (final unit in [...enemy.board]) {
+              _damageUnit(unit, damageAmount);
+            }
+            stateLog(sourceName, '对所有敌方单位造成 $damageAmount 点伤害。');
+            break;
+          case 'destroy-highest-health-enemy':
+            final candidates = enemy.board
+                .where((unit) => unit.health > 0)
+                .toList()
+              ..sort((left, right) => right.health.compareTo(left.health));
+            if (candidates.isNotEmpty) {
+              final destroyed = candidates.first;
+              destroyed.health = 0;
+              stateLog(sourceName, '摧毁 ${destroyed.card.name}。');
+            }
+            break;
           case 'freeze':
             if (target != null && enemy.board.contains(target)) {
               target.frozenTurns = max(target.frozenTurns, max(1, amount));
@@ -2305,6 +2476,22 @@ class GameController extends ChangeNotifier {
             for (var i = 0; i < count; i++) {
               _draw(source);
             }
+            break;
+          case 'shuffle-random-into-deck':
+            final ids = effect['cardIds'];
+            final pool = ids is List
+                ? ids.map((id) => card(id.toString())).whereType<CardDefinition>().toList()
+                : <CardDefinition>[];
+            final count = (effect['count'] as num?)?.toInt() ?? 1;
+            final fixedCost = (effect['cost'] as num?)?.toInt();
+            for (var i = 0; i < count && pool.isNotEmpty; i++) {
+              final generated = pool[_random.nextInt(pool.length)];
+              _syncDeckCostOverrides(source);
+              final insertionIndex = _random.nextInt(source.deck.length + 1);
+              source.deck.insert(insertionIndex, generated);
+              source.deckCostOverrides.insert(insertionIndex, fixedCost);
+            }
+            stateLog(sourceName, '将 $count 张传说龙裔洗入牌库。');
             break;
           case 'draw-opponent':
             final count = (effect['count'] as num?)?.toInt() ?? 1;
@@ -2426,6 +2613,9 @@ class GameController extends ChangeNotifier {
               state.chooseOneSource = sourceName;
               state.chooseOneOwner = _ownerOf(source);
               state.chooseOneTarget = target;
+              state.chooseOneRemaining = 1;
+              state.chooseOneSourceKind = 'spell';
+              state.chooseOneChosenLabels.clear();
               stateLog(sourceName, '请选择一个战术分支。');
               _emitFx(
                 'choose-one',
@@ -2591,22 +2781,58 @@ class GameController extends ChangeNotifier {
         .toList();
     final sourceName = state.chooseOneSource ?? '抉择';
     final target = state.chooseOneTarget;
+    final sourceKind = state.chooseOneSourceKind;
+    final label = option['label']?.toString() ?? '一个分支';
+
+    if (sourceKind == 'hero-card') {
+      state.chooseOneChosenLabels.add(label);
+      state.chooseOneOptions.removeAt(optionIndex);
+      state.chooseOneRemaining = max(0, state.chooseOneRemaining - 1);
+      _resolveEffects(
+        parsed,
+        source: source,
+        enemy: enemy,
+        target: target,
+        sourceName: '$sourceName · $label',
+      );
+      stateLog('灭世灾变', '已释放 $label。');
+      if (state.finished || state.chooseOneRemaining <= 0) {
+        state.chooseOneOptions = <Map<String, dynamic>>[];
+        state.chooseOneSource = null;
+        state.chooseOneOwner = 'player';
+        state.chooseOneTarget = null;
+        state.chooseOneRemaining = 1;
+        state.chooseOneSourceKind = 'spell';
+        state.chooseOneChosenLabels.clear();
+        if (!state.finished) state.phase = 'main';
+      } else {
+        state.phase = 'choose-one';
+      }
+      _processDeaths();
+      _checkFinished();
+      notifyListeners();
+      return true;
+    }
+
     state.phase = 'main';
     state.chooseOneOptions = <Map<String, dynamic>>[];
     state.chooseOneSource = null;
     state.chooseOneOwner = 'player';
     state.chooseOneTarget = null;
+    state.chooseOneRemaining = 1;
+    state.chooseOneSourceKind = 'spell';
+    state.chooseOneChosenLabels.clear();
     _resolveEffects(
       parsed,
       source: source,
       enemy: enemy,
       target: target,
-      sourceName: '$sourceName · ${option['label'] ?? '分支'}',
+      sourceName: '$sourceName · $label',
     );
     if (state.phase == 'main') {
       _resolveSpellTriggers(source: source, enemy: enemy);
     }
-    stateLog('抉择完成', '已选择 ${option['label'] ?? '一个分支'}。');
+    stateLog('抉择完成', '已选择 $label。');
     _processDeaths();
     _checkFinished();
     notifyListeners();
@@ -2919,6 +3145,7 @@ class GameController extends ChangeNotifier {
     _turnTimer?.cancel();
     _resolveTurnTriggers(state.player, start: false);
     _clearTemporaryBuffs(state.player);
+    state.player.heroAttackBonus = 0;
     _settleFreezeAtEndOfTurn(state.player);
     _processDeaths();
     _checkFinished();
@@ -3057,7 +3284,7 @@ class GameController extends ChangeNotifier {
           state.discoverChoices.isNotEmpty) {
         chooseDiscover(state.discoverChoices.first);
       }
-      if (state.phase == 'choose-one' &&
+      while (state.phase == 'choose-one' &&
           state.chooseOneOwner == 'ai' &&
           state.chooseOneOptions.isNotEmpty) {
         chooseOne(0);
@@ -3127,9 +3354,9 @@ class GameController extends ChangeNotifier {
       await Future<void>.delayed(const Duration(milliseconds: 1380));
     }
     if (!state.finished &&
-        state.ai.weapon != null &&
+        ((state.ai.weapon?.attack ?? 0) + state.ai.heroAttackBonus) > 0 &&
         !state.ai.heroHasAttacked &&
-        state.ai.weapon!.durability > 0) {
+        (state.ai.weapon == null || state.ai.weapon!.durability > 0)) {
       final taunts = state.player.board
           .where((unit) => unit.hasTaunt && !unit.stealthActive)
           .toList();
@@ -3147,6 +3374,7 @@ class GameController extends ChangeNotifier {
     }
     _resolveTurnTriggers(state.ai, start: false);
     _clearTemporaryBuffs(state.ai);
+    state.ai.heroAttackBonus = 0;
     _settleFreezeAtEndOfTurn(state.ai);
     _processDeaths();
     _checkFinished();
@@ -3204,7 +3432,8 @@ class GameController extends ChangeNotifier {
 
   void _aiHeroAttack(BattleState state, BattleUnit? target) {
     final weapon = state.ai.weapon;
-    if (weapon == null || weapon.durability <= 0) return;
+    final attack = (weapon?.attack ?? 0) + state.ai.heroAttackBonus;
+    if (attack <= 0) return;
     if (target == null) {
       _triggerSecrets(
         state.player,
@@ -3220,8 +3449,8 @@ class GameController extends ChangeNotifier {
     final defenderAttack = target?.attack ?? 0;
     final defenderHasLifesteal = target?.hasLifesteal ?? false;
     final dealt = target == null
-        ? _damageHero(state.player, weapon.attack)
-        : _damageUnit(target, weapon.attack, combat: true);
+        ? _damageHero(state.player, attack)
+        : _damageUnit(target, attack, combat: true);
     if (target != null) {
       final reflected = _damageHero(state.ai, defenderAttack);
       if (defenderHasLifesteal && reflected > 0) {
@@ -3229,12 +3458,13 @@ class GameController extends ChangeNotifier {
       }
     }
     state.ai.heroHasAttacked = true;
-    weapon.durability--;
+    if (weapon != null) weapon.durability--;
+    final attackSource = weapon?.card.name ?? state.ai.heroName;
     state.logs.insert(
       0,
       target == null
-          ? '敌方英雄使用 ${weapon.card.name} 攻击核心，造成 $dealt 点伤害。'
-          : '敌方英雄使用 ${weapon.card.name} 攻击 ${target.card.name}。',
+          ? '敌方英雄使用 $attackSource 攻击核心，造成 $dealt 点伤害。'
+          : '敌方英雄使用 $attackSource 攻击 ${target.card.name}。',
     );
     _emitFx(
       'attack',
@@ -3246,7 +3476,7 @@ class GameController extends ChangeNotifier {
       targetId: target?.instanceId ?? 'player-hero',
       amount: dealt,
     );
-    if (weapon.durability <= 0) state.ai.weapon = null;
+    if (weapon != null && weapon.durability <= 0) state.ai.weapon = null;
     _processDeaths();
   }
 
