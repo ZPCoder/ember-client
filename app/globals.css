@@ -7167,6 +7167,17 @@ button.hero-core {
   gap: 5px;
 }
 
+.collection-card-actions__trial {
+  grid-column: 1 / -1;
+  padding: 4px 6px;
+  border: 1px solid rgba(92, 224, 211, 0.2);
+  border-radius: 6px;
+  color: var(--cyan);
+  font-size: 9px;
+  text-align: center;
+  background: rgba(92, 224, 211, 0.06);
+}
+
 .button--tiny {
   min-height: 25px;
   padding: 4px 6px;

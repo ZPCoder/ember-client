@@ -76,6 +76,9 @@ import {
   totalRankedWins,
   ladderReadyTrialIsActive,
   previewCatchUpPack,
+  collectionWithTrialCards,
+  TRIAL_CARD_ACCESS_MS,
+  trialCardsAreActive,
   planAiTurnReplay,
   previewDeckCode,
   shouldScheduleLocalAiTurn,
@@ -227,6 +230,7 @@ type PlayerSnapshot = {
     claimedDeckId: LadderReadyDeckId | null;
   };
   catchUpPack?: { claimedAt: string | null; cardsGranted: number };
+  trialCards?: { activatedAt: string | null; expiresAt: string | null };
   recentMatches: RecentMatch[];
   stats: { wins: number; losses: number; matchesPlayed: number };
   updatedAt: string;
@@ -805,6 +809,14 @@ function readLocalPlayer(email: string): PlayerSnapshot | null {
       collection: rolled.collection,
       packsAvailable: rolled.packsAvailable,
       catchUpPack: parsed.catchUpPack ?? { claimedAt: null, cardsGranted: 0 },
+      trialCards: parsed.trialCards ?? (
+        parsed.ladderReady?.activatedAt && parsed.ladderReady.expiresAt
+          ? {
+              activatedAt: parsed.ladderReady.activatedAt,
+              expiresAt: parsed.ladderReady.expiresAt,
+            }
+          : { activatedAt: null, expiresAt: null }
+      ),
     };
     persistLocalPlayer(migrated);
     return migrated;
@@ -897,6 +909,7 @@ function makeDemoPlayer(identity?: {
     apprenticeTrack: { claimedMilestones: [] },
     ladderReady: { activatedAt: null, expiresAt: null, claimedDeckId: null },
     catchUpPack: { claimedAt: null, cardsGranted: 0 },
+    trialCards: { activatedAt: null, expiresAt: null },
     rankedLadders: {
       ...createRankedLadders(seasonKey),
       standard: { ...createRankedSnapshot(seasonKey), wins: 7, losses: 3 },
@@ -956,6 +969,15 @@ function applyLocalAction(
       if (!deck) throw new Error("AI 对局必须使用已保存的卡组或有效试玩套牌。");
       playerDeck = deck.cardIds;
       rankedFormat = deck.format === "wild" ? "wild" : "standard";
+      const effectiveCollection = collectionWithTrialCards(
+        current.collection,
+        current.trialCards,
+        CARD_CATALOG,
+        new Date(now),
+      );
+      if (findMissingDeckCards(playerDeck, effectiveCollection).length > 0) {
+        throw new Error("卡组包含未拥有或试玩权限已到期的卡牌。");
+      }
     }
     const validation = validateDeckForFormat(playerDeck, rankedFormat);
     if (!validation.valid) throw new Error(validation.errors[0]?.message ?? "卡组不符合组牌规则。");
@@ -983,7 +1005,7 @@ function applyLocalAction(
     const trial = current.ladderReady ?? { activatedAt: null, expiresAt: null, claimedDeckId: null };
     if (trial.claimedDeckId) throw new Error("本档案已经领取过一套天梯预备套牌。");
     if (trial.activatedAt) throw new Error("七日试玩已经激活。");
-    const activatedAt = new Date();
+    const activatedAt = new Date(now);
     return {
       ok: true,
       player: {
@@ -992,6 +1014,10 @@ function applyLocalAction(
           activatedAt: activatedAt.toISOString(),
           expiresAt: new Date(activatedAt.getTime() + LADDER_READY_TRIAL_MS).toISOString(),
           claimedDeckId: null,
+        },
+        trialCards: {
+          activatedAt: activatedAt.toISOString(),
+          expiresAt: new Date(activatedAt.getTime() + TRIAL_CARD_ACCESS_MS).toISOString(),
         },
         updatedAt: now,
       },
@@ -1281,8 +1307,14 @@ function applyLocalAction(
     savedDeck.cardIds.forEach((cardId) => {
       ownedCounts.set(cardId, (ownedCounts.get(cardId) ?? 0) + 1);
     });
+    const effectiveCollection = collectionWithTrialCards(
+      current.collection,
+      current.trialCards,
+      CARD_CATALOG,
+      new Date(now),
+    );
     for (const [cardId, count] of ownedCounts) {
-      if (count > (current.collection[cardId] ?? 0)) {
+      if (count > (effectiveCollection[cardId] ?? 0)) {
         throw new Error(`收藏中没有足够的「${cardId}」。`);
       }
     }
@@ -3398,6 +3430,11 @@ export function GameApp({
     return counts;
   }, [deckIds]);
 
+  const deckAccessCollection = useMemo(
+    () => collectionWithTrialCards(player.collection, player.trialCards, CARD_CATALOG),
+    [player.collection, player.trialCards],
+  );
+
   const deckValidation = useMemo(() => {
     try {
       const raw = validateDeckForFormat(deckIds, deckFormat);
@@ -3421,8 +3458,8 @@ export function GameApp({
   }, [deckFormat, deckIds]);
 
   const deckMissingCards = useMemo(
-    () => findMissingDeckCards(deckIds, player.collection),
-    [deckIds, player.collection],
+    () => findMissingDeckCards(deckIds, deckAccessCollection),
+    [deckAccessCollection, deckIds],
   );
   const deckPlayable = deckValidation.valid && (
     Boolean(selectedLadderReadyDeckId) || deckMissingCards.length === 0
@@ -3533,7 +3570,7 @@ export function GameApp({
 
   const addCard = (card: CatalogCard) => {
     setSelectedLadderReadyDeckId(null);
-    const owned = player.collection[card.id] ?? 0;
+    const owned = deckAccessCollection[card.id] ?? 0;
     const current = deckCounts.get(card.id) ?? 0;
     const limit = card.rarity === "legendary" ? 1 : 2;
     const definition = CARD_RULE_BY_ID.get(card.id);
@@ -3568,7 +3605,7 @@ export function GameApp({
     setSelectedLadderReadyDeckId(null);
     const completion = completeDeckFromCollection({
       cardIds: deckIds,
-      collection: player.collection,
+      collection: deckAccessCollection,
       format: deckFormat,
     });
     const added = completion.addedCardIds.length;
@@ -3597,7 +3634,7 @@ export function GameApp({
       });
       return;
     }
-    const missing = findMissingDeckCards(recipe.cardIds, player.collection)
+    const missing = findMissingDeckCards(recipe.cardIds, deckAccessCollection)
       .reduce((total, card) => total + card.missing, 0);
     setEditingDeckId(null);
     setSelectedLadderReadyDeckId(null);
@@ -3704,7 +3741,7 @@ export function GameApp({
       setNotice({ tone: "warning", text: validation.errors[0]?.message ?? "卡组代码不符合 30 张组牌规则。" });
       return false;
     }
-    const missing = findMissingDeckCards(decoded.cardIds, player.collection);
+    const missing = findMissingDeckCards(decoded.cardIds, deckAccessCollection);
     setEditingDeckId(null);
     setSelectedLadderReadyDeckId(null);
     setDeckIds([...decoded.cardIds]);
@@ -3723,7 +3760,7 @@ export function GameApp({
     const suggestions = suggestDeckReplacements({
       cardIds: deckIds,
       missingCardId,
-      collection: player.collection,
+      collection: deckAccessCollection,
       format: deckFormat,
     });
     if (!suggestions.includes(replacementCardId)) {
@@ -3779,7 +3816,7 @@ export function GameApp({
       preview.code !== declinedClipboardDeckCodeRef.current &&
       typeof window !== "undefined"
     ) {
-      const missing = findMissingDeckCards(preview.cardIds, player.collection)
+      const missing = findMissingDeckCards(preview.cardIds, deckAccessCollection)
         .reduce((sum, item) => sum + item.missing, 0);
       const confirmed = window.confirm(
         `检测到剪贴板中的${rankedFormatLabel(preview.format)}卡组「${preview.name}」` +
@@ -5256,7 +5293,8 @@ export function GameApp({
               {section === "collection" && (
                 <CollectionSection
                   cards={filteredCards}
-                  collection={player.collection}
+                  collection={deckAccessCollection}
+                  realCollection={player.collection}
                   dust={player.currencies.dust}
                   deckCounts={deckCounts}
                   search={search}
@@ -5293,7 +5331,8 @@ export function GameApp({
                     const definition = CARD_RULE_BY_ID.get(card.id);
                     return definition ? cardAvailableInRankedFormat(definition, deckFormat) : false;
                   })}
-                  collection={player.collection}
+                  collection={deckAccessCollection}
+                  realCollection={player.collection}
                   decks={player.decks}
                   editingDeckId={editingDeckId}
                   deckIds={deckIds}
@@ -5308,6 +5347,7 @@ export function GameApp({
                   deleting={apiBusy === "delete_deck"}
                   ladderReady={player.ladderReady}
                   catchUpPack={player.catchUpPack}
+                  trialCards={player.trialCards}
                   selectedLadderReadyDeckId={selectedLadderReadyDeckId}
                   ladderReadyBusy={apiBusy === "activate_ladder_ready" || apiBusy === "claim_ladder_ready_deck" || apiBusy === "claim_catch_up_pack"}
                   onName={setDeckName}
@@ -5416,7 +5456,7 @@ export function GameApp({
                       setNotice({ tone: "warning", text: `当前卡组不能进入${rankedFormatLabel(pvp.state.rankedFormat)}：${validation.errors[0]?.message ?? "卡组无效"}` });
                       return;
                     }
-                    const missing = findMissingDeckCards(deckIds, player.collection);
+                    const missing = findMissingDeckCards(deckIds, deckAccessCollection);
                     if (!selectedLadderReadyDeckId && missing.length > 0) {
                       setNotice({ tone: "warning", text: "当前卡组包含未拥有的卡牌，请先制作或替换。" });
                       return;
@@ -5954,6 +5994,7 @@ function RecentMatches({ matches }: { matches: RecentMatch[] }) {
 function CollectionSection({
   cards,
   collection,
+  realCollection,
   dust,
   deckCounts,
   search,
@@ -5985,6 +6026,7 @@ function CollectionSection({
 }: {
   cards: CatalogCard[];
   collection: Record<string, number>;
+  realCollection: Record<string, number>;
   dust: number;
   deckCounts: Map<string, number>;
   search: string;
@@ -6144,6 +6186,7 @@ function CollectionSection({
           <div className="card-grid">
             {visibleCards.map((card) => {
               const owned = collection[card.id] ?? 0;
+              const permanentlyOwned = realCollection[card.id] ?? 0;
               const inDeck = deckCounts.get(card.id) ?? 0;
               const rarity = card.rarity === "common" ? "普通" : card.rarity === "rare" ? "稀有" : card.rarity === "epic" ? "史诗" : "传说";
               const craftPrice = craftCost(rarity);
@@ -6158,6 +6201,11 @@ function CollectionSection({
                     actionLabel={`将${card.name}加入当前卡组`}
                   />
                   <div className="collection-card-actions">
+                    {owned > permanentlyOwned && (
+                      <small className="collection-card-actions__trial">
+                        试玩可用 {owned} · 永久拥有 {permanentlyOwned}
+                      </small>
+                    )}
                     <button
                       className="button button--tiny button--outline"
                       type="button"
@@ -6169,7 +6217,7 @@ function CollectionSection({
                     <button
                       className="button button--tiny button--muted"
                       type="button"
-                      disabled={apiBusy !== null || owned <= inDeck}
+                      disabled={apiBusy !== null || permanentlyOwned <= inDeck}
                       onClick={() => onDisenchant(card)}
                     >
                       分解 · +{dustValue} ✦
@@ -6203,6 +6251,7 @@ function CollectionSection({
 function DeckSection({
   cards,
   collection,
+  realCollection,
   decks,
   editingDeckId,
   deckIds,
@@ -6217,6 +6266,7 @@ function DeckSection({
   deleting,
   ladderReady,
   catchUpPack,
+  trialCards,
   selectedLadderReadyDeckId,
   ladderReadyBusy,
   onName,
@@ -6239,6 +6289,7 @@ function DeckSection({
 }: {
   cards: CatalogCard[];
   collection: Record<string, number>;
+  realCollection: Record<string, number>;
   decks: SavedDeck[];
   editingDeckId: string | null;
   deckIds: string[];
@@ -6253,6 +6304,7 @@ function DeckSection({
   deleting: boolean;
   ladderReady?: PlayerSnapshot["ladderReady"];
   catchUpPack?: PlayerSnapshot["catchUpPack"];
+  trialCards?: PlayerSnapshot["trialCards"];
   selectedLadderReadyDeckId: LadderReadyDeckId | null;
   ladderReadyBusy: boolean;
   onName: (name: string) => void;
@@ -6291,7 +6343,8 @@ function DeckSection({
   const trialExpired = Boolean(ladderReady?.expiresAt && clockNow && Date.parse(ladderReady.expiresAt) <= clockNow);
   const trialClaimed = Boolean(ladderReady?.claimedDeckId);
   const trialPlayable = ladderReadyTrialIsActive(ladderReady, clockNow);
-  const catchUpPreview = previewCatchUpPack(collection);
+  const catchUpPreview = previewCatchUpPack(realCollection);
+  const trialCardsActive = trialCardsAreActive(trialCards, clockNow);
   const uniqueDeckCards = Array.from(deckCounts.entries())
     .map(([id, count]) => ({ card: CARD_BY_ID.get(id), count }))
     .filter((entry): entry is { card: CatalogCard; count: number } => Boolean(entry.card))
@@ -6424,6 +6477,14 @@ function DeckSection({
             {catchUpPack?.claimedAt
               ? `追赶包已领取 · ${catchUpPack.cardsGranted} 张`
               : `追赶包预估 ${catchUpPreview.cardCount} 张（收藏越少越多）`}
+          </span>
+          <span>
+            <Icon name="spark" size={14} />
+            {trialCardsActive
+              ? `试玩卡生效中 · 猛禽年与圣甲虫年 · ${formatLadderReadyCountdown(trialCards?.expiresAt, clockNow)}`
+              : trialCards?.expiresAt
+                ? "试玩卡权限已到期"
+                : "启动扶持后临时开放两个当前扩展"}
           </span>
           <button
             className="button button--small"
