@@ -6766,8 +6766,8 @@
   },
   {
     "id": "neutral-season-spell-03",
-    "name": "荒原复苏·03",
-    "description": "为一个友方角色恢复 5 点生命。",
+    "name": "荒原避险令",
+    "description": "使一个友方角色在本回合中获得免疫。",
     "faction": "中立",
     "type": "spell",
     "cost": 3,
@@ -6776,11 +6776,14 @@
     "target": "friendly-character",
     "effect": [
       {
-        "kind": "heal",
-        "amount": 5
+        "kind": "grant-immune",
+        "duration": "end-of-turn"
       }
     ],
-    "keywords": [],
+    "keywords": [
+      "immune",
+      "temporary"
+    ],
     "onDeath": [],
     "set": "pegasus-2024"
   },

@@ -2491,6 +2491,7 @@ class _BattleBoardState extends State<BattleBoard> {
               ...state.ai.board.where(
                 (unit) =>
                     !unit.stealthActive &&
+                    !unit.immuneThisTurn &&
                     (card.type != 'spell' || !unit.isElusive),
               ),
             ]
@@ -2500,7 +2501,7 @@ class _BattleBoardState extends State<BattleBoard> {
                 .where(
                   (unit) =>
                       (!targetType.startsWith('enemy') ||
-                          !unit.stealthActive) &&
+                          (!unit.stealthActive && !unit.immuneThisTurn)) &&
                       (card.type != 'spell' || !unit.isElusive),
                 )
                 .toList();
@@ -2508,7 +2509,9 @@ class _BattleBoardState extends State<BattleBoard> {
         context,
         card,
         targetUnits,
-        allowHero: targetType.contains('character'),
+        allowHero:
+            targetType.contains('character') &&
+            (!targetType.startsWith('enemy') || !state.ai.heroImmuneThisTurn),
         enemy: targetType.startsWith('enemy'),
       );
       if (!context.mounted || choice == null) return;
@@ -2532,16 +2535,20 @@ class _BattleBoardState extends State<BattleBoard> {
 
   Future<void> _attack(BuildContext context, BattleUnit attacker) async {
     final taunts = state.ai.board
-        .where((unit) => unit.hasTaunt && !unit.stealthActive)
+        .where(
+          (unit) =>
+              unit.hasTaunt && !unit.stealthActive && !unit.immuneThisTurn,
+        )
         .toList();
     final visibleUnits = state.ai.board
-        .where((unit) => !unit.stealthActive)
+        .where((unit) => !unit.stealthActive && !unit.immuneThisTurn)
         .toList();
     final choice = await _pickBattleTarget(
       context,
       null,
       taunts.isNotEmpty ? taunts : visibleUnits,
-      allowHero: taunts.isEmpty && !attacker.rushOnly,
+      allowHero:
+          taunts.isEmpty && !attacker.rushOnly && !state.ai.heroImmuneThisTurn,
       enemy: true,
     );
     if (!context.mounted || choice == null) return;
@@ -2560,16 +2567,19 @@ class _BattleBoardState extends State<BattleBoard> {
     final weapon = state.player.weapon;
     if ((weapon?.attack ?? 0) + state.player.heroAttackBonus <= 0) return;
     final taunts = state.ai.board
-        .where((unit) => unit.hasTaunt && !unit.stealthActive)
+        .where(
+          (unit) =>
+              unit.hasTaunt && !unit.stealthActive && !unit.immuneThisTurn,
+        )
         .toList();
     final visibleUnits = state.ai.board
-        .where((unit) => !unit.stealthActive)
+        .where((unit) => !unit.stealthActive && !unit.immuneThisTurn)
         .toList();
     final choice = await _pickBattleTarget(
       context,
       null,
       taunts.isNotEmpty ? taunts : visibleUnits,
-      allowHero: taunts.isEmpty,
+      allowHero: taunts.isEmpty && !state.ai.heroImmuneThisTurn,
       enemy: true,
     );
     if (!context.mounted || choice == null) return;
@@ -2594,13 +2604,19 @@ class _BattleBoardState extends State<BattleBoard> {
     if (targetType.contains('unit') || targetType.contains('character')) {
       final friendly = targetType.startsWith('friendly');
       final targetUnits = (friendly ? state.player.board : state.ai.board)
-          .where((unit) => !unit.isElusive && (friendly || !unit.stealthActive))
+          .where(
+            (unit) =>
+                !unit.isElusive &&
+                (friendly || (!unit.stealthActive && !unit.immuneThisTurn)),
+          )
           .toList();
       choice = await _pickBattleTarget(
         context,
         null,
         targetUnits,
-        allowHero: targetType.contains('character'),
+        allowHero:
+            targetType.contains('character') &&
+            (friendly || !state.ai.heroImmuneThisTurn),
         enemy: !friendly,
       );
       if (!context.mounted || choice == null) return;
@@ -2909,6 +2925,7 @@ class _BattleBoardState extends State<BattleBoard> {
                         secretCount: state.ai.secrets.length,
                         heroAttackBonus: state.ai.heroAttackBonus,
                         heroFrozenTurns: state.ai.heroFrozenTurns,
+                        heroImmuneThisTurn: state.ai.heroImmuneThisTurn,
                         ai: true,
                       ),
                       const SizedBox(height: 13),
@@ -2969,6 +2986,7 @@ class _BattleBoardState extends State<BattleBoard> {
                         secretCount: state.player.secrets.length,
                         heroAttackBonus: state.player.heroAttackBonus,
                         heroFrozenTurns: state.player.heroFrozenTurns,
+                        heroImmuneThisTurn: state.player.heroImmuneThisTurn,
                         ai: false,
                       ),
                       const SizedBox(height: 12),
@@ -3997,6 +4015,7 @@ class _HeroBar extends StatelessWidget {
     required this.secretCount,
     this.heroAttackBonus = 0,
     this.heroFrozenTurns = 0,
+    this.heroImmuneThisTurn = false,
     required this.ai,
   });
 
@@ -4016,6 +4035,7 @@ class _HeroBar extends StatelessWidget {
   final int secretCount;
   final int heroAttackBonus;
   final int heroFrozenTurns;
+  final bool heroImmuneThisTurn;
   final bool ai;
 
   @override
@@ -4087,6 +4107,11 @@ class _HeroBar extends StatelessWidget {
             Text(
               '❄ 冻结',
               style: const TextStyle(color: Color(0xFF8EDBFF), fontSize: 9),
+            ),
+          if (heroImmuneThisTurn)
+            const Text(
+              '◇ 免疫',
+              style: TextStyle(color: Color(0xFFE7BD7A), fontSize: 9),
             ),
           if (secretCount > 0)
             Text(
@@ -4310,6 +4335,8 @@ class _BoardRow extends StatelessWidget {
                         const _UnitBadge(label: '潜行', color: Color(0xFF65CDDA)),
                       if (unit.hasReborn)
                         const _UnitBadge(label: '复生', color: Color(0xFFA692D1)),
+                      if (unit.immuneThisTurn)
+                        const _UnitBadge(label: '免疫', color: Color(0xFFE7BD7A)),
                     ],
                   ),
                   const Spacer(),
@@ -4849,6 +4876,7 @@ class OnlineBattlePanel extends StatelessWidget {
             ...controller.remoteBoard.where(
               (unit) =>
                   !unit.stealthActive &&
+                  !unit.isImmune &&
                   (card.type != 'spell' || !unit.isElusive),
             ),
           ]
@@ -4860,10 +4888,13 @@ class OnlineBattlePanel extends StatelessWidget {
               .where(
                 (unit) =>
                     !unit.stealthActive &&
+                    !unit.isImmune &&
                     (card.type != 'spell' || !unit.isElusive),
               )
               .toList(growable: false);
-    final allowHero = targetType.contains('character');
+    final allowHero =
+        targetType.contains('character') &&
+        (friendly || !controller.remoteHeroImmuneThisTurn);
     final choice = await _pickTarget(
       context,
       title: '选择「${card.name}」的目标',
@@ -4928,9 +4959,16 @@ class OnlineBattlePanel extends StatelessWidget {
                   .where((unit) => !unit.isElusive)
                   .toList(growable: false)
             : controller.remoteBoard
-                  .where((unit) => !unit.stealthActive && !unit.isElusive)
+                  .where(
+                    (unit) =>
+                        !unit.stealthActive &&
+                        !unit.isImmune &&
+                        !unit.isElusive,
+                  )
                   .toList(growable: false),
-        allowHero: targetType.contains('character'),
+        allowHero:
+            targetType.contains('character') &&
+            (friendly || !controller.remoteHeroImmuneThisTurn),
         friendly: friendly,
       );
       if (!context.mounted || choice == null) return;
@@ -5069,6 +5107,22 @@ class OnlineBattlePanel extends StatelessWidget {
                         '❄ 对手英雄冻结',
                         style: TextStyle(
                           color: Color(0xFF8EDBFF),
+                          fontSize: 10,
+                        ),
+                      ),
+                    if (controller.localHeroImmuneThisTurn)
+                      const Text(
+                        '◇ 英雄免疫',
+                        style: TextStyle(
+                          color: Color(0xFFE7BD7A),
+                          fontSize: 10,
+                        ),
+                      ),
+                    if (controller.remoteHeroImmuneThisTurn)
+                      const Text(
+                        '◇ 对手英雄免疫',
+                        style: TextStyle(
+                          color: Color(0xFFE7BD7A),
                           fontSize: 10,
                         ),
                       ),
@@ -5717,6 +5771,14 @@ class _OnlineBoardRow extends StatelessWidget {
                               unit.isFrozen ? '冻结中' : '等待下回合',
                               style: const TextStyle(
                                 color: Color(0xFF65746D),
+                                fontSize: 9,
+                              ),
+                            ),
+                          if (unit.isImmune)
+                            const Text(
+                              '免疫',
+                              style: TextStyle(
+                                color: Color(0xFFE7BD7A),
                                 fontSize: 9,
                               ),
                             ),

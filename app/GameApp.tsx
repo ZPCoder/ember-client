@@ -375,6 +375,7 @@ type BattleUnit = {
   minionTypes: MinionType[];
   stealthActive: boolean;
   frozenTurns: number;
+  immuneThisTurn: boolean;
   summoningSick: boolean;
   rushOnly: boolean;
   furyStacks: number;
@@ -409,6 +410,7 @@ type BattleSide = {
   heroHasAttacked: boolean;
   heroAttackBonus: number;
   heroFrozenTurns: number;
+  heroImmuneThisTurn: boolean;
   secrets: Array<{ secretId: string; name: string; description: string }>;
   overload: number;
   overloadLocked: number;
@@ -2136,6 +2138,7 @@ function normalizeBoard(value: unknown, turn: number): BattleUnit[] {
         : [...(card?.minionTypes ?? [])],
       stealthActive,
       frozenTurns,
+      immuneThisTurn: Boolean(item.immuneThisTurn),
       summoningSick,
       rushOnly: Boolean(item.rushOnly),
       furyStacks: asNumber(item.furyStacks, 0),
@@ -2238,6 +2241,9 @@ function battleFromRaw(value: unknown): BattleView | null {
     heroFrozenTurns: asNumber(
       (side.hero as Record<string, unknown> | undefined)?.frozenTurns,
       0,
+    ),
+    heroImmuneThisTurn: Boolean(
+      (side.hero as Record<string, unknown> | undefined)?.immuneThisTurn,
     ),
     overload: asNumber(side.overload, 0),
     overloadLocked: asNumber(side.overloadLocked, 0),
@@ -8371,6 +8377,11 @@ function HeroCore({
             ❄ 冻结
           </span>
         )}
+        {side.heroImmuneThisTurn && (
+          <span className="hero-core__frozen" aria-label="英雄本回合免疫伤害与敌方直接选择">
+            ◇ 免疫
+          </span>
+        )}
       </span>
       <span className="hero-core__health"><Icon name="shield" size={17} /> CORE</span>
       {active && <span className="hero-core__active">行动中</span>}
@@ -8466,7 +8477,9 @@ function BoardUnit({
       stealthActive: false,
     };
   const impactText = battleImpactText(impact);
-  const statusText = unit.frozenTurns > 0
+  const statusText = unit.immuneThisTurn
+    ? "◇ 本回合免疫"
+    : unit.frozenTurns > 0
     ? `❄ 冻结 ${unit.frozenTurns} 回合`
     : unit.summoningSick
       ? unit.rushOnly
@@ -8500,7 +8513,7 @@ function BoardUnit({
         onDrop={dropTarget ? onDropTarget : undefined}
         data-battle-drop={dropKey}
         aria-pressed={onSelect ? selected : undefined}
-        aria-label={`${unit.name}${unit.minionTypes.length > 0 ? `，${unit.minionTypes.map((type) => MINION_TYPE_DEFINITIONS[type].label).join("、")}` : ""}，${unit.stars} 星，攻击 ${unit.attack}，生命 ${unit.health}${targetable ? "，设为攻击目标" : unit.canAttack ? "，选择攻击" : "，本回合无法攻击"}${statusText ? `，${statusText.replaceAll("❄ ", "").replaceAll("↗ ", "").replaceAll("◌ ", "").replaceAll("↯ ", "")}` : ""}`}
+        aria-label={`${unit.name}${unit.minionTypes.length > 0 ? `，${unit.minionTypes.map((type) => MINION_TYPE_DEFINITIONS[type].label).join("、")}` : ""}，${unit.stars} 星，攻击 ${unit.attack}，生命 ${unit.health}${targetable ? "，设为攻击目标" : unit.canAttack ? "，选择攻击" : "，本回合无法攻击"}${statusText ? `，${statusText.replaceAll("❄ ", "").replaceAll("↗ ", "").replaceAll("◌ ", "").replaceAll("↯ ", "").replaceAll("◇ ", "")}` : ""}`}
         title={visualCard.description || `${unit.name} · ${unit.attack}/${unit.health}`}
       >
       <div className="board-unit__art">
@@ -9361,13 +9374,14 @@ function BattleSection({
     : 0;
   const rushOnlyAttack = Boolean(selectedAttackerUnit?.rushOnly);
   const enemyHeroTargetable = selectedAttacker
-    ? !attackBlockedByTaunt && !rushOnlyAttack
-    : cardCanTarget("ai", "hero");
+    ? !attackBlockedByTaunt && !rushOnlyAttack && !battle.ai.heroImmuneThisTurn
+    : cardCanTarget("ai", "hero") && !battle.ai.heroImmuneThisTurn;
   const pendingSourceBlocksElusive = pendingHeroPower || pendingDefinition?.type === "spell";
   const elusiveBlocksPendingTarget = (unit: BattleUnit): boolean =>
     Boolean(pendingSourceBlocksElusive && unit.keywords.includes("elusive"));
   const enemyUnitTargetable = (unit: BattleUnit) => {
     if (unit.health <= 0) return false;
+    if (unit.immuneThisTurn) return false;
     if (selectedAttacker) {
       if (unit.stealthActive) return false;
       return !attackBlockedByTaunt || unit.keywords.includes("taunt");
@@ -9386,6 +9400,7 @@ function BattleSection({
   };
   const targetPreviewForPendingUnit = (unit: BattleUnit, side: "player" | "ai"): string | undefined => {
     if (!pendingCard && !pendingHeroPower) return undefined;
+    if (unit.immuneThisTurn && side === "ai") return "免疫：不能成为敌方直接目标";
     if (elusiveBlocksPendingTarget(unit)) return "扰魔：不能成为法术或技能目标";
     if (pendingHeroPower) {
       const power = battle.player.heroPowerEffect;

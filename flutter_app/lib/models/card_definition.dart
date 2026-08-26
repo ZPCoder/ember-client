@@ -263,6 +263,7 @@ class BattleUnit {
     this.stealthActive = false,
     this.frozenTurns = 0,
     this.freezeBlocked = false,
+    this.immuneThisTurn = false,
     this.rebornUsed = false,
     this.permanentAttackBonus = 0,
     this.permanentHealthBonus = 0,
@@ -289,6 +290,7 @@ class BattleUnit {
 
   /// True when Freeze has consumed this unit's current-turn attack.
   bool freezeBlocked;
+  bool immuneThisTurn;
   bool rebornUsed;
   int permanentAttackBonus;
   int permanentHealthBonus;
@@ -384,6 +386,7 @@ class BattleSide {
     this.heroAttackBonus = 0,
     this.heroFrozenTurns = 0,
     this.heroFreezeBlocked = false,
+    this.heroImmuneThisTurn = false,
     List<String>? spellSchoolsPlayedThisTurn,
     List<String>? spellSchoolsPlayedLastTurn,
     List<String>? spellsPlayedThisGame,
@@ -461,6 +464,7 @@ class BattleSide {
   int heroAttackBonus;
   int heroFrozenTurns;
   bool heroFreezeBlocked;
+  bool heroImmuneThisTurn;
   int cardsPlayedThisTurn = 0;
   final List<String> spellSchoolsPlayedThisTurn;
   final List<String> spellSchoolsPlayedLastTurn;

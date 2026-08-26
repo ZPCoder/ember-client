@@ -39,6 +39,11 @@ void main() {
             .keywords,
         contains('elusive'),
       );
+      final immunity = catalog.singleWhere(
+        (card) => card.id == 'neutral-season-spell-03',
+      );
+      expect(immunity.keywords, contains('immune'));
+      expect(immunity.effect.single['kind'], 'grant-immune');
       final location = catalog.singleWhere((card) => card.isLocation);
       expect(location.id, 'sun-daybreak-order');
       expect(location.durability, 3);
@@ -4718,6 +4723,56 @@ void main() {
     },
   );
 
+  test('online temporary Immune blocks opposing cards and attacks', () async {
+    final catalog = await loadCatalog();
+    final spell = catalog.singleWhere((card) => card.id == 'sun-focused-ray');
+    final battlecry = catalog.singleWhere(
+      (card) => card.id == 'ember-oath-pyromancer',
+    );
+    final attackerCard = catalog.singleWhere(
+      (card) => card.id == 'sun-dawn-scout',
+    );
+    final immuneCard = catalog.singleWhere(
+      (card) => card.id == 'neutral-caravan-guard',
+    );
+    final client = _RecordingMultiplayerClient()
+      ..playerId = 'p-local'
+      ..isHost = true;
+    final controller = OnlineBattleController(catalog: catalog, client: client)
+      ..started = true
+      ..localTurn = true
+      ..phase = 'main'
+      ..localMana = 10
+      ..remoteHeroImmuneThisTurn = true
+      ..hand = [spell, battlecry]
+      ..handCostReductions = [0, 0];
+    final immune = OnlineUnit(
+      instanceId: 'online-immune',
+      card: immuneCard,
+      attack: 2,
+      health: 5,
+      maxHealth: 5,
+      immuneThisTurn: true,
+    );
+    final attacker = OnlineUnit(
+      instanceId: 'online-immune-attacker',
+      card: attackerCard,
+      attack: 2,
+      health: 1,
+      maxHealth: 1,
+    );
+    controller.remoteBoard = [immune];
+    controller.localBoard = [attacker];
+
+    controller.playCard(spell, handIndex: 0, target: immune);
+    controller.playCard(battlecry, handIndex: 1, target: immune);
+    controller.attackUnit(attacker, immune);
+    controller.attack(attacker);
+    expect(client.actions, isEmpty);
+    controller.dispose();
+    client.dispose();
+  });
+
   test(
     'online Shatter snapshot exposes fragment target and preserves hand index',
     () async {
@@ -5158,6 +5213,70 @@ void main() {
       state.player.board.add(attacker);
       expect(controller.attack(attacker, target: elusive), isTrue);
       expect(elusive.health, 1);
+      controller.dispose();
+    },
+  );
+
+  test(
+    'mobile temporary Immune prevents retaliation and expires at turn end',
+    () async {
+      final catalog = await loadCatalog();
+      final immunity = catalog.singleWhere(
+        (card) => card.id == 'neutral-season-spell-03',
+      );
+      final immuneCard = catalog.singleWhere(
+        (card) => card.id == 'neutral-stonehorn',
+      );
+      final defenderCard = catalog.singleWhere(
+        (card) => card.id == 'neutral-caravan-guard',
+      );
+      final controller = GameController(startingPlayer: 'player')
+        ..catalog = catalog
+        ..deckIds.addAll(List.filled(30, immuneCard.id));
+      controller.startBattle();
+      await controller.confirmMulligan();
+      final state = controller.battle!;
+      final attacker = BattleUnit(
+        instanceId: 'mobile-immune-attacker',
+        card: immuneCard,
+        owner: 'player',
+        attack: 2,
+        health: 5,
+        maxHealth: 5,
+      );
+      final defender = BattleUnit(
+        instanceId: 'mobile-immune-defender',
+        card: defenderCard,
+        owner: 'ai',
+        attack: 3,
+        health: 5,
+        maxHealth: 5,
+      );
+      state.player.board
+        ..clear()
+        ..add(attacker);
+      state.ai.board
+        ..clear()
+        ..add(defender);
+      state.player.hand
+        ..clear()
+        ..add(immunity);
+      state.player.handCostReductions
+        ..clear()
+        ..add(0);
+      state.player.handFragments
+        ..clear()
+        ..add(null);
+      state.player.mana = 10;
+
+      expect(controller.playCard(immunity, target: attacker), isTrue);
+      expect(attacker.immuneThisTurn, isTrue);
+      expect(controller.attack(attacker, target: defender), isTrue);
+      expect(attacker.health, 5);
+
+      state.ai.board.clear();
+      await controller.endTurn();
+      expect(attacker.immuneThisTurn, isFalse);
       controller.dispose();
     },
   );

@@ -22,6 +22,7 @@ class OnlineUnit {
     this.rushOnly = false,
     this.stealthActive = false,
     this.frozenTurns = 0,
+    this.immuneThisTurn = false,
     this.stars = 1,
     this.silenced = false,
   });
@@ -39,6 +40,7 @@ class OnlineUnit {
   final bool rushOnly;
   final bool stealthActive;
   final int frozenTurns;
+  final bool immuneThisTurn;
   final int stars;
   final bool silenced;
 
@@ -46,6 +48,7 @@ class OnlineUnit {
   bool get hasWindfury => keywords.contains('windfury');
   bool get hasDivineShield => keywords.contains('shield');
   bool get isElusive => keywords.contains('elusive');
+  bool get isImmune => immuneThisTurn;
   bool get isFrozen => frozenTurns > 0;
   int get attackLimit => hasWindfury ? 2 : 1;
   bool get canAttack =>
@@ -126,6 +129,8 @@ class OnlineBattleController extends ChangeNotifier {
   int remoteHeroAttackBonus = 0;
   int localHeroFrozenTurns = 0;
   int remoteHeroFrozenTurns = 0;
+  bool localHeroImmuneThisTurn = false;
+  bool remoteHeroImmuneThisTurn = false;
   bool localCoinAvailable = false;
   bool localHeroPowerUsed = false;
   bool localHeroHasAttacked = false;
@@ -278,6 +283,10 @@ class OnlineBattleController extends ChangeNotifier {
         _log('${card.name} 不能选择扰魔单位。');
         return;
       }
+      if (unitIsValid && !localBoard.contains(target) && target!.isImmune) {
+        _log('${card.name} 不能选择免疫单位。');
+        return;
+      }
       if ((needsUnit && !unitIsValid) ||
           (!needsUnit && !unitIsValid && !heroIsValid)) {
         _log('${card.name} 的目标不满足服务器规则。');
@@ -287,6 +296,7 @@ class OnlineBattleController extends ChangeNotifier {
         _log('${card.name} 不能选择核心作为目标。');
         return;
       }
+      if (targetHero && !friendly && remoteHeroImmuneThisTurn) return;
     }
     final wireTarget = targetHero
         ? <String, dynamic>{
@@ -311,6 +321,7 @@ class OnlineBattleController extends ChangeNotifier {
         !unit.canAttack ||
         unit.rushOnly ||
         !localBoard.contains(unit) ||
+        remoteHeroImmuneThisTurn ||
         _visibleRemoteTaunts.isNotEmpty) {
       return;
     }
@@ -328,6 +339,7 @@ class OnlineBattleController extends ChangeNotifier {
         !localBoard.contains(attacker) ||
         !remoteBoard.contains(target) ||
         target.stealthActive ||
+        target.isImmune ||
         (_visibleRemoteTaunts.isNotEmpty && !target.hasTaunt)) {
       return;
     }
@@ -351,9 +363,10 @@ class OnlineBattleController extends ChangeNotifier {
     }
     final taunts = _visibleRemoteTaunts;
     if (target == null) {
-      if (taunts.isNotEmpty) return;
+      if (taunts.isNotEmpty || remoteHeroImmuneThisTurn) return;
     } else if (!remoteBoard.contains(target) ||
         target.stealthActive ||
+        target.isImmune ||
         (taunts.isNotEmpty && !target.hasTaunt)) {
       return;
     }
@@ -425,6 +438,7 @@ class OnlineBattleController extends ChangeNotifier {
       final friendly = targetType.startsWith('friendly');
       final board = friendly ? localBoard : remoteBoard;
       if (!board.contains(target) ||
+          (!friendly && target.isImmune) ||
           target.isElusive ||
           (!friendly && target.stealthActive)) {
         return;
@@ -684,6 +698,7 @@ class OnlineBattleController extends ChangeNotifier {
     final heroName = hero is Map ? hero['name']?.toString() : null;
     final heroFrozenTurns =
         (hero is Map ? (hero['frozenTurns'] as num?)?.toInt() : null) ?? 0;
+    final heroImmuneThisTurn = hero is Map && hero['immuneThisTurn'] == true;
     final heroAttackBonus = (side['heroAttackBonus'] as num?)?.toInt() ?? 0;
     final heraldCount = (side['heraldCount'] as num?)?.toInt() ?? 0;
     List<String> spellSchools(Object? value) => value is List
@@ -700,6 +715,7 @@ class OnlineBattleController extends ChangeNotifier {
       localHeroName = heroName;
       localHeroAttackBonus = heroAttackBonus;
       localHeroFrozenTurns = heroFrozenTurns;
+      localHeroImmuneThisTurn = heroImmuneThisTurn;
       localOverloadLocked = (side['overloadLocked'] as num?)?.toInt() ?? 0;
       localHeraldCount = heraldCount;
       localSpellSchoolsThisTurn = schoolsThisTurn;
@@ -744,6 +760,7 @@ class OnlineBattleController extends ChangeNotifier {
       remoteHeroName = heroName;
       remoteHeroAttackBonus = heroAttackBonus;
       remoteHeroFrozenTurns = heroFrozenTurns;
+      remoteHeroImmuneThisTurn = heroImmuneThisTurn;
       remoteHeraldCount = heraldCount;
       remoteSpellSchoolsThisTurn = schoolsThisTurn;
       remoteSpellSchoolsLastTurn = schoolsLastTurn;
@@ -986,6 +1003,7 @@ class OnlineBattleController extends ChangeNotifier {
             rushOnly: unit['rushOnly'] == true,
             stealthActive: unit['stealthActive'] == true,
             frozenTurns: (unit['frozenTurns'] as num?)?.toInt() ?? 0,
+            immuneThisTurn: unit['immuneThisTurn'] == true,
             stars: (unit['stars'] as num?)?.toInt() ?? 1,
             silenced: silenced,
           );
@@ -1018,7 +1036,13 @@ class OnlineBattleController extends ChangeNotifier {
   }
 
   List<OnlineUnit> get _visibleRemoteTaunts => remoteBoard
-      .where((unit) => unit.health > 0 && !unit.stealthActive && unit.hasTaunt)
+      .where(
+        (unit) =>
+            unit.health > 0 &&
+            !unit.stealthActive &&
+            !unit.isImmune &&
+            unit.hasTaunt,
+      )
       .toList(growable: false);
 
   List<OnlineUnit> attackTargetsFor(OnlineUnit attacker) {
@@ -1026,7 +1050,9 @@ class OnlineBattleController extends ChangeNotifier {
       return const <OnlineUnit>[];
     }
     final visible = remoteBoard
-        .where((unit) => unit.health > 0 && !unit.stealthActive)
+        .where(
+          (unit) => unit.health > 0 && !unit.stealthActive && !unit.isImmune,
+        )
         .toList(growable: false);
     final taunts = visible
         .where((unit) => unit.hasTaunt)
@@ -1039,6 +1065,7 @@ class OnlineBattleController extends ChangeNotifier {
       localBoard.contains(attacker) &&
       attacker.canAttack &&
       !attacker.rushOnly &&
+      !remoteHeroImmuneThisTurn &&
       _visibleRemoteTaunts.isEmpty;
 
   bool hasLegalAttackTarget(OnlineUnit attacker) =>
@@ -1046,7 +1073,9 @@ class OnlineBattleController extends ChangeNotifier {
 
   List<OnlineUnit> get heroAttackTargets {
     final visible = remoteBoard
-        .where((unit) => unit.health > 0 && !unit.stealthActive)
+        .where(
+          (unit) => unit.health > 0 && !unit.stealthActive && !unit.isImmune,
+        )
         .toList(growable: false);
     final taunts = visible
         .where((unit) => unit.hasTaunt)
@@ -1060,6 +1089,7 @@ class OnlineBattleController extends ChangeNotifier {
       (localWeaponCard == null || localWeaponDurability > 0) &&
       localHeroFrozenTurns <= 0 &&
       !localHeroHasAttacked &&
+      !remoteHeroImmuneThisTurn &&
       _visibleRemoteTaunts.isEmpty;
 
   void _log(String message) {

@@ -116,6 +116,7 @@ const keywordLabels = <String, String>{
   'poisonous': '剧毒',
   'stealth': '潜行',
   'elusive': '扰魔',
+  'immune': '免疫',
   'reborn': '复生',
   'freeze': '冻结',
   'overload': '过载',

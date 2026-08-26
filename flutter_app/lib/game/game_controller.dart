@@ -1488,6 +1488,9 @@ class GameController extends ChangeNotifier {
         (card.isLocation && _battlefieldSize(state.player) >= 7) ||
         (_battlefieldSize(state.player) >= 7 &&
             _isPureSummonSpell(card, state.player)) ||
+        (targetHero &&
+            !(card.target ?? '').startsWith('friendly') &&
+            state.ai.heroImmuneThisTurn) ||
         !_validTarget(card, state.player, state.ai, target)) {
       return false;
     }
@@ -1668,11 +1671,17 @@ class GameController extends ChangeNotifier {
       return false;
     }
     final taunts = state.ai.board
-        .where((unit) => unit.hasTaunt && !unit.stealthActive)
+        .where(
+          (unit) =>
+              unit.hasTaunt && !unit.stealthActive && !unit.immuneThisTurn,
+        )
         .toList();
     if (taunts.isNotEmpty && (target == null || !target.hasTaunt)) return false;
     if (target != null && !state.ai.board.contains(target)) return false;
-    if (target?.stealthActive ?? false) return false;
+    if ((target?.stealthActive ?? false) || (target?.immuneThisTurn ?? false)) {
+      return false;
+    }
+    if (target == null && state.ai.heroImmuneThisTurn) return false;
     if (target == null) {
       _triggerSecrets(
         state.ai,
@@ -1787,6 +1796,7 @@ class GameController extends ChangeNotifier {
     if (targetType == 'enemy-unit') {
       return target != null &&
           enemy.board.contains(target) &&
+          !target.immuneThisTurn &&
           !target.isElusive &&
           !target.stealthActive;
     }
@@ -2130,6 +2140,7 @@ class GameController extends ChangeNotifier {
       stealthActive: original.stealthActive,
       frozenTurns: original.frozenTurns,
       freezeBlocked: original.frozenTurns > 0,
+      immuneThisTurn: original.immuneThisTurn,
       rebornUsed: original.rebornUsed,
       permanentAttackBonus: original.permanentAttackBonus,
       permanentHealthBonus: original.permanentHealthBonus,
@@ -3118,6 +3129,11 @@ class GameController extends ChangeNotifier {
     final targetType = card.target ?? '';
     if (card.type == 'spell' && target != null && target.isElusive)
       return false;
+    if (target != null &&
+        enemy.board.contains(target) &&
+        target.immuneThisTurn) {
+      return false;
+    }
     if (!targetType.contains('unit')) return true;
     if (target == null) {
       return false;
@@ -3986,6 +4002,30 @@ class GameController extends ChangeNotifier {
               stateLog(sourceName, '${unit.card.name} 获得临时 +$attack/+$health。');
             }
             break;
+          case 'grant-immune':
+            if (targetHero) {
+              source.heroImmuneThisTurn = true;
+              stateLog(sourceName, '友方核心本回合获得免疫。');
+              _emitFx(
+                'shield',
+                '核心获得免疫',
+                '本回合不会受到伤害，也不能被敌方选择',
+                Icons.shield_moon,
+                0xFFE7BD7A,
+              );
+            } else if (target != null && source.board.contains(target)) {
+              target.immuneThisTurn = true;
+              stateLog(sourceName, '${target.card.name} 本回合获得免疫。');
+              _emitFx(
+                'shield',
+                '单位获得免疫',
+                '${target.card.name} 本回合不会受到伤害',
+                Icons.shield_moon,
+                0xFFE7BD7A,
+                targetId: target.instanceId,
+              );
+            }
+            break;
           case 'silence':
             if (target == null) break;
             final targetSide = source.board.contains(target)
@@ -4006,6 +4046,7 @@ class GameController extends ChangeNotifier {
             target.stealthActive = false;
             target.frozenTurns = 0;
             target.freezeBlocked = false;
+            target.immuneThisTurn = false;
             target.rushOnly = false;
             target.rebornUsed = true;
             stateLog(sourceName, '${target.card.name} 被沉默。');
@@ -4391,13 +4432,19 @@ class GameController extends ChangeNotifier {
       return false;
     }
     final taunts = state.ai.board
-        .where((unit) => unit.hasTaunt && !unit.stealthActive)
+        .where(
+          (unit) =>
+              unit.hasTaunt && !unit.stealthActive && !unit.immuneThisTurn,
+        )
         .toList();
     if (taunts.isNotEmpty && (target == null || !target.hasTaunt)) {
       return false;
     }
     if (target != null && !state.ai.board.contains(target)) return false;
-    if (target?.stealthActive ?? false) return false;
+    if ((target?.stealthActive ?? false) || (target?.immuneThisTurn ?? false)) {
+      return false;
+    }
+    if (target == null && state.ai.heroImmuneThisTurn) return false;
     if (target == null && attacker.rushOnly) return false;
     _performAttack(attacker, state.ai, target);
     _checkFinished();
@@ -4473,7 +4520,7 @@ class GameController extends ChangeNotifier {
   }
 
   int _damageHero(BattleSide side, int amount) {
-    if (amount <= 0) return 0;
+    if (amount <= 0 || side.heroImmuneThisTurn) return 0;
     final absorbed = min(side.armor, amount);
     side.armor -= absorbed;
     final healthDamage = amount - absorbed;
@@ -4502,7 +4549,7 @@ class GameController extends ChangeNotifier {
     BattleUnit? source,
     bool combat = false,
   }) {
-    if (amount <= 0 || unit.health <= 0) return 0;
+    if (amount <= 0 || unit.health <= 0 || unit.immuneThisTurn) return 0;
     if (unit.divineShield) {
       unit.divineShield = false;
       _emitFx(
@@ -4968,22 +5015,30 @@ class GameController extends ChangeNotifier {
     }
     final attackers = [...state.ai.board];
     final taunts = state.player.board
-        .where((unit) => unit.hasTaunt && !unit.stealthActive)
+        .where(
+          (unit) =>
+              unit.hasTaunt && !unit.stealthActive && !unit.immuneThisTurn,
+        )
         .toList();
     for (final unit in attackers) {
       if (state.finished || !unit.canAttack || !state.ai.board.contains(unit)) {
         continue;
       }
       final visibleUnits = state.player.board
-          .where((candidate) => !candidate.stealthActive)
+          .where(
+            (candidate) =>
+                !candidate.stealthActive && !candidate.immuneThisTurn,
+          )
           .toList();
       if (unit.rushOnly && visibleUnits.isEmpty) continue;
       final targetPool = taunts.isNotEmpty ? taunts : visibleUnits;
-      final target = unit.rushOnly || taunts.isNotEmpty
+      final target =
+          unit.rushOnly || taunts.isNotEmpty || state.player.heroImmuneThisTurn
           ? (targetPool.isEmpty
                 ? null
                 : targetPool[_random.nextInt(targetPool.length)])
           : null;
+      if (target == null && state.player.heroImmuneThisTurn) continue;
       _performAttack(unit, state.player, target);
       _checkFinished();
       notifyListeners();
@@ -4995,19 +5050,24 @@ class GameController extends ChangeNotifier {
         !state.ai.heroHasAttacked &&
         (state.ai.weapon == null || state.ai.weapon!.durability > 0)) {
       final taunts = state.player.board
-          .where((unit) => unit.hasTaunt && !unit.stealthActive)
+          .where(
+            (unit) =>
+                unit.hasTaunt && !unit.stealthActive && !unit.immuneThisTurn,
+          )
           .toList();
       final visible = state.player.board
-          .where((unit) => !unit.stealthActive)
+          .where((unit) => !unit.stealthActive && !unit.immuneThisTurn)
           .toList();
       final targetPool = taunts.isNotEmpty ? taunts : visible;
       final target = targetPool.isEmpty
           ? null
           : targetPool[_random.nextInt(targetPool.length)];
-      _aiHeroAttack(state, target);
-      _checkFinished();
-      notifyListeners();
-      await Future<void>.delayed(const Duration(milliseconds: 1380));
+      if (target != null || !state.player.heroImmuneThisTurn) {
+        _aiHeroAttack(state, target);
+        _checkFinished();
+        notifyListeners();
+        await Future<void>.delayed(const Duration(milliseconds: 1380));
+      }
     }
     _resolveTurnTriggers(state.ai, start: false);
     _clearTemporaryBuffs(state.ai);
@@ -5212,7 +5272,9 @@ class GameController extends ChangeNotifier {
         unit.health = min(unit.health, unit.maxHealth);
         unit.temporaryHealthBonus = 0;
       }
+      unit.immuneThisTurn = false;
     }
+    side.heroImmuneThisTurn = false;
   }
 
   void _refillMana(BattleSide side) {
@@ -5249,6 +5311,7 @@ class GameController extends ChangeNotifier {
               (unit) =>
                   unit.health > 0 &&
                   !unit.stealthActive &&
+                  !unit.immuneThisTurn &&
                   (!blocksElusive || !unit.isElusive),
             ),
           ]..sort(
@@ -5272,6 +5335,7 @@ class GameController extends ChangeNotifier {
           .where(
             (unit) =>
                 !unit.stealthActive &&
+                !unit.immuneThisTurn &&
                 unit.health > 0 &&
                 (!blocksElusive || !unit.isElusive),
           )
@@ -5301,7 +5365,10 @@ class GameController extends ChangeNotifier {
             state.player.board
                 .where(
                   (unit) =>
-                      !unit.stealthActive && unit.health > 0 && !unit.isElusive,
+                      !unit.stealthActive &&
+                      !unit.immuneThisTurn &&
+                      unit.health > 0 &&
+                      !unit.isElusive,
                 )
                 .toList()
               ..sort((left, right) => left.health.compareTo(right.health));
