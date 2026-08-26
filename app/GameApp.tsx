@@ -13,6 +13,7 @@ import {
 import {
   APPRENTICE_MILESTONES,
   CARD_CATALOG,
+  CARD_SET_DEFINITIONS,
   AI_ARCHETYPES,
   DEFAULT_OPPONENT_DECK,
   DEFAULT_STARTER_DECK,
@@ -30,6 +31,7 @@ import {
   apprenticeMilestoneProgress,
   apprenticeTrackComplete,
   battleEventsToEffects,
+  cardAvailableInRankedFormat,
   chooseAiMulliganIndexes,
   createMatch,
   createRankedRewardState,
@@ -43,19 +45,24 @@ import {
   LADDER_READY_TRIAL_MS,
   LADDER_START_RATING,
   createRankedSnapshot,
+  createRankedLadders,
   describeRankedRewardBundle,
-  isRankFloorProgress,
+  highestRankedFormat,
   ladderLabelForProgress,
   ladderProgressForRating,
   normalizeRankedRewardState,
+  normalizeRankedLadders,
   RANKED_FIRST_TIME_REWARD_LEVELS,
   rankedSeasonRewardForPeak,
   rollRankedSeason,
+  rankedFormatLabel,
+  totalRankedWins,
   ladderReadyTrialIsActive,
   planAiTurnReplay,
   shouldScheduleLocalAiTurn,
   EXPANDED_FACTION_THEMES,
   validateDeck,
+  validateDeckForFormat,
   type BattleEffectKind,
   type BattleCommand,
   type CardDefinition,
@@ -67,6 +74,8 @@ import {
   type MatchQuality,
   type MatchState,
   type RankedSnapshot,
+  type RankedFormat,
+  type RankedLadders,
   type RankedRewardState,
   type SpellSchool,
   type Trait,
@@ -119,6 +128,7 @@ type CatalogCard = {
   keywords: Keyword[];
   traits: Trait[];
   school?: SpellSchool;
+  set?: CardDefinition["set"];
 };
 
 type PlayerTask = {
@@ -137,6 +147,7 @@ type SavedDeck = {
   id: string;
   name: string;
   cardIds: string[];
+  format: RankedFormat;
   updatedAt: string;
 };
 
@@ -145,6 +156,7 @@ type RecentMatch = {
   result: "win" | "loss" | "draw";
   mode: string;
   format?: "ranked" | "casual";
+  rankedFormat?: RankedFormat;
   opponent: string;
   rewardGold: number;
   createdAt: string;
@@ -170,6 +182,7 @@ type PlayerSnapshot = {
     weeklyFreePackClaimed?: boolean;
   };
   progression?: { xp: number; level: number };
+  rankedLadders: RankedLadders;
   ladder?: RankedSnapshot;
   rankedRewards?: RankedRewardState;
   friends?: Array<{ id: string; displayName: string; status: "pending" | "accepted"; direction: "incoming" | "outgoing" }>;
@@ -313,6 +326,7 @@ type PvpState = {
   roomCode: string | null;
   role: PvpRole | null;
   format: PvpFormat;
+  rankedFormat: RankedFormat;
   matchPool: ApprenticeMatchPool | null;
   matchQuality: MatchQuality | null;
   peerName: string | null;
@@ -323,8 +337,8 @@ type PvpState = {
 };
 
 type PvpIncoming =
-  | { id: number; type: "match-start"; payload: { seed: number; startingPlayer?: 0 | 1; deck?: string[]; decks?: [string[], string[]]; matchToken?: string; format?: PvpFormat } }
-  | { id: number; type: "match-sync"; payload: { state: MatchState; matchToken?: string; format?: PvpFormat } }
+  | { id: number; type: "match-start"; payload: { seed: number; startingPlayer?: 0 | 1; deck?: string[]; decks?: [string[], string[]]; matchToken?: string; format?: PvpFormat; rankedFormat?: RankedFormat } }
+  | { id: number; type: "match-sync"; payload: { state: MatchState; matchToken?: string; format?: PvpFormat; rankedFormat?: RankedFormat } }
   | { id: number; type: "command"; command: BattleCommand; state?: MatchState; matchToken?: string }
   | { id: number; type: "room-reset" }
   | { id: number; type: "rejected"; message: string; resync?: boolean };
@@ -555,6 +569,7 @@ function cardFromRaw(raw: Record<string, unknown>): CatalogCard {
       typeof raw.school === "string"
         ? (raw.school as SpellSchool)
         : undefined,
+    set: typeof raw.set === "string" ? raw.set as CardDefinition["set"] : undefined,
   };
 }
 
@@ -664,15 +679,21 @@ function readLocalPlayer(email: string): PlayerSnapshot | null {
     if (!isPlayerSnapshot(parsed)) return null;
     const now = new Date().toISOString();
     const seasonKey = now.slice(0, 7);
+    const rankedLadders = normalizeRankedLadders(parsed.rankedLadders, parsed.ladder, seasonKey);
     const rolled = rollRankedSeason({
-      ladder: parsed.ladder ?? createRankedSnapshot(seasonKey),
+      ladders: rankedLadders,
       rankedRewards: normalizeRankedRewardState(parsed.rankedRewards),
       collection: parsed.collection,
       packsAvailable: parsed.packsAvailable,
     }, CARD_CATALOG, seasonKey, now);
     const migrated = {
       ...parsed,
-      ladder: rolled.ladder,
+      decks: parsed.decks.map((deck) => ({
+        ...deck,
+        format: deck.format === "wild" || validateDeckForFormat(deck.cardIds, "standard").valid ? deck.format ?? "standard" : "wild",
+      })),
+      rankedLadders: rolled.ladders,
+      ladder: undefined,
       rankedRewards: rolled.rankedRewards,
       collection: rolled.collection,
       packsAvailable: rolled.packsAvailable,
@@ -703,6 +724,7 @@ function makeDemoPlayer(identity?: {
     id: "demo-starter",
     name: "星火远征队",
     cardIds: [...STARTER_IDS],
+    format: "standard",
     updatedAt: new Date().toISOString(),
   };
   return {
@@ -766,7 +788,10 @@ function makeDemoPlayer(identity?: {
     rewardTrack: { claimedLevels: [] },
     apprenticeTrack: { claimedMilestones: [] },
     ladderReady: { activatedAt: null, expiresAt: null, claimedDeckId: null },
-    ladder: { ...createRankedSnapshot(seasonKey), wins: 7, losses: 3 },
+    rankedLadders: {
+      ...createRankedLadders(seasonKey),
+      standard: { ...createRankedSnapshot(seasonKey), wins: 7, losses: 3 },
+    },
     rankedRewards: { ...createRankedRewardState(), earnedCardBackSeasons: [seasonKey] },
     recentMatches: [
       {
@@ -870,6 +895,7 @@ function applyLocalAction(
       id: `ladder-ready-${offer.id}`,
       name: `${offer.faction} · ${offer.name}`,
       cardIds: [...offer.deck],
+      format: "standard",
       updatedAt: now,
     };
     if (current.decks.length >= 20 && !current.decks.some((deck) => deck.id === claimedLadderReadyDeck.id)) {
@@ -1105,9 +1131,10 @@ function applyLocalAction(
       id,
       name: asString(deckInput.name, "未命名卡组"),
       cardIds: Array.isArray(deckInput.cardIds) ? deckInput.cardIds.map(String) : [],
+      format: deckInput.format === "wild" ? "wild" : "standard",
       updatedAt: now,
     };
-    const validation = validateDeck(savedDeck.cardIds);
+    const validation = validateDeckForFormat(savedDeck.cardIds, savedDeck.format);
     if (!validation.valid) {
       throw new Error(validation.errors[0]?.message ?? "卡组不符合组牌规则。");
     }
@@ -1171,6 +1198,7 @@ function applyLocalAction(
       result,
       mode: body.mode,
       ...(body.mode === "pvp" ? { format: body.format === "casual" ? "casual" : "ranked" } : {}),
+      ...(body.mode === "pvp" ? { rankedFormat: body.rankedFormat === "wild" ? "wild" : "standard" } : {}),
       opponent: asString(body.opponent, "镜像演算体 K-7"),
       rewardGold,
       createdAt: now,
@@ -1188,13 +1216,14 @@ function applyLocalAction(
     const rankedEconomy = body.mode === "pvp" && body.format !== "casual"
       ? (() => {
           const seasonKey = now.slice(0, 7);
+          const rankedFormat: RankedFormat = body.rankedFormat === "wild" ? "wild" : "standard";
           const rolled = rollRankedSeason({
-            ladder: current.ladder ?? createRankedSnapshot(seasonKey),
+            ladders: normalizeRankedLadders(current.rankedLadders, current.ladder, seasonKey),
             rankedRewards: normalizeRankedRewardState(current.rankedRewards),
             collection: current.collection,
             packsAvailable: current.packsAvailable,
           }, CARD_CATALOG, seasonKey, now);
-          return applyRankedMatchResult(rolled, CARD_CATALOG, result);
+          return applyRankedMatchResult(rolled, CARD_CATALOG, rankedFormat, result);
         })()
       : null;
     const player = {
@@ -1221,7 +1250,7 @@ function applyLocalAction(
         ...cycle,
         aiRewardsToday: body.mode === "ai" ? Math.min(20, (cycle.aiRewardsToday ?? 0) + 1) : cycle.aiRewardsToday,
       },
-      ladder: rankedEconomy?.ladder ?? current.ladder,
+      rankedLadders: rankedEconomy?.ladders ?? current.rankedLadders,
       updatedAt: now,
     };
     return { ok: true, player, rewardGold, localFallback: true };
@@ -1701,6 +1730,7 @@ function CardTile({
         <div className="game-card__meta">
           <span>{card.faction}</span>
           <span>{TYPE_LABEL[card.type] ?? card.type}</span>
+          {card.set && <span>{CARD_SET_DEFINITIONS[card.set].label}</span>}
         </div>
         <h3>{card.name}</h3>
         <div className="game-card__tags" aria-label="卡牌特质与关键词">
@@ -2128,6 +2158,7 @@ function useWebPvp(displayName: string) {
     roomCode: null,
     role: null,
     format: "ranked",
+    rankedFormat: "standard",
     matchPool: null,
     matchQuality: null,
     peerName: null,
@@ -2172,12 +2203,13 @@ function useWebPvp(displayName: string) {
     }
     if (type === "queue_joined") {
       const format: PvpFormat = message.format === "casual" ? "casual" : "ranked";
+      const rankedFormat: RankedFormat = message.rankedFormat === "wild" ? "wild" : "standard";
       const matchPool: ApprenticeMatchPool | null = message.pool === "apprentice"
         ? "apprentice"
         : message.pool === "standard"
           ? "standard"
           : null;
-      setState((current) => ({ ...current, status: "queue", roomCode: null, role: null, format, matchPool: matchPool ?? current.matchPool, matchQuality: null, peerName: null, localReady: false, remoteReady: false, remoteReadyDeck: null, message: asString(message.message, "正在按隐藏水平寻找对手…") }));
+      setState((current) => ({ ...current, status: "queue", roomCode: null, role: null, format, rankedFormat, matchPool: matchPool ?? current.matchPool, matchQuality: null, peerName: null, localReady: false, remoteReady: false, remoteReadyDeck: null, message: asString(message.message, "正在按隐藏水平寻找对手…") }));
       return;
     }
     if (type === "queue_left") {
@@ -2187,6 +2219,7 @@ function useWebPvp(displayName: string) {
     if (type === "room_created" || type === "room_joined") {
       const roomCode = asString(message.room);
       const format: PvpFormat = message.format === "casual" ? "casual" : "ranked";
+      const rankedFormat: RankedFormat = message.rankedFormat === "wild" ? "wild" : "standard";
       const matchPool: ApprenticeMatchPool | null = message.pool === "apprentice"
         ? "apprentice"
         : message.pool === "standard"
@@ -2204,6 +2237,7 @@ function useWebPvp(displayName: string) {
         roomCode: roomCode || null,
         role: type === "room_created" ? "host" : "guest",
         format,
+        rankedFormat,
         matchPool: matchPool ?? current.matchPool,
         matchQuality,
         localReady: false,
@@ -2228,9 +2262,10 @@ function useWebPvp(displayName: string) {
         : [];
       setState((current) => {
         const nextFormat: PvpFormat = payload && typeof payload === "object" && (payload as Record<string, unknown>).format === "casual" ? "casual" : current.format;
+        const nextRankedFormat: RankedFormat = payload && typeof payload === "object" && (payload as Record<string, unknown>).rankedFormat === "wild" ? "wild" : current.rankedFormat;
         const peer = players.find((player) => asString(player.id) !== current.playerId);
         return peer
-          ? { ...current, format: nextFormat, peerName: asString(peer.name, "对手"), status: current.localReady ? "ready" : "room" }
+          ? { ...current, format: nextFormat, rankedFormat: nextRankedFormat, peerName: asString(peer.name, "对手"), status: current.localReady ? "ready" : "room" }
           : current;
       });
       return;
@@ -2256,8 +2291,9 @@ function useWebPvp(displayName: string) {
       if (!state || typeof state !== "object" || !Array.isArray((state as Record<string, unknown>).players)) return;
       const matchToken = payload && typeof payload === "object" ? asString((payload as Record<string, unknown>).matchToken) : "";
       const format: PvpFormat = payload && typeof payload === "object" && (payload as Record<string, unknown>).format === "casual" ? "casual" : "ranked";
-      setState((current) => ({ ...current, format, status: "playing", message: "已恢复联机对局状态。" }));
-      enqueueIncoming({ id: ++incomingIdRef.current, type: "match-sync", payload: { state: state as MatchState, format, ...(matchToken ? { matchToken } : {}) } });
+      const rankedFormat: RankedFormat = payload && typeof payload === "object" && (payload as Record<string, unknown>).rankedFormat === "wild" ? "wild" : "standard";
+      setState((current) => ({ ...current, format, rankedFormat, status: "playing", message: "已恢复联机对局状态。" }));
+      enqueueIncoming({ id: ++incomingIdRef.current, type: "match-sync", payload: { state: state as MatchState, format, rankedFormat, ...(matchToken ? { matchToken } : {}) } });
       return;
     }
     if (type !== "action") return;
@@ -2284,7 +2320,8 @@ function useWebPvp(displayName: string) {
       if ((!deck && !decks) || !Number.isFinite(seed)) return;
       const startingPlayer: 0 | 1 = payload.startingPlayer === 1 ? 1 : 0;
       const format: PvpFormat = payload.format === "casual" ? "casual" : "ranked";
-      setState((current) => ({ ...current, format, status: "playing", message: "双方已准备，联机演算开始。" }));
+      const rankedFormat: RankedFormat = payload.rankedFormat === "wild" ? "wild" : "standard";
+      setState((current) => ({ ...current, format, rankedFormat, status: "playing", message: "双方已准备，联机演算开始。" }));
       const matchToken = asString(payload.matchToken);
       enqueueIncoming({
         id: ++incomingIdRef.current,
@@ -2293,6 +2330,7 @@ function useWebPvp(displayName: string) {
           seed,
           startingPlayer,
           format,
+          rankedFormat,
           ...(deck ? { deck } : { decks: decks as [string[], string[]] }),
           ...(matchToken ? { matchToken } : {}),
         },
@@ -2367,6 +2405,7 @@ function useWebPvp(displayName: string) {
       roomCode: null,
       role: null,
       format: "ranked",
+      rankedFormat: "standard",
       matchPool: null,
       matchQuality: null,
       peerName: null,
@@ -2535,7 +2574,7 @@ function useWebPvp(displayName: string) {
         return;
       }
       socketRef.current = null;
-      setState((current) => ({ ...current, status: "offline", roomCode: null, role: null, format: "ranked", matchPool: null, matchQuality: null, peerName: null, localReady: false, remoteReady: false, remoteReadyDeck: null, message: "联机大厅连接已断开。" }));
+      setState((current) => ({ ...current, status: "offline", roomCode: null, role: null, format: "ranked", rankedFormat: "standard", matchPool: null, matchQuality: null, peerName: null, localReady: false, remoteReady: false, remoteReadyDeck: null, message: "联机大厅连接已断开。" }));
     };
     if (canFallbackToPolling(parsed)) {
       fallbackTimerRef.current = window.setTimeout(() => {
@@ -2612,12 +2651,12 @@ function useWebPvp(displayName: string) {
     return true;
   }, [enqueueIncoming]);
 
-  const createRoom = useCallback((format: PvpFormat = "ranked") => {
-    send({ type: "create_room", format });
+  const createRoom = useCallback((format: PvpFormat = "ranked", rankedFormat: RankedFormat = "standard") => {
+    send({ type: "create_room", format, rankedFormat });
   }, [send]);
 
-  const queue = useCallback((format: PvpFormat = "ranked") => {
-    send({ type: "queue_join", format });
+  const queue = useCallback((format: PvpFormat = "ranked", rankedFormat: RankedFormat = "standard") => {
+    send({ type: "queue_join", format, rankedFormat });
   }, [send]);
 
   const leaveQueue = useCallback(() => {
@@ -2725,6 +2764,7 @@ export function GameApp({
   const [traitFilter, setTraitFilter] = useState("全部");
   const [keywordFilter, setKeywordFilter] = useState("全部");
   const [deckName, setDeckName] = useState("星火远征队");
+  const [deckFormat, setDeckFormat] = useState<RankedFormat>("standard");
   const [deckIds, setDeckIds] = useState<string[]>(() => [...STARTER_IDS]);
   const [editingDeckId, setEditingDeckId] = useState<string | null>(null);
   const [selectedLadderReadyDeckId, setSelectedLadderReadyDeckId] = useState<LadderReadyDeckId | null>(null);
@@ -2937,6 +2977,7 @@ export function GameApp({
           setEditingDeckId(firstDeck.id);
           setDeckIds([...firstDeck.cardIds]);
           setDeckName(firstDeck.name);
+          setDeckFormat(firstDeck.format ?? "standard");
         }
       } catch {
         if (!active) return;
@@ -2951,6 +2992,7 @@ export function GameApp({
             setEditingDeckId(firstDeck.id);
             setDeckIds([...firstDeck.cardIds]);
             setDeckName(firstDeck.name);
+            setDeckFormat(firstDeck.format ?? "standard");
           }
           setNotice({
             tone: "warning",
@@ -3058,7 +3100,7 @@ export function GameApp({
 
   const deckValidation = useMemo(() => {
     try {
-      const raw = (validateDeck as unknown as (ids: string[]) => unknown)(deckIds);
+      const raw = validateDeckForFormat(deckIds, deckFormat);
       const normalized = validationFromRaw(raw);
       if (deckIds.length !== 30) {
         return {
@@ -3076,7 +3118,7 @@ export function GameApp({
         errors: [`卡组必须恰好为 30 张（当前 ${deckIds.length} 张）`],
       };
     }
-  }, [deckIds]);
+  }, [deckFormat, deckIds]);
 
   const factions = useMemo(
     () => ["全部", ...Array.from(new Set(CATALOG.map((card) => card.faction)))],
@@ -3164,6 +3206,11 @@ export function GameApp({
     const owned = player.collection[card.id] ?? 0;
     const current = deckCounts.get(card.id) ?? 0;
     const limit = card.rarity === "legendary" ? 1 : 2;
+    const definition = CARD_RULE_BY_ID.get(card.id);
+    if (!definition || !cardAvailableInRankedFormat(definition, deckFormat)) {
+      setNotice({ tone: "warning", text: `「${card.name}」已退出标准环境，请切换为狂野卡组。` });
+      return;
+    }
     if (deckIds.length >= 30) {
       setNotice({ tone: "warning", text: "卡组已满 30 张，请先移除一张卡牌。" });
       return;
@@ -3202,6 +3249,7 @@ export function GameApp({
         ...(editingDeckId ? { id: editingDeckId } : {}),
         name: deckName.trim() || "未命名卡组",
         cardIds: deckIds,
+        format: deckFormat,
       },
     });
     if (payload) {
@@ -3216,7 +3264,7 @@ export function GameApp({
   };
 
   const importDeck = (ids: string[]) => {
-    const validation = validateDeck(ids);
+    const validation = validateDeckForFormat(ids, deckFormat);
     if (!validation.valid) {
       setNotice({ tone: "warning", text: validation.errors[0]?.message ?? "卡组代码不符合 30 张组牌规则。" });
       return;
@@ -3240,6 +3288,7 @@ export function GameApp({
     setSelectedLadderReadyDeckId(null);
     setDeckIds([...selected.cardIds]);
     setDeckName(selected.name);
+    setDeckFormat(selected.format ?? "standard");
     setNotice({ tone: "info", text: `已载入「${selected.name}」，保存后将设为当前卡组。` });
   };
 
@@ -3248,6 +3297,7 @@ export function GameApp({
     setSelectedLadderReadyDeckId(null);
     setDeckIds([...DEFAULT_STARTER_DECK]);
     setDeckName("新建战术卡组");
+    setDeckFormat("standard");
     setNotice({ tone: "info", text: "已创建新的卡组草稿，保存后会加入你的卡组列表。" });
   };
 
@@ -3373,6 +3423,7 @@ export function GameApp({
     setEditingDeckId(null);
     setDeckIds([...offer.deck]);
     setDeckName(`${offer.faction} · ${offer.name}（试玩）`);
+    setDeckFormat("standard");
     setTrainingActive(false);
     switchSection("battle");
     setNotice({ tone: "info", text: `已载入「${offer.name}」试玩套牌，可进入 AI 演算或在线对战。` });
@@ -3391,6 +3442,7 @@ export function GameApp({
     setEditingDeckId(saved.id);
     setDeckIds([...saved.cardIds]);
     setDeckName(saved.name);
+    setDeckFormat(saved.format ?? "standard");
     setNotice({
       tone: payload.localFallback ? "info" : "success",
       text: `已永久领取「${offer.name}」：缺少卡牌已补齐，卡组已加入收藏。`,
@@ -3427,6 +3479,7 @@ export function GameApp({
         setEditingDeckId(firstDeck.id);
         setDeckIds([...firstDeck.cardIds]);
         setDeckName(firstDeck.name);
+        setDeckFormat(firstDeck.format ?? "standard");
       }
       setNotice({
         tone: payload.localFallback ? "info" : "success",
@@ -4411,7 +4464,7 @@ export function GameApp({
       result,
       mode: onlineMatch ? "pvp" : "ai",
       opponent: onlineOpponent ?? (onlineMatch ? "联机对手" : "镜像演算体 K-7"),
-      ...(onlineMatch ? { format: pvp.state.format } : {}),
+      ...(onlineMatch ? { format: pvp.state.format, rankedFormat: pvp.state.rankedFormat } : {}),
       ...(!onlineMatch && aiMatchProofRef.current
         ? { aiProof: { ...aiMatchProofRef.current, commands: [...aiCommandTranscriptRef.current] } }
         : {}),
@@ -4430,7 +4483,7 @@ export function GameApp({
       });
       }
     });
-  }, [battleView, onlineMatch, onlineOpponent, postAction, pvp.state.format]);
+  }, [battleView, onlineMatch, onlineOpponent, postAction, pvp.state.format, pvp.state.rankedFormat]);
 
   const totalOwned = Object.values(player.collection).reduce((sum, count) => sum + count, 0);
   const uniqueOwned = Object.values(player.collection).filter((count) => count > 0).length;
@@ -4648,19 +4701,33 @@ export function GameApp({
               )}
               {section === "deck" && (
                 <DeckSection
-                  cards={CATALOG}
+                  cards={CATALOG.filter((card) => {
+                    const definition = CARD_RULE_BY_ID.get(card.id);
+                    return definition ? cardAvailableInRankedFormat(definition, deckFormat) : false;
+                  })}
                   collection={player.collection}
                   decks={player.decks}
                   editingDeckId={editingDeckId}
                   deckIds={deckIds}
                   deckCounts={deckCounts}
                   name={deckName}
+                  format={deckFormat}
                   validation={deckValidation}
                   saving={apiBusy === "save_deck"}
                   ladderReady={player.ladderReady}
                   selectedLadderReadyDeckId={selectedLadderReadyDeckId}
                   ladderReadyBusy={apiBusy === "activate_ladder_ready" || apiBusy === "claim_ladder_ready_deck"}
                   onName={setDeckName}
+                  onFormat={(format) => {
+                    setDeckFormat(format);
+                    if (format === "standard") {
+                      setDeckIds((ids) => ids.filter((id) => {
+                        const definition = CARD_RULE_BY_ID.get(id);
+                        return definition ? cardAvailableInRankedFormat(definition, "standard") : false;
+                      }));
+                    }
+                    setSelectedLadderReadyDeckId(null);
+                  }}
                   onSelectDeck={selectDeck}
                   onNewDeck={createNewDeck}
                   onAdd={addCard}
@@ -4735,15 +4802,22 @@ export function GameApp({
                   onPvpUrl={setPvpUrl}
                   onPvpRoomInput={setPvpRoomInput}
                   onPvpConnect={() => pvp.connect(pvpUrl)}
-                  onPvpCreate={(format) => pvp.createRoom(format)}
-                  onPvpQueue={(format) => pvp.queue(format)}
+                  onPvpCreate={(format, rankedFormat) => pvp.createRoom(format, rankedFormat)}
+                  onPvpQueue={(format, rankedFormat) => pvp.queue(format, rankedFormat)}
                   onPvpLeaveQueue={() => pvp.leaveQueue()}
                   onPvpFallbackAi={() => {
                     pvp.disconnect();
                     void startStandardBattle();
                   }}
                   onPvpJoin={() => pvp.joinRoom(pvpRoomInput)}
-                  onPvpReady={() => pvp.ready(deckIds)}
+                  onPvpReady={() => {
+                    const validation = validateDeckForFormat(deckIds, pvp.state.rankedFormat);
+                    if (!validation.valid) {
+                      setNotice({ tone: "warning", text: `当前卡组不能进入${rankedFormatLabel(pvp.state.rankedFormat)}：${validation.errors[0]?.message ?? "卡组无效"}` });
+                      return;
+                    }
+                    pvp.ready(deckIds);
+                  }}
                   onPvpDisconnect={() => pvp.disconnect()}
                   online={onlineMatch}
                   opponentName={onlineOpponent}
@@ -5498,12 +5572,14 @@ function DeckSection({
   deckIds,
   deckCounts,
   name,
+  format,
   validation,
   saving,
   ladderReady,
   selectedLadderReadyDeckId,
   ladderReadyBusy,
   onName,
+  onFormat,
   onSelectDeck,
   onNewDeck,
   onAdd,
@@ -5522,12 +5598,14 @@ function DeckSection({
   deckIds: string[];
   deckCounts: Map<string, number>;
   name: string;
+  format: RankedFormat;
   validation: ValidationView;
   saving: boolean;
   ladderReady?: PlayerSnapshot["ladderReady"];
   selectedLadderReadyDeckId: LadderReadyDeckId | null;
   ladderReadyBusy: boolean;
   onName: (name: string) => void;
+  onFormat: (format: RankedFormat) => void;
   onSelectDeck: (deckId: string) => void;
   onNewDeck: () => void;
   onAdd: (card: CatalogCard) => void;
@@ -5716,6 +5794,14 @@ function DeckSection({
 
       <div className="deck-workbench">
         <aside className="panel deck-manifest">
+          <label className="deck-format-select">
+            <span>卡组环境</span>
+            <select value={format} onChange={(event) => onFormat(event.target.value === "wild" ? "wild" : "standard")} disabled={Boolean(selectedLadderReadyDeckId)}>
+              <option value="standard">标准 · Core + 2025–2026</option>
+              <option value="wild">狂野 · 全部卡牌</option>
+            </select>
+            <small>{format === "standard" ? "仅使用当前轮换环境的 800 张卡牌。" : "可使用全部 1,000 张卡牌，包括已轮换的 2024 系列。"}</small>
+          </label>
           <div className="deck-loadout">
             <label>
               <span>已保存卡组</span>
@@ -5725,7 +5811,7 @@ function DeckSection({
                 aria-label="选择已保存卡组"
               >
                 <option value="">新建卡组草稿</option>
-                {decks.map((deck) => <option value={deck.id} key={deck.id}>{deck.name}</option>)}
+                {decks.map((deck) => <option value={deck.id} key={deck.id}>{rankedFormatLabel(deck.format ?? "standard")} · {deck.name}</option>)}
               </select>
             </label>
             <button className="button button--outline" type="button" onClick={onNewDeck}>
@@ -6229,8 +6315,8 @@ function PvpLobby({
   onUrl: (value: string) => void;
   onRoomInput: (value: string) => void;
   onConnect: () => void;
-  onCreate: (format: PvpFormat) => void;
-  onQueue: (format: PvpFormat) => void;
+  onCreate: (format: PvpFormat, rankedFormat: RankedFormat) => void;
+  onQueue: (format: PvpFormat, rankedFormat: RankedFormat) => void;
   onLeaveQueue: () => void;
   onFallbackAi: () => void;
   onJoin: () => void;
@@ -6239,6 +6325,7 @@ function PvpLobby({
 }) {
   const connected = state.status !== "offline" && state.status !== "error" && state.status !== "connecting";
   const [selectedFormat, setSelectedFormat] = useState<PvpFormat>(state.format);
+  const [selectedRankedFormat, setSelectedRankedFormat] = useState<RankedFormat>(state.rankedFormat);
   const protectedPool = state.matchPool ? state.matchPool === "apprentice" : apprenticePool;
   const matchQualityLabel = state.matchQuality === "ideal"
     ? "精确"
@@ -6274,8 +6361,8 @@ function PvpLobby({
             <div className={`pvp-lobby__queue ${protectedPool ? "is-protected" : ""}`}>
               <div>
                 <span className="panel__eyebrow">SERVER MATCHMAKING · {protectedPool ? "CADET" : "STANDARD"}</span>
-                <strong>{protectedPool ? "新兵保护匹配" : state.format === "casual" ? "休闲匹配" : "天梯匹配"}</strong>
-                <small>{protectedPool ? "只配对同轨道新玩家，并按隐藏水平从严到宽寻找对手。" : "Ranked 与 Casual 都按各自隐藏水平配对；等待越久，公平窗口逐步扩张。"}</small>
+                <strong>{protectedPool ? "新兵保护匹配" : `${rankedFormatLabel(state.rankedFormat)} · ${state.format === "casual" ? "休闲匹配" : "天梯匹配"}`}</strong>
+                <small>{protectedPool ? "只配对同轨道新玩家，并按隐藏水平从严到宽寻找对手。" : "标准与狂野天梯各有独立隐藏水平；休闲模式跨环境共用隐藏水平。"}</small>
               </div>
               <div className="pvp-lobby__queue-actions">
                 {protectedPool && <button className="button button--primary" type="button" onClick={onFallbackAi}>改打 AI 演算</button>}
@@ -6285,15 +6372,16 @@ function PvpLobby({
           ) : !state.roomCode ? (
             <>
               <label><span>匹配模式</span><select value={selectedFormat} onChange={(event) => setSelectedFormat(event.target.value === "casual" ? "casual" : "ranked")} aria-label="选择联机模式"><option value="ranked">Ranked 天梯</option><option value="casual">Casual 休闲</option></select></label>
-              <button className="button button--primary" type="button" onClick={() => onQueue(selectedFormat)}>快速匹配</button>
-              <span className="pvp-lobby__match-rule"><Icon name="radar" size={14} /><span><strong>公平匹配</strong><small>显示段位不参与选人；隐藏水平跨赛季保留，并按模式分别更新。</small></span></span>
-              <button className="button button--primary" type="button" onClick={() => onCreate(selectedFormat)}>创建 {selectedFormat === "casual" ? "休闲" : "天梯"} 房间</button>
+              <label><span>卡牌环境</span><select value={selectedRankedFormat} onChange={(event) => setSelectedRankedFormat(event.target.value === "wild" ? "wild" : "standard")} aria-label="选择卡牌环境"><option value="standard">Standard 标准</option><option value="wild">Wild 狂野</option></select></label>
+              <button className="button button--primary" type="button" onClick={() => onQueue(selectedFormat, selectedRankedFormat)}>快速匹配</button>
+              <span className="pvp-lobby__match-rule"><Icon name="radar" size={14} /><span><strong>公平匹配</strong><small>显示段位不参与选人；标准/狂野天梯隐藏分独立，休闲共用。</small></span></span>
+              <button className="button button--primary" type="button" onClick={() => onCreate(selectedFormat, selectedRankedFormat)}>创建{rankedFormatLabel(selectedRankedFormat)}{selectedFormat === "casual" ? "休闲" : "天梯"}房间</button>
               <label><span>房间码</span><input value={roomInput} maxLength={4} onChange={(event) => onRoomInput(event.target.value.toUpperCase())} placeholder="A7KQ" /></label>
               <button className="button button--outline" type="button" onClick={onJoin}>加入房间</button>
             </>
           ) : (
             <>
-              <div className="pvp-lobby__code"><small>{state.format === "casual" ? "休闲 Casual" : "天梯 Ranked"} · 房间码{matchQualityLabel ? ` · 匹配质量 ${matchQualityLabel}` : ""}</small><strong>{state.roomCode}</strong><span>{state.peerName ? `对手：${state.peerName}` : "等待对手加入"}</span></div>
+              <div className="pvp-lobby__code"><small>{rankedFormatLabel(state.rankedFormat)} · {state.format === "casual" ? "休闲 Casual" : "天梯 Ranked"} · 房间码{matchQualityLabel ? ` · 匹配质量 ${matchQualityLabel}` : ""}</small><strong>{state.roomCode}</strong><span>{state.peerName ? `对手：${state.peerName}` : "等待对手加入"}</span></div>
               <button className="button button--primary" type="button" disabled={state.localReady || !state.peerName} onClick={onReady}>{state.localReady ? "已准备" : "准备对战"}</button>
               <button className="button button--outline" type="button" onClick={onDisconnect}>离开房间</button>
             </>
@@ -6415,8 +6503,8 @@ function BattleSection({
   onPvpUrl: (value: string) => void;
   onPvpRoomInput: (value: string) => void;
   onPvpConnect: () => void;
-  onPvpCreate: (format: PvpFormat) => void;
-  onPvpQueue: (format: PvpFormat) => void;
+  onPvpCreate: (format: PvpFormat, rankedFormat: RankedFormat) => void;
+  onPvpQueue: (format: PvpFormat, rankedFormat: RankedFormat) => void;
   onPvpLeaveQueue: () => void;
   onPvpFallbackAi: () => void;
   onPvpJoin: () => void;
@@ -7430,20 +7518,18 @@ function OperationsSection({
   const completedTasks = player.tasks.filter((task) => task.claimed).length;
   const readyTasks = player.tasks.filter((task) => !task.claimed && task.progress >= task.target).length;
   const uniqueOwned = Object.values(player.collection).filter((count) => count > 0).length;
-  const ladderProgress = player.ladder?.rankProgress
-    ?? ladderProgressForRating(player.ladder?.rating ?? LADDER_START_RATING);
+  const fallbackSeasonKey = new Date().toISOString().slice(0, 7);
+  const rankedLadders = normalizeRankedLadders(player.rankedLadders, player.ladder, fallbackSeasonKey);
+  const rewardSourceFormat = highestRankedFormat(rankedLadders);
+  const ladder = rankedLadders[rewardSourceFormat];
+  const ladderProgress = ladder.rankProgress
+    ?? ladderProgressForRating(ladder.rating ?? LADDER_START_RATING);
   const ladderLabel = ladderLabelForProgress(ladderProgress);
-  const ladderStars = Math.min(2, Math.max(0, player.ladder?.stars ?? 0));
-  const ladderStarPips = ladderLabel === "传说"
-    ? "LEGEND"
-    : `${"★".repeat(ladderStars)}${"☆".repeat(3 - ladderStars)}`;
-  const ladderAtFloor = isRankFloorProgress(ladderProgress);
-  const ladderStarBonus = Math.min(11, Math.max(1, player.ladder?.starBonus ?? 1));
   const rankedRewards = normalizeRankedRewardState(player.rankedRewards);
-  const currentSeasonKey = player.ladder?.seasonKey ?? new Date().toISOString().slice(0, 7);
+  const currentSeasonKey = ladder.seasonKey ?? fallbackSeasonKey;
   const seasonCardBackEarned = rankedRewards.earnedCardBackSeasons.includes(currentSeasonKey);
   const projectedSeasonReward = rankedSeasonRewardForPeak(
-    player.ladder?.seasonBestProgress ?? ladderProgress,
+    ladder.seasonBestProgress ?? ladderProgress,
   );
   const nextFirstTimeReward = RANKED_FIRST_TIME_REWARD_LEVELS.find(
     (level) => !rankedRewards.claimedFirstTimeFloors.includes(level.floor),
@@ -7486,8 +7572,14 @@ function OperationsSection({
           <div><span>卡包商店</span><strong>{player.taskCycle?.packsBoughtToday ?? 0} / 10</strong><small>100 金币 / 个，日限购 10 个</small></div>
           <div><span>传奇保底</span><strong>{Math.min(player.packPity?.packsSinceLegendary ?? 0, 39)} / 40</strong><small>第 40 包首槽必出传说，出货后重置</small></div>
           <div><span>演算奖励</span><strong>{player.taskCycle?.aiRewardsToday ?? 0} / 20</strong><small>每日最多 20 场 AI 奖励，防止刷资源</small></div>
-          <div><span>天梯段位</span><strong>{ladderLabel} · {ladderStarPips}</strong><small>胜利星级 ×{ladderStarBonus}{player.ladder?.winStreak && player.ladder.winStreak >= 3 && ladderProgress < LADDER_DIAMOND_FIVE_PROGRESS ? ` · ${player.ladder.winStreak} 连胜再翻倍` : ""} · {ladderAtFloor ? "当前 10/5 段位保护生效" : "失败仅失 1 星"}。隐藏水平仍独立匹配。</small></div>
-          <div><span>赛季</span><strong>{player.ladder?.seasonKey ?? new Date().toISOString().slice(0, 7)}</strong><small>每月从青铜 10 重启；上赛季最佳段位决定初始星级倍率，到达每个 10/5 保护段后倍率递减。</small></div>
+          {(["standard", "wild"] as const).map((format) => {
+            const snapshot = rankedLadders[format];
+            const progress = snapshot.rankProgress ?? ladderProgressForRating(snapshot.rating);
+            const label = ladderLabelForProgress(progress);
+            const stars = Math.min(2, Math.max(0, snapshot.stars));
+            return <div key={format}><span>{rankedFormatLabel(format)}天梯</span><strong>{label} · {label === "传说" ? "LEGEND" : `${"★".repeat(stars)}${"☆".repeat(3 - stars)}`}</strong><small>{snapshot.wins} 胜 · 星级倍率 ×{Math.min(11, Math.max(1, snapshot.starBonus))}{(snapshot.winStreak ?? 0) >= 3 && progress < LADDER_DIAMOND_FIVE_PROGRESS ? ` · ${snapshot.winStreak} 连胜` : ""} · 独立段位与隐藏水平。</small></div>;
+          })}
+          <div><span>赛季</span><strong>{currentSeasonKey}</strong><small>两条天梯分别重置；赛季宝箱只按两者最高成绩发放一份。</small></div>
           <div><span>玩家 UID</span><strong className="ops-player-id">{player.id}</strong><small>用于好友邀请与客服核验；资产绑定稳定身份而非邮箱</small></div>
         </div>
         <div className="ops-weekly-gift">
@@ -7506,12 +7598,12 @@ function OperationsSection({
         <div className="ranked-rewards-grid">
           <article className="ranked-reward-card">
             <span><Icon name="pack" size={17} />赛季宝箱</span>
-            <strong>{ladderLabel}</strong>
-            <small>按本赛季最高段位累计：{describeRankedRewardBundle(projectedSeasonReward)}。下月首次登录自动入库。</small>
+            <strong>{rankedFormatLabel(rewardSourceFormat)} · {ladderLabel}</strong>
+            <small>按标准与狂野中的最高段位累计：{describeRankedRewardBundle(projectedSeasonReward)}。下月首次登录只结算一份。</small>
           </article>
           <article className={`ranked-reward-card ${seasonCardBackEarned ? "is-earned" : ""}`}>
             <span><Icon name="cards" size={17} />赛季卡背</span>
-            <strong>{seasonCardBackEarned ? "本赛季已解锁" : `${Math.min(5, player.ladder?.wins ?? 0)} / 5 胜`}</strong>
+            <strong>{seasonCardBackEarned ? "本赛季已解锁" : `${Math.min(5, totalRankedWins(rankedLadders))} / 5 胜`}</strong>
             <small>{seasonCardBackEarned ? `${currentSeasonKey} 卡背已永久收藏。` : "任意段位赢得 5 场 Ranked 后即时并永久解锁。"}</small>
           </article>
           <article className={`ranked-reward-card ${nextFirstTimeReward ? "" : "is-earned"}`}>
@@ -7522,7 +7614,7 @@ function OperationsSection({
         </div>
         <div className="ranked-rewards-history">
           <span>最近赛季结算</span>
-          <strong>{latestSeasonChest ? `${latestSeasonChest.seasonKey} · ${latestSeasonChest.peakLabel}` : "尚无已结算赛季"}</strong>
+          <strong>{latestSeasonChest ? `${latestSeasonChest.seasonKey} · ${rankedFormatLabel(latestSeasonChest.sourceFormat)} · ${latestSeasonChest.peakLabel}` : "尚无已结算赛季"}</strong>
           <small>{latestSeasonChest ? describeRankedRewardBundle(latestSeasonChest) : "达到青铜 5 后，赛季结束即可获得首个奖励宝箱。"}</small>
         </div>
       </section>

@@ -11,7 +11,7 @@ import { CARD_CATALOG } from "../lib/game/catalog.ts";
 const projectRoot = new URL("../", import.meta.url);
 
 test("build emits a deployable worker, D1 metadata, and migrations", async () => {
-  const [worker, hosting, migration, matchmakingMigration] = await Promise.all([
+  const [worker, hosting, migration, matchmakingMigration, formatMigration] = await Promise.all([
     stat(new URL("../dist/server/index.js", import.meta.url)),
     readFile(new URL("../dist/.openai/hosting.json", import.meta.url), "utf8"),
     readFile(
@@ -20,6 +20,10 @@ test("build emits a deployable worker, D1 metadata, and migrations", async () =>
     ),
     readFile(
       new URL("../dist/.openai/drizzle/0003_thick_miss_america.sql", import.meta.url),
+      "utf8",
+    ),
+    readFile(
+      new URL("../dist/.openai/drizzle/0004_absent_jack_murdock.sql", import.meta.url),
       "utf8",
     ),
   ]);
@@ -35,6 +39,8 @@ test("build emits a deployable worker, D1 metadata, and migrations", async () =>
   assert.match(matchmakingMigration, /CREATE TABLE IF NOT EXISTS `pvp_matchmaking_ratings`/);
   assert.match(matchmakingMigration, /CREATE TABLE IF NOT EXISTS `pvp_mmr_settlements`/);
   assert.match(matchmakingMigration, /pvp_matchmaking_ratings_format_rating_idx/);
+  assert.match(formatMigration, /CREATE TABLE `pvp_format_matchmaking_ratings`/);
+  assert.match(formatMigration, /ALTER TABLE `match_records` ADD `ranked_format`/);
 });
 
 test("ships the complete product surface and removes starter assets", async () => {
@@ -84,11 +90,12 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(game, /隐藏水平匹配 · 数值不公开/);
   assert.match(game, /显示段位不参与选人/);
   assert.match(game, /匹配质量/);
-  assert.match(game, /胜利星级 ×/);
-  assert.match(game, /当前 10\/5 段位保护生效/);
-  assert.match(game, /每月从青铜 10 重启/);
+  assert.match(game, /rankedLadders/);
+  assert.match(game, /Standard 标准/);
+  assert.match(game, /Wild 狂野/);
+  assert.match(game, /独立段位与隐藏水平/);
   assert.match(game, /赛季天梯奖励/);
-  assert.match(game, /下月首次登录自动入库/);
+  assert.match(game, /下月首次登录只结算一份/);
   assert.match(game, /任意段位赢得 5 场 Ranked/);
   assert.match(game, /天梯预备套牌/);
   assert.match(game, /activate_ladder_ready/);

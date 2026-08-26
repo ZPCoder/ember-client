@@ -2540,6 +2540,30 @@ button.game-card:not(:disabled):hover .game-card__artwork,
   top: calc(var(--topbar) + 20px);
 }
 
+.deck-format-select {
+  display: grid;
+  gap: 5px;
+  padding: 13px 14px;
+  border-bottom: 1px solid var(--line);
+  background: linear-gradient(90deg, rgba(85, 185, 173, 0.08), rgba(174, 124, 255, 0.04));
+}
+
+.deck-format-select > span,
+.deck-format-select > small {
+  color: #78877f;
+  font-size: 8px;
+}
+
+.deck-format-select select {
+  min-height: 34px;
+  padding: 0 9px;
+  border: 1px solid rgba(85, 185, 173, 0.3);
+  border-radius: 7px;
+  color: var(--paper-soft);
+  background: #101f1b;
+  font-size: 10px;
+}
+
 .deck-name-field {
   display: grid;
   grid-template-columns: 36px 1fr auto;
