@@ -137,6 +137,7 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(game, /天梯预备套牌/);
   assert.match(game, /activate_ladder_ready/);
   assert.match(game, /claim_ladder_ready_deck/);
+  assert.match(game, /purchase_ladder_ready_deck/);
   assert.match(game, /claim_catch_up_pack/);
   assert.match(game, /previewCatchUpPack/);
   assert.match(game, /曾获得完成度 · 每系列 1–10 · 稀有\+ ≥20%/);
@@ -155,6 +156,8 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(game, /ladderReadyDecksForTrial/);
   assert.match(game, /激活时锁定当前环境版本/);
   assert.match(gameStore, /catalogVersionId/);
+  assert.match(gameStore, /purchaseLadderReadyDeck/);
+  assert.match(game, /领取后其余套牌每套/);
   assert.match(game, /AI 与在线对战均可使用/);
   assert.match(game, /预备 · 全部能量/);
   assert.match(game, /type: "prepare-card"/);

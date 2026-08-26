@@ -80,6 +80,7 @@ import {
   LADDER_DIAMOND_FIVE_PROGRESS,
   LADDER_READY_TRIAL_DAYS,
   LADDER_READY_TRIAL_MS,
+  LADDER_READY_DECK_PRICE_GOLD,
   LADDER_START_RATING,
   MAX_SAVED_DECKS,
   createRankedSnapshot,
@@ -291,6 +292,7 @@ type PlayerSnapshot = {
     expiresAt: string | null;
     claimedDeckId: LadderReadyDeckId | null;
     catalogVersionId: LadderReadyCatalogVersionId | null;
+    purchasedDeckIds: LadderReadyDeckId[];
   };
   catchUpPack?: {
     claimedAt: string | null;
@@ -333,6 +335,7 @@ type GamePayload = {
   savedDeck?: SavedDeck;
   deletedDeckId?: string;
   claimedLadderReadyDeck?: SavedDeck;
+  purchasedLadderReadyDeck?: SavedDeck;
   aiMatch?: {
     token: string;
     seed: number;
@@ -1099,7 +1102,7 @@ function makeDemoPlayer(identity?: {
     progression: { xp: 850, level: 1 },
     rewardTrack: { claimedLevels: [] },
     apprenticeTrack: { claimedMilestones: [] },
-    ladderReady: { activatedAt: null, expiresAt: null, claimedDeckId: null, catalogVersionId: null },
+    ladderReady: { activatedAt: null, expiresAt: null, claimedDeckId: null, catalogVersionId: null, purchasedDeckIds: [] },
     catchUpPack: { claimedAt: null, cardsGranted: 0, ...catchUpProgress },
     trialCards: { activatedAt: null, expiresAt: null },
     returnJourney: { claimedStageIds: [], matchesPlayedAtActivation: 0 },
@@ -1235,7 +1238,7 @@ function applyLocalAction(
     };
   }
   if (action === "activate_ladder_ready") {
-    const trial = current.ladderReady ?? { activatedAt: null, expiresAt: null, claimedDeckId: null, catalogVersionId: null };
+    const trial = current.ladderReady ?? { activatedAt: null, expiresAt: null, claimedDeckId: null, catalogVersionId: null, purchasedDeckIds: [] };
     if (trial.claimedDeckId) throw new Error("本档案已经领取过一套天梯预备套牌。");
     if (trial.activatedAt) throw new Error("七日试玩已经激活。");
     const activatedAt = new Date(now);
@@ -1249,6 +1252,7 @@ function applyLocalAction(
           expiresAt: new Date(activatedAt.getTime() + LADDER_READY_TRIAL_MS).toISOString(),
           claimedDeckId: null,
           catalogVersionId,
+          purchasedDeckIds: [],
         },
         trialCards: {
           activatedAt: activatedAt.toISOString(),
@@ -1299,7 +1303,7 @@ function applyLocalAction(
       collection,
       decks: [...current.decks.filter((deck) => deck.id !== claimedLadderReadyDeck.id), claimedLadderReadyDeck],
       activeDeckId: claimedLadderReadyDeck.id,
-      ladderReady: { ...trial, claimedDeckId: offer.id, catalogVersionId: catalog.id },
+      ladderReady: { ...trial, claimedDeckId: offer.id, catalogVersionId: catalog.id, purchasedDeckIds: trial.purchasedDeckIds ?? [] },
       catchUpPack: {
         ...(current.catchUpPack ?? { claimedAt: null, cardsGranted: 0 }),
         ...catchUpProgress,
@@ -1307,6 +1311,60 @@ function applyLocalAction(
       updatedAt: now,
     };
     return { ok: true, player, claimedLadderReadyDeck, localFallback: true };
+  }
+  if (action === "purchase_ladder_ready_deck") {
+    const trial = current.ladderReady;
+    if (!trial?.claimedDeckId) throw new Error("请先选择并领取一套免费天梯预备套牌。");
+    const deckId = asString(body.deckId) as LadderReadyDeckId;
+    if (trial.claimedDeckId === deckId || (trial.purchasedDeckIds ?? []).includes(deckId)) {
+      throw new Error("这套天梯预备套牌已经拥有。");
+    }
+    if (current.currencies.gold < LADDER_READY_DECK_PRICE_GOLD) throw new Error("金币不足，无法购买这套天梯预备套牌。");
+    const catalog = ladderReadyCatalogForTrial(trial, now);
+    const offer = getLadderReadyDeck(deckId, catalog.id);
+    if (!offer) throw new Error("天梯预备套牌不存在。");
+    const purchasedLadderReadyDeck: SavedDeck = {
+      id: `ladder-ready-${offer.id}`,
+      name: `${offer.faction} · ${offer.name}`,
+      cardIds: [...offer.deck],
+      format: "standard",
+      cardBackId: DEFAULT_CARD_BACK_ID,
+      updatedAt: now,
+    };
+    if (current.decks.length >= MAX_SAVED_DECKS && !current.decks.some((deck) => deck.id === purchasedLadderReadyDeck.id)) {
+      throw new Error(`已保存卡组已达 ${MAX_SAVED_DECKS} 套上限，请先整理卡组。`);
+    }
+    const required = new Map<string, number>();
+    offer.deck.forEach((cardId) => required.set(cardId, (required.get(cardId) ?? 0) + 1));
+    const collection = { ...current.collection };
+    const grantedCardIds: string[] = [];
+    required.forEach((count, cardId) => {
+      const granted = Math.max(0, count - (collection[cardId] ?? 0));
+      for (let index = 0; index < granted; index += 1) grantedCardIds.push(cardId);
+      collection[cardId] = Math.max(collection[cardId] ?? 0, count);
+    });
+    const catchUpProgress = recordCatchUpCards(
+      current.catchUpPack ?? catchUpProgressFromCollection(current.collection),
+      grantedCardIds,
+    );
+    const player = {
+      ...current,
+      currencies: { ...current.currencies, gold: current.currencies.gold - LADDER_READY_DECK_PRICE_GOLD },
+      collection,
+      decks: [...current.decks.filter((deck) => deck.id !== purchasedLadderReadyDeck.id), purchasedLadderReadyDeck],
+      activeDeckId: purchasedLadderReadyDeck.id,
+      ladderReady: {
+        ...trial,
+        catalogVersionId: catalog.id,
+        purchasedDeckIds: [...(trial.purchasedDeckIds ?? []), offer.id],
+      },
+      catchUpPack: {
+        ...(current.catchUpPack ?? { claimedAt: null, cardsGranted: 0 }),
+        ...catchUpProgress,
+      },
+      updatedAt: now,
+    };
+    return { ok: true, player, purchasedLadderReadyDeck, costGold: LADDER_READY_DECK_PRICE_GOLD, localFallback: true };
   }
   if (action === "claim_catch_up_pack") {
     if (!current.ladderReady?.activatedAt) throw new Error("请先启动回归扶持计划。");
@@ -4572,6 +4630,27 @@ export function GameApp({
     });
   };
 
+  const purchaseLadderReady = async (deckId: LadderReadyDeckId) => {
+    const offer = getLadderReadyDeck(deckId, ladderReadyCatalogForTrial(player.ladderReady).id);
+    if (!offer) return;
+    const payload = await postAction("purchase_ladder_ready_deck", {
+      idempotencyKey: makeId(`ladder-ready-purchase-${deckId}`),
+      deckId,
+    });
+    if (!payload?.purchasedLadderReadyDeck) return;
+    const saved = payload.purchasedLadderReadyDeck;
+    setSelectedLadderReadyDeckId(null);
+    setEditingDeckId(saved.id);
+    setDeckIds([...saved.cardIds]);
+    setDeckName(saved.name);
+    setDeckFormat(saved.format ?? "standard");
+    setDeckCardBackId(saved.cardBackId ?? DEFAULT_CARD_BACK_ID);
+    setNotice({
+      tone: payload.localFallback ? "info" : "success",
+      text: `已购买「${offer.name}」，消耗 ${payload.costGold ?? LADDER_READY_DECK_PRICE_GOLD} 金币；缺少卡牌已补齐。`,
+    });
+  };
+
   const claimReturnQuest = async (stageId: ReturnQuestStageId) => {
     const stage = RETURN_QUEST_STAGES.find((candidate) => candidate.id === stageId);
     if (!stage) return;
@@ -6029,6 +6108,7 @@ export function GameApp({
                   collection={deckAccessCollection}
                   realCollection={player.collection}
                   goldenCollection={player.goldenCollection ?? {}}
+                  gold={player.currencies.gold}
                   decks={player.decks}
                   editingDeckId={editingDeckId}
                   deckIds={deckIds}
@@ -6051,7 +6131,7 @@ export function GameApp({
                   matchesPlayed={player.stats.matchesPlayed}
                   snapshotAt={player.updatedAt}
                   selectedLadderReadyDeckId={selectedLadderReadyDeckId}
-                  ladderReadyBusy={apiBusy === "activate_ladder_ready" || apiBusy === "claim_ladder_ready_deck" || apiBusy === "claim_catch_up_pack" || apiBusy === "claim_return_quest"}
+                  ladderReadyBusy={apiBusy === "activate_ladder_ready" || apiBusy === "claim_ladder_ready_deck" || apiBusy === "purchase_ladder_ready_deck" || apiBusy === "claim_catch_up_pack" || apiBusy === "claim_return_quest"}
                   onName={setDeckName}
                   onCardBack={setDeckCardBackId}
                   onToggleFavoriteCardBack={(cardBackId) => void toggleFavoriteCardBack(cardBackId)}
@@ -6079,6 +6159,7 @@ export function GameApp({
                   onActivateLadderReady={() => void activateLadderReady()}
                   onTrialLadderReady={trialLadderReadyDeck}
                   onClaimLadderReady={(deckId) => void claimLadderReady(deckId)}
+                  onPurchaseLadderReady={(deckId) => void purchaseLadderReady(deckId)}
                   onClaimReturnQuest={(stageId) => void claimReturnQuest(stageId)}
                 />
               )}
@@ -7171,6 +7252,7 @@ function DeckSection({
   collection,
   realCollection,
   goldenCollection,
+  gold,
   decks,
   editingDeckId,
   deckIds,
@@ -7212,12 +7294,14 @@ function DeckSection({
   onActivateLadderReady,
   onTrialLadderReady,
   onClaimLadderReady,
+  onPurchaseLadderReady,
   onClaimReturnQuest,
 }: {
   cards: CatalogCard[];
   collection: Record<string, number>;
   realCollection: Record<string, number>;
   goldenCollection: Record<string, number>;
+  gold: number;
   decks: SavedDeck[];
   editingDeckId: string | null;
   deckIds: string[];
@@ -7259,6 +7343,7 @@ function DeckSection({
   onActivateLadderReady: () => void;
   onTrialLadderReady: (deckId: LadderReadyDeckId) => void;
   onClaimLadderReady: (deckId: LadderReadyDeckId) => void;
+  onPurchaseLadderReady: (deckId: LadderReadyDeckId) => void;
   onClaimReturnQuest: (stageId: ReturnQuestStageId) => void;
 }) {
   const [deckCode, setDeckCode] = useState("");
@@ -7267,6 +7352,7 @@ function DeckSection({
   const [libraryOwnership, setLibraryOwnership] = useState<"all" | "addable" | "missing">("all");
   const [copiedDeckFingerprint, setCopiedDeckFingerprint] = useState<string | null>(null);
   const [claimConfirmation, setClaimConfirmation] = useState<LadderReadyDeckId | null>(null);
+  const [purchaseConfirmation, setPurchaseConfirmation] = useState<LadderReadyDeckId | null>(null);
   const [recipeFaction, setRecipeFaction] = useState<Faction>(() =>
     factionForDeck(deckIds) ?? "曜光"
   );
@@ -7432,7 +7518,7 @@ function DeckSection({
           <div>
             <span className="panel__eyebrow">LADDER READY / 7-DAY ARMORY</span>
             <h2 id="ladder-ready-title">天梯预备套牌</h2>
-            <p>六套完整 30 张卡组可在七天内无限试玩；激活时锁定当前环境版本，最终任选一套永久领取。</p>
+            <p>六套完整 30 张卡组可在七天内无限试玩；激活时锁定当前环境版本，任选一套免费领取后可购买其余选择。</p>
           </div>
           <div className={`ladder-ready__status ${trialClaimed ? "is-claimed" : trialPlayable ? "is-live" : ""}`}>
             <Icon name={trialClaimed ? "check" : "clock"} size={18} />
@@ -7454,6 +7540,7 @@ function DeckSection({
           <span><Icon name="check" size={14} /> AI 与在线对战均可使用</span>
           <span><Icon name="clock" size={14} /> 激活后连续计时七天</span>
           <span><Icon name="shield" size={14} /> 每个账号仅能永久领取一套</span>
+          <span><Icon name="spark" size={14} /> 领取后其余套牌每套 {LADDER_READY_DECK_PRICE_GOLD} 金币</span>
           <span><Icon name="cards" size={14} /> 当前目录：{ladderReadyCatalog.label}</span>
           <span>
             <Icon name="cards" size={14} />
@@ -7513,10 +7600,12 @@ function DeckSection({
             const averageCost = offer.deck.reduce((sum, cardId) => sum + (CARD_BY_ID.get(cardId)?.cost ?? 0), 0) / offer.deck.length;
             const legendaryCount = offer.deck.filter((cardId) => CARD_BY_ID.get(cardId)?.rarity === "legendary").length;
             const isClaimed = ladderReady?.claimedDeckId === offer.id;
+            const isPurchased = (ladderReady?.purchasedDeckIds ?? []).includes(offer.id);
+            const isOwned = isClaimed || isPurchased;
             const isSelected = selectedLadderReadyDeckId === offer.id;
             return (
               <article
-                className={`ladder-ready-card ${isClaimed ? "is-claimed" : ""} ${isSelected ? "is-selected" : ""}`}
+                className={`ladder-ready-card ${isOwned ? "is-claimed" : ""} ${isSelected ? "is-selected" : ""}`}
                 style={{ "--offer-tone": definition.tone } as CSSProperties}
                 key={offer.id}
               >
@@ -7535,9 +7624,21 @@ function DeckSection({
                   <button className="button button--outline" type="button" disabled={!trialPlayable || ladderReadyBusy} onClick={() => onTrialLadderReady(offer.id)}>
                     <Icon name="swords" size={15} />{isSelected ? "试玩已载入" : "试玩此套"}
                   </button>
-                  <button className="button button--small" type="button" disabled={!trialActivated || trialClaimed || ladderReadyBusy} onClick={() => setClaimConfirmation(offer.id)}>
-                    {isClaimed ? "已永久领取" : "永久领取"}
-                  </button>
+                  {!trialClaimed ? (
+                    <button className="button button--small" type="button" disabled={!trialActivated || ladderReadyBusy} onClick={() => setClaimConfirmation(offer.id)}>
+                      {isClaimed ? "已永久领取" : "免费领取"}
+                    </button>
+                  ) : (
+                    <button
+                      className="button button--small"
+                      type="button"
+                      disabled={isOwned || ladderReadyBusy || gold < LADDER_READY_DECK_PRICE_GOLD}
+                      title={!isOwned && gold < LADDER_READY_DECK_PRICE_GOLD ? `还需 ${LADDER_READY_DECK_PRICE_GOLD - gold} 金币` : undefined}
+                      onClick={() => setPurchaseConfirmation(offer.id)}
+                    >
+                      {isClaimed ? "免费套牌" : isPurchased ? "已购买" : `${LADDER_READY_DECK_PRICE_GOLD} 金币购买`}
+                    </button>
+                  )}
                 </div>
               </article>
             );
@@ -7559,6 +7660,27 @@ function DeckSection({
                 <button className="button button--ghost" type="button" onClick={() => setClaimConfirmation(null)}>继续试玩</button>
                 <button className="button button--primary" type="button" disabled={ladderReadyBusy} onClick={() => { setClaimConfirmation(null); onClaimLadderReady(offer.id); }}>
                   <Icon name="check" />确认永久领取
+                </button>
+              </div>
+            </section>
+          </div>
+        );
+      })()}
+
+      {purchaseConfirmation && (() => {
+        const offer = getLadderReadyDeck(purchaseConfirmation, ladderReadyCatalog.id);
+        if (!offer) return null;
+        return (
+          <div className="ladder-ready-confirm" role="presentation" onClick={() => setPurchaseConfirmation(null)}>
+            <section role="dialog" aria-modal="true" aria-labelledby="ladder-ready-purchase-title" onClick={(event) => event.stopPropagation()}>
+              <span className="ladder-ready-confirm__sigil">{FACTION_DEFINITIONS[offer.faction].sigil}</span>
+              <span className="panel__eyebrow">LOCKED CATALOG / GOLD PURCHASE</span>
+              <h2 id="ladder-ready-purchase-title">购买「{offer.name}」？</h2>
+              <p>将从当前目录永久获得这套 30 张配方并自动补齐缺卡，消耗 {LADDER_READY_DECK_PRICE_GOLD} 金币。当前持有 {gold} 金币。</p>
+              <div>
+                <button className="button button--ghost" type="button" onClick={() => setPurchaseConfirmation(null)}>取消</button>
+                <button className="button button--primary" type="button" disabled={ladderReadyBusy || gold < LADDER_READY_DECK_PRICE_GOLD} onClick={() => { setPurchaseConfirmation(null); onPurchaseLadderReady(offer.id); }}>
+                  <Icon name="check" />确认购买
                 </button>
               </div>
             </section>
