@@ -81,6 +81,8 @@ import {
   rankedSeasonRewardForPeak,
   rollRankedSeason,
   rankedFormatLabel,
+  rankedFormatCardCount,
+  standardFormatSnapshot,
   totalRankedWins,
   ladderReadyTrialIsActive,
   previewCatchUpPack,
@@ -186,6 +188,7 @@ type CatalogCard = {
   minionTypes: MinionType[];
   school?: SpellSchool;
   set?: CardDefinition["set"];
+  releaseWave?: CardDefinition["releaseWave"];
 };
 
 type PlayerTask = {
@@ -701,6 +704,9 @@ function cardFromRaw(raw: Record<string, unknown>): CatalogCard {
         ? (raw.school as SpellSchool)
         : undefined,
     set: typeof raw.set === "string" ? raw.set as CardDefinition["set"] : undefined,
+    releaseWave: raw.releaseWave === 1 || raw.releaseWave === 2 || raw.releaseWave === 3
+      ? raw.releaseWave
+      : undefined,
   };
 }
 
@@ -6639,6 +6645,12 @@ function DeckSection({
     return () => window.clearInterval(interval);
   }, []);
   const trialActivated = Boolean(ladderReady?.activatedAt && ladderReady.expiresAt);
+  const standardSnapshot = standardFormatSnapshot(clockNow || Date.now());
+  const standardCardCount = rankedFormatCardCount(CARD_CATALOG, "standard", clockNow || Date.now());
+  const standardWaveText = standardSnapshot.currentWave === 1 ? "第一" : standardSnapshot.currentWave === 2 ? "第二" : "第三";
+  const nextStandardReleaseMonth = standardSnapshot.nextRelease
+    ? new Intl.DateTimeFormat("zh-CN", { month: "long", timeZone: "UTC" }).format(new Date(standardSnapshot.nextRelease.availableFrom))
+    : null;
   const trialExpired = Boolean(ladderReady?.expiresAt && clockNow && Date.parse(ladderReady.expiresAt) <= clockNow);
   const trialClaimed = Boolean(ladderReady?.claimedDeckId);
   const trialPlayable = ladderReadyTrialIsActive(ladderReady, clockNow);
@@ -6950,10 +6962,10 @@ function DeckSection({
           <label className="deck-format-select">
             <span>卡组环境</span>
             <select value={format} onChange={(event) => onFormat(event.target.value === "wild" ? "wild" : "standard")} disabled={Boolean(selectedLadderReadyDeckId)}>
-              <option value="standard">标准 · Core + 2025–2026</option>
+              <option value="standard">标准 · {standardSnapshot.seasonLabel} · {standardWaveText}扩展期</option>
               <option value="wild">狂野 · 全部卡牌</option>
             </select>
-            <small>{format === "standard" ? "仅使用当前轮换环境的 800 张卡牌。" : "可使用全部 1,000 张卡牌，包括已轮换的 2024 系列。"}</small>
+            <small>{format === "standard" ? `按赛季日期开放 ${standardCardCount.toLocaleString("zh-CN")} 张卡牌；当前为${standardSnapshot.currentWaveLabel}环境${nextStandardReleaseMonth ? `，下一批预计${nextStandardReleaseMonth}开放` : ""}。` : "可使用全部 1,000 张卡牌，包括已轮换的系列。"}</small>
           </label>
           <div className="deck-loadout">
             <label>
