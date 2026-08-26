@@ -47,7 +47,11 @@ import {
   getHeroPower,
   hasMinionType,
   getLadderReadyDeck,
-  generateCatchUpPack,
+  generateCatchUpPackReward,
+  catchUpProgressFromCollection,
+  recordCatchUpCards,
+  CATCH_UP_PACK_SETS,
+  CATCH_UP_LEGENDARY_GUARANTEE_CARDS,
   getTraitStatuses,
   LADDER_DIAMOND_FIVE_PROGRESS,
   LADDER_READY_DECKS,
@@ -94,6 +98,7 @@ import {
   type BattleEffectKind,
   type BattleCommand,
   type CardDefinition,
+  type CardSetId,
   type CardTargetRule,
   type DeckRecipe,
   type Faction,
@@ -236,7 +241,12 @@ type PlayerSnapshot = {
     expiresAt: string | null;
     claimedDeckId: LadderReadyDeckId | null;
   };
-  catchUpPack?: { claimedAt: string | null; cardsGranted: number };
+  catchUpPack?: {
+    claimedAt: string | null;
+    cardsGranted: number;
+    cardsSeenBySet: Partial<Record<CardSetId, number>>;
+    legendarySeenSets: CardSetId[];
+  };
   trialCards?: { activatedAt: string | null; expiresAt: string | null };
   returnJourney?: { claimedStageIds: ReturnQuestStageId[]; matchesPlayedAtActivation: number };
   recentMatches: RecentMatch[];
@@ -805,6 +815,8 @@ function readLocalPlayer(email: string): PlayerSnapshot | null {
       collection: parsed.collection,
       packsAvailable: parsed.packsAvailable,
     }, CARD_CATALOG, seasonKey, now);
+    const migratedCatchUpProgress = catchUpProgressFromCollection(rolled.collection);
+    const storedCatchUp = parsed.catchUpPack;
     const migrated = {
       ...parsed,
       decks: parsed.decks.map((deck) => ({
@@ -816,7 +828,12 @@ function readLocalPlayer(email: string): PlayerSnapshot | null {
       rankedRewards: rolled.rankedRewards,
       collection: rolled.collection,
       packsAvailable: rolled.packsAvailable,
-      catchUpPack: parsed.catchUpPack ?? { claimedAt: null, cardsGranted: 0 },
+      catchUpPack: {
+        claimedAt: storedCatchUp?.claimedAt ?? null,
+        cardsGranted: storedCatchUp?.cardsGranted ?? 0,
+        cardsSeenBySet: storedCatchUp?.cardsSeenBySet ?? migratedCatchUpProgress.cardsSeenBySet,
+        legendarySeenSets: storedCatchUp?.legendarySeenSets ?? migratedCatchUpProgress.legendarySeenSets,
+      },
       trialCards: parsed.trialCards ?? (
         parsed.ladderReady?.activatedAt && parsed.ladderReady.expiresAt
           ? {
@@ -859,6 +876,7 @@ function makeDemoPlayer(identity?: {
     format: "standard",
     updatedAt: new Date().toISOString(),
   };
+  const catchUpProgress = catchUpProgressFromCollection(collection);
   return {
     id: "local-commander",
     email: identity?.email ?? "commander@aether.local",
@@ -920,7 +938,7 @@ function makeDemoPlayer(identity?: {
     rewardTrack: { claimedLevels: [] },
     apprenticeTrack: { claimedMilestones: [] },
     ladderReady: { activatedAt: null, expiresAt: null, claimedDeckId: null },
-    catchUpPack: { claimedAt: null, cardsGranted: 0 },
+    catchUpPack: { claimedAt: null, cardsGranted: 0, ...catchUpProgress },
     trialCards: { activatedAt: null, expiresAt: null },
     returnJourney: { claimedStageIds: [], matchesPlayedAtActivation: 0 },
     rankedLadders: {
@@ -1060,13 +1078,26 @@ function applyLocalAction(
     const required = new Map<string, number>();
     offer.deck.forEach((cardId) => required.set(cardId, (required.get(cardId) ?? 0) + 1));
     const collection = { ...current.collection };
-    required.forEach((count, cardId) => { collection[cardId] = Math.max(collection[cardId] ?? 0, count); });
+    const grantedCardIds: string[] = [];
+    required.forEach((count, cardId) => {
+      const granted = Math.max(0, count - (collection[cardId] ?? 0));
+      for (let index = 0; index < granted; index += 1) grantedCardIds.push(cardId);
+      collection[cardId] = Math.max(collection[cardId] ?? 0, count);
+    });
+    const catchUpProgress = recordCatchUpCards(
+      current.catchUpPack ?? catchUpProgressFromCollection(current.collection),
+      grantedCardIds,
+    );
     const player = {
       ...current,
       collection,
       decks: [...current.decks.filter((deck) => deck.id !== claimedLadderReadyDeck.id), claimedLadderReadyDeck],
       activeDeckId: claimedLadderReadyDeck.id,
       ladderReady: { ...trial, claimedDeckId: offer.id },
+      catchUpPack: {
+        ...(current.catchUpPack ?? { claimedAt: null, cardsGranted: 0 }),
+        ...catchUpProgress,
+      },
       updatedAt: now,
     };
     return { ok: true, player, claimedLadderReadyDeck, localFallback: true };
@@ -1077,7 +1108,13 @@ function applyLocalAction(
     const seed = current.stats.matchesPlayed
       + (current.packPity?.packsOpened ?? 0) * 31
       + Object.values(current.collection).reduce((sum, count) => sum + count, 0) * 131;
-    const cards = generateCatchUpPack(current.collection, seed);
+    const currentCatchUp = current.catchUpPack ?? {
+      claimedAt: null,
+      cardsGranted: 0,
+      ...catchUpProgressFromCollection(current.collection),
+    };
+    const reward = generateCatchUpPackReward(current.collection, seed, currentCatchUp);
+    const cards = reward.cards;
     const collection = { ...current.collection };
     const counts = new Map<string, number>();
     cards.forEach((cardId) => {
@@ -1087,7 +1124,7 @@ function applyLocalAction(
     const player = {
       ...current,
       collection,
-      catchUpPack: { claimedAt: now, cardsGranted: cards.length },
+      catchUpPack: { claimedAt: now, cardsGranted: cards.length, ...reward.progress },
       returnJourney: {
         claimedStageIds: current.returnJourney?.claimedStageIds.includes("reconnect")
           ? current.returnJourney.claimedStageIds
@@ -1121,7 +1158,13 @@ function applyLocalAction(
       + (current.packPity?.packsOpened ?? 0) * 31
       + Object.values(current.collection).reduce((sum, count) => sum + count, 0) * 131
       + (stageIndex + 1) * 7_919;
-    const cards = generateCatchUpPack(current.collection, seed);
+    const currentCatchUp = current.catchUpPack ?? {
+      claimedAt: null,
+      cardsGranted: 0,
+      ...catchUpProgressFromCollection(current.collection),
+    };
+    const reward = generateCatchUpPackReward(current.collection, seed, currentCatchUp);
+    const cards = reward.cards;
     const collection = { ...current.collection };
     const counts = new Map<string, number>();
     cards.forEach((cardId) => {
@@ -1134,6 +1177,7 @@ function applyLocalAction(
       catchUpPack: {
         claimedAt: current.catchUpPack?.claimedAt ?? now,
         cardsGranted: (current.catchUpPack?.cardsGranted ?? 0) + cards.length,
+        ...reward.progress,
       },
       returnJourney: {
         ...journey,
@@ -1210,6 +1254,15 @@ function applyLocalAction(
     openedMap.forEach((count, id) => {
       collection[id] = (collection[id] ?? 0) + count;
     });
+    const currentCatchUp = current.catchUpPack ?? {
+      claimedAt: null,
+      cardsGranted: 0,
+      ...catchUpProgressFromCollection(current.collection),
+    };
+    const catchUpProgress = recordCatchUpCards(
+      currentCatchUp,
+      opened.flatMap((entry) => Array.from({ length: entry.count }, () => entry.cardId)),
+    );
     const player = {
       ...current,
       packsAvailable: Math.max(0, current.packsAvailable - 1),
@@ -1217,6 +1270,7 @@ function applyLocalAction(
         packsOpened: packPity.packsOpened + 1,
         packsSinceLegendary: openedLegendary ? 0 : packPity.packsSinceLegendary + 1,
       },
+      catchUpPack: { ...currentCatchUp, ...catchUpProgress },
       collection,
       tasks: current.tasks.map((task) =>
         task.id.includes("pack") || task.description.includes("卡包")
@@ -1286,6 +1340,13 @@ function applyLocalAction(
         ...current,
         currencies: { ...current.currencies, dust: current.currencies.dust - cost },
         collection: { ...current.collection, [cardId]: (current.collection[cardId] ?? 0) + 1 },
+        catchUpPack: {
+          ...(current.catchUpPack ?? { claimedAt: null, cardsGranted: 0 }),
+          ...recordCatchUpCards(
+            current.catchUpPack ?? catchUpProgressFromCollection(current.collection),
+            [cardId],
+          ),
+        },
         updatedAt: now,
       };
       return { ok: true, player, cardId, amount: cost, kind: "craft", localFallback: true };
@@ -6450,6 +6511,13 @@ function DeckSection({
   const trialClaimed = Boolean(ladderReady?.claimedDeckId);
   const trialPlayable = ladderReadyTrialIsActive(ladderReady, clockNow);
   const catchUpPreview = previewCatchUpPack(realCollection);
+  const catchUpProgress = catchUpPack ?? catchUpProgressFromCollection(realCollection);
+  const legendaryGuaranteeText = CATCH_UP_PACK_SETS.map((set) => {
+    const label = CARD_SET_DEFINITIONS[set].label;
+    return catchUpProgress.legendarySeenSets.includes(set)
+      ? `${label}已出传说`
+      : `${label} ${Math.min(catchUpProgress.cardsSeenBySet[set] ?? 0, CATCH_UP_LEGENDARY_GUARANTEE_CARDS)}/${CATCH_UP_LEGENDARY_GUARANTEE_CARDS}`;
+  }).join(" · ");
   const trialCardsActive = trialCardsAreActive(trialCards, clockNow);
   const normalizedReturnJourney = returnJourney ?? {
     claimedStageIds: catchUpPack?.claimedAt ? ["reconnect" as const] : [],
@@ -6587,6 +6655,10 @@ function DeckSection({
             {catchUpPack?.claimedAt
               ? `追赶包已领取 · ${catchUpPack.cardsGranted} 张`
               : `追赶包预估 ${catchUpPreview.cardCount} 张（逐系列缺口 · 稀有+ ≥20%）`}
+          </span>
+          <span>
+            <Icon name="spark" size={14} />
+            前 50 张传说保底 · {legendaryGuaranteeText}
           </span>
           <span>
             <Icon name="spark" size={14} />
