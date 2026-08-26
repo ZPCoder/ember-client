@@ -29,6 +29,7 @@ import {
   REWARD_TRACK,
   craftCost,
   disenchantValue,
+  extraCardDisenchantPlan,
   TRAIT_DEFINITIONS,
   TRAIT_ORDER,
   applyCommand,
@@ -291,7 +292,9 @@ type GamePayload = {
   targetId?: string;
   cardId?: string;
   amount?: number;
-  kind?: "craft" | "disenchant";
+  cards?: number;
+  copies?: number;
+  kind?: "craft" | "disenchant" | "bulk-disenchant";
   savedDeck?: SavedDeck;
   deletedDeckId?: string;
   claimedLadderReadyDeck?: SavedDeck;
@@ -1415,7 +1418,9 @@ function applyLocalAction(
       return { ok: true, player, cardId, amount: cost, kind: "craft", localFallback: true };
     }
     const owned = current.collection[cardId] ?? 0;
-    const used = current.decks.reduce((sum, deck) => sum + deck.cardIds.filter((id) => id === cardId).length, 0);
+    const used = Math.max(0, ...current.decks.map(
+      (deck) => deck.cardIds.filter((id) => id === cardId).length,
+    ));
     if (owned <= used) throw new Error("卡牌正在卡组中使用，至少保留卡组所需数量。");
     const value = disenchantValue(card.rarity as "普通" | "稀有" | "史诗" | "传说");
     const player = {
@@ -1425,6 +1430,30 @@ function applyLocalAction(
       updatedAt: now,
     };
     return { ok: true, player, cardId, amount: value, kind: "disenchant", localFallback: true };
+  }
+
+  if (action === "disenchant_extras") {
+    const plan = extraCardDisenchantPlan(current.collection, CARD_CATALOG);
+    if (plan.totalCopies === 0) throw new Error("收藏中没有超过可用套数的多余卡牌。");
+    const collection = { ...current.collection };
+    for (const entry of plan.entries) {
+      collection[entry.cardId] = Math.max(0, (collection[entry.cardId] ?? 0) - entry.copies);
+    }
+    const player = {
+      ...current,
+      currencies: { ...current.currencies, dust: current.currencies.dust + plan.totalDust },
+      collection,
+      updatedAt: now,
+    };
+    return {
+      ok: true,
+      player,
+      amount: plan.totalDust,
+      cards: plan.totalCards,
+      copies: plan.totalCopies,
+      kind: "bulk-disenchant",
+      localFallback: true,
+    };
   }
 
   if (action === "claim_reward") {
@@ -4146,6 +4175,18 @@ export function GameApp({
     }
   };
 
+  const disenchantExtras = async () => {
+    const payload = await postAction("disenchant_extras", {
+      idempotencyKey: makeId("disenchant-extras"),
+    });
+    if (payload) {
+      setNotice({
+        tone: payload.localFallback ? "info" : "success",
+        text: `已安全分解 ${payload.copies ?? 0} 张多余卡牌，获得 ${payload.amount ?? 0} 星尘。`,
+      });
+    }
+  };
+
   const claimReward = async (level: number) => {
     const payload = await postAction("claim_reward", {
       idempotencyKey: makeId(`reward-${level}`),
@@ -5619,6 +5660,7 @@ export function GameApp({
                   apiBusy={apiBusy}
                   onCraft={(card) => void changeCardDust("craft_card", card)}
                   onDisenchant={(card) => void changeCardDust("disenchant_card", card)}
+                  onDisenchantExtras={() => void disenchantExtras()}
                   onOpenDeck={() => switchSection("deck")}
                 />
               )}
@@ -6327,6 +6369,7 @@ function CollectionSection({
   apiBusy,
   onCraft,
   onDisenchant,
+  onDisenchantExtras,
   onOpenDeck,
 }: {
   cards: CatalogCard[];
@@ -6359,8 +6402,14 @@ function CollectionSection({
   apiBusy: string | null;
   onCraft: (card: CatalogCard) => void;
   onDisenchant: (card: CatalogCard) => void;
+  onDisenchantExtras: () => void;
   onOpenDeck: () => void;
 }) {
+  const [confirmExtraDisenchant, setConfirmExtraDisenchant] = useState(false);
+  const extraPlan = useMemo(
+    () => extraCardDisenchantPlan(realCollection, CARD_CATALOG),
+    [realCollection],
+  );
   const filterSignature = `${search}|${faction}|${type}|${rarity}|${trait}|${keyword}|${minionType}|${spellSchool}`;
   const [pagination, setPagination] = useState({ signature: filterSignature, count: 30 });
   const visibleCount = pagination.signature === filterSignature ? pagination.count : 30;
@@ -6373,12 +6422,35 @@ function CollectionSection({
         title="卡牌收藏"
         description="浏览 20 个体系共 1000 张档案，按卡牌类型、随从类型、法术派系、特质与关键词检索，并围绕可查询的类型联动规划牌组。"
         action={
-          <button className="button button--outline" type="button" onClick={onOpenDeck}>
-            <Icon name="layers" />
-            当前卡组 {Array.from(deckCounts.values()).reduce((sum, count) => sum + count, 0)} / 30
-          </button>
+          <>
+            <button className="button button--outline" type="button" disabled={extraPlan.totalCopies === 0 || apiBusy !== null} onClick={() => setConfirmExtraDisenchant(true)}>
+              <Icon name="dust" />
+              {extraPlan.totalCopies > 0 ? `分解多余 · ${extraPlan.totalCopies} 张` : "没有多余卡牌"}
+            </button>
+            <button className="button button--outline" type="button" onClick={onOpenDeck}>
+              <Icon name="layers" />
+              当前卡组 {Array.from(deckCounts.values()).reduce((sum, count) => sum + count, 0)} / 30
+            </button>
+          </>
         }
       />
+
+      {confirmExtraDisenchant && (
+        <div className="ladder-ready-confirm" role="presentation" onClick={() => setConfirmExtraDisenchant(false)}>
+          <section role="dialog" aria-modal="true" aria-labelledby="extra-disenchant-title" onClick={(event) => event.stopPropagation()}>
+            <span className="ladder-ready-confirm__sigil">✦</span>
+            <span className="panel__eyebrow">MASS DISENCHANT / FINAL CHECK</span>
+            <h2 id="extra-disenchant-title">分解全部多余卡牌？</h2>
+            <p>将从 {extraPlan.totalCards} 种卡牌中分解 {extraPlan.totalCopies} 张超限复制，获得 {extraPlan.totalDust.toLocaleString("zh-CN")} 星尘。每种卡牌会保留完整可用套数，已保存卡组不会缺牌。</p>
+            <div>
+              <button className="button button--ghost" type="button" onClick={() => setConfirmExtraDisenchant(false)}>取消</button>
+              <button className="button button--primary" type="button" disabled={apiBusy !== null} onClick={() => { setConfirmExtraDisenchant(false); onDisenchantExtras(); }}>
+                <Icon name="dust" />确认分解
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
 
       <div className="faction-codex" aria-label="20个卡牌体系">
         {(Object.entries(FACTION_DEFINITIONS) as Array<
