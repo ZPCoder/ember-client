@@ -47,7 +47,9 @@ import {
   MAX_SAVED_DECKS,
   createRankedSnapshot,
   createRankedLadders,
+  decodeDeckCode,
   describeRankedRewardBundle,
+  encodeDeckCode,
   highestRankedFormat,
   ladderLabelForProgress,
   ladderProgressForRating,
@@ -3324,22 +3326,44 @@ export function GameApp({
     });
   };
 
-  const importDeck = (ids: string[]) => {
-    const validation = validateDeckForFormat(ids, deckFormat);
+  const importDeck = (code: string): boolean => {
+    let decoded: ReturnType<typeof decodeDeckCode>;
+    try {
+      decoded = decodeDeckCode(code);
+    } catch (error) {
+      setNotice({
+        tone: "warning",
+        text: error instanceof Error ? error.message : "无法解析这段卡组代码。",
+      });
+      return false;
+    }
+    if (player.decks.length >= MAX_SAVED_DECKS) {
+      setNotice({ tone: "warning", text: `已使用全部 ${MAX_SAVED_DECKS} 个卡组栏位，请先整理现有卡组。` });
+      return false;
+    }
+    const format = decoded.format ?? deckFormat;
+    const validation = validateDeckForFormat(decoded.cardIds, format);
     if (!validation.valid) {
       setNotice({ tone: "warning", text: validation.errors[0]?.message ?? "卡组代码不符合 30 张组牌规则。" });
-      return;
+      return false;
     }
     const counts = new Map<string, number>();
-    ids.forEach((id) => counts.set(id, (counts.get(id) ?? 0) + 1));
+    decoded.cardIds.forEach((id) => counts.set(id, (counts.get(id) ?? 0) + 1));
     const missing = [...counts.entries()].find(([id, count]) => (player.collection[id] ?? 0) < count);
     if (missing) {
       setNotice({ tone: "warning", text: `收藏中没有足够的「${CARD_BY_ID.get(missing[0])?.name ?? missing[0]}」。` });
-      return;
+      return false;
     }
-    setDeckIds([...ids]);
+    setEditingDeckId(null);
     setSelectedLadderReadyDeckId(null);
-    setNotice({ tone: "success", text: "卡组代码已解析，保存后即可投入演算。" });
+    setDeckIds([...decoded.cardIds]);
+    setDeckName(decoded.name ?? "导入牌组");
+    setDeckFormat(format);
+    setNotice({
+      tone: "success",
+      text: `已导入新的${rankedFormatLabel(format)}卡组草稿，保存后会加入卡组列表。`,
+    });
+    return true;
   };
 
   const selectDeck = (deckId: string) => {
@@ -5682,7 +5706,7 @@ function DeckSection({
   onRemove: (cardId: string) => void;
   onSave: () => void;
   onDelete: () => void;
-  onImport: (ids: string[]) => void;
+  onImport: (code: string) => boolean;
   onBattle: () => void;
   onActivateLadderReady: () => void;
   onTrialLadderReady: (deckId: LadderReadyDeckId) => void;
@@ -5738,23 +5762,14 @@ function DeckSection({
   const deckHeroPower = getHeroPower(deckFaction);
   const deckSlotsFull = decks.length >= MAX_SAVED_DECKS;
 
-  const encodeDeckCode = () => {
-    const raw = `ASTRA1|${deckIds.join(",")}`;
-    const encoded = typeof window === "undefined" ? raw : window.btoa(raw).replaceAll("+", "-").replaceAll("/", "_").replaceAll("=", "");
+  const copyDeckCode = () => {
+    const encoded = encodeDeckCode({ format, name, cardIds: deckIds });
     setDeckCode(encoded);
     void navigator.clipboard?.writeText(encoded).catch(() => undefined);
   };
 
-  const decodeDeckCode = () => {
-    try {
-      const normalized = deckCode.trim().replaceAll("-", "+").replaceAll("_", "/");
-      const padded = normalized + "=".repeat((4 - (normalized.length % 4)) % 4);
-      const raw = typeof window === "undefined" ? normalized : window.atob(padded);
-      const ids = raw.startsWith("ASTRA1|") ? raw.slice(7).split(",").filter(Boolean) : raw.split(",").filter(Boolean);
-      onImport(ids);
-    } catch {
-      setDeckCode("");
-    }
+  const importDeckCode = () => {
+    if (onImport(deckCode)) setDeckCode("");
   };
 
   return (
@@ -5903,9 +5918,9 @@ function DeckSection({
             <strong className={deckIds.length === 30 ? "is-complete" : ""}>{deckIds.length}<small>/30</small></strong>
           </div>
           <div className="deck-code-tools" aria-label="卡组代码">
-            <label><span>卡组代码</span><input value={deckCode} onChange={(event) => setDeckCode(event.target.value)} placeholder="粘贴 ASTRA1 卡组代码" /></label>
-            <div><button className="button button--small button--outline" type="button" onClick={decodeDeckCode}>导入</button><button className="button button--small button--outline" type="button" onClick={encodeDeckCode}>复制导出</button></div>
-            <small>可跨设备分享 30 张卡组；导入时会校验收藏数量与组牌规则。</small>
+            <label><span>卡组代码</span><input value={deckCode} onChange={(event) => setDeckCode(event.target.value)} placeholder="粘贴 ASTRA2 或旧版 ASTRA1 卡组代码" /></label>
+            <div><button className="button button--small button--outline" type="button" onClick={importDeckCode} disabled={!deckCode.trim() || deckSlotsFull}>导入为新卡组</button><button className="button button--small button--outline" type="button" onClick={copyDeckCode} disabled={!validation.valid}>复制导出</button></div>
+            <small>ASTRA2 会随 30 张卡牌携带名称及标准／狂野模式；导入会新建草稿，并校验收藏与组牌规则。</small>
           </div>
 
           <div className={`deck-validation ${validation.valid ? "deck-validation--valid" : "deck-validation--invalid"}`} role="status">

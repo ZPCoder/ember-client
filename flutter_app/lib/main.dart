@@ -1432,6 +1432,81 @@ class DeckPage extends StatelessWidget {
                       label: const Text('复制'),
                     ),
                     OutlinedButton.icon(
+                      onPressed: controller.deckValid
+                          ? () async {
+                              final code = controller.exportActiveDeckCode();
+                              await Clipboard.setData(
+                                ClipboardData(text: code),
+                              );
+                              if (!context.mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('ASTRA2 卡组代码已复制')),
+                              );
+                            }
+                          : null,
+                      icon: const Icon(Icons.ios_share_outlined, size: 17),
+                      label: const Text('复制代码'),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: controller.canCreateDeck
+                          ? () async {
+                              final input = TextEditingController();
+                              final code = await showDialog<String>(
+                                context: context,
+                                builder: (dialogContext) => AlertDialog(
+                                  title: const Text('导入卡组代码'),
+                                  content: TextField(
+                                    controller: input,
+                                    autofocus: true,
+                                    minLines: 2,
+                                    maxLines: 5,
+                                    decoration: InputDecoration(
+                                      hintText: '粘贴 ASTRA2 或旧版 ASTRA1 代码',
+                                      suffixIcon: IconButton(
+                                        tooltip: '从剪贴板粘贴',
+                                        onPressed: () async {
+                                          final data = await Clipboard.getData(
+                                            'text/plain',
+                                          );
+                                          if (data?.text != null) {
+                                            input.text = data!.text!;
+                                          }
+                                        },
+                                        icon: const Icon(Icons.paste_outlined),
+                                      ),
+                                    ),
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.pop(dialogContext),
+                                      child: const Text('取消'),
+                                    ),
+                                    FilledButton(
+                                      onPressed: () => Navigator.pop(
+                                        dialogContext,
+                                        input.text.trim(),
+                                      ),
+                                      child: const Text('导入为新牌组'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                              input.dispose();
+                              if (code == null || code.isEmpty) return;
+                              final result = await controller.importDeckCode(
+                                code,
+                              );
+                              if (!context.mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(result.message)),
+                              );
+                            }
+                          : null,
+                      icon: const Icon(Icons.download_outlined, size: 17),
+                      label: const Text('导入代码'),
+                    ),
+                    OutlinedButton.icon(
                       onPressed: controller.activeDeckId == null
                           ? null
                           : () async {

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../data/catalog.dart';
+import '../data/deck_code.dart';
 import '../data/formats.dart';
 import '../models/card_definition.dart';
 import '../models/local_saved_deck.dart';
@@ -255,27 +256,23 @@ class GameController extends ChangeNotifier {
     return null;
   }
 
-  Set<String> get _deckFactions => deckIds
-      .map((id) => card(id)?.faction)
-      .whereType<String>()
-      .where((faction) => faction != '中立')
-      .toSet();
-
-  String? get _deckValidationError {
-    if (deckIds.length < 30) return '还差 ${30 - deckIds.length} 张卡牌';
-    if (deckIds.length > 30) return '卡组最多 30 张卡牌';
-    if (deckIds.any((id) => card(id) == null)) return '卡组包含未知卡牌';
-    for (final id in deckIds) {
+  String? _validateDeck(List<String> ids, RankedFormat format) {
+    if (ids.length < 30) return '还差 ${30 - ids.length} 张卡牌';
+    if (ids.length > 30) return '卡组最多 30 张卡牌';
+    if (ids.any((id) => card(id) == null)) return '卡组包含未知卡牌';
+    final factions = <String>{};
+    for (final id in ids) {
       final definition = card(id)!;
-      if (!cardAllowedInDeck(definition)) {
-        return '${deckFormat.fullLabel}不能使用「${definition.name}」'
+      if (!cardAvailableInRankedFormat(definition, format)) {
+        return '${format.fullLabel}不能使用「${definition.name}」'
             '（${cardSetDefinition(definition.setId).label}）';
       }
+      if (definition.faction != '中立') factions.add(definition.faction);
     }
-    if (_deckFactions.length > 1) return '不能混合两个非中立阵营';
+    if (factions.length > 1) return '不能混合两个非中立阵营';
 
     final copies = <String, int>{};
-    for (final id in deckIds) {
+    for (final id in ids) {
       copies[id] = (copies[id] ?? 0) + 1;
     }
     for (final entry in copies.entries) {
@@ -288,6 +285,8 @@ class GameController extends ChangeNotifier {
     }
     return null;
   }
+
+  String? get _deckValidationError => _validateDeck(deckIds, deckFormat);
 
   bool get deckValid => _deckValidationError == null;
 
@@ -350,6 +349,64 @@ class GameController extends ChangeNotifier {
     await _queueDeckPersistence();
     notifyListeners();
     return true;
+  }
+
+  String exportActiveDeckCode() => encodeDeckCode(
+    format: deckFormat,
+    name: _normalizeDeckName(deckName),
+    cardIds: List<String>.from(deckIds),
+  );
+
+  Future<DeckCodeImportResult> importDeckCode(String value) async {
+    if (!canCreateDeck) {
+      return const DeckCodeImportResult(
+        success: false,
+        message: '27 个牌组栏位已全部使用，请先删除一个牌组',
+      );
+    }
+    DecodedDeckCode decoded;
+    try {
+      decoded = decodeDeckCode(value);
+    } on FormatException catch (error) {
+      return DeckCodeImportResult(
+        success: false,
+        message: error.message.toString(),
+      );
+    }
+    final format = decoded.format ?? deckFormat;
+    final validationError = _validateDeck(decoded.cardIds, format);
+    if (validationError != null) {
+      return DeckCodeImportResult(success: false, message: validationError);
+    }
+    final counts = <String, int>{};
+    for (final id in decoded.cardIds) {
+      counts[id] = (counts[id] ?? 0) + 1;
+    }
+    for (final entry in counts.entries) {
+      if (owned(entry.key) < entry.value) {
+        final definition = card(entry.key);
+        return DeckCodeImportResult(
+          success: false,
+          message: '收藏中没有足够的「${definition?.name ?? entry.key}」',
+        );
+      }
+    }
+
+    _stageActiveDeck();
+    deckFormat = format;
+    deckName = _normalizeDeckName(decoded.name ?? '导入牌组');
+    deckIds
+      ..clear()
+      ..addAll(decoded.cardIds);
+    final imported = _currentDeckSnapshot(id: _newDeckId());
+    savedDecks.add(imported);
+    activeDeckId = imported.id;
+    await _queueDeckPersistence();
+    notifyListeners();
+    return DeckCodeImportResult(
+      success: true,
+      message: '已导入「${imported.name}」为新的${format.label}牌组',
+    );
   }
 
   Future<bool> deleteDeck(String deckId) async {
