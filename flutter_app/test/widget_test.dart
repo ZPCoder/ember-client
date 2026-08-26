@@ -44,6 +44,22 @@ void main() {
       );
       expect(immunity.keywords, contains('immune'));
       expect(immunity.effect.single['kind'], 'grant-immune');
+      final permanentImmunity = catalog.singleWhere(
+        (card) => card.id == 'neutral-season-14',
+      );
+      expect(permanentImmunity.name, '虚空封界者');
+      expect(permanentImmunity.keywords, contains('immune'));
+      expect(
+        OnlineUnit(
+          instanceId: 'online-permanent-immune',
+          card: permanentImmunity,
+          attack: 4,
+          health: 4,
+          maxHealth: 4,
+          keywords: permanentImmunity.keywords,
+        ).isImmune,
+        isTrue,
+      );
       final location = catalog.singleWhere((card) => card.isLocation);
       expect(location.id, 'sun-daybreak-order');
       expect(location.durability, 3);
@@ -5277,6 +5293,70 @@ void main() {
       state.ai.board.clear();
       await controller.endTurn();
       expect(attacker.immuneThisTurn, isFalse);
+      controller.dispose();
+    },
+  );
+
+  test(
+    'mobile printed Immune blocks attacks and area damage across turns',
+    () async {
+      final catalog = await loadCatalog();
+      final permanent = catalog.singleWhere(
+        (card) => card.id == 'neutral-season-14',
+      );
+      final attackerCard = catalog.singleWhere(
+        (card) => card.id == 'sun-skyfire-roc',
+      );
+      final areaSpell = catalog.singleWhere(
+        (card) => card.id == 'void-ink-storm',
+      );
+      final controller = GameController(startingPlayer: 'player')
+        ..catalog = catalog
+        ..deckIds.addAll(List.filled(30, attackerCard.id));
+      controller.startBattle();
+      await controller.confirmMulligan();
+      final state = controller.battle!;
+      final attacker = BattleUnit(
+        instanceId: 'mobile-permanent-attacker',
+        card: attackerCard,
+        owner: 'player',
+        attack: 8,
+        health: 8,
+        maxHealth: 8,
+        summoningSick: false,
+      );
+      final target = BattleUnit(
+        instanceId: 'mobile-permanent-target',
+        card: permanent,
+        owner: 'ai',
+        attack: permanent.attack ?? 0,
+        health: permanent.health ?? 1,
+        maxHealth: permanent.health ?? 1,
+      );
+      state.player.board
+        ..clear()
+        ..add(attacker);
+      state.ai.board
+        ..clear()
+        ..add(target);
+      state.player.hand
+        ..clear()
+        ..add(areaSpell);
+      state.player.handCostReductions
+        ..clear()
+        ..add(0);
+      state.player.handFragments
+        ..clear()
+        ..add(null);
+      state.player.mana = 10;
+
+      expect(target.isImmune, isTrue);
+      expect(controller.attack(attacker, target: target), isFalse);
+      expect(controller.playCard(areaSpell), isTrue);
+      expect(target.health, permanent.health);
+      state.ai.board.clear();
+      await controller.endTurn();
+      expect(target.isImmune, isTrue);
       controller.dispose();
     },
   );

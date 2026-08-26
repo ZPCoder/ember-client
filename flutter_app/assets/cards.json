@@ -6661,16 +6661,16 @@
   },
   {
     "id": "neutral-season-14",
-    "name": "齿轮工匠·14",
-    "description": "combo。 中立的战线单位。 亡语：抽一张牌。 连击：使所有友方单位获得 +1/+1。",
+    "name": "虚空封界者",
+    "description": "免疫。亡语：抽一张牌。",
     "faction": "中立",
     "type": "unit",
     "cost": 6,
     "rarity": "普通",
-    "attack": 5,
-    "health": 7,
+    "attack": 4,
+    "health": 4,
     "keywords": [
-      "combo",
+      "immune",
       "deathrattle"
     ],
     "traits": [
@@ -6681,13 +6681,6 @@
       {
         "kind": "draw",
         "count": 1
-      }
-    ],
-    "combo": [
-      {
-        "kind": "buff-all-friendly",
-        "attack": 1,
-        "health": 1
       }
     ],
     "effect": [],

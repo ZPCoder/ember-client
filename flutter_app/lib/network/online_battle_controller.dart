@@ -48,7 +48,7 @@ class OnlineUnit {
   bool get hasWindfury => keywords.contains('windfury');
   bool get hasDivineShield => keywords.contains('shield');
   bool get isElusive => keywords.contains('elusive');
-  bool get isImmune => immuneThisTurn;
+  bool get isImmune => immuneThisTurn || keywords.contains('immune');
   bool get isFrozen => frozenTurns > 0;
   int get attackLimit => hasWindfury ? 2 : 1;
   bool get canAttack =>

@@ -2491,7 +2491,7 @@ class _BattleBoardState extends State<BattleBoard> {
               ...state.ai.board.where(
                 (unit) =>
                     !unit.stealthActive &&
-                    !unit.immuneThisTurn &&
+                    !unit.isImmune &&
                     (card.type != 'spell' || !unit.isElusive),
               ),
             ]
@@ -2501,7 +2501,7 @@ class _BattleBoardState extends State<BattleBoard> {
                 .where(
                   (unit) =>
                       (!targetType.startsWith('enemy') ||
-                          (!unit.stealthActive && !unit.immuneThisTurn)) &&
+                          (!unit.stealthActive && !unit.isImmune)) &&
                       (card.type != 'spell' || !unit.isElusive),
                 )
                 .toList();
@@ -2535,13 +2535,10 @@ class _BattleBoardState extends State<BattleBoard> {
 
   Future<void> _attack(BuildContext context, BattleUnit attacker) async {
     final taunts = state.ai.board
-        .where(
-          (unit) =>
-              unit.hasTaunt && !unit.stealthActive && !unit.immuneThisTurn,
-        )
+        .where((unit) => unit.hasTaunt && !unit.stealthActive && !unit.isImmune)
         .toList();
     final visibleUnits = state.ai.board
-        .where((unit) => !unit.stealthActive && !unit.immuneThisTurn)
+        .where((unit) => !unit.stealthActive && !unit.isImmune)
         .toList();
     final choice = await _pickBattleTarget(
       context,
@@ -2567,13 +2564,10 @@ class _BattleBoardState extends State<BattleBoard> {
     final weapon = state.player.weapon;
     if ((weapon?.attack ?? 0) + state.player.heroAttackBonus <= 0) return;
     final taunts = state.ai.board
-        .where(
-          (unit) =>
-              unit.hasTaunt && !unit.stealthActive && !unit.immuneThisTurn,
-        )
+        .where((unit) => unit.hasTaunt && !unit.stealthActive && !unit.isImmune)
         .toList();
     final visibleUnits = state.ai.board
-        .where((unit) => !unit.stealthActive && !unit.immuneThisTurn)
+        .where((unit) => !unit.stealthActive && !unit.isImmune)
         .toList();
     final choice = await _pickBattleTarget(
       context,
@@ -2607,7 +2601,7 @@ class _BattleBoardState extends State<BattleBoard> {
           .where(
             (unit) =>
                 !unit.isElusive &&
-                (friendly || (!unit.stealthActive && !unit.immuneThisTurn)),
+                (friendly || (!unit.stealthActive && !unit.isImmune)),
           )
           .toList();
       choice = await _pickBattleTarget(
@@ -4335,7 +4329,7 @@ class _BoardRow extends StatelessWidget {
                         const _UnitBadge(label: '潜行', color: Color(0xFF65CDDA)),
                       if (unit.hasReborn)
                         const _UnitBadge(label: '复生', color: Color(0xFFA692D1)),
-                      if (unit.immuneThisTurn)
+                      if (unit.isImmune)
                         const _UnitBadge(label: '免疫', color: Color(0xFFE7BD7A)),
                     ],
                   ),

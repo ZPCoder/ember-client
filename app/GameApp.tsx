@@ -384,6 +384,10 @@ type BattleUnit = {
   temporaryHealthBonus: number;
 };
 
+function battleUnitIsImmune(unit: Pick<BattleUnit, "keywords" | "immuneThisTurn">): boolean {
+  return unit.immuneThisTurn || unit.keywords.includes("immune");
+}
+
 type BattleLocation = {
   id: string;
   cardId: string;
@@ -8477,8 +8481,10 @@ function BoardUnit({
       stealthActive: false,
     };
   const impactText = battleImpactText(impact);
-  const statusText = unit.immuneThisTurn
-    ? "◇ 本回合免疫"
+  const statusText = battleUnitIsImmune(unit)
+    ? unit.immuneThisTurn
+      ? "◇ 本回合免疫"
+      : "◇ 免疫"
     : unit.frozenTurns > 0
     ? `❄ 冻结 ${unit.frozenTurns} 回合`
     : unit.summoningSick
@@ -9381,7 +9387,7 @@ function BattleSection({
     Boolean(pendingSourceBlocksElusive && unit.keywords.includes("elusive"));
   const enemyUnitTargetable = (unit: BattleUnit) => {
     if (unit.health <= 0) return false;
-    if (unit.immuneThisTurn) return false;
+    if (battleUnitIsImmune(unit)) return false;
     if (selectedAttacker) {
       if (unit.stealthActive) return false;
       return !attackBlockedByTaunt || unit.keywords.includes("taunt");
@@ -9400,7 +9406,7 @@ function BattleSection({
   };
   const targetPreviewForPendingUnit = (unit: BattleUnit, side: "player" | "ai"): string | undefined => {
     if (!pendingCard && !pendingHeroPower) return undefined;
-    if (unit.immuneThisTurn && side === "ai") return "免疫：不能成为敌方直接目标";
+    if (battleUnitIsImmune(unit) && side === "ai") return "免疫：不能成为敌方直接目标";
     if (elusiveBlocksPendingTarget(unit)) return "扰魔：不能成为法术或技能目标";
     if (pendingHeroPower) {
       const power = battle.player.heroPowerEffect;
