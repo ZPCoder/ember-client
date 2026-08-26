@@ -110,6 +110,8 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(game, /claim_ladder_ready_deck/);
   assert.match(game, /claim_catch_up_pack/);
   assert.match(game, /previewCatchUpPack/);
+  assert.match(game, /稀有\+ ≥20%/);
+  assert.match(gameStore, /generateCatchUpPack/);
   assert.match(game, /collectionWithTrialCards/);
   assert.match(game, /trialCardsAreActive/);
   assert.match(game, /试玩卡生效中/);

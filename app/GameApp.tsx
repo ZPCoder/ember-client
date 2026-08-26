@@ -6586,7 +6586,7 @@ function DeckSection({
             <Icon name="cards" size={14} />
             {catchUpPack?.claimedAt
               ? `追赶包已领取 · ${catchUpPack.cardsGranted} 张`
-              : `追赶包预估 ${catchUpPreview.cardCount} 张（收藏越少越多）`}
+              : `追赶包预估 ${catchUpPreview.cardCount} 张（逐系列缺口 · 稀有+ ≥20%）`}
           </span>
           <span>
             <Icon name="spark" size={14} />
