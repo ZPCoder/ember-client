@@ -3250,6 +3250,12 @@ button.game-card:not(:disabled):hover .game-card__artwork,
   font-size: 7px;
 }
 
+.deck-keywords .deck-school-chip {
+  color: #b9d9f3;
+  border: 1px solid rgba(104, 169, 216, 0.18);
+  background: rgba(104, 169, 216, 0.08);
+}
+
 .deck-list {
   max-height: 360px;
   overflow: auto;
@@ -4551,6 +4557,17 @@ button.hero-core {
   margin-top: 3px;
   margin-left: 0 !important;
   color: #8ddfd3 !important;
+}
+
+.hero-core__schools {
+  display: block !important;
+  max-width: 190px;
+  margin-top: 3px;
+  margin-left: 0 !important;
+  overflow: hidden;
+  color: #a9cce8 !important;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .hero-core__health {

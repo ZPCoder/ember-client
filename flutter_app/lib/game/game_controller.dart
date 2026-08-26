@@ -1103,6 +1103,36 @@ class GameController extends ChangeNotifier {
     return true;
   }
 
+  bool _drawSpellSchool(BattleSide side, String school) {
+    _syncDeckCostOverrides(side);
+    final matchIndex = side.deck.lastIndexWhere(
+      (candidate) => candidate.type == 'spell' && candidate.school == school,
+    );
+    if (matchIndex < 0) return false;
+    final drawn = side.deck.removeAt(matchIndex);
+    final costOverride = side.deckCostOverrides.removeAt(matchIndex);
+    if (_addCardToHand(side, drawn, costOverride: costOverride)) return true;
+    stateLog(
+      _ownerOf(side) == 'player' ? '手牌已满' : '敌方手牌已满',
+      ' ${drawn.name} 被燃毁。',
+    );
+    return true;
+  }
+
+  bool _spellSchoolPayoffActive(BattleSide side, Map<String, dynamic> effect) {
+    final history = effect['window'] == 'last-turn'
+        ? side.spellSchoolsPlayedLastTurn
+        : side.spellSchoolsPlayedThisTurn;
+    final distinct = history.toSet();
+    final requiredSchool = effect['requiredSchool']?.toString();
+    final minimumDistinct = max(
+      1,
+      (effect['minimumDistinct'] as num?)?.toInt() ?? 1,
+    );
+    return (requiredSchool == null || distinct.contains(requiredSchool)) &&
+        distinct.length >= minimumDistinct;
+  }
+
   bool _addCardToHand(
     BattleSide side,
     CardDefinition drawn, {
@@ -1715,6 +1745,7 @@ class GameController extends ChangeNotifier {
             'draw',
             'draw-opponent',
             'draw-minion-type',
+            'draw-spell-school',
             'summon',
           }.contains(kind)) {
             effect['count'] =
@@ -1729,6 +1760,8 @@ class GameController extends ChangeNotifier {
                 ((effect['attack'] as num?)?.toInt() ?? 0) * multiplier;
             effect['health'] =
                 ((effect['health'] as num?)?.toInt() ?? 0) * multiplier;
+          } else if (kind == 'spell-school-payoff') {
+            effect['effects'] = _scaledEffects(effect['effects'], multiplier);
           }
           return effect;
         })
@@ -2023,6 +2056,9 @@ class GameController extends ChangeNotifier {
       );
       _processDeaths();
       return;
+    }
+    if (card.type == 'spell' && card.school != null) {
+      source.spellSchoolsPlayedThisTurn.add(card.school!);
     }
     source.overloadLocked += card.overload;
     if (card.isHero) {
@@ -2511,6 +2547,31 @@ class GameController extends ChangeNotifier {
             final minionType = effect['minionType']?.toString() ?? '';
             for (var i = 0; i < count; i++) {
               if (!_drawMinionType(source, minionType)) break;
+            }
+            break;
+          case 'draw-spell-school':
+            final count = (effect['count'] as num?)?.toInt() ?? 1;
+            final school = effect['school']?.toString() ?? '';
+            for (var i = 0; i < count; i++) {
+              if (!_drawSpellSchool(source, school)) break;
+            }
+            break;
+          case 'spell-school-payoff':
+            final nested = effect['effects'];
+            if (_spellSchoolPayoffActive(source, effect) && nested is List) {
+              _resolveEffects(
+                nested
+                    .whereType<Map>()
+                    .map((item) => Map<String, dynamic>.from(item))
+                    .toList(growable: false),
+                source: source,
+                enemy: enemy,
+                target: target,
+                targetHero: targetHero,
+                sourceName: '$sourceName · 派系共鸣',
+                sourceCard: sourceCard,
+                sourceUnit: sourceUnit,
+              );
             }
             break;
           case 'shuffle-random-into-deck':
@@ -3206,6 +3267,7 @@ class GameController extends ChangeNotifier {
     _resolveTurnTriggers(state.player, start: false);
     _clearTemporaryBuffs(state.player);
     state.player.heroAttackBonus = 0;
+    _archiveSpellSchoolTurn(state.player);
     _settleFreezeAtEndOfTurn(state.player);
     _processDeaths();
     _checkFinished();
@@ -3435,6 +3497,7 @@ class GameController extends ChangeNotifier {
     _resolveTurnTriggers(state.ai, start: false);
     _clearTemporaryBuffs(state.ai);
     state.ai.heroAttackBonus = 0;
+    _archiveSpellSchoolTurn(state.ai);
     _settleFreezeAtEndOfTurn(state.ai);
     _processDeaths();
     _checkFinished();
@@ -3557,6 +3620,13 @@ class GameController extends ChangeNotifier {
         unit.freezeBlocked = false;
       }
     }
+  }
+
+  void _archiveSpellSchoolTurn(BattleSide side) {
+    side.spellSchoolsPlayedLastTurn
+      ..clear()
+      ..addAll(side.spellSchoolsPlayedThisTurn);
+    side.spellSchoolsPlayedThisTurn.clear();
   }
 
   /// Consume Freeze after the character has actually lost its next attack.

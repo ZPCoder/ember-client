@@ -833,6 +833,7 @@ class _CollectionPageState extends State<CollectionPage> {
   String faction = '全部';
   String type = '全部';
   String minionType = '全部';
+  String spellSchool = '全部';
   String cardPool = 'all';
   int visible = 30;
 
@@ -842,7 +843,7 @@ class _CollectionPageState extends State<CollectionPage> {
       final set = cardSetDefinition(card.setId);
       final textMatch =
           needle.isEmpty ||
-          '${card.name} ${card.description} ${set.label} ${card.minionTypes.map((type) => minionTypeLabels[type] ?? type).join(' ')}'
+          '${card.name} ${card.description} ${set.label} ${card.minionTypes.map((type) => minionTypeLabels[type] ?? type).join(' ')} ${card.school == null ? '' : spellSchoolLabels[card.school] ?? card.school}'
               .toLowerCase()
               .contains(needle);
       final poolMatch = switch (cardPool) {
@@ -854,7 +855,8 @@ class _CollectionPageState extends State<CollectionPage> {
           poolMatch &&
           (faction == '全部' || card.faction == faction) &&
           (type == '全部' || card.type == type) &&
-          (minionType == '全部' || hasMinionType(card, minionType));
+          (minionType == '全部' || hasMinionType(card, minionType)) &&
+          (spellSchool == '全部' || card.school == spellSchool);
     }).toList();
     if (faction != '全部') return result;
     final buckets = [
@@ -954,7 +956,7 @@ class _CollectionPageState extends State<CollectionPage> {
                   SizedBox(
                     width: compactFilters
                         ? constraints.maxWidth
-                        : constraints.maxWidth - 290,
+                        : constraints.maxWidth - 435,
                     child: TextField(
                       decoration: const InputDecoration(
                         prefixIcon: Icon(Icons.search),
@@ -999,6 +1001,25 @@ class _CollectionPageState extends State<CollectionPage> {
                       ],
                       onChanged: (value) => setState(() {
                         minionType = value ?? '全部';
+                        visible = 30;
+                      }),
+                    ),
+                  ),
+                  SizedBox(
+                    width: dropdownWidth,
+                    child: DropdownButtonFormField<String>(
+                      initialValue: spellSchool,
+                      decoration: const InputDecoration(labelText: '法术派系'),
+                      items: [
+                        const DropdownMenuItem(value: '全部', child: Text('全部')),
+                        for (final item in spellSchoolOrder)
+                          DropdownMenuItem(
+                            value: item,
+                            child: Text(spellSchoolLabels[item] ?? item),
+                          ),
+                      ],
+                      onChanged: (value) => setState(() {
+                        spellSchool = value ?? '全部';
                         visible = 30;
                       }),
                     ),
@@ -1138,6 +1159,11 @@ class CardTile extends StatelessWidget {
     final displayedCost = costOverride ?? card.cost;
     final isDiscounted = displayedCost < card.cost;
     final tags = <({String label, Color color})>[
+      if (card.school != null)
+        (
+          label: spellSchoolLabels[card.school] ?? card.school!,
+          color: const Color(0xFF9DBFE4),
+        ),
       for (final minionType in card.minionTypes)
         (
           label: minionTypeLabels[minionType] ?? minionType,
@@ -2820,6 +2846,10 @@ class _BattleBoardState extends State<BattleBoard> {
                         weapon: state.ai.weapon,
                         overloadLocked: state.ai.overloadLocked,
                         heraldCount: state.ai.heraldCount,
+                        spellSchoolsThisTurn:
+                            state.ai.spellSchoolsPlayedThisTurn,
+                        spellSchoolsLastTurn:
+                            state.ai.spellSchoolsPlayedLastTurn,
                         secretCount: state.ai.secrets.length,
                         heroAttackBonus: state.ai.heroAttackBonus,
                         ai: true,
@@ -2854,6 +2884,10 @@ class _BattleBoardState extends State<BattleBoard> {
                         weapon: state.player.weapon,
                         overloadLocked: state.player.overloadLocked,
                         heraldCount: state.player.heraldCount,
+                        spellSchoolsThisTurn:
+                            state.player.spellSchoolsPlayedThisTurn,
+                        spellSchoolsLastTurn:
+                            state.player.spellSchoolsPlayedLastTurn,
                         secretCount: state.player.secrets.length,
                         heroAttackBonus: state.player.heroAttackBonus,
                         ai: false,
@@ -3867,6 +3901,8 @@ class _HeroBar extends StatelessWidget {
     required this.weapon,
     required this.overloadLocked,
     required this.heraldCount,
+    required this.spellSchoolsThisTurn,
+    required this.spellSchoolsLastTurn,
     required this.secretCount,
     this.heroAttackBonus = 0,
     required this.ai,
@@ -3881,6 +3917,8 @@ class _HeroBar extends StatelessWidget {
   final BattleWeapon? weapon;
   final int overloadLocked;
   final int heraldCount;
+  final List<String> spellSchoolsThisTurn;
+  final List<String> spellSchoolsLastTurn;
   final int secretCount;
   final int heroAttackBonus;
   final bool ai;
@@ -3968,6 +4006,18 @@ class _HeroBar extends StatelessWidget {
                   ? 2
                   : 1}',
               style: const TextStyle(color: Color(0xFF65CDDA), fontSize: 9),
+            ),
+          if (spellSchoolsThisTurn.isNotEmpty ||
+              spellSchoolsLastTurn.isNotEmpty)
+            Text(
+              [
+                if (spellSchoolsThisTurn.isNotEmpty)
+                  '本回合 ${spellSchoolsThisTurn.toSet().map((school) => spellSchoolLabels[school] ?? school).join('/')}',
+                if (spellSchoolsLastTurn.isNotEmpty)
+                  '上回合 ${spellSchoolsLastTurn.toSet().map((school) => spellSchoolLabels[school] ?? school).join('/')}',
+              ].join(' · '),
+              style: const TextStyle(color: Color(0xFF9DBFE4), fontSize: 9),
+              overflow: TextOverflow.ellipsis,
             ),
         ],
       ),
@@ -4862,6 +4912,29 @@ class OnlineBattlePanel extends StatelessWidget {
                             : 1}',
                         style: const TextStyle(
                           color: Color(0xFFE46D3F),
+                          fontSize: 10,
+                        ),
+                      ),
+                    if (controller.localSpellSchoolsThisTurn.isNotEmpty ||
+                        controller.localSpellSchoolsLastTurn.isNotEmpty)
+                      Text(
+                        [
+                          if (controller.localSpellSchoolsThisTurn.isNotEmpty)
+                            '本回合 ${controller.localSpellSchoolsThisTurn.toSet().map((school) => spellSchoolLabels[school] ?? school).join('/')}',
+                          if (controller.localSpellSchoolsLastTurn.isNotEmpty)
+                            '上回合 ${controller.localSpellSchoolsLastTurn.toSet().map((school) => spellSchoolLabels[school] ?? school).join('/')}',
+                        ].join(' · '),
+                        style: const TextStyle(
+                          color: Color(0xFF9DBFE4),
+                          fontSize: 10,
+                        ),
+                      ),
+                    if (controller.remoteSpellSchoolsThisTurn.isNotEmpty ||
+                        controller.remoteSpellSchoolsLastTurn.isNotEmpty)
+                      Text(
+                        '对手派系 ${{...controller.remoteSpellSchoolsThisTurn, ...controller.remoteSpellSchoolsLastTurn}.map((school) => spellSchoolLabels[school] ?? school).join('/')}',
+                        style: const TextStyle(
+                          color: Color(0xFFB99ACF),
                           fontSize: 10,
                         ),
                       ),

@@ -89,6 +89,10 @@ class OnlineBattleController extends ChangeNotifier {
   int localOverloadLocked = 0;
   int localHeraldCount = 0;
   int remoteHeraldCount = 0;
+  List<String> localSpellSchoolsThisTurn = <String>[];
+  List<String> localSpellSchoolsLastTurn = <String>[];
+  List<String> remoteSpellSchoolsThisTurn = <String>[];
+  List<String> remoteSpellSchoolsLastTurn = <String>[];
   String? localHeroName;
   String? remoteHeroName;
   int localHeroAttackBonus = 0;
@@ -596,6 +600,11 @@ class OnlineBattleController extends ChangeNotifier {
     final heroName = hero is Map ? hero['name']?.toString() : null;
     final heroAttackBonus = (side['heroAttackBonus'] as num?)?.toInt() ?? 0;
     final heraldCount = (side['heraldCount'] as num?)?.toInt() ?? 0;
+    List<String> spellSchools(Object? value) => value is List
+        ? value.map((item) => item.toString()).toList(growable: false)
+        : <String>[];
+    final schoolsThisTurn = spellSchools(side['spellSchoolsPlayedThisTurn']);
+    final schoolsLastTurn = spellSchools(side['spellSchoolsPlayedLastTurn']);
     if (localSide) {
       localMana = mana;
       localMaxMana = maxMana;
@@ -604,6 +613,8 @@ class OnlineBattleController extends ChangeNotifier {
       localHeroAttackBonus = heroAttackBonus;
       localOverloadLocked = (side['overloadLocked'] as num?)?.toInt() ?? 0;
       localHeraldCount = heraldCount;
+      localSpellSchoolsThisTurn = schoolsThisTurn;
+      localSpellSchoolsLastTurn = schoolsLastTurn;
       localCoinAvailable = side['coinAvailable'] == true;
       localHeroPowerUsed = side['heroPowerUsed'] == true;
       localHeroHasAttacked = side['heroHasAttacked'] == true;
@@ -642,6 +653,8 @@ class OnlineBattleController extends ChangeNotifier {
       remoteHeroName = heroName;
       remoteHeroAttackBonus = heroAttackBonus;
       remoteHeraldCount = heraldCount;
+      remoteSpellSchoolsThisTurn = schoolsThisTurn;
+      remoteSpellSchoolsLastTurn = schoolsLastTurn;
     }
   }
 

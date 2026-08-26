@@ -170,6 +170,26 @@ const minionTypeLabels = <String, String>{
   'all': '万象',
 };
 
+const spellSchoolOrder = <String>[
+  'radiance',
+  'tide',
+  'construct',
+  'ember',
+  'astral',
+  'verdant',
+  'storm',
+];
+
+const spellSchoolLabels = <String, String>{
+  'radiance': '曜术',
+  'tide': '潮术',
+  'construct': '构术',
+  'ember': '烬术',
+  'astral': '星术',
+  'verdant': '森术',
+  'storm': '雷术',
+};
+
 bool hasMinionType(CardDefinition card, String minionType) =>
     card.minionTypes.contains(minionType) ||
     (minionType != 'all' && card.minionTypes.contains('all'));

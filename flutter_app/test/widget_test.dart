@@ -535,6 +535,151 @@ void main() {
   });
 
   test(
+    'mobile spell schools support searches, payoffs and turn history',
+    () async {
+      const filler = CardDefinition(
+        id: 'school-filler',
+        name: '派系占位单位',
+        description: '测试派系历史。',
+        faction: '中立',
+        type: 'unit',
+        cost: 1,
+        rarity: '普通',
+        attack: 1,
+        health: 1,
+      );
+      const astralTarget = CardDefinition(
+        id: 'school-astral-target',
+        name: '星术目标',
+        description: '可被派系检索。',
+        faction: '中立',
+        type: 'spell',
+        cost: 1,
+        rarity: '普通',
+        school: 'astral',
+      );
+      const tacticalMap = CardDefinition(
+        id: 'school-tactical-map',
+        name: '派系战术图',
+        description: '从牌库抽一张星术战术。',
+        faction: '中立',
+        type: 'spell',
+        cost: 2,
+        rarity: '普通',
+        school: 'construct',
+        effect: [
+          {'kind': 'draw-spell-school', 'school': 'astral', 'count': 1},
+        ],
+      );
+      const resonance = CardDefinition(
+        id: 'school-resonance',
+        name: '双派系共鸣',
+        description: '完成施放两个不同派系后抽两张牌。',
+        faction: '中立',
+        type: 'spell',
+        cost: 5,
+        rarity: '稀有',
+        school: 'astral',
+        effect: [
+          {
+            'kind': 'spell-school-payoff',
+            'window': 'this-turn',
+            'minimumDistinct': 2,
+            'effects': [
+              {'kind': 'draw', 'count': 2},
+            ],
+          },
+        ],
+      );
+      const historian = CardDefinition(
+        id: 'school-historian',
+        name: '派系史官',
+        description: '上一回合施放两个不同派系时抽两张牌。',
+        faction: '中立',
+        type: 'unit',
+        cost: 2,
+        rarity: '稀有',
+        attack: 2,
+        health: 2,
+        onPlay: [
+          {
+            'kind': 'spell-school-payoff',
+            'window': 'last-turn',
+            'minimumDistinct': 2,
+            'effects': [
+              {'kind': 'draw', 'count': 2},
+            ],
+          },
+        ],
+      );
+
+      final controller = GameController(startingPlayer: 'player')
+        ..catalog = [filler, astralTarget, tacticalMap, resonance, historian]
+        ..deckIds.addAll(List.filled(30, filler.id));
+      controller.startBattle();
+      await controller.confirmMulligan();
+      final state = controller.battle!;
+      state.player.hand
+        ..clear()
+        ..addAll([tacticalMap, resonance]);
+      state.player.handCostReductions
+        ..clear()
+        ..addAll([0, 0]);
+      state.player.handFragments
+        ..clear()
+        ..addAll([null, null]);
+      state.player.deck
+        ..clear()
+        ..addAll([filler, filler, astralTarget]);
+      state.player.deckCostOverrides
+        ..clear()
+        ..addAll([null, 1, 0]);
+      state.player.mana = 10;
+
+      expect(controller.playCard(tacticalMap, handIndex: 0), isTrue);
+      expect(state.player.hand.last, astralTarget);
+      expect(state.player.handCostReductions.last, 1);
+      expect(state.player.spellSchoolsPlayedThisTurn, ['construct']);
+      expect(controller.playCard(resonance, handIndex: 0), isTrue);
+      expect(state.player.spellSchoolsPlayedThisTurn, ['construct', 'astral']);
+      expect(state.player.deck, isEmpty);
+      expect(state.player.hand.length, 3);
+
+      state.ai.hand.clear();
+      state.ai.deck
+        ..clear()
+        ..add(filler);
+      state.ai.deckCostOverrides
+        ..clear()
+        ..add(null);
+      await controller.endTurn();
+      expect(state.player.spellSchoolsPlayedThisTurn, isEmpty);
+      expect(state.player.spellSchoolsPlayedLastTurn, ['construct', 'astral']);
+
+      state.player.hand
+        ..clear()
+        ..add(historian);
+      state.player.handCostReductions
+        ..clear()
+        ..add(0);
+      state.player.handFragments
+        ..clear()
+        ..add(null);
+      state.player.deck
+        ..clear()
+        ..addAll([filler, filler]);
+      state.player.deckCostOverrides
+        ..clear()
+        ..addAll([null, null]);
+      state.player.mana = 2;
+      expect(controller.playCard(historian, handIndex: 0), isTrue);
+      expect(state.player.deck, isEmpty);
+      expect(state.player.hand, [filler, filler]);
+      controller.dispose();
+    },
+  );
+
+  test(
     'mobile Disguised deploys under the recipient and damages that controller',
     () async {
       final filler = CardDefinition(
@@ -2565,6 +2710,8 @@ void main() {
             {
               'hero': {'health': 28},
               'hand': ['sun-dawn-scout'],
+              'spellSchoolsPlayedThisTurn': ['construct', 'astral'],
+              'spellSchoolsPlayedLastTurn': ['radiance'],
               'board': [
                 {
                   'entityId': 'u1',
@@ -2592,6 +2739,8 @@ void main() {
     expect(controller.hand.single.id, 'sun-dawn-scout');
     expect(controller.localBoard.single.instanceId, 'u1');
     expect(controller.localBoard.single.minionTypes, ['beast', 'construct']);
+    expect(controller.localSpellSchoolsThisTurn, ['construct', 'astral']);
+    expect(controller.localSpellSchoolsLastTurn, ['radiance']);
     expect(controller.canAct, isTrue);
 
     client.lastEvent = MultiplayerEvent(

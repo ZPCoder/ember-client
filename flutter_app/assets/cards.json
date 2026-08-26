@@ -487,7 +487,7 @@
   {
     "id": "neutral-tactical-map",
     "name": "折痕战术图",
-    "description": "抽一张牌。",
+    "description": "从牌库抽一张星术战术。折痕标记着下一条灵脉。",
     "faction": "中立",
     "type": "spell",
     "cost": 2,
@@ -496,7 +496,8 @@
     "target": "none",
     "effect": [
       {
-        "kind": "draw",
+        "kind": "draw-spell-school",
+        "school": "astral",
         "count": 1
       }
     ],
@@ -12712,7 +12713,7 @@
   {
     "id": "leyline-season-02",
     "name": "共鸣符文师·02",
-    "description": "spell-trigger。 灵脉的战线单位。 在你施放法术后抽一张牌。",
+    "description": "战吼：若你上一回合完成施放过两个不同派系的战术，抽两张牌。在你施放战术后抽一张牌。",
     "faction": "灵脉",
     "type": "unit",
     "cost": 2,
@@ -12720,7 +12721,8 @@
     "attack": 3,
     "health": 3,
     "keywords": [
-      "spell-trigger"
+      "spell-trigger",
+      "battlecry"
     ],
     "traits": [
       "bulwark",
@@ -12735,7 +12737,20 @@
     "onDeath": [],
     "effect": [],
     "set": "core",
-    "minionTypes": []
+    "minionTypes": [],
+    "onPlay": [
+      {
+        "kind": "spell-school-payoff",
+        "window": "last-turn",
+        "minimumDistinct": 2,
+        "effects": [
+          {
+            "kind": "draw",
+            "count": 2
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "leyline-season-03",
@@ -13830,7 +13845,7 @@
   {
     "id": "leyline-season-spell-05",
     "name": "共鸣风暴·05",
-    "description": "对所有敌方角色造成 1 点伤害。",
+    "description": "对所有敌方角色造成 1 点伤害。若你本回合完成施放过两个不同派系的战术，抽两张牌。",
     "faction": "灵脉",
     "type": "spell",
     "cost": 5,
@@ -13841,6 +13856,17 @@
       {
         "kind": "damage-all-enemies",
         "amount": 1
+      },
+      {
+        "kind": "spell-school-payoff",
+        "window": "this-turn",
+        "minimumDistinct": 2,
+        "effects": [
+          {
+            "kind": "draw",
+            "count": 2
+          }
+        ]
       }
     ],
     "keywords": [],

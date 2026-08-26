@@ -310,6 +310,8 @@ type BattleSide = {
   secrets: Array<{ secretId: string; name: string; description: string }>;
   overload: number;
   overloadLocked: number;
+  spellSchoolsPlayedThisTurn: SpellSchool[];
+  spellSchoolsPlayedLastTurn: SpellSchool[];
   weapon: {
     cardId: string;
     name: string;
@@ -529,6 +531,8 @@ const SPELL_SCHOOL_LABEL: Record<SpellSchool, string> = {
   verdant: "森术",
   storm: "雷术",
 };
+
+const SPELL_SCHOOL_ORDER = Object.keys(SPELL_SCHOOL_LABEL) as SpellSchool[];
 
 const FACTION_DEFINITIONS: Record<Faction, { sigil: string; doctrine: string; tone: string }> = Object.freeze(
   Object.fromEntries(EXPANDED_FACTION_THEMES.map((theme) => [theme.faction, { sigil: theme.sigil, doctrine: theme.doctrine, tone: theme.tone }])) as Record<Faction, { sigil: string; doctrine: string; tone: string }>,
@@ -1524,6 +1528,16 @@ function battleFromRaw(value: unknown): BattleView | null {
     heroAttackBonus: asNumber(side.heroAttackBonus, 0),
     overload: asNumber(side.overload, 0),
     overloadLocked: asNumber(side.overloadLocked, 0),
+    spellSchoolsPlayedThisTurn: Array.isArray(side.spellSchoolsPlayedThisTurn)
+      ? side.spellSchoolsPlayedThisTurn
+          .map(String)
+          .filter((school): school is SpellSchool => SPELL_SCHOOL_ORDER.includes(school as SpellSchool))
+      : [],
+    spellSchoolsPlayedLastTurn: Array.isArray(side.spellSchoolsPlayedLastTurn)
+      ? side.spellSchoolsPlayedLastTurn
+          .map(String)
+          .filter((school): school is SpellSchool => SPELL_SCHOOL_ORDER.includes(school as SpellSchool))
+      : [],
     secrets: Array.isArray(side.secrets)
       ? side.secrets.map((entry) => {
           const secret = entry as Record<string, unknown>;
@@ -2913,6 +2927,7 @@ export function GameApp({
   const [traitFilter, setTraitFilter] = useState("全部");
   const [keywordFilter, setKeywordFilter] = useState("全部");
   const [minionTypeFilter, setMinionTypeFilter] = useState("全部");
+  const [spellSchoolFilter, setSpellSchoolFilter] = useState("全部");
   const [deckName, setDeckName] = useState("星火远征队");
   const [deckFormat, setDeckFormat] = useState<RankedFormat>("standard");
   const [deckIds, setDeckIds] = useState<string[]>(() => [...STARTER_IDS]);
@@ -3313,6 +3328,13 @@ export function GameApp({
     [],
   );
 
+  const spellSchoolOptions = useMemo(
+    () => SPELL_SCHOOL_ORDER
+      .filter((school) => CATALOG.some((card) => card.school === school))
+      .map((school) => ({ id: school, label: SPELL_SCHOOL_LABEL[school] })),
+    [],
+  );
+
   const filteredCards = useMemo(() => {
     const needle = search.trim().toLocaleLowerCase("zh-CN");
     const matches = CATALOG.filter((card) => {
@@ -3340,6 +3362,7 @@ export function GameApp({
         (typeFilter === "全部" || card.type === typeFilter) &&
         (rarityFilter === "全部" || card.rarity === rarityFilter) &&
         (minionTypeFilter === "全部" || hasMinionType(card.minionTypes, minionTypeFilter as MinionType)) &&
+        (spellSchoolFilter === "全部" || card.school === spellSchoolFilter) &&
         (traitFilter === "全部" || card.traits.includes(traitFilter as Trait)) &&
         (keywordFilter === "全部" || card.keywords.includes(keywordFilter as Keyword))
       );
@@ -3354,7 +3377,7 @@ export function GameApp({
     return Array.from({ length: longestBucket }, (_, index) =>
       factionBuckets.map((cards) => cards[index]).filter(Boolean),
     ).flat() as CatalogCard[];
-  }, [factionFilter, keywordFilter, minionTypeFilter, rarityFilter, search, traitFilter, typeFilter]);
+  }, [factionFilter, keywordFilter, minionTypeFilter, rarityFilter, search, spellSchoolFilter, traitFilter, typeFilter]);
 
   const battleView = useMemo(() => battleFromRaw(battle), [battle]);
   const battleStatus = battleView?.status;
@@ -5099,10 +5122,12 @@ export function GameApp({
                   trait={traitFilter}
                   keyword={keywordFilter}
                   minionType={minionTypeFilter}
+                  spellSchool={spellSchoolFilter}
                   factions={factions}
                   traitOptions={traitOptions}
                   keywordOptions={keywordOptions}
                   minionTypeOptions={minionTypeOptions}
+                  spellSchoolOptions={spellSchoolOptions}
                   onSearch={setSearch}
                   onFaction={setFactionFilter}
                   onType={setTypeFilter}
@@ -5110,6 +5135,7 @@ export function GameApp({
                   onTrait={setTraitFilter}
                   onKeyword={setKeywordFilter}
                   onMinionType={setMinionTypeFilter}
+                  onSpellSchool={setSpellSchoolFilter}
                   onAdd={addCard}
                   apiBusy={apiBusy}
                   onCraft={(card) => void changeCardDust("craft_card", card)}
@@ -5792,10 +5818,12 @@ function CollectionSection({
   trait,
   keyword,
   minionType,
+  spellSchool,
   factions,
   traitOptions,
   keywordOptions,
   minionTypeOptions,
+  spellSchoolOptions,
   onSearch,
   onFaction,
   onType,
@@ -5803,6 +5831,7 @@ function CollectionSection({
   onTrait,
   onKeyword,
   onMinionType,
+  onSpellSchool,
   onAdd,
   apiBusy,
   onCraft,
@@ -5820,10 +5849,12 @@ function CollectionSection({
   trait: string;
   keyword: string;
   minionType: string;
+  spellSchool: string;
   factions: string[];
   traitOptions: Array<{ id: Trait; label: string }>;
   keywordOptions: Array<{ id: Keyword; label: string }>;
   minionTypeOptions: Array<{ id: MinionType; label: string }>;
+  spellSchoolOptions: Array<{ id: SpellSchool; label: string }>;
   onSearch: (value: string) => void;
   onFaction: (value: string) => void;
   onType: (value: string) => void;
@@ -5831,13 +5862,14 @@ function CollectionSection({
   onTrait: (value: string) => void;
   onKeyword: (value: string) => void;
   onMinionType: (value: string) => void;
+  onSpellSchool: (value: string) => void;
   onAdd: (card: CatalogCard) => void;
   apiBusy: string | null;
   onCraft: (card: CatalogCard) => void;
   onDisenchant: (card: CatalogCard) => void;
   onOpenDeck: () => void;
 }) {
-  const filterSignature = `${search}|${faction}|${type}|${rarity}|${trait}|${keyword}|${minionType}`;
+  const filterSignature = `${search}|${faction}|${type}|${rarity}|${trait}|${keyword}|${minionType}|${spellSchool}`;
   const [pagination, setPagination] = useState({ signature: filterSignature, count: 30 });
   const visibleCount = pagination.signature === filterSignature ? pagination.count : 30;
   const visibleCards = cards.slice(0, visibleCount);
@@ -5847,7 +5879,7 @@ function CollectionSection({
       <SectionHeading
         eyebrow="TACTICAL ARCHIVE / COLLECTION"
         title="卡牌收藏"
-        description="浏览 20 个体系共 1000 张档案，按卡牌类型、随从类型、特质与关键词检索，并围绕可查询的类型联动规划牌组。"
+        description="浏览 20 个体系共 1000 张档案，按卡牌类型、随从类型、法术派系、特质与关键词检索，并围绕可查询的类型联动规划牌组。"
         action={
           <button className="button button--outline" type="button" onClick={onOpenDeck}>
             <Icon name="layers" />
@@ -5924,6 +5956,15 @@ function CollectionSection({
           <select value={minionType} onChange={(event) => onMinionType(event.target.value)}>
             <option value="全部">全部</option>
             {minionTypeOptions.map((item) => (
+              <option value={item.id} key={item.id}>{item.label}</option>
+            ))}
+          </select>
+        </label>
+        <label className="filter-field">
+          <span>法术派系</span>
+          <select value={spellSchool} onChange={(event) => onSpellSchool(event.target.value)}>
+            <option value="全部">全部</option>
+            {spellSchoolOptions.map((item) => (
               <option value={item.id} key={item.id}>{item.label}</option>
             ))}
           </select>
@@ -6140,6 +6181,12 @@ function DeckSection({
       count: deckIds.filter((id) =>
         CARD_BY_ID.get(id)?.minionTypes.includes(minionType),
       ).length,
+    }))
+    .filter((item) => item.count > 0);
+  const spellSchoolProfile = SPELL_SCHOOL_ORDER
+    .map((school) => ({
+      school,
+      count: deckIds.filter((id) => CARD_BY_ID.get(id)?.school === school).length,
     }))
     .filter((item) => item.count > 0);
   const deckFaction = factionForDeck(deckIds);
@@ -6513,6 +6560,18 @@ function DeckSection({
                 </div>
               </div>
             )}
+            {spellSchoolProfile.length > 0 && (
+              <div className="deck-keywords">
+                <small>法术派系分布 · {spellSchoolProfile.length} 种</small>
+                <div>
+                  {spellSchoolProfile.map(({ school, count }) => (
+                    <span className="deck-school-chip" key={school}>
+                      {SPELL_SCHOOL_LABEL[school]} ×{count}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="deck-list">
@@ -6529,7 +6588,7 @@ function DeckSection({
                 </span>
                 <span className="deck-entry__cost">{card.cost}</span>
                 <span className={`deck-entry__rarity deck-entry__rarity--${card.rarity}`} />
-                <span className="deck-entry__name"><strong>{card.name}</strong><small>{missing ? `缺少 ${missing.missing} 张` : `${card.faction} · ${TYPE_LABEL[card.type]}${card.minionTypes.length > 0 ? ` · ${card.minionTypes.map((type) => MINION_TYPE_DEFINITIONS[type].label).join("/")}` : ""}`}</small></span>
+                <span className="deck-entry__name"><strong>{card.name}</strong><small>{missing ? `缺少 ${missing.missing} 张` : `${card.faction} · ${TYPE_LABEL[card.type]}${card.minionTypes.length > 0 ? ` · ${card.minionTypes.map((type) => MINION_TYPE_DEFINITIONS[type].label).join("/")}` : card.school ? ` · ${SPELL_SCHOOL_LABEL[card.school]}` : ""}`}</small></span>
                 <span className="deck-entry__count">{missing ? `缺${missing.missing}` : `×${count}`}</span>
                 <button type="button" onClick={() => onRemove(card.id)} aria-label={`从卡组移除一张${card.name}`}>
                   <Icon name="minus" size={16} />
@@ -6626,6 +6685,8 @@ function HeroCore({
 }) {
   const effectClass = effect ? `hero-core--${effect}` : "";
   const impactText = battleImpactText(impact);
+  const currentSchools = [...new Set(side.spellSchoolsPlayedThisTurn)];
+  const lastTurnSchools = [...new Set(side.spellSchoolsPlayedLastTurn)];
   const core = (
     <>
       <span className="hero-core__portrait"><Icon name={enemy ? "bot" : "user"} size={30} /></span>
@@ -6650,6 +6711,13 @@ function HeroCore({
         {side.heraldCount > 0 && (
           <em className="hero-core__herald">
             先驱 {side.heraldCount} · 巨型 ×{Math.min(4, 2 ** Math.floor(side.heraldCount / 2))}
+          </em>
+        )}
+        {(currentSchools.length > 0 || lastTurnSchools.length > 0) && (
+          <em className="hero-core__schools" title="完成施放的法术派系历史">
+            {currentSchools.length > 0 && `本回合 ${currentSchools.map((school) => SPELL_SCHOOL_LABEL[school]).join("/")}`}
+            {currentSchools.length > 0 && lastTurnSchools.length > 0 && " · "}
+            {lastTurnSchools.length > 0 && `上回合 ${lastTurnSchools.map((school) => SPELL_SCHOOL_LABEL[school]).join("/")}`}
           </em>
         )}
         {side.weapon && (

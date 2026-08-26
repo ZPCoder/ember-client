@@ -311,10 +311,14 @@ class BattleSide {
     this.heroId = 'faction-commander',
     this.heroName = '远征指挥官',
     this.heroAttackBonus = 0,
+    List<String>? spellSchoolsPlayedThisTurn,
+    List<String>? spellSchoolsPlayedLastTurn,
     List<BattleSecret>? secrets,
   }) : deckCostOverrides = List<int?>.from(deckCostOverrides ?? const <int?>[]),
        handCostReductions = handCostReductions ?? <int>[],
        handFragments = handFragments ?? <HandFragment?>[],
+       spellSchoolsPlayedThisTurn = spellSchoolsPlayedThisTurn ?? <String>[],
+       spellSchoolsPlayedLastTurn = spellSchoolsPlayedLastTurn ?? <String>[],
        secrets = secrets ?? <BattleSecret>[];
 
   int heroHealth;
@@ -337,6 +341,8 @@ class BattleSide {
   String heroName;
   int heroAttackBonus;
   int cardsPlayedThisTurn = 0;
+  final List<String> spellSchoolsPlayedThisTurn;
+  final List<String> spellSchoolsPlayedLastTurn;
   bool heroHasAttacked = false;
   final List<BattleSecret> secrets;
 }
