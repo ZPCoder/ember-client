@@ -79,6 +79,9 @@ import {
   collectionWithTrialCards,
   TRIAL_CARD_ACCESS_MS,
   trialCardsAreActive,
+  RETURN_QUEST_STAGE_IDS,
+  RETURN_QUEST_STAGES,
+  returnQuestStageReady,
   planAiTurnReplay,
   previewDeckCode,
   shouldScheduleLocalAiTurn,
@@ -103,6 +106,7 @@ import {
   type RankedFormat,
   type RankedLadders,
   type RankedRewardState,
+  type ReturnQuestStageId,
   type SpellSchool,
   type Trait,
   type BattleVisualEffect,
@@ -231,6 +235,7 @@ type PlayerSnapshot = {
   };
   catchUpPack?: { claimedAt: string | null; cardsGranted: number };
   trialCards?: { activatedAt: string | null; expiresAt: string | null };
+  returnJourney?: { claimedStageIds: ReturnQuestStageId[]; matchesPlayedAtActivation: number };
   recentMatches: RecentMatch[];
   stats: { wins: number; losses: number; matchesPlayed: number };
   updatedAt: string;
@@ -817,6 +822,10 @@ function readLocalPlayer(email: string): PlayerSnapshot | null {
             }
           : { activatedAt: null, expiresAt: null }
       ),
+      returnJourney: parsed.returnJourney ?? {
+        claimedStageIds: parsed.catchUpPack?.claimedAt ? ["reconnect"] : [],
+        matchesPlayedAtActivation: parsed.stats?.matchesPlayed ?? 0,
+      },
     };
     persistLocalPlayer(migrated);
     return migrated;
@@ -910,6 +919,7 @@ function makeDemoPlayer(identity?: {
     ladderReady: { activatedAt: null, expiresAt: null, claimedDeckId: null },
     catchUpPack: { claimedAt: null, cardsGranted: 0 },
     trialCards: { activatedAt: null, expiresAt: null },
+    returnJourney: { claimedStageIds: [], matchesPlayedAtActivation: 0 },
     rankedLadders: {
       ...createRankedLadders(seasonKey),
       standard: { ...createRankedSnapshot(seasonKey), wins: 7, losses: 3 },
@@ -1019,6 +1029,10 @@ function applyLocalAction(
           activatedAt: activatedAt.toISOString(),
           expiresAt: new Date(activatedAt.getTime() + TRIAL_CARD_ACCESS_MS).toISOString(),
         },
+        returnJourney: {
+          claimedStageIds: [],
+          matchesPlayedAtActivation: current.stats.matchesPlayed,
+        },
         updatedAt: now,
       },
       localFallback: true,
@@ -1071,6 +1085,57 @@ function applyLocalAction(
       ...current,
       collection,
       catchUpPack: { claimedAt: now, cardsGranted: cards.length },
+      returnJourney: {
+        claimedStageIds: current.returnJourney?.claimedStageIds.includes("reconnect")
+          ? current.returnJourney.claimedStageIds
+          : ["reconnect", ...(current.returnJourney?.claimedStageIds ?? [])],
+        matchesPlayedAtActivation: current.returnJourney?.matchesPlayedAtActivation ?? current.stats.matchesPlayed,
+      },
+      updatedAt: now,
+    };
+    return {
+      ok: true,
+      player,
+      openedCards: [...counts].map(([cardId, count]) => ({ cardId, count })),
+      localFallback: true,
+    };
+  }
+  if (action === "claim_return_quest") {
+    const stageId = asString(body.stageId) as ReturnQuestStageId;
+    if (!RETURN_QUEST_STAGE_IDS.includes(stageId)) throw new Error("回归任务阶段不存在。");
+    const journey = current.returnJourney ?? {
+      claimedStageIds: current.catchUpPack?.claimedAt ? ["reconnect" as const] : [],
+      matchesPlayedAtActivation: current.stats.matchesPlayed,
+    };
+    if (journey.claimedStageIds.includes(stageId)) throw new Error("该回归任务奖励已经领取。");
+    if (!returnQuestStageReady(stageId, journey, {
+      activatedAt: current.ladderReady?.activatedAt,
+      decks: current.decks,
+      matchesPlayed: current.stats.matchesPlayed,
+    })) throw new Error("请先完成当前回归任务及其前置步骤。");
+    const stageIndex = RETURN_QUEST_STAGE_IDS.indexOf(stageId);
+    const seed = current.stats.matchesPlayed
+      + (current.packPity?.packsOpened ?? 0) * 31
+      + Object.values(current.collection).reduce((sum, count) => sum + count, 0) * 131
+      + (stageIndex + 1) * 7_919;
+    const cards = generateCatchUpPack(current.collection, seed);
+    const collection = { ...current.collection };
+    const counts = new Map<string, number>();
+    cards.forEach((cardId) => {
+      collection[cardId] = (collection[cardId] ?? 0) + 1;
+      counts.set(cardId, (counts.get(cardId) ?? 0) + 1);
+    });
+    const player = {
+      ...current,
+      collection,
+      catchUpPack: {
+        claimedAt: current.catchUpPack?.claimedAt ?? now,
+        cardsGranted: (current.catchUpPack?.cardsGranted ?? 0) + cards.length,
+      },
+      returnJourney: {
+        ...journey,
+        claimedStageIds: [...journey.claimedStageIds, stageId],
+      },
       updatedAt: now,
     };
     return {
@@ -3980,15 +4045,18 @@ export function GameApp({
     });
   };
 
-  const claimCatchUpPack = async () => {
-    const payload = await postAction("claim_catch_up_pack", {
-      idempotencyKey: makeId("catch-up-pack"),
+  const claimReturnQuest = async (stageId: ReturnQuestStageId) => {
+    const stage = RETURN_QUEST_STAGES.find((candidate) => candidate.id === stageId);
+    if (!stage) return;
+    const payload = await postAction("claim_return_quest", {
+      idempotencyKey: makeId(`return-quest-${stageId}`),
+      stageId,
     });
     if (!payload) return;
     const granted = payload.openedCards?.reduce((sum, entry) => sum + entry.count, 0) ?? 0;
     setNotice({
       tone: payload.localFallback ? "info" : "success",
-      text: `追赶包已解密：根据领取前收藏缺口获得 ${granted} 张卡牌。`,
+      text: `「${stage.title}」已完成：追赶包补充 ${granted} 张卡牌。`,
     });
   };
 
@@ -5348,8 +5416,10 @@ export function GameApp({
                   ladderReady={player.ladderReady}
                   catchUpPack={player.catchUpPack}
                   trialCards={player.trialCards}
+                  returnJourney={player.returnJourney}
+                  matchesPlayed={player.stats.matchesPlayed}
                   selectedLadderReadyDeckId={selectedLadderReadyDeckId}
-                  ladderReadyBusy={apiBusy === "activate_ladder_ready" || apiBusy === "claim_ladder_ready_deck" || apiBusy === "claim_catch_up_pack"}
+                  ladderReadyBusy={apiBusy === "activate_ladder_ready" || apiBusy === "claim_ladder_ready_deck" || apiBusy === "claim_catch_up_pack" || apiBusy === "claim_return_quest"}
                   onName={setDeckName}
                   onFormat={(format) => {
                     setDeckFormat(format);
@@ -5375,7 +5445,7 @@ export function GameApp({
                   onActivateLadderReady={() => void activateLadderReady()}
                   onTrialLadderReady={trialLadderReadyDeck}
                   onClaimLadderReady={(deckId) => void claimLadderReady(deckId)}
-                  onClaimCatchUpPack={() => void claimCatchUpPack()}
+                  onClaimReturnQuest={(stageId) => void claimReturnQuest(stageId)}
                 />
               )}
               {section === "battle" && (
@@ -6267,6 +6337,8 @@ function DeckSection({
   ladderReady,
   catchUpPack,
   trialCards,
+  returnJourney,
+  matchesPlayed,
   selectedLadderReadyDeckId,
   ladderReadyBusy,
   onName,
@@ -6285,7 +6357,7 @@ function DeckSection({
   onActivateLadderReady,
   onTrialLadderReady,
   onClaimLadderReady,
-  onClaimCatchUpPack,
+  onClaimReturnQuest,
 }: {
   cards: CatalogCard[];
   collection: Record<string, number>;
@@ -6305,6 +6377,8 @@ function DeckSection({
   ladderReady?: PlayerSnapshot["ladderReady"];
   catchUpPack?: PlayerSnapshot["catchUpPack"];
   trialCards?: PlayerSnapshot["trialCards"];
+  returnJourney?: PlayerSnapshot["returnJourney"];
+  matchesPlayed: number;
   selectedLadderReadyDeckId: LadderReadyDeckId | null;
   ladderReadyBusy: boolean;
   onName: (name: string) => void;
@@ -6323,7 +6397,7 @@ function DeckSection({
   onActivateLadderReady: () => void;
   onTrialLadderReady: (deckId: LadderReadyDeckId) => void;
   onClaimLadderReady: (deckId: LadderReadyDeckId) => void;
-  onClaimCatchUpPack: () => void;
+  onClaimReturnQuest: (stageId: ReturnQuestStageId) => void;
 }) {
   const [deckCode, setDeckCode] = useState("");
   const [copiedDeckFingerprint, setCopiedDeckFingerprint] = useState<string | null>(null);
@@ -6345,6 +6419,10 @@ function DeckSection({
   const trialPlayable = ladderReadyTrialIsActive(ladderReady, clockNow);
   const catchUpPreview = previewCatchUpPack(realCollection);
   const trialCardsActive = trialCardsAreActive(trialCards, clockNow);
+  const normalizedReturnJourney = returnJourney ?? {
+    claimedStageIds: catchUpPack?.claimedAt ? ["reconnect" as const] : [],
+    matchesPlayedAtActivation: matchesPlayed,
+  };
   const uniqueDeckCards = Array.from(deckCounts.entries())
     .map(([id, count]) => ({ card: CARD_BY_ID.get(id), count }))
     .filter((entry): entry is { card: CatalogCard; count: number } => Boolean(entry.card))
@@ -6486,15 +6564,40 @@ function DeckSection({
                 ? "试玩卡权限已到期"
                 : "启动扶持后临时开放两个当前扩展"}
           </span>
-          <button
-            className="button button--small"
-            type="button"
-            disabled={!trialActivated || Boolean(catchUpPack?.claimedAt) || ladderReadyBusy}
-            onClick={onClaimCatchUpPack}
-          >
-            {catchUpPack?.claimedAt ? "追赶包已领取" : "领取追赶包"}
-          </button>
         </div>
+        <section className="return-journey" aria-labelledby="return-journey-title">
+          <div className="return-journey__heading">
+            <div>
+              <span className="panel__eyebrow">RETURN JOURNEY / 3 STEPS</span>
+              <h3 id="return-journey-title">星港重启任务链</h3>
+            </div>
+            <strong>{normalizedReturnJourney.claimedStageIds.length} / {RETURN_QUEST_STAGES.length}</strong>
+          </div>
+          <div className="return-journey__grid">
+            {RETURN_QUEST_STAGES.map((stage, index) => {
+              const claimed = normalizedReturnJourney.claimedStageIds.includes(stage.id);
+              const ready = returnQuestStageReady(stage.id, normalizedReturnJourney, {
+                activatedAt: ladderReady?.activatedAt,
+                decks,
+                matchesPlayed,
+              });
+              return (
+                <article className={`${claimed ? "is-claimed" : ready ? "is-ready" : ""}`} key={stage.id}>
+                  <span>{index + 1}</span>
+                  <div><strong>{stage.title}</strong><small>{stage.description}</small></div>
+                  <button
+                    className="button button--tiny"
+                    type="button"
+                    disabled={claimed || !ready || ladderReadyBusy}
+                    onClick={() => onClaimReturnQuest(stage.id)}
+                  >
+                    {claimed ? "已领取" : ready ? "领取追赶包" : "未解锁"}
+                  </button>
+                </article>
+              );
+            })}
+          </div>
+        </section>
         <div className="ladder-ready__grid">
           {LADDER_READY_DECKS.map((offer) => {
             const definition = FACTION_DEFINITIONS[offer.faction];

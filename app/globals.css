@@ -2378,6 +2378,89 @@ button.game-card:not(:disabled):hover .game-card__artwork,
   gap: 5px;
 }
 
+.return-journey {
+  position: relative;
+  margin: 0 12px 12px;
+  padding: 14px;
+  border: 1px solid rgba(92, 224, 211, 0.14);
+  border-radius: 12px;
+  background: rgba(4, 15, 13, 0.42);
+}
+
+.return-journey__heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.return-journey__heading h3 {
+  margin: 2px 0 0;
+  color: var(--paper);
+  font-family: var(--font-display), serif;
+  font-size: 17px;
+}
+
+.return-journey__heading > strong {
+  color: var(--cyan);
+  font-size: 11px;
+}
+
+.return-journey__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.return-journey__grid article {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  color: #71817a;
+  background: rgba(255, 255, 255, 0.018);
+}
+
+.return-journey__grid article.is-ready {
+  border-color: rgba(92, 224, 211, 0.3);
+  color: var(--cyan);
+}
+
+.return-journey__grid article.is-claimed {
+  border-color: rgba(225, 188, 107, 0.22);
+  color: #e1bc6b;
+}
+
+.return-journey__grid article > span {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  font-size: 9px;
+}
+
+.return-journey__grid strong,
+.return-journey__grid small {
+  display: block;
+}
+
+.return-journey__grid strong {
+  color: var(--paper-soft);
+  font-size: 10px;
+}
+
+.return-journey__grid small {
+  margin-top: 2px;
+  color: #71817a;
+  font-size: 8px;
+}
+
 .ladder-ready__grid {
   position: relative;
   display: grid;
@@ -7981,6 +8064,10 @@ button.hero-core {
 
   .ladder-ready__grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .return-journey__grid {
+    grid-template-columns: 1fr;
   }
 
   .training-callout {
