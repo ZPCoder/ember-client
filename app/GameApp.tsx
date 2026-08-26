@@ -142,6 +142,7 @@ type CatalogCard = {
   tradeable?: boolean;
   preparable?: boolean;
   disguised?: boolean;
+  shatter?: boolean;
   target: CardTargetRule;
   keywords: Keyword[];
   traits: Trait[];
@@ -306,7 +307,14 @@ type BattleSide = {
   mana: number;
   maxMana: number;
   deckCount: number;
-  hand: Array<{ instanceId: string; cardId: string; handIndex: number; costReduction: number }>;
+  hand: Array<{
+    instanceId: string;
+    cardId: string;
+    handIndex: number;
+    costReduction: number;
+    fragment?: "left" | "right";
+    fragmentGroupId?: string;
+  }>;
   board: BattleUnit[];
 };
 
@@ -580,6 +588,7 @@ function cardFromRaw(raw: Record<string, unknown>): CatalogCard {
     tradeable: raw.tradeable === true,
     preparable: raw.preparable === true,
     disguised: raw.disguised === true,
+    shatter: Boolean(raw.shatter),
     target: asString(raw.target, "none") as CardTargetRule,
     keywords: Array.isArray(raw.keywords)
       ? (raw.keywords.map(String) as Keyword[])
@@ -598,6 +607,18 @@ function cardFromRaw(raw: Record<string, unknown>): CatalogCard {
 const CATALOG: CatalogCard[] = rawCatalog.map(cardFromRaw);
 const CARD_BY_ID = new Map(CATALOG.map((card) => [card.id, card]));
 const CARD_RULE_BY_ID = new Map(CARD_CATALOG.map((card) => [card.id, card]));
+
+function cardRuleForHandSlot(
+  handCard: BattleSide["hand"][number],
+): CardDefinition | undefined {
+  const rule = CARD_RULE_BY_ID.get(handCard.cardId);
+  if (!rule || !handCard.fragment || !rule.shatter) return rule;
+  return {
+    ...rule,
+    target: rule.shatter[`${handCard.fragment}Target`] ?? rule.target,
+    effect: [...rule.shatter[handCard.fragment]],
+  };
+}
 
 function getStarterDeck(): string[] {
   const raw = DEFAULT_STARTER_DECK as unknown;
@@ -1315,19 +1336,34 @@ function getSide(raw: Record<string, unknown>, side: "player" | "ai"): Record<st
   return {};
 }
 
-function normalizeHand(value: unknown, reductionsValue?: unknown): BattleSide["hand"] {
+function normalizeHand(
+  value: unknown,
+  reductionsValue?: unknown,
+  fragmentsValue?: unknown,
+): BattleSide["hand"] {
   if (!Array.isArray(value)) return [];
   const reductions = Array.isArray(reductionsValue) ? reductionsValue : [];
+  const fragments = Array.isArray(fragmentsValue) ? fragmentsValue : [];
   return value.map((entry, index) => {
     const rawReduction = reductions[index];
     const costReduction = typeof rawReduction === "number" && Number.isFinite(rawReduction)
       ? Math.max(0, Math.floor(rawReduction))
       : 0;
+    const rawFragment = fragments[index];
+    const fragment = rawFragment && typeof rawFragment === "object"
+      ? rawFragment as Record<string, unknown>
+      : null;
+    const piece = fragment?.piece === "left" || fragment?.piece === "right"
+      ? fragment.piece
+      : undefined;
+    const fragmentGroupId = piece ? asString(fragment?.groupId) || undefined : undefined;
     if (typeof entry === "string") return {
       instanceId: `${entry}-${index}`,
       cardId: entry,
       handIndex: index,
       costReduction,
+      fragment: piece,
+      fragmentGroupId,
     };
     const item = (entry ?? {}) as Record<string, unknown>;
     return {
@@ -1335,6 +1371,8 @@ function normalizeHand(value: unknown, reductionsValue?: unknown): BattleSide["h
       cardId: asString(item.cardId ?? item.definitionId ?? item.id),
       handIndex: index,
       costReduction,
+      fragment: piece,
+      fragmentGroupId,
     };
   });
 }
@@ -1481,7 +1519,7 @@ function battleFromRaw(value: unknown): BattleView | null {
     deckCount: Array.isArray(side.deck)
       ? side.deck.length
       : asNumber(side.deckCount ?? side.remainingDeck),
-    hand: normalizeHand(side.hand, side.handCostReductions),
+    hand: normalizeHand(side.hand, side.handCostReductions, side.handFragments),
     board: normalizeBoard(side.board ?? side.units, turn),
   });
   const statusRaw = asString(raw.status ?? raw.phase, "playing").toLowerCase();
@@ -4377,6 +4415,7 @@ export function GameApp({
       return;
     }
     const card = CARD_BY_ID.get(handCard.cardId);
+    const ruleCard = cardRuleForHandSlot(handCard);
     if (placement === "enemy" && !card?.disguised) {
       setBattleMessage("只有伪装单位可以部署到敌方战场。");
       return;
@@ -4386,7 +4425,7 @@ export function GameApp({
       setBattleMessage(`能量不足：部署「${card.name}」需要 ${effectiveCost} 点能量。`);
       return;
     }
-    const targetRule = card?.target ?? "none";
+    const targetRule = ruleCard?.target ?? card?.target ?? "none";
     const hasAvailableTarget = (() => {
       switch (targetRule) {
         case "enemy-unit":
@@ -7072,10 +7111,10 @@ function BattleSection({
   ];
   const completedTrainingSteps = trainingSteps.filter((step) => step.done).length;
   const pendingDefinition = pendingCard ? CARD_BY_ID.get(pendingCard.cardId) : undefined;
-  const pendingRuleCard = pendingDefinition ? CARD_RULE_BY_ID.get(pendingDefinition.id) : undefined;
+  const pendingRuleCard = pendingCard ? cardRuleForHandSlot(pendingCard) : undefined;
   const targetRule = pendingHeroPower
     ? battle.player.heroPowerTarget
-    : pendingDefinition?.target ?? "none";
+    : pendingRuleCard?.target ?? pendingDefinition?.target ?? "none";
   const pendingEffectsForTarget = [
     ...(pendingRuleCard?.effect ?? []),
     ...(pendingRuleCard?.onPlay ?? []),
@@ -7528,8 +7567,18 @@ function BattleSection({
               {battle.player.hand.map((handCard, handIndex) => {
                 const card = CARD_BY_ID.get(handCard.cardId);
                 if (!card) return null;
+                const fragmentLabel = handCard.fragment === "left" ? "左片" : handCard.fragment === "right" ? "右片" : null;
+                const visualCard: CatalogCard = fragmentLabel
+                  ? {
+                      ...card,
+                      name: `${card.name} · ${fragmentLabel}`,
+                      description: `破碎${fragmentLabel}：单独使用时只结算这一半的效果；与同组另一片相邻后自动重组。${card.description}`,
+                    }
+                  : card;
                 const effectiveCost = Math.max(0, card.cost - handCard.costReduction);
-                const selectedForMulligan = mulliganSelection.includes(handIndex);
+                const selectedForMulligan = mulliganSelection.includes(handIndex)
+                  || Boolean(handCard.fragmentGroupId && battle.player.hand.some((entry, index) =>
+                    entry.fragmentGroupId === handCard.fragmentGroupId && mulliganSelection.includes(index)));
                 const enemyUpgradeAvailable = card.type === "unit"
                   && battle.ai.board.some((unit) => unit.cardId === card.id && unit.stars === 1);
                 const disabled = mulliganActive
@@ -7537,11 +7586,11 @@ function BattleSection({
                   : !playerCanAct || effectiveCost > battle.player.mana || pendingHeroPower;
                 return (
                   <div
-                    className={`hand-card ${disabled ? "hand-card--disabled" : ""} ${pendingCard?.instanceId === handCard.instanceId || selectedForMulligan ? "hand-card--selected" : ""}`}
+                    className={`hand-card ${handCard.fragment ? `hand-card--fragment hand-card--fragment-${handCard.fragment}` : card.shatter ? "hand-card--reassembled" : ""} ${disabled ? "hand-card--disabled" : ""} ${pendingCard?.instanceId === handCard.instanceId || selectedForMulligan ? "hand-card--selected" : ""}`}
                     key={handCard.instanceId}
                   >
                     <CardTile
-                      card={card}
+                      card={visualCard}
                       compact
                       showDescription
                       costOverride={effectiveCost}
@@ -7552,12 +7601,17 @@ function BattleSection({
                     <button
                       className="hand-card__inspect"
                       type="button"
-                      onClick={() => onInspectCard(card)}
+                      onClick={() => onInspectCard(visualCard)}
                       aria-label={`查看${card.name}详情`}
                       title={`查看${card.name}详情`}
                     >
                       i
                     </button>
+                    {fragmentLabel && (
+                      <span className="hand-card__fragment" aria-label={`${card.name}${fragmentLabel}`}>
+                        {handCard.fragment === "left" ? "◀" : "▶"} {fragmentLabel}
+                      </span>
+                    )}
                     {!mulliganActive && card.tradeable && (
                       <button
                         className="hand-card__trade"

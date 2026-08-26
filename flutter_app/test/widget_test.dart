@@ -48,6 +48,20 @@ void main() {
       expect(catalog.where((card) => card.preparable), hasLength(23));
       expect(catalog.where((card) => card.bribe), hasLength(20));
       expect(catalog.where((card) => card.disguised), hasLength(20));
+      expect(catalog.where((card) => card.hasShatter), hasLength(5));
+      expect(
+        catalog
+            .where((card) => card.hasShatter)
+            .every(
+              (card) =>
+                  card.setId == 'raptor-2025' &&
+                  card.type == 'spell' &&
+                  card.keywords.contains('shatter') &&
+                  card.shatter?['left'] is List &&
+                  card.shatter?['right'] is List,
+            ),
+        isTrue,
+      );
       expect(
         catalog
             .where((card) => card.disguised)
@@ -453,6 +467,123 @@ void main() {
     expect(state.ai.board, isEmpty);
     controller.dispose();
   });
+
+  test(
+    'mobile Shatter splits to both hand edges and reassembles after the bridge card',
+    () async {
+      final catalog = await loadCatalog();
+      final shatter = catalog.singleWhere(
+        (card) => card.id == 'ember-cinder-dispatch',
+      );
+      final filler = catalog.singleWhere((card) => card.id == 'sun-dawn-scout');
+      final controller = GameController(startingPlayer: 'player')
+        ..catalog = catalog
+        ..deckIds.addAll(List.filled(30, filler.id));
+      controller.startBattle();
+      await controller.confirmMulligan();
+      final state = controller.battle!;
+      state.player.hand
+        ..clear()
+        ..add(filler);
+      state.player.handCostReductions
+        ..clear()
+        ..add(0);
+      state.player.handFragments
+        ..clear()
+        ..add(null);
+      state.player.deck
+        ..clear()
+        ..add(filler);
+      state.phase = 'discover';
+      state.discoverOwner = 'player';
+      state.discoverChoices = [shatter.id];
+
+      expect(controller.chooseDiscover(shatter.id), isTrue);
+      expect(state.player.hand.map((card) => card.id), [
+        shatter.id,
+        filler.id,
+        shatter.id,
+      ]);
+      expect(state.player.hand.first.name, contains('左片'));
+      expect(state.player.hand.last.name, contains('右片'));
+      expect(state.player.handFragments.first?.piece, 'left');
+      expect(state.player.handFragments.last?.piece, 'right');
+      expect(
+        state.player.handFragments.first?.groupId,
+        state.player.handFragments.last?.groupId,
+      );
+
+      state.player.mana = 3;
+      expect(controller.playCard(filler, handIndex: 1), isTrue);
+      expect(state.player.hand, hasLength(1));
+      expect(state.player.hand.single.id, shatter.id);
+      expect(state.player.hand.single.name, shatter.name);
+      expect(state.player.handFragments, [null]);
+      expect(state.logs.any((log) => log.contains('破碎重组')), isTrue);
+
+      expect(controller.playCard(shatter, handIndex: 0), isTrue);
+      expect(state.ai.heroHealth, 29);
+      expect(state.player.hand.map((card) => card.id), contains(filler.id));
+      controller.dispose();
+    },
+  );
+
+  test(
+    'mobile AI prioritizes a playable card between matching Shatter pieces',
+    () async {
+      final catalog = await loadCatalog();
+      final shatter = catalog.singleWhere(
+        (card) => card.id == 'ember-cinder-dispatch',
+      );
+      final filler = catalog.singleWhere((card) => card.id == 'sun-dawn-scout');
+      final left = shatter.copyWith(
+        name: '${shatter.name} · 左片',
+        target: 'none',
+        effect: const [
+          {'kind': 'draw', 'count': 1},
+        ],
+      );
+      final right = shatter.copyWith(
+        name: '${shatter.name} · 右片',
+        target: 'none',
+        effect: const [
+          {'kind': 'random-enemy-damage', 'amount': 1},
+        ],
+      );
+      final controller = GameController(startingPlayer: 'player')
+        ..catalog = catalog
+        ..deckIds.addAll(List.filled(30, filler.id));
+      controller.startBattle();
+      await controller.confirmMulligan();
+      final state = controller.battle!;
+      state.ai.hand
+        ..clear()
+        ..addAll([left, filler, right]);
+      state.ai.handCostReductions
+        ..clear()
+        ..addAll([0, 0, 0]);
+      state.ai.handFragments
+        ..clear()
+        ..addAll(const [
+          HandFragment(groupId: 'ai-shatter', piece: 'left'),
+          null,
+          HandFragment(groupId: 'ai-shatter', piece: 'right'),
+        ]);
+      state.ai.maxMana = 5;
+      state.ai.deck
+        ..clear()
+        ..add(filler);
+      state.player.deck
+        ..clear()
+        ..add(filler);
+
+      await controller.endTurn();
+
+      expect(state.logs.any((log) => log.contains('破碎重组')), isTrue);
+      expect(state.ai.handFragments.whereType<HandFragment>(), isEmpty);
+      controller.dispose();
+    },
+  );
 
   test(
     'mobile rejects fake enemy placement and upgrades on a full recipient board',
@@ -2352,6 +2483,74 @@ void main() {
     controller.dispose();
     client.dispose();
   });
+
+  test(
+    'online Shatter snapshot exposes fragment target and preserves hand index',
+    () async {
+      final catalog = await loadCatalog();
+      final shatter = catalog.singleWhere(
+        (card) => card.id == 'astral-lucid-script',
+      );
+      final client = _RecordingMultiplayerClient()
+        ..playerId = 'p-local'
+        ..isHost = true;
+      final controller = OnlineBattleController(
+        catalog: catalog,
+        client: client,
+      );
+      client.lastEvent = MultiplayerEvent(
+        type: 'action',
+        playerId: 'p-local',
+        action: 'command',
+        payload: {
+          'state': {
+            'version': 1,
+            'turn': 3,
+            'phase': 'main',
+            'activePlayer': 0,
+            'players': [
+              {
+                'hero': {'health': 30},
+                'mana': 2,
+                'maxMana': 2,
+                'hand': [shatter.id],
+                'handCostReductions': [0],
+                'handFragments': [
+                  {'groupId': 'online-piece', 'piece': 'left'},
+                ],
+                'board': [],
+              },
+              {
+                'hero': {'health': 30},
+                'hand': ['__hidden-card__'],
+                'handCostReductions': [0],
+                'handFragments': [null],
+                'board': [],
+              },
+            ],
+          },
+        },
+      );
+      client.eventSequence++;
+      client.notifyListeners();
+
+      final display = controller.handDisplayCard(0);
+      expect(controller.handFragment(0)?.piece, 'left');
+      expect(display.name, contains('左片'));
+      expect(display.target, 'none');
+      expect(display.effect.single['kind'], 'draw');
+      controller.playCard(display, handIndex: 0);
+
+      final payload = client.actions.single['payload'] as Map<String, dynamic>;
+      final command = payload['command'] as Map<String, dynamic>;
+      expect(command['type'], 'play-card');
+      expect(command['cardId'], shatter.id);
+      expect(command['handIndex'], 0);
+      expect(command.containsKey('target'), isFalse);
+      controller.dispose();
+      client.dispose();
+    },
+  );
 
   test(
     'online units project authoritative combat state and legal attacks',

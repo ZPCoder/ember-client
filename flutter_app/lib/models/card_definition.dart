@@ -16,6 +16,7 @@ class CardDefinition {
     this.preparable = false,
     this.bribe = false,
     this.disguised = false,
+    this.shatter,
     this.spellDamage = 0,
     this.keywords = const [],
     this.traits = const [],
@@ -46,6 +47,7 @@ class CardDefinition {
   final bool preparable;
   final bool bribe;
   final bool disguised;
+  final Map<String, dynamic>? shatter;
   final int spellDamage;
   final List<String> keywords;
   final List<String> traits;
@@ -60,11 +62,13 @@ class CardDefinition {
   final List<Map<String, dynamic>> effect;
 
   bool get isUnit => type == 'unit';
+  bool get hasShatter => shatter != null;
   bool get hasBattlecry => keywords.contains('battlecry') || onPlay.isNotEmpty;
   bool get hasDeathrattle =>
       keywords.contains('deathrattle') || onDeath.isNotEmpty;
 
   CardDefinition copyWith({
+    String? name,
     String? description,
     List<String>? keywords,
     String? target,
@@ -75,10 +79,11 @@ class CardDefinition {
     List<Map<String, dynamic>>? onPlay,
     List<Map<String, dynamic>>? onDeath,
     List<Map<String, dynamic>>? effect,
+    Map<String, dynamic>? shatter,
   }) {
     return CardDefinition(
       id: id,
-      name: name,
+      name: name ?? this.name,
       description: description ?? this.description,
       faction: faction,
       type: type,
@@ -93,6 +98,7 @@ class CardDefinition {
       preparable: preparable,
       bribe: bribe,
       disguised: disguised,
+      shatter: shatter ?? this.shatter,
       spellDamage: spellDamage,
       keywords: keywords ?? this.keywords,
       traits: traits,
@@ -141,6 +147,9 @@ class CardDefinition {
       disguised:
           json['disguised'] == true ||
           strings(json['keywords']).contains('disguised'),
+      shatter: json['shatter'] is Map
+          ? Map<String, dynamic>.from(json['shatter'] as Map)
+          : null,
       spellDamage: (json['spellDamage'] as num?)?.toInt() ?? 0,
       keywords: strings(json['keywords']),
       traits: strings(json['traits']),
@@ -155,6 +164,15 @@ class CardDefinition {
       effect: effects(json['effect']),
     );
   }
+}
+
+class HandFragment {
+  const HandFragment({required this.groupId, required this.piece});
+
+  final String groupId;
+  final String piece;
+
+  bool get isLeft => piece == 'left';
 }
 
 class HeroPowerDefinition {
@@ -254,12 +272,14 @@ class BattleSide {
     required this.deck,
     required this.hand,
     List<int>? handCostReductions,
+    List<HandFragment?>? handFragments,
     required this.board,
     this.coinAvailable = false,
     this.weapon,
     this.overloadLocked = 0,
     List<BattleSecret>? secrets,
   }) : handCostReductions = handCostReductions ?? <int>[],
+       handFragments = handFragments ?? <HandFragment?>[],
        secrets = secrets ?? <BattleSecret>[];
 
   int heroHealth;
@@ -271,6 +291,7 @@ class BattleSide {
   final List<CardDefinition> deck;
   final List<CardDefinition> hand;
   final List<int> handCostReductions;
+  final List<HandFragment?> handFragments;
   final List<BattleUnit> board;
   bool coinAvailable;
   BattleWeapon? weapon;

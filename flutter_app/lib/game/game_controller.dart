@@ -66,6 +66,7 @@ class GameController extends ChangeNotifier {
   SharedPreferences? _prefs;
   Timer? _turnTimer;
   int _deckIdSequence = 0;
+  int _shatterGroupSequence = 0;
   String? _declinedClipboardDeckCode;
   Future<void> _deckPersistQueue = Future<void>.value();
 
@@ -848,8 +849,23 @@ class GameController extends ChangeNotifier {
       return;
     }
     if (index < 0 || index >= state.player.hand.length) return;
-    if (!state.mulliganSelected.add(index)) {
-      state.mulliganSelected.remove(index);
+    _syncHandCostReductions(state.player);
+    final groupId = state.player.handFragments[index]?.groupId;
+    final linkedIndexes = groupId == null
+        ? <int>[index]
+        : state.player.handFragments
+              .asMap()
+              .entries
+              .where((entry) => entry.value?.groupId == groupId)
+              .map((entry) => entry.key)
+              .toList();
+    final shouldSelect = !linkedIndexes.every(state.mulliganSelected.contains);
+    for (final linkedIndex in linkedIndexes) {
+      if (shouldSelect) {
+        state.mulliganSelected.add(linkedIndex);
+      } else {
+        state.mulliganSelected.remove(linkedIndex);
+      }
     }
     notifyListeners();
   }
@@ -859,17 +875,26 @@ class GameController extends ChangeNotifier {
     if (state == null || state.phase != 'mulligan' || state.mulliganDone) {
       return;
     }
-    final selected = state.mulliganSelected.toList()..sort();
+    final selected = _expandedMulliganIndexes(
+      state.player,
+      state.mulliganSelected,
+    );
     final returned = <CardDefinition>[];
+    final returnedGroups = <String>{};
     _syncHandCostReductions(state.player);
     for (final index in selected.reversed) {
       if (index >= 0 && index < state.player.hand.length) {
-        returned.add(state.player.hand.removeAt(index));
+        final fragment = state.player.handFragments[index];
+        final removed = state.player.hand.removeAt(index);
+        if (fragment == null || returnedGroups.add(fragment.groupId)) {
+          returned.add(card(removed.id) ?? removed);
+        }
         state.player.handCostReductions.removeAt(index);
+        state.player.handFragments.removeAt(index);
       }
     }
     for (var i = 0; i < returned.length; i++) {
-      _draw(state.player);
+      if (state.player.deck.isNotEmpty) _draw(state.player);
     }
     if (returned.isNotEmpty) {
       state.player.deck.addAll(returned);
@@ -937,21 +962,22 @@ class GameController extends ChangeNotifier {
     if (keep.isEmpty && indexed.isNotEmpty) keep.add(indexed.first.key);
     final returned = <CardDefinition>[];
     _syncHandCostReductions(side);
-    for (final index
-        in side.hand
-            .asMap()
-            .keys
-            .where((index) => !keep.contains(index))
-            .toList()
-            .reversed) {
-      returned.add(side.hand.removeAt(index));
+    final returnIndexes = _expandedMulliganIndexes(
+      side,
+      side.hand.asMap().keys.where((index) => !keep.contains(index)),
+    );
+    final returnedGroups = <String>{};
+    for (final index in returnIndexes.reversed) {
+      final fragment = side.handFragments[index];
+      final removed = side.hand.removeAt(index);
+      if (fragment == null || returnedGroups.add(fragment.groupId)) {
+        returned.add(card(removed.id) ?? removed);
+      }
       side.handCostReductions.removeAt(index);
+      side.handFragments.removeAt(index);
     }
     for (var i = 0; i < returned.length; i++) {
-      if (side.deck.isNotEmpty) {
-        side.hand.add(side.deck.removeLast());
-        side.handCostReductions.add(0);
-      }
+      if (side.deck.isNotEmpty) _draw(side);
     }
     side.deck.addAll(returned);
     side.deck.shuffle(_random);
@@ -1015,9 +1041,7 @@ class GameController extends ChangeNotifier {
   void _draw(BattleSide side) {
     if (side.deck.isNotEmpty) {
       final drawn = side.deck.removeLast();
-      if (_occupiedHandSlots(side) < 10) {
-        side.hand.add(drawn);
-        _syncHandCostReductions(side);
+      if (_addCardToHand(side, drawn)) {
         return;
       }
       stateLog(
@@ -1050,6 +1074,41 @@ class GameController extends ChangeNotifier {
         amount: side.fatigue,
       );
     }
+  }
+
+  bool _addCardToHand(BattleSide side, CardDefinition drawn) {
+    final available = 10 - _occupiedHandSlots(side);
+    if (available <= 0) return false;
+    _syncHandCostReductions(side);
+    if (!drawn.hasShatter) {
+      side.hand.add(drawn);
+      side.handCostReductions.add(0);
+      side.handFragments.add(null);
+      return true;
+    }
+    final groupId = 'm${_shatterGroupSequence++}';
+    side.hand.insert(0, _shatterFragmentCard(drawn, 'left'));
+    side.handCostReductions.insert(0, 0);
+    side.handFragments.insert(0, HandFragment(groupId: groupId, piece: 'left'));
+    var fragmentCount = 1;
+    if (available >= 2) {
+      side.hand.add(_shatterFragmentCard(drawn, 'right'));
+      side.handCostReductions.add(0);
+      side.handFragments.add(HandFragment(groupId: groupId, piece: 'right'));
+      fragmentCount = 2;
+    } else {
+      stateLog('破碎片燃毁', '${drawn.name} 的右片因手牌空间不足被销毁。');
+    }
+    stateLog('破碎', '${drawn.name} 裂成 $fragmentCount 片并移向手牌两端。');
+    _emitFx(
+      'buff',
+      '破碎',
+      '${drawn.name} 裂至手牌两端',
+      Icons.call_split,
+      0xFF65CDDA,
+      sourceId: drawn.id,
+    );
+    return true;
   }
 
   bool playCard(
@@ -1117,6 +1176,7 @@ class GameController extends ChangeNotifier {
     if (index < 0) return false;
     state.player.hand.removeAt(index);
     state.player.handCostReductions.removeAt(index);
+    state.player.handFragments.removeAt(index);
     state.player.mana--;
     // Tradeable draws from the original deck before the physical card is
     // inserted, so a trade can never immediately redraw itself. Preserve the
@@ -1124,7 +1184,7 @@ class GameController extends ChangeNotifier {
     _draw(state.player);
     state.player.deck.insert(
       _random.nextInt(state.player.deck.length + 1),
-      card,
+      this.card(card.id) ?? card,
     );
     state.logs.insert(0, '${card.name} 已交易，抽取一张替代档案。');
     _emitFx(
@@ -1184,6 +1244,15 @@ class GameController extends ChangeNotifier {
     }
     _syncHandCostReductions(side);
     return side.handCostReductions[handIndex];
+  }
+
+  HandFragment? playerHandFragment(int handIndex) {
+    final side = battle?.player;
+    if (side == null || handIndex < 0 || handIndex >= side.hand.length) {
+      return null;
+    }
+    _syncHandCostReductions(side);
+    return side.handFragments[handIndex];
   }
 
   bool heroAttack({BattleUnit? target, bool targetHero = false}) {
@@ -1602,6 +1671,8 @@ class GameController extends ChangeNotifier {
     final effectiveCost = _effectiveHandCost(source, resolvedHandIndex);
     source.hand.removeAt(resolvedHandIndex);
     source.handCostReductions.removeAt(resolvedHandIndex);
+    source.handFragments.removeAt(resolvedHandIndex);
+    _reassembleAdjacentFragments(source);
     source.mana -= effectiveCost;
     final comboActive = source.cardsPlayedThisTurn > 0;
     source.cardsPlayedThisTurn++;
@@ -1741,6 +1812,90 @@ class GameController extends ChangeNotifier {
     }
     while (side.handCostReductions.length < side.hand.length) {
       side.handCostReductions.add(0);
+    }
+    while (side.handFragments.length > side.hand.length) {
+      side.handFragments.removeLast();
+    }
+    while (side.handFragments.length < side.hand.length) {
+      side.handFragments.add(null);
+    }
+  }
+
+  List<int> _expandedMulliganIndexes(BattleSide side, Iterable<int> requested) {
+    _syncHandCostReductions(side);
+    final valid = requested
+        .where((index) => index >= 0 && index < side.hand.length)
+        .toSet();
+    final groups = valid
+        .map((index) => side.handFragments[index]?.groupId)
+        .whereType<String>()
+        .toSet();
+    final expanded =
+        side.hand
+            .asMap()
+            .keys
+            .where(
+              (index) =>
+                  valid.contains(index) ||
+                  groups.contains(side.handFragments[index]?.groupId),
+            )
+            .toList()
+          ..sort();
+    return expanded;
+  }
+
+  CardDefinition _shatterFragmentCard(CardDefinition full, String piece) {
+    final rawEffects = full.shatter?[piece];
+    final effects = rawEffects is List
+        ? rawEffects
+              .whereType<Map>()
+              .map((effect) => Map<String, dynamic>.from(effect))
+              .toList(growable: false)
+        : <Map<String, dynamic>>[];
+    final target =
+        full.shatter?['${piece}Target']?.toString() ?? full.target ?? 'none';
+    final label = piece == 'left' ? '左片' : '右片';
+    return full.copyWith(
+      name: '${full.name} · $label',
+      description: '破碎$label：单独使用时只结算这一半效果；与同组另一片相邻后自动重组。${full.description}',
+      target: target,
+      effect: effects,
+    );
+  }
+
+  void _reassembleAdjacentFragments(BattleSide side) {
+    _syncHandCostReductions(side);
+    for (var index = 0; index < side.hand.length - 1; index++) {
+      final left = side.handFragments[index];
+      final right = side.handFragments[index + 1];
+      if (left == null ||
+          right == null ||
+          !left.isLeft ||
+          right.piece != 'right' ||
+          left.groupId != right.groupId ||
+          side.hand[index].id != side.hand[index + 1].id) {
+        continue;
+      }
+      final restored = card(side.hand[index].id) ?? side.hand[index];
+      side.hand[index] = restored;
+      side.hand.removeAt(index + 1);
+      side.handCostReductions[index] = max(
+        side.handCostReductions[index],
+        side.handCostReductions[index + 1],
+      );
+      side.handCostReductions.removeAt(index + 1);
+      side.handFragments[index] = null;
+      side.handFragments.removeAt(index + 1);
+      stateLog('破碎重组', '${restored.name} 的两片重新相接。');
+      _emitFx(
+        'buff',
+        '破碎重组',
+        '${restored.name} 恢复为完整卡牌',
+        Icons.join_inner,
+        0xFFE7BD7A,
+        sourceId: restored.id,
+      );
+      break;
     }
   }
 
@@ -2185,10 +2340,7 @@ class GameController extends ChangeNotifier {
     if (discovered == null) return false;
     final owner = state.discoverOwner == 'ai' ? state.ai : state.player;
     final enemy = identical(owner, state.player) ? state.ai : state.player;
-    if (_occupiedHandSlots(owner) < 10) {
-      owner.hand.add(discovered);
-      _syncHandCostReductions(owner);
-    } else {
+    if (!_addCardToHand(owner, discovered)) {
       stateLog('发现失败', '${discovered.name} 因手牌已满被燃毁。');
     }
     state.phase = 'main';
@@ -2630,12 +2782,16 @@ class GameController extends ChangeNotifier {
     while (!state.finished) {
       _syncHandCostReductions(state.ai);
       final candidates =
-          List<int>.generate(state.ai.hand.length, (index) => index)..sort(
-            (left, right) => _effectiveHandCost(
-              state.ai,
-              left,
-            ).compareTo(_effectiveHandCost(state.ai, right)),
-          );
+          List<int>.generate(state.ai.hand.length, (index) => index)
+            ..sort((left, right) {
+              final bridgeOrder = (_isShatterBridge(state.ai, left) ? 0 : 1)
+                  .compareTo(_isShatterBridge(state.ai, right) ? 0 : 1);
+              if (bridgeOrder != 0) return bridgeOrder;
+              return _effectiveHandCost(
+                state.ai,
+                left,
+              ).compareTo(_effectiveHandCost(state.ai, right));
+            });
       int? handIndex;
       CardDefinition? card;
       BattleUnit? target;
@@ -2787,6 +2943,33 @@ class GameController extends ChangeNotifier {
       return 'enemy';
     }
     return 'friendly';
+  }
+
+  bool _isShatterBridge(BattleSide side, int handIndex) {
+    _syncHandCostReductions(side);
+    if (handIndex < 0 ||
+        handIndex >= side.hand.length ||
+        side.handFragments[handIndex] != null) {
+      return false;
+    }
+    for (var leftIndex = 0; leftIndex < handIndex; leftIndex++) {
+      final left = side.handFragments[leftIndex];
+      if (left == null || !left.isLeft) continue;
+      for (
+        var rightIndex = handIndex + 1;
+        rightIndex < side.hand.length;
+        rightIndex++
+      ) {
+        final right = side.handFragments[rightIndex];
+        if (right != null &&
+            right.piece == 'right' &&
+            right.groupId == left.groupId &&
+            side.hand[leftIndex].id == side.hand[rightIndex].id) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   void _aiHeroAttack(BattleState state, BattleUnit? target) {

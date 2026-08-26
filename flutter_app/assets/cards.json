@@ -1783,7 +1783,7 @@
   {
     "id": "neutral-cloudrail-behemoth",
     "name": "云轨冲撞令",
-    "description": "对一个敌方角色造成 7 点伤害。重新启动废弃天轨的代价十分昂贵。",
+    "description": "破碎。左片：对一个敌方角色造成 3 点伤害。右片：对一个敌方角色造成 4 点伤害。重组后恢复原本的 7 点伤害。",
     "faction": "中立",
     "type": "spell",
     "cost": 6,
@@ -1796,8 +1796,26 @@
         "amount": 7
       }
     ],
-    "keywords": [],
+    "keywords": [
+      "shatter"
+    ],
     "onDeath": [],
+    "shatter": {
+      "left": [
+        {
+          "kind": "damage",
+          "amount": 3
+        }
+      ],
+      "right": [
+        {
+          "kind": "damage",
+          "amount": 4
+        }
+      ],
+      "leftTarget": "enemy-character",
+      "rightTarget": "enemy-character"
+    },
     "set": "raptor-2025"
   },
   {
@@ -2560,7 +2578,7 @@
   {
     "id": "ember-cinder-dispatch",
     "name": "余烬急报",
-    "description": "抽一张牌，并对一个随机敌方角色造成 1 点伤害。",
+    "description": "破碎。左片：抽 1 张牌。右片：随机对一个敌方角色造成 1 点伤害。重组后同时结算。",
     "faction": "烬火",
     "type": "spell",
     "cost": 2,
@@ -2579,9 +2597,24 @@
       }
     ],
     "keywords": [
-      "tradeable"
+      "tradeable",
+      "shatter"
     ],
     "onDeath": [],
+    "shatter": {
+      "left": [
+        {
+          "kind": "draw",
+          "count": 1
+        }
+      ],
+      "right": [
+        {
+          "kind": "random-enemy-damage",
+          "amount": 1
+        }
+      ]
+    },
     "set": "raptor-2025"
   },
   {
@@ -3289,7 +3322,7 @@
   {
     "id": "astral-lucid-script",
     "name": "清醒星文",
-    "description": "抽一张牌，并为一个友方角色恢复 2 点生命。",
+    "description": "破碎。左片：抽 1 张牌。右片：为一个友方角色恢复 2 点生命。重组后同时结算。",
     "faction": "星穹",
     "type": "spell",
     "cost": 2,
@@ -3308,9 +3341,26 @@
       }
     ],
     "keywords": [
-      "tradeable"
+      "tradeable",
+      "shatter"
     ],
     "onDeath": [],
+    "shatter": {
+      "left": [
+        {
+          "kind": "draw",
+          "count": 1
+        }
+      ],
+      "right": [
+        {
+          "kind": "heal",
+          "amount": 2
+        }
+      ],
+      "leftTarget": "none",
+      "rightTarget": "friendly-character"
+    },
     "set": "raptor-2025"
   },
   {
@@ -3956,7 +4006,7 @@
   {
     "id": "verdant-rooting-rite",
     "name": "扎根仪式",
-    "description": "使一个友方单位获得 +1/+3。",
+    "description": "破碎。左片：使一个友方单位获得 +1 攻击。右片：使一个友方单位获得 +3 生命。重组后恢复原本的 +1/+3。",
     "faction": "苍林",
     "type": "spell",
     "cost": 2,
@@ -3970,8 +4020,28 @@
         "health": 3
       }
     ],
-    "keywords": [],
+    "keywords": [
+      "shatter"
+    ],
     "onDeath": [],
+    "shatter": {
+      "left": [
+        {
+          "kind": "buff",
+          "attack": 1,
+          "health": 0
+        }
+      ],
+      "right": [
+        {
+          "kind": "buff",
+          "attack": 0,
+          "health": 3
+        }
+      ],
+      "leftTarget": "friendly-unit",
+      "rightTarget": "friendly-unit"
+    },
     "set": "raptor-2025"
   },
   {
@@ -4629,7 +4699,7 @@
   {
     "id": "storm-emergency-plating",
     "name": "应急镀层",
-    "description": "使一个友方单位获得 +0/+2。",
+    "description": "破碎。左右片各使一个友方单位获得 +1 生命。重组后恢复原本的 +0/+2。",
     "faction": "雷铸",
     "type": "spell",
     "cost": 1,
@@ -4643,8 +4713,28 @@
         "health": 2
       }
     ],
-    "keywords": [],
+    "keywords": [
+      "shatter"
+    ],
     "onDeath": [],
+    "shatter": {
+      "left": [
+        {
+          "kind": "buff",
+          "attack": 0,
+          "health": 1
+        }
+      ],
+      "right": [
+        {
+          "kind": "buff",
+          "attack": 0,
+          "health": 1
+        }
+      ],
+      "leftTarget": "friendly-unit",
+      "rightTarget": "friendly-unit"
+    },
     "set": "raptor-2025"
   },
   {

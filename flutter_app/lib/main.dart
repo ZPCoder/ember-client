@@ -1053,6 +1053,36 @@ class _CollectionPageState extends State<CollectionPage> {
   }
 }
 
+class _ShatterBadge extends StatelessWidget {
+  const _ShatterBadge({required this.fragment});
+
+  final HandFragment fragment;
+
+  @override
+  Widget build(BuildContext context) => DecoratedBox(
+    decoration: BoxDecoration(
+      color: const Color(0xE6192224),
+      borderRadius: BorderRadius.circular(999),
+      border: Border.all(
+        color: fragment.isLeft
+            ? const Color(0xFF65CDDA)
+            : const Color(0xFFE7A855),
+      ),
+    ),
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      child: Text(
+        fragment.isLeft ? '◀ 左片' : '右片 ▶',
+        style: const TextStyle(
+          color: Color(0xFFF1F5ED),
+          fontSize: 9,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    ),
+  );
+}
+
 class CardTile extends StatelessWidget {
   const CardTile({
     super.key,
@@ -2889,6 +2919,7 @@ class _BattleBoardState extends State<BattleBoard> {
               separatorBuilder: (_, _) => const SizedBox(width: 9),
               itemBuilder: (_, index) {
                 final handCard = state.player.hand[index];
+                final fragment = controller.playerHandFragment(index);
                 final effectiveCost = controller.playerHandCost(index);
                 final selected = state.mulliganSelected.contains(index);
                 return SizedBox(
@@ -2901,6 +2932,10 @@ class _BattleBoardState extends State<BattleBoard> {
                       border: Border.all(
                         color: selected
                             ? const Color(0xFFE46D3F)
+                            : fragment?.piece == 'left'
+                            ? const Color(0xFF65CDDA)
+                            : fragment?.piece == 'right'
+                            ? const Color(0xFFE7A855)
                             : Colors.transparent,
                         width: 2,
                       ),
@@ -2913,33 +2948,48 @@ class _BattleBoardState extends State<BattleBoard> {
                             ]
                           : const [],
                     ),
-                    child: CardTile(
-                      card: handCard,
-                      compact: true,
-                      costOverride: effectiveCost,
-                      onTap: state.phase == 'mulligan'
-                          ? () => controller.toggleMulligan(index)
-                          : state.activePlayer != 'player' ||
-                                state.player.mana < effectiveCost
-                          ? null
-                          : () =>
-                                _playCard(context, handCard, handIndex: index),
-                      onLongPress: state.phase == 'main' && handCard.tradeable
-                          ? () {
-                              final traded = controller.tradeCard(
-                                handCard,
-                                handIndex: index,
-                              );
-                              if (traded && context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('已交易：消耗 1 法力并抽取替代牌'),
-                                    duration: Duration(milliseconds: 750),
-                                  ),
-                                );
-                              }
-                            }
-                          : null,
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        CardTile(
+                          card: handCard,
+                          compact: true,
+                          costOverride: effectiveCost,
+                          onTap: state.phase == 'mulligan'
+                              ? () => controller.toggleMulligan(index)
+                              : state.activePlayer != 'player' ||
+                                    state.player.mana < effectiveCost
+                              ? null
+                              : () => _playCard(
+                                  context,
+                                  handCard,
+                                  handIndex: index,
+                                ),
+                          onLongPress:
+                              state.phase == 'main' && handCard.tradeable
+                              ? () {
+                                  final traded = controller.tradeCard(
+                                    handCard,
+                                    handIndex: index,
+                                  );
+                                  if (traded && context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('已交易：消耗 1 法力并抽取替代牌'),
+                                        duration: Duration(milliseconds: 750),
+                                      ),
+                                    );
+                                  }
+                                }
+                              : null,
+                        ),
+                        if (fragment != null)
+                          Positioned(
+                            top: 5,
+                            left: 38,
+                            child: _ShatterBadge(fragment: fragment),
+                          ),
+                      ],
                     ),
                   ),
                 );
@@ -4818,19 +4868,35 @@ class OnlineBattlePanel extends StatelessWidget {
                   itemCount: controller.hand.length,
                   separatorBuilder: (_, _) => const SizedBox(width: 9),
                   itemBuilder: (context, index) {
-                    final card = controller.hand[index];
+                    final card = controller.handDisplayCard(index);
+                    final fragment = controller.handFragment(index);
                     final effectiveCost = controller.handCost(index);
                     return SizedBox(
                       width: 142,
-                      child: CardTile(
-                        card: card,
-                        compact: true,
-                        costOverride: effectiveCost,
-                        onTap:
-                            !controller.canAct ||
-                                controller.localMana < effectiveCost
-                            ? null
-                            : () => _playCard(context, card, handIndex: index),
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          CardTile(
+                            card: card,
+                            compact: true,
+                            costOverride: effectiveCost,
+                            onTap:
+                                !controller.canAct ||
+                                    controller.localMana < effectiveCost
+                                ? null
+                                : () => _playCard(
+                                    context,
+                                    card,
+                                    handIndex: index,
+                                  ),
+                          ),
+                          if (fragment != null)
+                            Positioned(
+                              top: 5,
+                              left: 36,
+                              child: _ShatterBadge(fragment: fragment),
+                            ),
+                        ],
                       ),
                     );
                   },

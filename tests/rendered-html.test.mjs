@@ -110,6 +110,9 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(game, /预备 · 全部能量/);
   assert.match(game, /type: "prepare-card"/);
   assert.match(game, /伪装 · 敌方战场/);
+  assert.match(game, /fragmentLabel/);
+  assert.match(game, /card\.shatter/);
+  assert.match(game, /cardRuleForHandSlot/);
   assert.match(game, /placement: pendingCardPlacement/);
   assert.match(game, /\/api\/game/);
   assert.match(game, /\/cards\/\$\{card\.id\}\.webp/);
@@ -167,6 +170,8 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(styles, /\.ranked-rewards-history/);
   assert.match(styles, /\.hand-card__prepare/);
   assert.match(styles, /\.hand-card__disguise/);
+  assert.match(styles, /\.hand-card__fragment/);
+  assert.match(styles, /\.hand-card--reassembled/);
   assert.match(styles, /\.game-card__cost\.is-discounted/);
   assert.match(styles, /\.turn-clock/);
   assert.match(styles, /\.board-slot/);
@@ -190,6 +195,8 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(worker, /正在按隐藏水平寻找/);
   assert.match(worker, /case "prepare-card"/);
   assert.match(worker, /safeEvent\.type === "card-prepared"/);
+  assert.match(worker, /safeEvent\.type === "card-shattered"/);
+  assert.match(worker, /safeEvent\.type === "card-reassembled"/);
   assert.match(worker, /raw\.placement === "friendly"/);
   assert.match(worker, /raw\.placement === "enemy"/);
   assert.match(ranked, /LADDER_RANKS_PER_LEAGUE = 10/);

@@ -5348,6 +5348,40 @@ button.hero-core {
   animation: battle-card-charge 1.15s ease-in-out infinite;
 }
 
+.hand-card--fragment-left .game-card {
+  border-color: rgba(79, 209, 197, 0.68);
+  clip-path: polygon(0 0, 100% 0, 88% 50%, 100% 100%, 0 100%);
+  box-shadow: inset -12px 0 20px rgba(79, 209, 197, 0.08);
+}
+
+.hand-card--fragment-right .game-card {
+  border-color: rgba(244, 170, 83, 0.68);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 12% 50%);
+  box-shadow: inset 12px 0 20px rgba(244, 170, 83, 0.08);
+}
+
+.hand-card--reassembled .game-card {
+  border-color: rgba(235, 205, 120, 0.66);
+  box-shadow: 0 0 18px rgba(235, 205, 120, 0.16);
+}
+
+.hand-card__fragment {
+  position: absolute;
+  z-index: 8;
+  top: 4px;
+  left: 50%;
+  translate: -50% 0;
+  padding: 3px 7px;
+  border: 1px solid rgba(224, 238, 230, 0.38);
+  border-radius: 999px;
+  color: #f1f5ed;
+  background: rgba(5, 17, 18, 0.88);
+  font-size: 7px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  pointer-events: none;
+}
+
 .hand-card .game-card {
   min-height: 165px;
 }

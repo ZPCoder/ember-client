@@ -71,6 +71,7 @@ class OnlineBattleController extends ChangeNotifier {
   late final List<String> deckIds;
   List<CardDefinition> hand = <CardDefinition>[];
   List<int> handCostReductions = <int>[];
+  List<HandFragment?> handFragments = <HandFragment?>[];
   List<OnlineUnit> localBoard = <OnlineUnit>[];
   List<OnlineUnit> remoteBoard = <OnlineUnit>[];
   final List<String> logs = <String>[];
@@ -514,6 +515,7 @@ class OnlineBattleController extends ChangeNotifier {
       local['handCostReductions'],
       hand.length,
     );
+    handFragments = _parseHandFragments(local['handFragments'], hand.length);
     localBoard = _parseBoard(local['board']);
     remoteBoard = _parseBoard(remote['board']);
     final discover = snapshot['discover'];
@@ -629,6 +631,52 @@ class OnlineBattleController extends ChangeNotifier {
       if (reduction < 0) return 0;
       return reduction > 1000 ? 1000 : reduction;
     });
+  }
+
+  List<HandFragment?> _parseHandFragments(Object? raw, int handLength) {
+    final values = raw is List ? raw : const <Object?>[];
+    return List<HandFragment?>.generate(handLength, (index) {
+      if (index >= values.length || values[index] is! Map) return null;
+      final fragment = Map<String, dynamic>.from(values[index] as Map);
+      final groupId = fragment['groupId']?.toString();
+      final piece = fragment['piece']?.toString();
+      if (groupId == null ||
+          groupId.isEmpty ||
+          (piece != 'left' && piece != 'right')) {
+        return null;
+      }
+      return HandFragment(groupId: groupId, piece: piece!);
+    });
+  }
+
+  HandFragment? handFragment(int handIndex) =>
+      handIndex >= 0 && handIndex < handFragments.length
+      ? handFragments[handIndex]
+      : null;
+
+  CardDefinition handDisplayCard(int handIndex) {
+    final definition = hand[handIndex];
+    final fragment = handFragment(handIndex);
+    if (fragment == null) return definition;
+    final label = fragment.isLeft ? '左片' : '右片';
+    final rawEffects = definition.shatter?[fragment.piece];
+    final effects = rawEffects is List
+        ? rawEffects
+              .whereType<Map>()
+              .map((effect) => Map<String, dynamic>.from(effect))
+              .toList(growable: false)
+        : <Map<String, dynamic>>[];
+    final target =
+        definition.shatter?['${fragment.piece}Target']?.toString() ??
+        definition.target ??
+        'none';
+    return definition.copyWith(
+      name: '${definition.name} · $label',
+      description:
+          '破碎$label：单独使用时只结算这一半效果；与同组另一片相邻后自动重组。${definition.description}',
+      target: target,
+      effect: effects,
+    );
   }
 
   int _resolveHandIndex(CardDefinition card, int? preferredIndex) {
