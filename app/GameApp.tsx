@@ -39,6 +39,8 @@ import {
   apprenticeTrackComplete,
   battleEventsToEffects,
   cardAvailableInRankedFormat,
+  matchesParsedCardSearch,
+  parseCardSearch,
   chooseAiMulliganIndexes,
   completeDeckFromCollection,
   createMatch,
@@ -3715,26 +3717,28 @@ export function GameApp({
   );
 
   const filteredCards = useMemo(() => {
-    const needle = search.trim().toLocaleLowerCase("zh-CN");
+    const searchClauses = parseCardSearch(search);
     const matches = CATALOG.filter((card) => {
-      const matchesSearch =
-        !needle ||
-        card.name.toLocaleLowerCase("zh-CN").includes(needle) ||
-        card.description.toLocaleLowerCase("zh-CN").includes(needle) ||
-        card.minionTypes.some((minionType) =>
-          MINION_TYPE_DEFINITIONS[minionType].label.toLocaleLowerCase("zh-CN").includes(needle),
-        ) ||
-        card.traits.some((trait) =>
-          TRAIT_DEFINITIONS[trait].label.toLocaleLowerCase("zh-CN").includes(needle),
-        ) ||
-        card.keywords.some((keyword) =>
-          KEYWORD_DEFINITIONS[keyword].label.toLocaleLowerCase("zh-CN").includes(needle),
-        ) ||
-        (card.school
-          ? SPELL_SCHOOL_LABEL[card.school]
-              .toLocaleLowerCase("zh-CN")
-              .includes(needle)
-          : false);
+      const matchesSearch = matchesParsedCardSearch({
+        name: card.name,
+        description: card.description,
+        cost: card.cost,
+        attack: card.attack,
+        health: card.health,
+        owned: Math.max(0, Math.floor(player.collection[card.id] ?? 0)),
+        copyLimit: card.rarity === "legendary" ? 1 : 2,
+        type: card.type,
+        rarity: card.rarity,
+        searchTerms: [
+          card.faction,
+          TYPE_LABEL[card.type] ?? card.type,
+          card.set ? CARD_SET_DEFINITIONS[card.set].label : "",
+          ...card.minionTypes.map((minionType) => MINION_TYPE_DEFINITIONS[minionType].label),
+          ...card.traits.map((trait) => TRAIT_DEFINITIONS[trait].label),
+          ...card.keywords.map((keyword) => KEYWORD_DEFINITIONS[keyword].label),
+          card.school ? SPELL_SCHOOL_LABEL[card.school] : "",
+        ],
+      }, searchClauses);
       return (
         matchesSearch &&
         (factionFilter === "全部" || card.faction === factionFilter) &&
@@ -3756,7 +3760,7 @@ export function GameApp({
     return Array.from({ length: longestBucket }, (_, index) =>
       factionBuckets.map((cards) => cards[index]).filter(Boolean),
     ).flat() as CatalogCard[];
-  }, [factionFilter, keywordFilter, minionTypeFilter, rarityFilter, search, spellSchoolFilter, traitFilter, typeFilter]);
+  }, [factionFilter, keywordFilter, minionTypeFilter, player.collection, rarityFilter, search, spellSchoolFilter, traitFilter, typeFilter]);
 
   const battleView = useMemo(() => battleFromRaw(battle), [battle]);
   const battleStatus = battleView?.status;
@@ -6405,7 +6409,8 @@ function CollectionSection({
             type="search"
             value={search}
             onChange={(event) => onSearch(event.target.value)}
-            placeholder="搜索名称或战术描述…"
+            placeholder="名称，或 费用:3-5 攻击:4+ 缺少…"
+            aria-describedby="collection-search-help"
           />
           {search && (
             <button type="button" onClick={() => onSearch("")} aria-label="清除搜索">
@@ -6475,6 +6480,10 @@ function CollectionSection({
             ))}
           </select>
         </label>
+      </div>
+
+      <div className="collection-search-help" id="collection-search-help">
+        高级搜索：费用、攻击、生命、持有支持精确值、范围及 + / −；也可组合“缺少”“多余”“类型:单位”“稀有度:传说”。
       </div>
 
       <div className="collection-summary">

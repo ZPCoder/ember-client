@@ -1919,6 +1919,13 @@ button.resource-chip:hover {
   color: #5c6a64;
 }
 
+.collection-search-help {
+  margin: -3px 2px 11px;
+  color: #66766f;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
 .filter-field > span {
   flex: 0 0 auto;
   white-space: nowrap;
