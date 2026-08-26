@@ -94,6 +94,7 @@ import {
   normalizeRankedRewardState,
   normalizeRankedLadders,
   normalizeOwnedCardBackId,
+  normalizeFavoriteCardBackIds,
   resolveCardBackSelection,
   seasonCardBackId,
   removeSavedDeck,
@@ -261,6 +262,7 @@ type PlayerSnapshot = {
   goldenPackPity?: Record<PackType, { packsOpened: number; packsSinceLegendary: number }>;
   collection: Record<string, number>;
   goldenCollection?: Record<string, number>;
+  favoriteCardBackIds?: string[];
   decks: SavedDeck[];
   activeDeckId: string | null;
   tasks: PlayerTask[];
@@ -977,6 +979,7 @@ function readLocalPlayer(email: string): PlayerSnapshot | null {
       goldenPacks: { ...emptyGoldenPacks(), ...(parsed.goldenPacks ?? {}) },
       goldenPackPity: { ...emptyGoldenPackPity(), ...(parsed.goldenPackPity ?? {}) },
       goldenCollection: parsed.goldenCollection ?? {},
+      favoriteCardBackIds: normalizeFavoriteCardBackIds(parsed.favoriteCardBackIds, rolled.rankedRewards),
       catchUpPack: {
         ...baseCatchUp,
         ...rolledCatchUpProgress,
@@ -1039,6 +1042,7 @@ function makeDemoPlayer(identity?: {
     goldenPackPity: emptyGoldenPackPity(),
     collection,
     goldenCollection: {},
+    favoriteCardBackIds: [seasonCardBackId(seasonKey)],
     decks: [deck],
     activeDeckId: deck.id,
     tasks: [
@@ -1721,6 +1725,16 @@ function applyLocalAction(
       reward: milestone.reward,
       localFallback: true,
     };
+  }
+
+  if (action === "set_favorite_card_backs") {
+    const requested = Array.isArray(body.cardBackIds) ? body.cardBackIds.map(String) : [];
+    const favoriteCardBackIds = normalizeFavoriteCardBackIds(requested, normalizeRankedRewardState(current.rankedRewards));
+    if (favoriteCardBackIds.length !== requested.length || favoriteCardBackIds.some((id, index) => id !== requested[index])) {
+      throw new Error("收藏列表包含未解锁、重复或随机卡背。");
+    }
+    const player = { ...current, favoriteCardBackIds, updatedAt: now };
+    return { ok: true, player, favoriteCardBackIds, localFallback: true };
   }
 
   if (action === "save_deck") {
@@ -3918,6 +3932,10 @@ export function GameApp({
     () => unlockedCardBacks(normalizeRankedRewardState(player.rankedRewards)),
     [player.rankedRewards],
   );
+  const favoriteCardBackIds = useMemo(
+    () => normalizeFavoriteCardBackIds(player.favoriteCardBackIds, normalizeRankedRewardState(player.rankedRewards)),
+    [player.favoriteCardBackIds, player.rankedRewards],
+  );
 
   const deckAccessCollection = useMemo(
     () => collectionWithTrialCards(player.collection, player.trialCards, CARD_CATALOG),
@@ -4195,6 +4213,23 @@ export function GameApp({
           ? "云端暂不可用，卡组已保存到本地演示档案。"
           : "卡组已加密保存，可立即投入演算。",
       });
+    }
+  };
+
+  const toggleFavoriteCardBack = async (cardBackId: string) => {
+    const next = favoriteCardBackIds.includes(cardBackId)
+      ? favoriteCardBackIds.filter((id) => id !== cardBackId)
+      : [...favoriteCardBackIds, cardBackId];
+    if (next.length === 0) {
+      setNotice({ tone: "warning", text: "至少保留一个收藏卡背，供“仅收藏随机”使用。" });
+      return;
+    }
+    const payload = await postAction("set_favorite_card_backs", {
+      idempotencyKey: makeId("favorite-card-backs"),
+      cardBackIds: next,
+    });
+    if (payload) {
+      setNotice({ tone: payload.localFallback ? "info" : "success", text: "卡背收藏列表已更新。" });
     }
   };
 
@@ -4810,7 +4845,7 @@ export function GameApp({
         ticket.opponentArchetypeId,
         ticket.token,
         [
-          resolveCardBackSelection(deckCardBackId, normalizeRankedRewardState(player.rankedRewards), ticket.seed, 0),
+          resolveCardBackSelection(deckCardBackId, normalizeRankedRewardState(player.rankedRewards), ticket.seed, 0, player.favoriteCardBackIds),
           DEFAULT_CARD_BACK_ID,
         ],
       );
@@ -5993,6 +6028,7 @@ export function GameApp({
                   format={deckFormat}
                   cardBackId={deckCardBackId}
                   cardBacks={availableCardBacks}
+                  favoriteCardBackIds={favoriteCardBackIds}
                   validation={deckValidation}
                   missingCards={selectedLadderReadyDeckId ? [] : deckMissingCards}
                   playable={deckPlayable}
@@ -6009,6 +6045,7 @@ export function GameApp({
                   ladderReadyBusy={apiBusy === "activate_ladder_ready" || apiBusy === "claim_ladder_ready_deck" || apiBusy === "claim_catch_up_pack" || apiBusy === "claim_return_quest"}
                   onName={setDeckName}
                   onCardBack={setDeckCardBackId}
+                  onToggleFavoriteCardBack={(cardBackId) => void toggleFavoriteCardBack(cardBackId)}
                   onFormat={(format) => {
                     setDeckFormat(format);
                     if (format === "standard") {
@@ -7133,6 +7170,7 @@ function DeckSection({
   format,
   cardBackId,
   cardBacks,
+  favoriteCardBackIds,
   validation,
   missingCards,
   playable,
@@ -7149,6 +7187,7 @@ function DeckSection({
   ladderReadyBusy,
   onName,
   onCardBack,
+  onToggleFavoriteCardBack,
   onFormat,
   onSelectDeck,
   onNewDeck,
@@ -7178,6 +7217,7 @@ function DeckSection({
   format: RankedFormat;
   cardBackId: string;
   cardBacks: CardBackDefinition[];
+  favoriteCardBackIds: string[];
   validation: ValidationView;
   missingCards: MissingDeckCard[];
   playable: boolean;
@@ -7194,6 +7234,7 @@ function DeckSection({
   ladderReadyBusy: boolean;
   onName: (name: string) => void;
   onCardBack: (cardBackId: string) => void;
+  onToggleFavoriteCardBack: (cardBackId: string) => void;
   onFormat: (format: RankedFormat) => void;
   onSelectDeck: (deckId: string) => void;
   onNewDeck: () => void;
@@ -7619,6 +7660,26 @@ function DeckSection({
               ))}
             </select>
           </label>
+          <div className="deck-card-back-favorites" aria-label="收藏卡背列表">
+            <span><strong>多个收藏卡背</strong><small>“随机收藏卡背”只会从点亮的卡背中选择。</small></span>
+            <div>
+              {cardBacks.filter((cardBack) => cardBack.kind !== "random").map((cardBack) => {
+                const favorite = favoriteCardBackIds.includes(cardBack.id);
+                return (
+                  <button
+                    className={favorite ? "is-favorite" : ""}
+                    type="button"
+                    aria-pressed={favorite}
+                    onClick={() => onToggleFavoriteCardBack(cardBack.id)}
+                    key={cardBack.id}
+                  >
+                    <span className={`card-back-preview card-back-preview--${cardBack.kind}`} aria-hidden="true" />
+                    <span>{favorite ? "★" : "☆"} {cardBack.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
           <div className="deck-code-tools" aria-label="卡组代码">
             <label><span>卡组代码或完整牌表</span><textarea rows={3} value={deckCode} onChange={(event) => setDeckCode(event.target.value)} placeholder="粘贴完整牌表、ASTRA2 或旧版 ASTRA1 卡组代码" /></label>
             <div><button className="button button--small button--outline" type="button" onClick={importDeckCode} disabled={!deckCode.trim() || deckSlotsFull}>导入为新卡组</button><button className="button button--small button--outline" type="button" onClick={copyDeckCode} disabled={!validation.valid}>{copiedDeckFingerprint === deckFingerprint ? "已复制牌表" : "复制牌表"}</button></div>

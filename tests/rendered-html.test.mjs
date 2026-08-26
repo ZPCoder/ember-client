@@ -272,9 +272,12 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(rankedRewards, /legendSeasonCardBackUnlocked/);
   assert.match(cardBacks, /DEFAULT_CARD_BACK_ID = "ember-core"/);
   assert.match(cardBacks, /RANDOM_OWNED_CARD_BACK_ID = "random-owned"/);
+  assert.match(cardBacks, /RANDOM_FAVORITE_CARD_BACK_ID = "random-favorites"/);
+  assert.match(cardBacks, /normalizeFavoriteCardBackIds/);
   assert.match(cardBacks, /cardBackIsUnlocked/);
   assert.match(gameStore, /CARD_BACK_LOCKED/);
   assert.match(gameRoute, /deck\.cardBackId/);
+  assert.match(gameRoute, /set_favorite_card_backs/);
   assert.match(game, /aria-label="选择牌组卡背"/);
   assert.match(game, /battle-deck-back--\$\{cardBackDefinition\(cardBackIds\[0\]\)\.kind\}/);
   assert.match(game, /card-back--\$\{cardBackDefinition\(cardBackIds\[1\]\)\.kind\}/);
@@ -283,6 +286,7 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(worker, /resolveCardBackSelection/);
   assert.match(worker, /cardBackIds/);
   assert.match(styles, /\.deck-card-back-select/);
+  assert.match(styles, /\.deck-card-back-favorites/);
   assert.match(styles, /\.card-back-preview--legend/);
   assert.match(styles, /\.card-back-preview--random/);
   assert.match(gameStore, /applyRankedMatchResult/);

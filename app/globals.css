@@ -3105,6 +3105,50 @@ button.game-card:not(:disabled):hover .game-card__artwork,
   width: 100%;
 }
 
+.deck-card-back-favorites {
+  display: grid;
+  gap: 9px;
+  padding: 12px;
+  border: 1px solid rgba(137, 216, 255, 0.14);
+  border-radius: 12px;
+  background: rgba(7, 19, 19, 0.58);
+}
+
+.deck-card-back-favorites > span {
+  display: grid;
+  gap: 3px;
+}
+
+.deck-card-back-favorites small {
+  color: var(--muted);
+}
+
+.deck-card-back-favorites > div {
+  display: flex;
+  gap: 7px;
+  overflow-x: auto;
+  padding-bottom: 3px;
+}
+
+.deck-card-back-favorites button {
+  display: grid;
+  min-width: 92px;
+  justify-items: center;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  color: var(--muted);
+  background: rgba(6, 14, 12, 0.72);
+  cursor: pointer;
+}
+
+.deck-card-back-favorites button.is-favorite {
+  border-color: rgba(244, 196, 96, 0.66);
+  color: #f2d49d;
+  background: rgba(101, 67, 23, 0.28);
+}
+
 .card-back-preview,
 .battle-deck-back {
   display: inline-block;
