@@ -9363,13 +9363,16 @@ function BattleSection({
   const enemyHeroTargetable = selectedAttacker
     ? !attackBlockedByTaunt && !rushOnlyAttack
     : cardCanTarget("ai", "hero");
+  const pendingSourceBlocksElusive = pendingHeroPower || pendingDefinition?.type === "spell";
+  const elusiveBlocksPendingTarget = (unit: BattleUnit): boolean =>
+    Boolean(pendingSourceBlocksElusive && unit.keywords.includes("elusive"));
   const enemyUnitTargetable = (unit: BattleUnit) => {
     if (unit.health <= 0) return false;
     if (selectedAttacker) {
       if (unit.stealthActive) return false;
       return !attackBlockedByTaunt || unit.keywords.includes("taunt");
     }
-    return cardCanTarget("ai", "unit") && !unit.stealthActive;
+    return cardCanTarget("ai", "unit") && !unit.stealthActive && !elusiveBlocksPendingTarget(unit);
   };
   const trainingAllowsUnitSelection = !trainingActive
     || trainingRouteComplete
@@ -9383,6 +9386,7 @@ function BattleSection({
   };
   const targetPreviewForPendingUnit = (unit: BattleUnit, side: "player" | "ai"): string | undefined => {
     if (!pendingCard && !pendingHeroPower) return undefined;
+    if (elusiveBlocksPendingTarget(unit)) return "扰魔：不能成为法术或技能目标";
     if (pendingHeroPower) {
       const power = battle.player.heroPowerEffect;
       if (power.kind === "damage-enemy-unit" && side === "ai") {
@@ -9714,7 +9718,7 @@ function BattleSection({
                   key={unit.id}
                   unit={unit}
                   selected={selectedAttacker === unit.id}
-                  targetable={cardCanTarget("player", "unit") && unit.health > 0}
+                  targetable={cardCanTarget("player", "unit") && unit.health > 0 && !elusiveBlocksPendingTarget(unit)}
                   effect={effectForUnit(unit.id)}
                   impact={impactForUnit(unit.id)}
                   targetPreview={targetPreviewForUnit(unit, "player")}

@@ -115,6 +115,7 @@ const keywordLabels = <String, String>{
   'windfury': '风怒',
   'poisonous': '剧毒',
   'stealth': '潜行',
+  'elusive': '扰魔',
   'reborn': '复生',
   'freeze': '冻结',
   'overload': '过载',

@@ -45,6 +45,7 @@ class OnlineUnit {
   bool get hasTaunt => keywords.contains('taunt');
   bool get hasWindfury => keywords.contains('windfury');
   bool get hasDivineShield => keywords.contains('shield');
+  bool get isElusive => keywords.contains('elusive');
   bool get isFrozen => frozenTurns > 0;
   int get attackLimit => hasWindfury ? 2 : 1;
   bool get canAttack =>
@@ -273,6 +274,10 @@ class OnlineBattleController extends ChangeNotifier {
         _log('${card.name} 不能直接选择潜行单位。');
         return;
       }
+      if (unitIsValid && card.type == 'spell' && target!.isElusive) {
+        _log('${card.name} 不能选择扰魔单位。');
+        return;
+      }
       if ((needsUnit && !unitIsValid) ||
           (!needsUnit && !unitIsValid && !heroIsValid)) {
         _log('${card.name} 的目标不满足服务器规则。');
@@ -419,7 +424,9 @@ class OnlineBattleController extends ChangeNotifier {
     if (target != null) {
       final friendly = targetType.startsWith('friendly');
       final board = friendly ? localBoard : remoteBoard;
-      if (!board.contains(target) || (!friendly && target.stealthActive)) {
+      if (!board.contains(target) ||
+          target.isElusive ||
+          (!friendly && target.stealthActive)) {
         return;
       }
     }

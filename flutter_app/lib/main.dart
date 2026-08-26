@@ -2485,15 +2485,23 @@ class _BattleBoardState extends State<BattleBoard> {
     if (targetType.contains('unit') || targetType.contains('character')) {
       final targetUnits = targetType == 'any-unit'
           ? <BattleUnit>[
-              ...state.player.board,
-              ...state.ai.board.where((unit) => !unit.stealthActive),
+              ...state.player.board.where(
+                (unit) => card.type != 'spell' || !unit.isElusive,
+              ),
+              ...state.ai.board.where(
+                (unit) =>
+                    !unit.stealthActive &&
+                    (card.type != 'spell' || !unit.isElusive),
+              ),
             ]
           : (targetType.startsWith('friendly')
                     ? state.player.board
                     : state.ai.board)
                 .where(
                   (unit) =>
-                      !targetType.startsWith('enemy') || !unit.stealthActive,
+                      (!targetType.startsWith('enemy') ||
+                          !unit.stealthActive) &&
+                      (card.type != 'spell' || !unit.isElusive),
                 )
                 .toList();
       choice = await _pickBattleTarget(
@@ -2586,7 +2594,7 @@ class _BattleBoardState extends State<BattleBoard> {
     if (targetType.contains('unit') || targetType.contains('character')) {
       final friendly = targetType.startsWith('friendly');
       final targetUnits = (friendly ? state.player.board : state.ai.board)
-          .where((unit) => friendly || !unit.stealthActive)
+          .where((unit) => !unit.isElusive && (friendly || !unit.stealthActive))
           .toList();
       choice = await _pickBattleTarget(
         context,
@@ -4835,13 +4843,25 @@ class OnlineBattlePanel extends StatelessWidget {
     final friendly = targetType.startsWith('friendly');
     final units = targetType == 'any-unit'
         ? <OnlineUnit>[
-            ...controller.localBoard,
-            ...controller.remoteBoard.where((unit) => !unit.stealthActive),
+            ...controller.localBoard.where(
+              (unit) => card.type != 'spell' || !unit.isElusive,
+            ),
+            ...controller.remoteBoard.where(
+              (unit) =>
+                  !unit.stealthActive &&
+                  (card.type != 'spell' || !unit.isElusive),
+            ),
           ]
         : friendly
         ? controller.localBoard
+              .where((unit) => card.type != 'spell' || !unit.isElusive)
+              .toList(growable: false)
         : controller.remoteBoard
-              .where((unit) => !unit.stealthActive)
+              .where(
+                (unit) =>
+                    !unit.stealthActive &&
+                    (card.type != 'spell' || !unit.isElusive),
+              )
               .toList(growable: false);
     final allowHero = targetType.contains('character');
     final choice = await _pickTarget(
@@ -4905,8 +4925,10 @@ class OnlineBattlePanel extends StatelessWidget {
         title: '选择「${power.name}」的目标',
         units: friendly
             ? controller.localBoard
+                  .where((unit) => !unit.isElusive)
+                  .toList(growable: false)
             : controller.remoteBoard
-                  .where((unit) => !unit.stealthActive)
+                  .where((unit) => !unit.stealthActive && !unit.isElusive)
                   .toList(growable: false),
         allowHero: targetType.contains('character'),
         friendly: friendly,

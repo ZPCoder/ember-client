@@ -1787,13 +1787,19 @@ class GameController extends ChangeNotifier {
     if (targetType == 'enemy-unit') {
       return target != null &&
           enemy.board.contains(target) &&
+          !target.isElusive &&
           !target.stealthActive;
     }
     if (targetType == 'friendly-unit') {
-      return target != null && source.board.contains(target);
+      return target != null &&
+          source.board.contains(target) &&
+          !target.isElusive;
     }
     if (targetType == 'friendly-character') {
-      return targetHero || (target != null && source.board.contains(target));
+      return targetHero ||
+          (target != null &&
+              source.board.contains(target) &&
+              !target.isElusive);
     }
     return true;
   }
@@ -3110,6 +3116,8 @@ class GameController extends ChangeNotifier {
       return false;
     }
     final targetType = card.target ?? '';
+    if (card.type == 'spell' && target != null && target.isElusive)
+      return false;
     if (!targetType.contains('unit')) return true;
     if (target == null) {
       return false;
@@ -5230,12 +5238,18 @@ class GameController extends ChangeNotifier {
 
   BattleUnit? _aiTarget(CardDefinition card, BattleState state) {
     final type = card.target ?? '';
+    final blocksElusive = card.type == 'spell';
     if (type == 'any-unit') {
       final candidates =
           <BattleUnit>[
-            ...state.ai.board.where((unit) => unit.health > 0),
+            ...state.ai.board.where(
+              (unit) => unit.health > 0 && (!blocksElusive || !unit.isElusive),
+            ),
             ...state.player.board.where(
-              (unit) => unit.health > 0 && !unit.stealthActive,
+              (unit) =>
+                  unit.health > 0 &&
+                  !unit.stealthActive &&
+                  (!blocksElusive || !unit.isElusive),
             ),
           ]..sort(
             (left, right) => (right.attack + right.health).compareTo(
@@ -5246,13 +5260,21 @@ class GameController extends ChangeNotifier {
     }
     if (type.startsWith('friendly')) {
       if (type.contains('unit')) {
-        return state.ai.board.isEmpty ? null : state.ai.board.first;
+        final candidates = state.ai.board
+            .where((unit) => !blocksElusive || !unit.isElusive)
+            .toList();
+        return candidates.isEmpty ? null : candidates.first;
       }
       return null;
     }
     if (type.startsWith('enemy') && type.contains('unit')) {
       final visible = state.player.board
-          .where((unit) => !unit.stealthActive && unit.health > 0)
+          .where(
+            (unit) =>
+                !unit.stealthActive &&
+                unit.health > 0 &&
+                (!blocksElusive || !unit.isElusive),
+          )
           .toList();
       if (visible.isEmpty) return null;
       final takesControl = [
@@ -5277,7 +5299,10 @@ class GameController extends ChangeNotifier {
       case 'enemy-unit':
         final visible =
             state.player.board
-                .where((unit) => !unit.stealthActive && unit.health > 0)
+                .where(
+                  (unit) =>
+                      !unit.stealthActive && unit.health > 0 && !unit.isElusive,
+                )
                 .toList()
               ..sort((left, right) => left.health.compareTo(right.health));
         return visible.isEmpty ? null : visible.first;
@@ -5286,7 +5311,10 @@ class GameController extends ChangeNotifier {
         final damaged =
             state.ai.board
                 .where(
-                  (unit) => unit.health > 0 && unit.health < unit.maxHealth,
+                  (unit) =>
+                      unit.health > 0 &&
+                      unit.health < unit.maxHealth &&
+                      !unit.isElusive,
                 )
                 .toList()
               ..sort(

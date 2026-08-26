@@ -33,6 +33,12 @@ void main() {
       expect(catalog.where((card) => card.type == 'weapon'), hasLength(20));
       expect(catalog.where((card) => card.type == 'hero'), hasLength(1));
       expect(catalog.where((card) => card.type == 'location'), hasLength(1));
+      expect(
+        catalog
+            .singleWhere((card) => card.id == 'neutral-caravan-guard')
+            .keywords,
+        contains('elusive'),
+      );
       final location = catalog.singleWhere((card) => card.isLocation);
       expect(location.id, 'sun-daybreak-order');
       expect(location.durability, 3);
@@ -4643,6 +4649,76 @@ void main() {
   );
 
   test(
+    'online Elusive blocks spells and hero powers but not battlecries or attacks',
+    () async {
+      final catalog = await loadCatalog();
+      final spell = catalog.singleWhere((card) => card.id == 'sun-focused-ray');
+      final battlecry = catalog.singleWhere(
+        (card) => card.id == 'ember-oath-pyromancer',
+      );
+      final attackerCard = catalog.singleWhere(
+        (card) => card.id == 'sun-dawn-scout',
+      );
+      final elusiveCard = catalog.singleWhere(
+        (card) => card.id == 'neutral-caravan-guard',
+      );
+      final client = _RecordingMultiplayerClient()
+        ..playerId = 'p-local'
+        ..isHost = true;
+      final controller =
+          OnlineBattleController(catalog: catalog, client: client)
+            ..started = true
+            ..localTurn = true
+            ..phase = 'main'
+            ..localMana = 10
+            ..hand = [spell, battlecry]
+            ..handCostReductions = [0, 0]
+            ..localHeroPower = const HeroPowerDefinition(
+              id: 'ember-scorch',
+              faction: '烬火',
+              name: '熔火灼痕',
+              description: '对一个敌方单位造成 2 点伤害。',
+              cost: 2,
+              target: 'enemy-unit',
+              effect: {'kind': 'damage-enemy-unit', 'amount': 2},
+            );
+      final elusive = OnlineUnit(
+        instanceId: 'online-elusive',
+        card: elusiveCard,
+        attack: 2,
+        health: 5,
+        maxHealth: 5,
+        keywords: const ['taunt', 'elusive'],
+      );
+      final attacker = OnlineUnit(
+        instanceId: 'online-attacker',
+        card: attackerCard,
+        attack: 2,
+        health: 1,
+        maxHealth: 1,
+      );
+      controller.remoteBoard = [elusive];
+      controller.localBoard = [attacker];
+
+      controller.playCard(spell, handIndex: 0, target: elusive);
+      controller.useHeroPower(target: elusive);
+      expect(client.actions, isEmpty);
+
+      controller.playCard(battlecry, handIndex: 1, target: elusive);
+      controller.attackUnit(attacker, elusive);
+      expect(client.actions, hasLength(2));
+      expect(
+        client.actions.map(
+          (entry) => ((entry['payload'] as Map)['command'] as Map)['type'],
+        ),
+        ['play-card', 'attack'],
+      );
+      controller.dispose();
+      client.dispose();
+    },
+  );
+
+  test(
     'online Shatter snapshot exposes fragment target and preserves hand index',
     () async {
       final catalog = await loadCatalog();
@@ -5002,6 +5078,89 @@ void main() {
     expect(state.player.heroHealth, 30);
     controller.dispose();
   });
+
+  test(
+    'mobile Elusive blocks spells and hero powers but not battlecries or attacks',
+    () async {
+      final catalog = await loadCatalog();
+      final spell = catalog.singleWhere((card) => card.id == 'sun-focused-ray');
+      final battlecry = catalog.singleWhere(
+        (card) => card.id == 'ember-oath-pyromancer',
+      );
+      final attackerCard = catalog.singleWhere(
+        (card) => card.id == 'sun-dawn-scout',
+      );
+      final elusiveCard = catalog.singleWhere(
+        (card) => card.id == 'neutral-caravan-guard',
+      );
+      final controller = GameController(startingPlayer: 'player')
+        ..catalog = catalog
+        ..deckIds.addAll(List.filled(30, battlecry.id));
+      controller.startBattle();
+      await controller.confirmMulligan();
+      final state = controller.battle!;
+      state.playerHeroPower = const HeroPowerDefinition(
+        id: 'ember-scorch',
+        faction: '烬火',
+        name: '熔火灼痕',
+        description: '对一个敌方单位造成 2 点伤害。',
+        cost: 2,
+        target: 'enemy-unit',
+        effect: {'kind': 'damage-enemy-unit', 'amount': 2},
+      );
+      state.player.mana = 10;
+      final elusive = BattleUnit(
+        instanceId: 'mobile-elusive',
+        card: elusiveCard,
+        owner: 'ai',
+        attack: 2,
+        health: 5,
+        maxHealth: 5,
+      );
+      state.ai.board
+        ..clear()
+        ..add(elusive);
+      state.player.hand
+        ..clear()
+        ..add(spell);
+      state.player.handCostReductions
+        ..clear()
+        ..add(0);
+      state.player.handFragments
+        ..clear()
+        ..add(null);
+
+      expect(controller.playCard(spell, target: elusive), isFalse);
+      expect(state.player.mana, 10);
+      expect(controller.useHeroPower(target: elusive), isFalse);
+      expect(state.heroPowerUsed, isFalse);
+
+      state.player.hand
+        ..clear()
+        ..add(battlecry);
+      state.player.handCostReductions
+        ..clear()
+        ..add(0);
+      state.player.handFragments
+        ..clear()
+        ..add(null);
+      expect(controller.playCard(battlecry, target: elusive), isTrue);
+      expect(elusive.health, 3);
+
+      final attacker = BattleUnit(
+        instanceId: 'mobile-attacker',
+        card: attackerCard,
+        owner: 'player',
+        attack: 2,
+        health: 1,
+        maxHealth: 1,
+      );
+      state.player.board.add(attacker);
+      expect(controller.attack(attacker, target: elusive), isTrue);
+      expect(elusive.health, 1);
+      controller.dispose();
+    },
+  );
 
   test('mobile hero powers follow their faction and target rules', () {
     CardDefinition factionCard(String id, String faction) => CardDefinition(

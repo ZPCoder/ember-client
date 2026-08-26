@@ -304,6 +304,7 @@ class BattleUnit {
   bool get hasWindfury => !silenced && card.keywords.contains('windfury');
   bool get hasPoisonous => !silenced && card.keywords.contains('poisonous');
   bool get hasStealth => !silenced && card.keywords.contains('stealth');
+  bool get isElusive => !silenced && card.keywords.contains('elusive');
   bool get hasReborn => !silenced && card.keywords.contains('reborn');
   bool get isFrozen => frozenTurns > 0;
   int get attackLimit => hasWindfury ? 2 : 1;

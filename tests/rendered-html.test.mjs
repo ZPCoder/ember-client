@@ -65,6 +65,7 @@ test("ships the complete product surface and removes starter assets", async () =
   const cardIds = CARD_CATALOG.map((card) => card.id);
   const locationCard = CARD_CATALOG.find((card) => card.id === "sun-daybreak-order");
   const heroFreezeCard = CARD_CATALOG.find((card) => card.id === "void-chill-needle");
+  const elusiveCard = CARD_CATALOG.find((card) => card.id === "neutral-caravan-guard");
   const cardArt = await Promise.all(
     cardIds.map(async (cardId) => {
       const assetUrl = new URL(`../public/cards/${cardId}.webp`, import.meta.url);
@@ -175,6 +176,9 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.equal(locationCard?.type, "location");
   assert.equal(locationCard?.durability, 3);
   assert.ok(heroFreezeCard?.effect?.some((effect) => effect.kind === "freeze"));
+  assert.ok(elusiveCard?.keywords?.includes("elusive"));
+  assert.match(game, /elusiveBlocksPendingTarget/);
+  assert.match(game, /扰魔：不能成为法术或技能目标/);
   assert.match(game, /heroFrozenTurns/);
   assert.match(game, /英雄被冻结，必须跳过下一次攻击/);
   assert.match(game, /伪装 · 敌方战场/);
