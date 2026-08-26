@@ -1426,6 +1426,8 @@ function applyLocalAction(
     const card = CARD_BY_ID.get(cardId);
     if (!card) throw new Error("卡牌不存在。");
     if (action === "craft_card") {
+      const cardRule = CARD_RULE_BY_ID.get(cardId);
+      if (!cardRule || !cardAvailableInRankedFormat(cardRule, "wild")) throw new Error("该卡牌尚未发布，暂时不能制作。");
       const cost = craftCost(card.rarity as "普通" | "稀有" | "史诗" | "传说");
       if (current.currencies.dust < cost) throw new Error("星尘不足，无法制作这张卡。");
       const player = {
@@ -3348,6 +3350,8 @@ export function GameApp({
   );
   const [openedCards, setOpenedCards] = useState<Array<{ cardId: string; count: number }>>([]);
   const [search, setSearch] = useState("");
+  const [collectionEnvironment, setCollectionEnvironment] = useState<"released" | "standard" | "wild-only">("released");
+  const [cardSetFilter, setCardSetFilter] = useState<"全部" | CardSetId>("全部");
   const [factionFilter, setFactionFilter] = useState("全部");
   const [typeFilter, setTypeFilter] = useState("全部");
   const [rarityFilter, setRarityFilter] = useState("全部");
@@ -3774,12 +3778,22 @@ export function GameApp({
   const filteredCards = useMemo(() => {
     const searchClauses = parseCardSearch(search);
     const matches = CATALOG.filter((card) => {
+      const definition = CARD_RULE_BY_ID.get(card.id);
+      const released = Boolean(definition && cardAvailableInRankedFormat(definition, "wild"));
+      const standard = Boolean(definition && cardAvailableInRankedFormat(definition, "standard"));
+      const matchesEnvironment = collectionEnvironment === "released"
+        ? released
+        : collectionEnvironment === "standard"
+          ? standard
+          : released && !standard;
       const matchesSearch = matchesParsedCardSearch(
         catalogCardSearchInput(card, player.collection),
         searchClauses,
       );
       return (
         matchesSearch &&
+        matchesEnvironment &&
+        (cardSetFilter === "全部" || card.set === cardSetFilter) &&
         (factionFilter === "全部" || card.faction === factionFilter) &&
         (typeFilter === "全部" || card.type === typeFilter) &&
         (rarityFilter === "全部" || card.rarity === rarityFilter) &&
@@ -3799,7 +3813,7 @@ export function GameApp({
     return Array.from({ length: longestBucket }, (_, index) =>
       factionBuckets.map((cards) => cards[index]).filter(Boolean),
     ).flat() as CatalogCard[];
-  }, [factionFilter, keywordFilter, minionTypeFilter, player.collection, rarityFilter, search, spellSchoolFilter, traitFilter, typeFilter]);
+  }, [cardSetFilter, collectionEnvironment, factionFilter, keywordFilter, minionTypeFilter, player.collection, rarityFilter, search, spellSchoolFilter, traitFilter, typeFilter]);
 
   const battleView = useMemo(() => battleFromRaw(battle), [battle]);
   const battleStatus = battleView?.status;
@@ -5646,6 +5660,8 @@ export function GameApp({
                   dust={player.currencies.dust}
                   deckCounts={deckCounts}
                   search={search}
+                  environment={collectionEnvironment}
+                  cardSet={cardSetFilter}
                   faction={factionFilter}
                   type={typeFilter}
                   rarity={rarityFilter}
@@ -5659,6 +5675,8 @@ export function GameApp({
                   minionTypeOptions={minionTypeOptions}
                   spellSchoolOptions={spellSchoolOptions}
                   onSearch={setSearch}
+                  onEnvironment={setCollectionEnvironment}
+                  onCardSet={setCardSetFilter}
                   onFaction={setFactionFilter}
                   onType={setTypeFilter}
                   onRarity={setRarityFilter}
@@ -6355,6 +6373,8 @@ function CollectionSection({
   dust,
   deckCounts,
   search,
+  environment,
+  cardSet,
   faction,
   type,
   rarity,
@@ -6368,6 +6388,8 @@ function CollectionSection({
   minionTypeOptions,
   spellSchoolOptions,
   onSearch,
+  onEnvironment,
+  onCardSet,
   onFaction,
   onType,
   onRarity,
@@ -6388,6 +6410,8 @@ function CollectionSection({
   dust: number;
   deckCounts: Map<string, number>;
   search: string;
+  environment: "released" | "standard" | "wild-only";
+  cardSet: "全部" | CardSetId;
   faction: string;
   type: string;
   rarity: string;
@@ -6401,6 +6425,8 @@ function CollectionSection({
   minionTypeOptions: Array<{ id: MinionType; label: string }>;
   spellSchoolOptions: Array<{ id: SpellSchool; label: string }>;
   onSearch: (value: string) => void;
+  onEnvironment: (value: "released" | "standard" | "wild-only") => void;
+  onCardSet: (value: "全部" | CardSetId) => void;
   onFaction: (value: string) => void;
   onType: (value: string) => void;
   onRarity: (value: string) => void;
@@ -6420,7 +6446,7 @@ function CollectionSection({
     () => extraCardDisenchantPlan(realCollection, CARD_CATALOG),
     [realCollection],
   );
-  const filterSignature = `${search}|${faction}|${type}|${rarity}|${trait}|${keyword}|${minionType}|${spellSchool}`;
+  const filterSignature = `${search}|${environment}|${cardSet}|${faction}|${type}|${rarity}|${trait}|${keyword}|${minionType}|${spellSchool}`;
   const [pagination, setPagination] = useState({ signature: filterSignature, count: 30 });
   const visibleCount = pagination.signature === filterSignature ? pagination.count : 30;
   const visibleCards = cards.slice(0, visibleCount);
@@ -6430,7 +6456,7 @@ function CollectionSection({
       <SectionHeading
         eyebrow="TACTICAL ARCHIVE / COLLECTION"
         title="卡牌收藏"
-        description="浏览 20 个体系共 1000 张档案，按卡牌类型、随从类型、法术派系、特质与关键词检索，并围绕可查询的类型联动规划牌组。"
+        description="浏览 20 个体系的已发布档案，按环境、系列、卡牌类型、随从类型、法术派系、特质与关键词检索。"
         action={
           <>
             <button className="button button--outline" type="button" disabled={extraPlan.totalCopies === 0 || apiBusy !== null} onClick={() => setConfirmExtraDisenchant(true)}>
@@ -6499,6 +6525,23 @@ function CollectionSection({
               <Icon name="close" size={15} />
             </button>
           )}
+        </label>
+        <label className="filter-field">
+          <span>环境</span>
+          <select value={environment} onChange={(event) => onEnvironment(event.target.value as "released" | "standard" | "wild-only")}>
+            <option value="released">全部已发布</option>
+            <option value="standard">当前标准</option>
+            <option value="wild-only">仅已轮换</option>
+          </select>
+        </label>
+        <label className="filter-field">
+          <span>系列</span>
+          <select value={cardSet} onChange={(event) => onCardSet(event.target.value as "全部" | CardSetId)}>
+            <option value="全部">全部</option>
+            {(Object.values(CARD_SET_DEFINITIONS) as Array<(typeof CARD_SET_DEFINITIONS)[CardSetId]>).map((set) => (
+              <option value={set.id} key={set.id}>{set.label}</option>
+            ))}
+          </select>
         </label>
         <label className="filter-field">
           <span>阵营</span>
@@ -6741,6 +6784,7 @@ function DeckSection({
   const trialActivated = Boolean(ladderReady?.activatedAt && ladderReady.expiresAt);
   const standardSnapshot = standardFormatSnapshot(clockNow || Date.now());
   const standardCardCount = rankedFormatCardCount(CARD_CATALOG, "standard", clockNow || Date.now());
+  const wildCardCount = rankedFormatCardCount(CARD_CATALOG, "wild", clockNow || Date.now());
   const standardWaveText = standardSnapshot.currentWave === 1 ? "第一" : standardSnapshot.currentWave === 2 ? "第二" : "第三";
   const nextStandardReleaseMonth = standardSnapshot.nextRelease
     ? new Intl.DateTimeFormat("zh-CN", { month: "long", timeZone: "UTC" }).format(new Date(standardSnapshot.nextRelease.availableFrom))
@@ -7079,9 +7123,9 @@ function DeckSection({
             <span>卡组环境</span>
             <select value={format} onChange={(event) => onFormat(event.target.value === "wild" ? "wild" : "standard")} disabled={Boolean(selectedLadderReadyDeckId)}>
               <option value="standard">标准 · {standardSnapshot.seasonLabel} · {standardWaveText}扩展期</option>
-              <option value="wild">狂野 · 全部卡牌</option>
+              <option value="wild">狂野 · 全部已发布卡牌</option>
             </select>
-            <small>{format === "standard" ? `按赛季日期开放 ${standardCardCount.toLocaleString("zh-CN")} 张卡牌；当前为${standardSnapshot.currentWaveLabel}环境${nextStandardReleaseMonth ? `，下一批预计${nextStandardReleaseMonth}开放` : ""}。` : "可使用全部 1,000 张卡牌，包括已轮换的系列。"}</small>
+            <small>{format === "standard" ? `按赛季日期开放 ${standardCardCount.toLocaleString("zh-CN")} 张卡牌；当前为${standardSnapshot.currentWaveLabel}环境${nextStandardReleaseMonth ? `，下一批预计${nextStandardReleaseMonth}开放` : ""}。` : `可使用全部 ${wildCardCount.toLocaleString("zh-CN")} 张已发布卡牌，包括已轮换系列；未来扩展不会提前开放。`}</small>
           </label>
           <div className="deck-loadout">
             <label>
