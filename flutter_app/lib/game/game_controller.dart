@@ -2230,6 +2230,7 @@ class GameController extends ChangeNotifier {
 
   void _playHeroCard({
     required CardDefinition card,
+    required String handEntityId,
     required BattleSide source,
     required BattleSide enemy,
     required String owner,
@@ -2248,6 +2249,7 @@ class GameController extends ChangeNotifier {
 
     source.heroId = definition['heroId']?.toString() ?? card.id;
     source.heroName = definition['heroName']?.toString() ?? card.name;
+    source.heroCardEntityId = handEntityId;
     final armor = (definition['armor'] as num?)?.toInt() ?? 0;
     source.armor += max(0, armor);
     if (owner == 'player') {
@@ -2264,7 +2266,7 @@ class GameController extends ChangeNotifier {
       '获得 $armor 点护甲并替换英雄技能',
       Icons.whatshot,
       0xFFE46D3F,
-      sourceId: card.id,
+      sourceId: handEntityId,
       amount: armor,
     );
 
@@ -2299,6 +2301,7 @@ class GameController extends ChangeNotifier {
     state.phase = 'choose-one';
     state.chooseOneOptions = List<Map<String, dynamic>>.from(options);
     state.chooseOneSource = card.name;
+    state.chooseOneSourceEntityId = handEntityId;
     state.chooseOneOwner = owner;
     state.chooseOneTarget = null;
     state.chooseOneRemaining = choiceCount;
@@ -2355,7 +2358,14 @@ class GameController extends ChangeNotifier {
           source.spellsPlayedThisGame.length) {
         source.spellsPlayedFromStartingDeck.add(true);
       }
+      while (source.spellsPlayedEntityIds.length <
+          source.spellsPlayedThisGame.length) {
+        source.spellsPlayedEntityIds.add(
+          'legacy-spell-${source.spellsPlayedEntityIds.length}-${source.spellsPlayedThisGame[source.spellsPlayedEntityIds.length]}',
+        );
+      }
       source.spellsPlayedThisGame.add(card.id);
+      source.spellsPlayedEntityIds.add(handEntityId);
       source.spellsPlayedFromStartingDeck.add(startedInDeck);
       if (card.school != null) {
         source.spellSchoolsPlayedThisTurn.add(card.school!);
@@ -2363,10 +2373,17 @@ class GameController extends ChangeNotifier {
     }
     source.overloadLocked += card.overload;
     if (card.isHero) {
-      _playHeroCard(card: card, source: source, enemy: enemy, owner: owner);
+      _playHeroCard(
+        card: card,
+        handEntityId: handEntityId,
+        source: source,
+        enemy: enemy,
+        owner: owner,
+      );
     } else if (card.type == 'weapon') {
       final maxDurability = max(1, card.durability ?? card.health ?? 1);
       source.weapon = BattleWeapon(
+        entityId: handEntityId,
         card: card,
         attack: card.attack ?? 0,
         durability: maxDurability,
@@ -2380,7 +2397,7 @@ class GameController extends ChangeNotifier {
         '${card.attack ?? 0} 攻击 · $maxDurability 耐久',
         Icons.shield_moon,
         factionColors[card.faction] ?? 0xFFE7BD7A,
-        sourceId: card.id,
+        sourceId: handEntityId,
       );
     } else if (card.isUnit) {
       final recipient = placement == 'enemy' ? enemy : source;
@@ -2495,6 +2512,7 @@ class GameController extends ChangeNotifier {
             targetHero && (card.target ?? '').startsWith('friendly'),
         sourceName: card.name,
         sourceCard: card,
+        sourceEntityId: handEntityId,
       );
       if (comboActive && card.combo.isNotEmpty && battle?.phase == 'main') {
         _resolveEffects(
@@ -3181,6 +3199,7 @@ class GameController extends ChangeNotifier {
     required String sourceName,
     CardDefinition? sourceCard,
     BattleUnit? sourceUnit,
+    String? sourceEntityId,
   }) {
     _effectResolutionDepth++;
     try {
@@ -3203,6 +3222,7 @@ class GameController extends ChangeNotifier {
                 !source.secrets.any((secret) => secret.secretId == secretId)) {
               source.secrets.add(
                 BattleSecret(
+                  entityId: sourceEntityId ?? _nextCardEntityId(),
                   card:
                       sourceCard ??
                       catalog.firstWhere(
@@ -3829,6 +3849,7 @@ class GameController extends ChangeNotifier {
                   .map((item) => Map<String, dynamic>.from(item))
                   .toList();
               state.chooseOneSource = sourceName;
+              state.chooseOneSourceEntityId = sourceEntityId;
               state.chooseOneOwner = _ownerOf(source);
               state.chooseOneTarget = target;
               state.chooseOneRemaining = 1;
@@ -4018,6 +4039,7 @@ class GameController extends ChangeNotifier {
         .map((item) => Map<String, dynamic>.from(item))
         .toList();
     final sourceName = state.chooseOneSource ?? '抉择';
+    final sourceEntityId = state.chooseOneSourceEntityId;
     final target = state.chooseOneTarget;
     final sourceKind = state.chooseOneSourceKind;
     final label = option['label']?.toString() ?? '一个分支';
@@ -4037,6 +4059,7 @@ class GameController extends ChangeNotifier {
       if (state.finished || state.chooseOneRemaining <= 0) {
         state.chooseOneOptions = <Map<String, dynamic>>[];
         state.chooseOneSource = null;
+        state.chooseOneSourceEntityId = null;
         state.chooseOneOwner = 'player';
         state.chooseOneTarget = null;
         state.chooseOneRemaining = 1;
@@ -4055,6 +4078,7 @@ class GameController extends ChangeNotifier {
     state.phase = 'main';
     state.chooseOneOptions = <Map<String, dynamic>>[];
     state.chooseOneSource = null;
+    state.chooseOneSourceEntityId = null;
     state.chooseOneOwner = 'player';
     state.chooseOneTarget = null;
     state.chooseOneRemaining = 1;
@@ -4066,6 +4090,7 @@ class GameController extends ChangeNotifier {
       enemy: enemy,
       target: target,
       sourceName: '$sourceName · $label',
+      sourceEntityId: sourceEntityId,
     );
     if (state.phase == 'main') {
       _resolveSpellTriggers(source: source, enemy: enemy);

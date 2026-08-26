@@ -376,10 +376,12 @@ class BattleSide {
     this.heraldCount = 0,
     this.heroId = 'faction-commander',
     this.heroName = '远征指挥官',
+    this.heroCardEntityId,
     this.heroAttackBonus = 0,
     List<String>? spellSchoolsPlayedThisTurn,
     List<String>? spellSchoolsPlayedLastTurn,
     List<String>? spellsPlayedThisGame,
+    List<String>? spellsPlayedEntityIds,
     List<bool>? spellsPlayedFromStartingDeck,
     this.nonDeckSpellRecastUsed = false,
     List<BattleDeathRecord>? deathHistory,
@@ -414,6 +416,7 @@ class BattleSide {
        spellSchoolsPlayedThisTurn = spellSchoolsPlayedThisTurn ?? <String>[],
        spellSchoolsPlayedLastTurn = spellSchoolsPlayedLastTurn ?? <String>[],
        spellsPlayedThisGame = spellsPlayedThisGame ?? <String>[],
+       spellsPlayedEntityIds = spellsPlayedEntityIds ?? <String>[],
        spellsPlayedFromStartingDeck = spellsPlayedFromStartingDeck ?? <bool>[],
        deathHistory = deathHistory ?? <BattleDeathRecord>[],
        discardHistory = discardHistory ?? <BattleDiscardRecord>[],
@@ -443,11 +446,13 @@ class BattleSide {
   int heraldCount;
   String heroId;
   String heroName;
+  String? heroCardEntityId;
   int heroAttackBonus;
   int cardsPlayedThisTurn = 0;
   final List<String> spellSchoolsPlayedThisTurn;
   final List<String> spellSchoolsPlayedLastTurn;
   final List<String> spellsPlayedThisGame;
+  final List<String> spellsPlayedEntityIds;
   final List<bool> spellsPlayedFromStartingDeck;
   bool nonDeckSpellRecastUsed;
   final List<BattleDeathRecord> deathHistory;
@@ -458,12 +463,14 @@ class BattleSide {
 
 class BattleWeapon {
   BattleWeapon({
+    required this.entityId,
     required this.card,
     required this.attack,
     required this.durability,
     required this.maxDurability,
   });
 
+  final String entityId;
   final CardDefinition card;
   int attack;
   int durability;
@@ -472,12 +479,14 @@ class BattleWeapon {
 
 class BattleSecret {
   BattleSecret({
+    required this.entityId,
     required this.card,
     required this.secretId,
     required this.trigger,
     required this.effect,
   });
 
+  final String entityId;
   final CardDefinition card;
   final String secretId;
   final String trigger;
@@ -542,6 +551,7 @@ class BattleState {
   String? discoverCopiedFrom;
   List<Map<String, dynamic>> chooseOneOptions;
   String? chooseOneSource;
+  String? chooseOneSourceEntityId;
   String chooseOneOwner = 'player';
   BattleUnit? chooseOneTarget;
   int chooseOneRemaining = 1;

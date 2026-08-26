@@ -2556,7 +2556,11 @@ void main() {
     state.player.hand
       ..clear()
       ..add(weapon);
+    state.player.handEntityIds
+      ..clear()
+      ..add('mobile-weapon-entity');
     expect(controller.playCard(weapon), isTrue);
+    expect(state.player.weapon?.entityId, 'mobile-weapon-entity');
     expect(state.player.weapon?.durability, 2);
     expect(controller.heroAttack(targetHero: true), isTrue);
     expect(state.ai.heroHealth, 27);
@@ -3299,6 +3303,7 @@ void main() {
       );
     state.ai.secrets.add(
       BattleSecret(
+        entityId: 'counter-secret-entity',
         card: counterSecret,
         secretId: counterSecret.id,
         trigger: 'opponent-plays-spell',
@@ -5308,7 +5313,13 @@ void main() {
       state.player.hand
         ..clear()
         ..add(discover);
+      state.player.handEntityIds
+        ..clear()
+        ..add('mobile-discover-spell-entity');
       expect(controller.playCard(discover), isTrue);
+      expect(state.player.spellsPlayedEntityIds, [
+        'mobile-discover-spell-entity',
+      ]);
       expect(state.phase, 'discover');
       expect(state.discoverChoices, [choice.id]);
       expect(controller.chooseDiscover(choice.id), isTrue);
@@ -5318,8 +5329,12 @@ void main() {
       state.player.hand
         ..clear()
         ..add(secret);
+      state.player.handEntityIds
+        ..clear()
+        ..add('mobile-secret-entity');
       expect(controller.playCard(secret), isTrue);
       expect(state.player.secrets.single.secretId, 'counter-secret');
+      expect(state.player.secrets.single.entityId, 'mobile-secret-entity');
       state.ai.hand
         ..clear()
         ..add(enemySpell);
@@ -5495,6 +5510,9 @@ void main() {
       state.player.hand
         ..clear()
         ..add(heroCard);
+      state.player.handEntityIds
+        ..clear()
+        ..add('mobile-hero-card-entity');
       state.player.handCostReductions
         ..clear()
         ..add(0);
@@ -5507,11 +5525,13 @@ void main() {
 
       expect(controller.playCard(heroCard), isTrue);
       expect(state.player.heroName, '赤曜灭世者');
+      expect(state.player.heroCardEntityId, 'mobile-hero-card-entity');
       expect(state.player.armor, 12);
       expect(state.playerHeroPower.name, '残酷撕裂');
       expect(state.phase, 'choose-one');
       expect(state.chooseOneRemaining, 1);
       expect(state.chooseOneSourceKind, 'hero-card');
+      expect(state.chooseOneSourceEntityId, 'mobile-hero-card-entity');
 
       final summonIndex = state.chooseOneOptions.indexWhere(
         (option) => option['label']?.toString().contains('龙裔君临') ?? false,
