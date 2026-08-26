@@ -115,6 +115,7 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(catchUpPack, /圣甲虫回归追赶包/);
   assert.match(game, /前 50 张传说保底/);
   assert.match(gameStore, /generateCatchUpPack/);
+  assert.match(gameStore, /recordCatchUpCards\(state\.catchUpPack, grantedCardIds\)/);
   assert.match(game, /collectionWithTrialCards/);
   assert.match(game, /trialCardsAreActive/);
   assert.match(game, /试玩卡生效中/);

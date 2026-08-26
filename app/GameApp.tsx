@@ -1549,11 +1549,26 @@ function applyLocalAction(
           return applyRankedMatchResult(rolled, CARD_CATALOG, rankedFormat, result);
         })()
       : null;
+    const rankedCollection = rankedEconomy?.collection ?? current.collection;
+    const rankedGrantedCards: string[] = [];
+    for (const [cardId, count] of Object.entries(rankedCollection)) {
+      const granted = Math.max(0, count - (current.collection[cardId] ?? 0));
+      for (let index = 0; index < granted; index += 1) rankedGrantedCards.push(cardId);
+    }
+    const currentCatchUp = current.catchUpPack ?? {
+      claimedAt: null,
+      cardsGranted: 0,
+      ...catchUpProgressFromCollection(current.collection),
+    };
     const player = {
       ...current,
-      collection: rankedEconomy?.collection ?? current.collection,
+      collection: rankedCollection,
       packsAvailable: rankedEconomy?.packsAvailable ?? current.packsAvailable,
       rankedRewards: rankedEconomy?.rankedRewards ?? current.rankedRewards,
+      catchUpPack: {
+        ...currentCatchUp,
+        ...recordCatchUpCards(currentCatchUp, rankedGrantedCards),
+      },
       currencies: {
         ...current.currencies,
         gold: current.currencies.gold + rewardGold,
