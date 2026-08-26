@@ -7505,11 +7505,19 @@ function BattleEffectLayer({ effect }: { effect: BattleVisualEffect }) {
     (effect.kind === "damage" || effect.kind === "heal")
       ? `${effect.kind === "damage" ? "−" : "+"}${effect.amount}`
       : null;
+  const signature = effect.kind === "attack" && effect.cardId === "sun-dawn-scout"
+    ? "dawn-charge"
+    : effect.kind === "shield" && effect.cardId === "sun-mirror-warden"
+      ? "prism-break"
+      : effect.kind === "card" && effect.cardId === "sun-orbit-insight" && effect.label === "发现候选"
+        ? "orbit-discover"
+        : null;
 
   return (
     <div
-      className={`battlefield__fx-layer battle-fx--${effect.kind} battle-fx--${effect.targetSide ?? effect.side ?? "neutral"}`}
+      className={`battlefield__fx-layer battle-fx--${effect.kind} battle-fx--${effect.targetSide ?? effect.side ?? "neutral"}${signature ? ` battle-fx--signature-${signature}` : ""}`}
       data-event-type={eventType}
+      data-card-signature={signature ?? undefined}
       aria-hidden="true"
     >
       <span className="battle-fx__vignette" />
@@ -7520,6 +7528,11 @@ function BattleEffectLayer({ effect }: { effect: BattleVisualEffect }) {
       <span className="battle-fx__particles">
         {Array.from({ length: 8 }, (_, index) => <i key={index} />)}
       </span>
+      {signature && (
+        <span className="battle-fx__signature">
+          {Array.from({ length: 7 }, (_, index) => <i key={index} />)}
+        </span>
+      )}
       <span className="battle-fx__banner">
         {revealCard && (
           <span className="battle-fx__card-reveal" aria-hidden="true">

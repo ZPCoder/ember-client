@@ -264,6 +264,14 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(styles, /\.battlefield__fx-layer/);
   assert.match(styles, /battle-banner-enter 840ms/);
   assert.match(styles, /@keyframes battle-lunge-player/);
+  assert.match(game, /data-card-signature/);
+  assert.match(styles, /\.battle-fx--signature-dawn-charge/);
+  assert.match(styles, /\.battle-fx--signature-prism-break/);
+  assert.match(styles, /\.battle-fx--signature-orbit-discover/);
+  assert.match(styles, /@keyframes battle-signature-dawn-streak/);
+  assert.match(styles, /@keyframes battle-signature-prism-shard/);
+  assert.match(styles, /@keyframes battle-signature-orbit/);
+  assert.match(styles, /\.battle-fx__signature,[\s\S]*display: none/);
   assert.match(styles, /@media \(prefers-reduced-motion: reduce\)/);
   assert.doesNotMatch(game, /<svg/i);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
