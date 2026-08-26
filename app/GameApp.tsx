@@ -7968,6 +7968,7 @@ function BattleSection({
     | { kind: "attacker"; unitId: string }
     | null
   >(null);
+  const [pointerDragPosition, setPointerDragPosition] = useState<{ x: number; y: number } | null>(null);
   const pointerDragRef = useRef<{
     pointerId: number;
     startX: number;
@@ -8083,7 +8084,16 @@ function BattleSection({
   const draggedCardDefinition = draggedHandCard ? CARD_BY_ID.get(draggedHandCard.cardId) : undefined;
   const cardDragActive = Boolean(draggedHandCard);
   const attackerDragActive = dragIntent?.kind === "attacker";
-  const finishDrag = () => setDragIntent(null);
+  const draggedAttackerUnit = dragIntent?.kind === "attacker"
+    ? battle.player.board.find((unit) => unit.id === dragIntent.unitId)
+    : undefined;
+  const dragProxyCard = draggedCardDefinition
+    ?? (draggedAttackerUnit ? CARD_BY_ID.get(draggedAttackerUnit.cardId) : undefined);
+  const dragProxyLabel = draggedCardDefinition?.name ?? draggedAttackerUnit?.name;
+  const finishDrag = () => {
+    setDragIntent(null);
+    setPointerDragPosition(null);
+  };
   const allowDrop = (event: ReactDragEvent<HTMLElement>) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = "move";
@@ -8129,6 +8139,7 @@ function BattleSection({
         onSelectAttacker(pointerDrag.intent.unitId);
       }
     }
+    setPointerDragPosition({ x: event.clientX, y: event.clientY });
     event.preventDefault();
   };
   const endPointerDrag = (event: ReactPointerEvent<HTMLElement>) => {
@@ -8473,6 +8484,23 @@ function BattleSection({
       <div className="battle-layout">
         <div className={`battlefield battlefield--theme-${battlefieldTheme} ${effect ? `battlefield--fx-${effect.kind}` : ""} ${cardDragActive ? "battlefield--drag-card" : ""} ${attackerDragActive ? "battlefield--drag-attacker" : ""}`}>
           <div className="battlefield__grid" aria-hidden="true" />
+          {pointerDragPosition && dragIntent && dragProxyLabel && (
+            <div
+              className={`battle-drag-proxy battle-drag-proxy--${dragIntent.kind}`}
+              style={{ left: pointerDragPosition.x, top: pointerDragPosition.y }}
+              aria-hidden="true"
+            >
+              {dragProxyCard && (
+                <span className="battle-drag-proxy__art">
+                  <CardArtwork card={dragProxyCard} eager />
+                </span>
+              )}
+              <span>
+                <small>{dragIntent.kind === "card" ? "拖动出牌" : "拖动攻击"}</small>
+                <strong>{dragProxyLabel}</strong>
+              </span>
+            </div>
+          )}
           {effect && <BattleEffectLayer key={effect.id} effect={effect} />}
           <div className="battlefield__enemy-zone">
             <div className="battlefield__side-info">

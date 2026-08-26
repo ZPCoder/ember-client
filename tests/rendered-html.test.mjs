@@ -281,6 +281,8 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(game, /distance < 12/);
   assert.match(game, /elementFromPoint\(event\.clientX, event\.clientY\)/);
   assert.match(game, /onDragAttack\(pointerDrag\.intent\.unitId/);
+  assert.match(game, /setPointerDragPosition\(\{ x: event\.clientX, y: event\.clientY \}\)/);
+  assert.match(game, /battle-drag-proxy--\$\{dragIntent\.kind\}/);
   assert.match(game, /data-battle-drop="friendly-board"/);
   assert.match(game, /dropKey="enemy-hero"/);
   assert.match(game, /onPointerCancel=\{[^\n]*cancelPointerDrag/);
@@ -288,6 +290,8 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(styles, /\.board-unit--draggable/);
   assert.match(styles, /\.hero-core--drop-ready/);
   assert.match(styles, /\.hand-card--dragging/);
+  assert.match(styles, /\.battle-drag-proxy/);
+  assert.match(styles, /pointer-events: none/);
   assert.match(styles, /touch-action: none/);
   assert.match(styles, /@media \(prefers-reduced-motion: reduce\)/);
   assert.doesNotMatch(game, /<svg/i);
