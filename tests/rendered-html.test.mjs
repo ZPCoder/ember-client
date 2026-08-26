@@ -112,6 +112,10 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(game, /伪装 · 敌方战场/);
   assert.match(game, /fragmentLabel/);
   assert.match(game, /card\.shatter/);
+  assert.match(game, /herald: Boolean\(raw\.herald\)/);
+  assert.match(game, /colossal: Boolean\(raw\.colossal\)/);
+  assert.match(game, /heraldCount/);
+  assert.match(game, /hero-core__herald/);
   assert.match(game, /cardRuleForHandSlot/);
   assert.match(game, /placement: pendingCardPlacement/);
   assert.match(game, /\/api\/game/);
@@ -172,6 +176,7 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(styles, /\.hand-card__disguise/);
   assert.match(styles, /\.hand-card__fragment/);
   assert.match(styles, /\.hand-card--reassembled/);
+  assert.match(styles, /\.hero-core__herald/);
   assert.match(styles, /\.game-card__cost\.is-discounted/);
   assert.match(styles, /\.turn-clock/);
   assert.match(styles, /\.board-slot/);

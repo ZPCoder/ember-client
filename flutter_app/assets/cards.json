@@ -5392,7 +5392,7 @@
   {
     "id": "void-season-01",
     "name": "深潮潜行者·01",
-    "description": "lifesteal。 幽潮的战线单位。 登场时抽一张牌。",
+    "description": "先驱：召唤一名继承所属巨型附肢力量的士兵。每使用两次先驱，该巨型、附肢与士兵的数值翻倍。lifesteal。 幽潮的战线单位。 登场时抽一张牌。",
     "faction": "幽潮",
     "type": "unit",
     "cost": 1,
@@ -5401,7 +5401,8 @@
     "health": 3,
     "keywords": [
       "lifesteal",
-      "battlecry"
+      "battlecry",
+      "herald"
     ],
     "traits": [
       "swift",
@@ -5416,6 +5417,9 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
+    "herald": {
+      "colossalCardId": "void-season-08"
+    },
     "set": "scarab-2026"
   },
   {
@@ -5480,7 +5484,7 @@
   {
     "id": "void-season-04",
     "name": "沉湾祭司·04",
-    "description": "lifesteal。 幽潮的战线单位。",
+    "description": "先驱：召唤一名继承所属巨型附肢力量的士兵。每使用两次先驱，该巨型、附肢与士兵的数值翻倍。lifesteal。 幽潮的战线单位。",
     "faction": "幽潮",
     "type": "unit",
     "cost": 4,
@@ -5488,7 +5492,8 @@
     "attack": 4,
     "health": 8,
     "keywords": [
-      "lifesteal"
+      "lifesteal",
+      "herald"
     ],
     "traits": [
       "bulwark",
@@ -5496,6 +5501,9 @@
     ],
     "onDeath": [],
     "effect": [],
+    "herald": {
+      "colossalCardId": "void-season-08"
+    },
     "set": "scarab-2026"
   },
   {
@@ -5580,7 +5588,7 @@
   {
     "id": "void-season-08",
     "name": "沉湾祭司·08",
-    "description": "预备。冻结。幽潮的战线单位。登场时冻结一个敌方单位。",
+    "description": "预备。巨型：召唤时组装 1 个附肢；每使用两次先驱，本体、附肢与附肢效果翻倍。冻结。幽潮的战线单位。登场时冻结一个敌方单位。",
     "faction": "幽潮",
     "type": "unit",
     "cost": 8,
@@ -5590,7 +5598,8 @@
     "keywords": [
       "freeze",
       "battlecry",
-      "prepare"
+      "prepare",
+      "colossal"
     ],
     "traits": [
       "bulwark",
@@ -5606,6 +5615,25 @@
     "onDeath": [],
     "effect": [],
     "preparable": true,
+    "colossal": {
+      "parts": [
+        {
+          "id": "void-season-08-appendage",
+          "name": "深潮巨鳍",
+          "attack": 2,
+          "health": 3,
+          "keywords": [
+            "lifesteal"
+          ],
+          "effect": [
+            {
+              "kind": "armor",
+              "amount": 1
+            }
+          ]
+        }
+      ]
+    },
     "set": "scarab-2026"
   },
   {
@@ -6437,7 +6465,7 @@
   {
     "id": "ember-season-01",
     "name": "熔火先锋·01",
-    "description": "charge。 烬火的战线单位。 登场时抽一张牌。",
+    "description": "先驱：召唤一名继承所属巨型附肢力量的士兵。每使用两次先驱，该巨型、附肢与士兵的数值翻倍。charge。 烬火的战线单位。 登场时抽一张牌。",
     "faction": "烬火",
     "type": "unit",
     "cost": 1,
@@ -6446,7 +6474,8 @@
     "health": 5,
     "keywords": [
       "charge",
-      "battlecry"
+      "battlecry",
+      "herald"
     ],
     "traits": [
       "swift",
@@ -6461,6 +6490,9 @@
     "target": "none",
     "onDeath": [],
     "effect": [],
+    "herald": {
+      "colossalCardId": "ember-season-08"
+    },
     "set": "scarab-2026"
   },
   {
@@ -6517,7 +6549,7 @@
   {
     "id": "ember-season-04",
     "name": "灰烬战兽·04",
-    "description": "windfury。 烬火的战线单位。",
+    "description": "先驱：召唤一名继承所属巨型附肢力量的士兵。每使用两次先驱，该巨型、附肢与士兵的数值翻倍。windfury。 烬火的战线单位。",
     "faction": "烬火",
     "type": "unit",
     "cost": 4,
@@ -6525,7 +6557,8 @@
     "attack": 3,
     "health": 6,
     "keywords": [
-      "windfury"
+      "windfury",
+      "herald"
     ],
     "traits": [
       "bulwark",
@@ -6533,6 +6566,9 @@
     ],
     "onDeath": [],
     "effect": [],
+    "herald": {
+      "colossalCardId": "ember-season-08"
+    },
     "set": "scarab-2026"
   },
   {
@@ -6609,7 +6645,7 @@
   {
     "id": "ember-season-08",
     "name": "灰烬战兽·08",
-    "description": "预备。windfury。 烬火的战线单位。 登场时对一个敌方角色造成伤害。",
+    "description": "预备。巨型：召唤时组装 1 个附肢；每使用两次先驱，本体、附肢与附肢效果翻倍。windfury。 烬火的战线单位。 登场时对一个敌方角色造成伤害。",
     "faction": "烬火",
     "type": "unit",
     "cost": 8,
@@ -6619,7 +6655,8 @@
     "keywords": [
       "windfury",
       "battlecry",
-      "prepare"
+      "prepare",
+      "colossal"
     ],
     "traits": [
       "bulwark",
@@ -6635,6 +6672,25 @@
     "onDeath": [],
     "effect": [],
     "preparable": true,
+    "colossal": {
+      "parts": [
+        {
+          "id": "ember-season-08-appendage",
+          "name": "熔核巨爪",
+          "attack": 3,
+          "health": 2,
+          "keywords": [
+            "rush"
+          ],
+          "effect": [
+            {
+              "kind": "random-enemy-damage",
+              "amount": 1
+            }
+          ]
+        }
+      ]
+    },
     "set": "scarab-2026"
   },
   {
@@ -7903,7 +7959,7 @@
   {
     "id": "storm-season-01",
     "name": "雷铸炮台·01",
-    "description": "overload。 雷铸的战线单位。 登场时抽一张牌。 过载（1）。",
+    "description": "先驱：召唤一名继承所属巨型附肢力量的士兵。每使用两次先驱，该巨型、附肢与士兵的数值翻倍。overload。 雷铸的战线单位。 登场时抽一张牌。 过载（1）。",
     "faction": "雷铸",
     "type": "unit",
     "cost": 1,
@@ -7912,7 +7968,8 @@
     "health": 4,
     "keywords": [
       "overload",
-      "battlecry"
+      "battlecry",
+      "herald"
     ],
     "traits": [
       "swift",
@@ -7928,6 +7985,9 @@
     "overload": 1,
     "onDeath": [],
     "effect": [],
+    "herald": {
+      "colossalCardId": "storm-season-08"
+    },
     "set": "scarab-2026"
   },
   {
@@ -7990,7 +8050,7 @@
   {
     "id": "storm-season-04",
     "name": "风暴雷王·04",
-    "description": "shield。 雷铸的战线单位。",
+    "description": "先驱：召唤一名继承所属巨型附肢力量的士兵。每使用两次先驱，该巨型、附肢与士兵的数值翻倍。shield。 雷铸的战线单位。",
     "faction": "雷铸",
     "type": "unit",
     "cost": 4,
@@ -7998,7 +8058,8 @@
     "attack": 3,
     "health": 5,
     "keywords": [
-      "shield"
+      "shield",
+      "herald"
     ],
     "traits": [
       "bulwark",
@@ -8006,6 +8067,9 @@
     ],
     "onDeath": [],
     "effect": [],
+    "herald": {
+      "colossalCardId": "storm-season-08"
+    },
     "set": "scarab-2026"
   },
   {
@@ -8089,7 +8153,7 @@
   {
     "id": "storm-season-08",
     "name": "风暴雷王·08",
-    "description": "预备。shield。 雷铸的战线单位。 登场时对一个敌方角色造成伤害。",
+    "description": "预备。巨型：召唤时组装 1 个附肢；每使用两次先驱，本体、附肢与附肢效果翻倍。shield。 雷铸的战线单位。 登场时对一个敌方角色造成伤害。",
     "faction": "雷铸",
     "type": "unit",
     "cost": 8,
@@ -8099,7 +8163,8 @@
     "keywords": [
       "shield",
       "battlecry",
-      "prepare"
+      "prepare",
+      "colossal"
     ],
     "traits": [
       "bulwark",
@@ -8115,6 +8180,25 @@
     "onDeath": [],
     "effect": [],
     "preparable": true,
+    "colossal": {
+      "parts": [
+        {
+          "id": "storm-season-08-appendage",
+          "name": "雷甲侧翼",
+          "attack": 2,
+          "health": 4,
+          "keywords": [
+            "shield"
+          ],
+          "effect": [
+            {
+              "kind": "armor",
+              "amount": 1
+            }
+          ]
+        }
+      ]
+    },
     "set": "scarab-2026"
   },
   {
@@ -14037,7 +14121,7 @@
   {
     "id": "dusk-season-26",
     "name": "暗巷刺客·26",
-    "description": "沉默。暮影的战线单位。登场时沉默一个敌方单位。",
+    "description": "先驱：召唤一名继承所属巨型附肢力量的士兵。每使用两次先驱，该巨型、附肢与士兵的数值翻倍。沉默。暮影的战线单位。登场时沉默一个敌方单位。",
     "faction": "暮影",
     "type": "unit",
     "cost": 2,
@@ -14046,7 +14130,8 @@
     "health": 4,
     "keywords": [
       "silence",
-      "battlecry"
+      "battlecry",
+      "herald"
     ],
     "traits": [
       "bulwark",
@@ -14060,6 +14145,9 @@
     ],
     "onDeath": [],
     "effect": [],
+    "herald": {
+      "colossalCardId": "dusk-season-32"
+    },
     "set": "scarab-2026"
   },
   {
@@ -14101,7 +14189,7 @@
   {
     "id": "dusk-season-28",
     "name": "薄暮窃密师·28",
-    "description": "stealth。 暮影的战线单位。",
+    "description": "先驱：召唤一名继承所属巨型附肢力量的士兵。每使用两次先驱，该巨型、附肢与士兵的数值翻倍。stealth。 暮影的战线单位。",
     "faction": "暮影",
     "type": "unit",
     "cost": 4,
@@ -14109,7 +14197,8 @@
     "attack": 5,
     "health": 6,
     "keywords": [
-      "stealth"
+      "stealth",
+      "herald"
     ],
     "traits": [
       "bulwark",
@@ -14117,6 +14206,9 @@
     ],
     "onDeath": [],
     "effect": [],
+    "herald": {
+      "colossalCardId": "dusk-season-32"
+    },
     "set": "scarab-2026"
   },
   {
@@ -14200,7 +14292,7 @@
   {
     "id": "dusk-season-32",
     "name": "薄暮窃密师·32",
-    "description": "预备。沉默。暮影的战线单位。登场时沉默一个敌方单位。",
+    "description": "预备。巨型：召唤时组装 1 个附肢；每使用两次先驱，本体、附肢与附肢效果翻倍。沉默。暮影的战线单位。登场时沉默一个敌方单位。",
     "faction": "暮影",
     "type": "unit",
     "cost": 8,
@@ -14210,7 +14302,8 @@
     "keywords": [
       "silence",
       "battlecry",
-      "prepare"
+      "prepare",
+      "colossal"
     ],
     "traits": [
       "bulwark",
@@ -14225,6 +14318,25 @@
     "onDeath": [],
     "effect": [],
     "preparable": true,
+    "colossal": {
+      "parts": [
+        {
+          "id": "dusk-season-32-appendage",
+          "name": "暮影潜肢",
+          "attack": 3,
+          "health": 2,
+          "keywords": [
+            "stealth"
+          ],
+          "effect": [
+            {
+              "kind": "draw",
+              "count": 1
+            }
+          ]
+        }
+      ]
+    },
     "set": "scarab-2026"
   },
   {
@@ -20155,7 +20267,7 @@
   {
     "id": "rift-season-26",
     "name": "陨痕裂界者·26",
-    "description": "rush。 裂星的战线单位。",
+    "description": "先驱：召唤一名继承所属巨型附肢力量的士兵。每使用两次先驱，该巨型、附肢与士兵的数值翻倍。rush。 裂星的战线单位。",
     "faction": "裂星",
     "type": "unit",
     "cost": 2,
@@ -20163,7 +20275,8 @@
     "attack": 3,
     "health": 5,
     "keywords": [
-      "rush"
+      "rush",
+      "herald"
     ],
     "traits": [
       "bulwark",
@@ -20171,6 +20284,9 @@
     ],
     "onDeath": [],
     "effect": [],
+    "herald": {
+      "colossalCardId": "rift-season-32"
+    },
     "set": "scarab-2026"
   },
   {
@@ -20213,7 +20329,7 @@
   {
     "id": "rift-season-28",
     "name": "星陨终结者·28",
-    "description": "charge。 裂星的战线单位。",
+    "description": "先驱：召唤一名继承所属巨型附肢力量的士兵。每使用两次先驱，该巨型、附肢与士兵的数值翻倍。charge。 裂星的战线单位。",
     "faction": "裂星",
     "type": "unit",
     "cost": 4,
@@ -20221,7 +20337,8 @@
     "attack": 4,
     "health": 7,
     "keywords": [
-      "charge"
+      "charge",
+      "herald"
     ],
     "traits": [
       "bulwark",
@@ -20229,6 +20346,9 @@
     ],
     "onDeath": [],
     "effect": [],
+    "herald": {
+      "colossalCardId": "rift-season-32"
+    },
     "set": "scarab-2026"
   },
   {
@@ -20315,7 +20435,7 @@
   {
     "id": "rift-season-32",
     "name": "星陨终结者·32",
-    "description": "预备。charge。 裂星的战线单位。",
+    "description": "预备。巨型：召唤时组装 1 个附肢；每使用两次先驱，本体、附肢与附肢效果翻倍。charge。 裂星的战线单位。",
     "faction": "裂星",
     "type": "unit",
     "cost": 8,
@@ -20324,7 +20444,8 @@
     "health": 11,
     "keywords": [
       "charge",
-      "prepare"
+      "prepare",
+      "colossal"
     ],
     "traits": [
       "bulwark",
@@ -20333,6 +20454,25 @@
     "onDeath": [],
     "effect": [],
     "preparable": true,
+    "colossal": {
+      "parts": [
+        {
+          "id": "rift-season-32-appendage",
+          "name": "裂星冲角",
+          "attack": 4,
+          "health": 1,
+          "keywords": [
+            "charge"
+          ],
+          "effect": [
+            {
+              "kind": "random-enemy-damage",
+              "amount": 1
+            }
+          ]
+        }
+      ]
+    },
     "set": "scarab-2026"
   },
   {
@@ -24013,7 +24153,7 @@
   {
     "id": "firmament-season-26",
     "name": "穹顶圣卫·26",
-    "description": "charge。 天穹的战线单位。",
+    "description": "先驱：召唤一名继承所属巨型附肢力量的士兵。每使用两次先驱，该巨型、附肢与士兵的数值翻倍。charge。 天穹的战线单位。",
     "faction": "天穹",
     "type": "unit",
     "cost": 2,
@@ -24021,7 +24161,8 @@
     "attack": 3,
     "health": 4,
     "keywords": [
-      "charge"
+      "charge",
+      "herald"
     ],
     "traits": [
       "bulwark",
@@ -24029,6 +24170,9 @@
     ],
     "onDeath": [],
     "effect": [],
+    "herald": {
+      "colossalCardId": "firmament-season-32"
+    },
     "set": "scarab-2026"
   },
   {
@@ -24070,7 +24214,7 @@
   {
     "id": "firmament-season-28",
     "name": "云端终局者·28",
-    "description": "登场时触发战吼。 天穹的战线单位。 战吼：抽一张牌。",
+    "description": "先驱：召唤一名继承所属巨型附肢力量的士兵。每使用两次先驱，该巨型、附肢与士兵的数值翻倍。登场时触发战吼。 天穹的战线单位。 战吼：抽一张牌。",
     "faction": "天穹",
     "type": "unit",
     "cost": 4,
@@ -24078,7 +24222,8 @@
     "attack": 4,
     "health": 6,
     "keywords": [
-      "battlecry"
+      "battlecry",
+      "herald"
     ],
     "traits": [
       "bulwark",
@@ -24093,6 +24238,9 @@
     ],
     "onDeath": [],
     "effect": [],
+    "herald": {
+      "colossalCardId": "firmament-season-32"
+    },
     "set": "scarab-2026"
   },
   {
@@ -24177,7 +24325,7 @@
   {
     "id": "firmament-season-32",
     "name": "云端终局者·32",
-    "description": "预备。登场时触发战吼。 天穹的战线单位。 战吼：抽一张牌。",
+    "description": "预备。巨型：召唤时组装 1 个附肢；每使用两次先驱，本体、附肢与附肢效果翻倍。登场时触发战吼。 天穹的战线单位。 战吼：抽一张牌。",
     "faction": "天穹",
     "type": "unit",
     "cost": 8,
@@ -24186,7 +24334,8 @@
     "health": 10,
     "keywords": [
       "battlecry",
-      "prepare"
+      "prepare",
+      "colossal"
     ],
     "traits": [
       "bulwark",
@@ -24202,6 +24351,26 @@
     "onDeath": [],
     "effect": [],
     "preparable": true,
+    "colossal": {
+      "parts": [
+        {
+          "id": "firmament-season-32-appendage",
+          "name": "天穹承柱",
+          "attack": 2,
+          "health": 5,
+          "keywords": [
+            "taunt"
+          ],
+          "effect": [
+            {
+              "kind": "buff-all-friendly",
+              "attack": 0,
+              "health": 1
+            }
+          ]
+        }
+      ]
+    },
     "set": "scarab-2026"
   },
   {

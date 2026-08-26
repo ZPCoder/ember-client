@@ -2772,6 +2772,7 @@ class _BattleBoardState extends State<BattleBoard> {
                         coinAvailable: state.ai.coinAvailable,
                         weapon: state.ai.weapon,
                         overloadLocked: state.ai.overloadLocked,
+                        heraldCount: state.ai.heraldCount,
                         secretCount: state.ai.secrets.length,
                         ai: true,
                       ),
@@ -2802,6 +2803,7 @@ class _BattleBoardState extends State<BattleBoard> {
                         coinAvailable: state.player.coinAvailable,
                         weapon: state.player.weapon,
                         overloadLocked: state.player.overloadLocked,
+                        heraldCount: state.player.heraldCount,
                         secretCount: state.player.secrets.length,
                         ai: false,
                       ),
@@ -3812,6 +3814,7 @@ class _HeroBar extends StatelessWidget {
     required this.coinAvailable,
     required this.weapon,
     required this.overloadLocked,
+    required this.heraldCount,
     required this.secretCount,
     required this.ai,
   });
@@ -3824,6 +3827,7 @@ class _HeroBar extends StatelessWidget {
   final bool coinAvailable;
   final BattleWeapon? weapon;
   final int overloadLocked;
+  final int heraldCount;
   final int secretCount;
   final bool ai;
 
@@ -3896,6 +3900,15 @@ class _HeroBar extends StatelessWidget {
             Text(
               '🔒 过载 $overloadLocked',
               style: const TextStyle(color: Color(0xFFE46D3F), fontSize: 9),
+            ),
+          if (heraldCount > 0)
+            Text(
+              '先驱 $heraldCount · 巨型 ×${heraldCount >= 4
+                  ? 4
+                  : heraldCount >= 2
+                  ? 2
+                  : 1}',
+              style: const TextStyle(color: Color(0xFF65CDDA), fontSize: 9),
             ),
         ],
       ),
@@ -4750,6 +4763,30 @@ class OnlineBattlePanel extends StatelessWidget {
                         '护甲 ${controller.localArmor}',
                         style: const TextStyle(
                           color: Color(0xFFE7BD7A),
+                          fontSize: 10,
+                        ),
+                      ),
+                    if (controller.localHeraldCount > 0)
+                      Text(
+                        '先驱 ${controller.localHeraldCount} · 巨型 ×${controller.localHeraldCount >= 4
+                            ? 4
+                            : controller.localHeraldCount >= 2
+                            ? 2
+                            : 1}',
+                        style: const TextStyle(
+                          color: Color(0xFF65CDDA),
+                          fontSize: 10,
+                        ),
+                      ),
+                    if (controller.remoteHeraldCount > 0)
+                      Text(
+                        '对手先驱 ${controller.remoteHeraldCount} · 巨型 ×${controller.remoteHeraldCount >= 4
+                            ? 4
+                            : controller.remoteHeraldCount >= 2
+                            ? 2
+                            : 1}',
+                        style: const TextStyle(
+                          color: Color(0xFFE46D3F),
                           fontSize: 10,
                         ),
                       ),

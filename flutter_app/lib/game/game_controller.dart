@@ -1498,8 +1498,14 @@ class GameController extends ChangeNotifier {
         final count = (effect['count'] as num?)?.toInt() ?? 1;
         if (summonCard == null || !summonCard.isUnit) return false;
         for (var i = 0; i < count && source.board.length < 7; i++) {
-          final unit = _summonUnit(summonCard, owner: owner);
+          final unit = _summonUnit(summonCard, owner: owner, side: source);
           source.board.add(unit);
+          _summonColossalParts(
+            card: summonCard,
+            source: source,
+            enemy: enemy,
+            owner: owner,
+          );
           _emitFx(
             'summon',
             '${power.name} · ${summonCard.name}',
@@ -1593,19 +1599,24 @@ class GameController extends ChangeNotifier {
   BattleUnit _summonUnit(
     CardDefinition card, {
     required String owner,
+    BattleSide? side,
     int? healthOverride,
     bool reborn = false,
   }) {
     final rush = card.keywords.contains('rush');
     final charge = card.keywords.contains('charge');
+    final multiplier = card.hasColossal && side != null
+        ? _heraldMultiplier(side)
+        : 1;
+    final printedHealth = (card.health ?? 1) * multiplier;
     return BattleUnit(
       instanceId:
           '$owner-${DateTime.now().microsecondsSinceEpoch}-${card.id}-${_random.nextInt(9999)}',
       card: card,
       owner: owner,
-      attack: card.attack ?? 0,
-      health: healthOverride ?? card.health ?? 1,
-      maxHealth: card.health ?? 1,
+      attack: (card.attack ?? 0) * multiplier,
+      health: healthOverride ?? printedHealth,
+      maxHealth: printedHealth,
       hasAttacked: !charge && !rush,
       divineShield: card.keywords.contains('shield') && !reborn,
       summoningSick: !charge && !rush,
@@ -1613,6 +1624,174 @@ class GameController extends ChangeNotifier {
       stealthActive: card.keywords.contains('stealth'),
       rebornUsed: reborn,
     );
+  }
+
+  int _heraldMultiplier(BattleSide side) {
+    if (side.heraldCount >= 4) return 4;
+    if (side.heraldCount >= 2) return 2;
+    return 1;
+  }
+
+  List<Map<String, dynamic>> _colossalParts(CardDefinition card) {
+    final raw = card.colossal?['parts'];
+    return raw is List
+        ? raw
+              .whereType<Map>()
+              .map((part) => Map<String, dynamic>.from(part))
+              .toList(growable: false)
+        : const <Map<String, dynamic>>[];
+  }
+
+  List<Map<String, dynamic>> _scaledEffects(Object? raw, int multiplier) {
+    if (raw is! List) return const <Map<String, dynamic>>[];
+    return raw
+        .whereType<Map>()
+        .map((entry) {
+          final effect = Map<String, dynamic>.from(entry);
+          final kind = effect['kind']?.toString();
+          if ({
+            'damage',
+            'heal',
+            'damage-friendly-hero',
+            'random-enemy-damage',
+            'damage-all-enemies',
+            'armor',
+            'random-enemy-freeze',
+          }.contains(kind)) {
+            effect['amount'] =
+                ((effect['amount'] as num?)?.toInt() ?? 1) * multiplier;
+          } else if ({'draw', 'draw-opponent', 'summon'}.contains(kind)) {
+            effect['count'] =
+                ((effect['count'] as num?)?.toInt() ?? 1) * multiplier;
+          } else if ({
+            'buff',
+            'buff-all-friendly',
+            'temporary-buff',
+          }.contains(kind)) {
+            effect['attack'] =
+                ((effect['attack'] as num?)?.toInt() ?? 0) * multiplier;
+            effect['health'] =
+                ((effect['health'] as num?)?.toInt() ?? 0) * multiplier;
+          }
+          return effect;
+        })
+        .toList(growable: false);
+  }
+
+  CardDefinition _colossalTokenCard(
+    CardDefinition colossal,
+    Map<String, dynamic> part, {
+    required bool soldier,
+  }) {
+    final partId = part['id']?.toString() ?? '${colossal.id}-appendage';
+    final partName = part['name']?.toString() ?? '${colossal.name}附肢';
+    final keywords = part['keywords'] is List
+        ? (part['keywords'] as List)
+              .map((item) => item.toString())
+              .toList(growable: false)
+        : const <String>[];
+    return CardDefinition(
+      id: soldier ? '$partId-soldier' : partId,
+      name: soldier ? '$partName士兵' : partName,
+      description: soldier ? '先驱召唤的巨型附肢士兵。' : '巨型组装的附肢。',
+      faction: colossal.faction,
+      type: 'unit',
+      cost: 0,
+      rarity: '衍生',
+      setId: colossal.setId,
+      attack: (part['attack'] as num?)?.toInt() ?? 0,
+      health: (part['health'] as num?)?.toInt() ?? 1,
+      keywords: keywords,
+      traits: colossal.traits,
+    );
+  }
+
+  BattleUnit? _summonColossalToken({
+    required CardDefinition colossal,
+    required Map<String, dynamic> part,
+    required BattleSide source,
+    required BattleSide enemy,
+    required String owner,
+    required int multiplier,
+    required bool soldier,
+  }) {
+    if (source.board.length >= 7) return null;
+    final tokenCard = _colossalTokenCard(colossal, part, soldier: soldier);
+    final unit = _summonUnit(tokenCard, owner: owner);
+    unit.attack *= multiplier;
+    unit.health *= multiplier;
+    unit.maxHealth *= multiplier;
+    source.board.add(unit);
+    _emitFx(
+      'summon',
+      '${tokenCard.name} 被召唤',
+      soldier ? '先驱士兵强度 ×$multiplier' : '巨型附肢强度 ×$multiplier',
+      Icons.auto_awesome,
+      factionColors[colossal.faction] ?? 0xFF69CFC3,
+      sourceId: unit.instanceId,
+      amount: multiplier,
+    );
+    _triggerSecrets(enemy, 'opponent-summons-unit', triggeringSide: source);
+    _resolveEffects(
+      _scaledEffects(part['effect'], multiplier),
+      source: source,
+      enemy: enemy,
+      sourceName: tokenCard.name,
+      sourceCard: tokenCard,
+    );
+    return unit;
+  }
+
+  void _summonColossalParts({
+    required CardDefinition card,
+    required BattleSide source,
+    required BattleSide enemy,
+    required String owner,
+  }) {
+    if (!card.hasColossal) return;
+    final multiplier = _heraldMultiplier(source);
+    var summoned = 0;
+    for (final part in _colossalParts(card)) {
+      final unit = _summonColossalToken(
+        colossal: card,
+        part: part,
+        source: source,
+        enemy: enemy,
+        owner: owner,
+        multiplier: multiplier,
+        soldier: false,
+      );
+      if (unit != null) summoned++;
+    }
+    stateLog(card.name, '以 ×$multiplier 强度组装，召唤 $summoned 个附肢。');
+  }
+
+  void _resolveHeraldPlay({
+    required CardDefinition card,
+    required BattleSide source,
+    required BattleSide enemy,
+    required String owner,
+  }) {
+    if (!card.hasHerald) return;
+    source.heraldCount++;
+    final multiplier = _heraldMultiplier(source);
+    final colossalId = card.herald?['colossalCardId']?.toString();
+    final colossal = colossalId == null ? null : this.card(colossalId);
+    final parts = colossal == null
+        ? const <Map<String, dynamic>>[]
+        : _colossalParts(colossal);
+    if (colossal != null && parts.isNotEmpty) {
+      _summonColossalToken(
+        colossal: colossal,
+        part: parts.first,
+        source: source,
+        enemy: enemy,
+        owner: owner,
+        multiplier: multiplier,
+        soldier: true,
+      );
+    }
+    stateLog(card.name, '先驱进度 ${source.heraldCount}，巨型强度 ×$multiplier。');
   }
 
   BattleUnit? _findUpgradeTarget(BattleSide side, CardDefinition card) {
@@ -1713,10 +1892,18 @@ class GameController extends ChangeNotifier {
           ? (owner == 'player' ? 'ai' : 'player')
           : owner;
       final upgradeTarget = _findUpgradeTarget(recipient, card);
-      final unit = upgradeTarget ?? _summonUnit(card, owner: recipientOwner);
+      final unit =
+          upgradeTarget ??
+          _summonUnit(card, owner: recipientOwner, side: recipient);
       if (upgradeTarget == null) {
         recipient.board.add(unit);
         _triggerSecrets(enemy, 'opponent-summons-unit', triggeringSide: source);
+        _summonColossalParts(
+          card: card,
+          source: recipient,
+          enemy: placement == 'enemy' ? source : enemy,
+          owner: recipientOwner,
+        );
       } else {
         _upgradeUnit(recipient, upgradeTarget, card);
       }
@@ -1768,6 +1955,12 @@ class GameController extends ChangeNotifier {
           sourceCard: card,
         );
       }
+      _resolveHeraldPlay(
+        card: card,
+        source: source,
+        enemy: enemy,
+        owner: owner,
+      );
     } else {
       _emitFx(
         'spell',
@@ -2210,7 +2403,11 @@ class GameController extends ChangeNotifier {
             if (targetSide == null) break;
             final index = targetSide.board.indexOf(target);
             if (index < 0) break;
-            final replacement = _summonUnit(transformed, owner: target.owner);
+            final replacement = _summonUnit(
+              transformed,
+              owner: target.owner,
+              side: targetSide,
+            );
             targetSide.board[index] = replacement;
             stateLog(
               sourceName,
@@ -2249,7 +2446,11 @@ class GameController extends ChangeNotifier {
             final count = (effect['count'] as num?)?.toInt() ?? 1;
             if (summonCard != null && summonCard.isUnit) {
               for (var i = 0; i < count && source.board.length < 7; i++) {
-                final unit = _summonUnit(summonCard, owner: _ownerOf(source));
+                final unit = _summonUnit(
+                  summonCard,
+                  owner: _ownerOf(source),
+                  side: source,
+                );
                 source.board.add(unit);
                 _emitFx(
                   'summon',
@@ -2258,6 +2459,17 @@ class GameController extends ChangeNotifier {
                   Icons.auto_awesome,
                   factionColors[summonCard.faction] ?? 0xFF69CFC3,
                   sourceId: unit.instanceId,
+                );
+                _triggerSecrets(
+                  enemy,
+                  'opponent-summons-unit',
+                  triggeringSide: source,
+                );
+                _summonColossalParts(
+                  card: summonCard,
+                  source: source,
+                  enemy: enemy,
+                  owner: _ownerOf(source),
                 );
               }
             }
@@ -2660,6 +2872,7 @@ class GameController extends ChangeNotifier {
         final reborn = _summonUnit(
           unit.card,
           owner: unit.owner,
+          side: entry.side,
           healthOverride: 1,
           reborn: true,
         );
@@ -2678,6 +2891,12 @@ class GameController extends ChangeNotifier {
           entry.enemy,
           'opponent-summons-unit',
           triggeringSide: entry.side,
+        );
+        _summonColossalParts(
+          card: unit.card,
+          source: entry.side,
+          enemy: entry.enemy,
+          owner: unit.owner,
         );
         _markHeroesForDeath(state);
         enqueueDeadUnits();
@@ -2784,6 +3003,9 @@ class GameController extends ChangeNotifier {
       final candidates =
           List<int>.generate(state.ai.hand.length, (index) => index)
             ..sort((left, right) {
+              final heraldOrder = (_isHeraldSetup(state.ai, left) ? 0 : 1)
+                  .compareTo(_isHeraldSetup(state.ai, right) ? 0 : 1);
+              if (heraldOrder != 0) return heraldOrder;
               final bridgeOrder = (_isShatterBridge(state.ai, left) ? 0 : 1)
                   .compareTo(_isShatterBridge(state.ai, right) ? 0 : 1);
               if (bridgeOrder != 0) return bridgeOrder;
@@ -2970,6 +3192,14 @@ class GameController extends ChangeNotifier {
       }
     }
     return false;
+  }
+
+  bool _isHeraldSetup(BattleSide side, int handIndex) {
+    if (handIndex < 0 || handIndex >= side.hand.length) return false;
+    final colossalId = side.hand[handIndex].herald?['colossalCardId']
+        ?.toString();
+    return colossalId != null &&
+        side.hand.any((candidate) => candidate.id == colossalId);
   }
 
   void _aiHeroAttack(BattleState state, BattleUnit? target) {

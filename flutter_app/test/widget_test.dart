@@ -49,6 +49,8 @@ void main() {
       expect(catalog.where((card) => card.bribe), hasLength(20));
       expect(catalog.where((card) => card.disguised), hasLength(20));
       expect(catalog.where((card) => card.hasShatter), hasLength(5));
+      expect(catalog.where((card) => card.hasHerald), hasLength(12));
+      expect(catalog.where((card) => card.hasColossal), hasLength(6));
       expect(
         catalog
             .where((card) => card.hasShatter)
@@ -584,6 +586,148 @@ void main() {
       controller.dispose();
     },
   );
+
+  test('mobile Herald scales its soldiers and the linked Colossal', () async {
+    const part = <String, dynamic>{
+      'id': 'test-colossal-appendage',
+      'name': '测试巨鳍',
+      'attack': 2,
+      'health': 3,
+      'keywords': <String>['lifesteal'],
+      'effect': <Map<String, dynamic>>[
+        <String, dynamic>{'kind': 'armor', 'amount': 1},
+      ],
+    };
+    const colossal = CardDefinition(
+      id: 'test-colossal',
+      name: '测试巨型',
+      description: '巨型。',
+      faction: '幽潮',
+      type: 'unit',
+      cost: 8,
+      rarity: '传说',
+      attack: 5,
+      health: 6,
+      keywords: <String>['colossal'],
+      colossal: <String, dynamic>{
+        'parts': <Map<String, dynamic>>[part],
+      },
+    );
+    const heraldOne = CardDefinition(
+      id: 'test-herald-one',
+      name: '测试先驱一',
+      description: '先驱。',
+      faction: '幽潮',
+      type: 'unit',
+      cost: 1,
+      rarity: '普通',
+      attack: 1,
+      health: 1,
+      keywords: <String>['herald'],
+      herald: <String, dynamic>{'colossalCardId': 'test-colossal'},
+    );
+    const heraldTwo = CardDefinition(
+      id: 'test-herald-two',
+      name: '测试先驱二',
+      description: '先驱。',
+      faction: '幽潮',
+      type: 'unit',
+      cost: 1,
+      rarity: '普通',
+      attack: 1,
+      health: 1,
+      keywords: <String>['herald'],
+      herald: <String, dynamic>{'colossalCardId': 'test-colossal'},
+    );
+    const filler = CardDefinition(
+      id: 'test-colossal-filler',
+      name: '测试占位',
+      description: '战场占位。',
+      faction: '幽潮',
+      type: 'unit',
+      cost: 1,
+      rarity: '普通',
+      attack: 1,
+      health: 1,
+    );
+    final controller = GameController(startingPlayer: 'player')
+      ..catalog = const [filler, heraldOne, heraldTwo, colossal]
+      ..deckIds.addAll(List.filled(30, filler.id));
+    controller.startBattle();
+    await controller.confirmMulligan();
+    final state = controller.battle!;
+    state.player.hand
+      ..clear()
+      ..addAll(const [heraldOne, heraldTwo, colossal]);
+    state.player.handCostReductions
+      ..clear()
+      ..addAll(const [0, 0, 0]);
+    state.player.handFragments
+      ..clear()
+      ..addAll(const [null, null, null]);
+    state.player.mana = 10;
+
+    expect(controller.playCard(heraldOne, handIndex: 0), isTrue);
+    expect(state.player.heraldCount, 1);
+    expect(state.player.board.last.card.id, 'test-colossal-appendage-soldier');
+    expect(state.player.board.last.attack, 2);
+    expect(state.player.armor, 1);
+
+    expect(controller.playCard(heraldTwo, handIndex: 0), isTrue);
+    expect(state.player.heraldCount, 2);
+    expect(state.player.board.last.attack, 4);
+    expect(state.player.board.last.health, 6);
+    expect(state.player.armor, 3);
+
+    expect(controller.playCard(colossal, handIndex: 0), isTrue);
+    final body = state.player.board.singleWhere(
+      (unit) => unit.card.id == colossal.id,
+    );
+    final appendage = state.player.board.singleWhere(
+      (unit) => unit.card.id == part['id'],
+    );
+    expect(body.attack, 10);
+    expect(body.health, 12);
+    expect(appendage.attack, 4);
+    expect(appendage.health, 6);
+    expect(state.player.armor, 5);
+
+    state.player.board
+      ..clear()
+      ..addAll(
+        List.generate(
+          6,
+          (index) => BattleUnit(
+            instanceId: 'colossal-filler-$index',
+            card: filler,
+            owner: 'player',
+            attack: 1,
+            health: 1,
+            maxHealth: 1,
+          ),
+        ),
+      );
+    state.player.hand
+      ..clear()
+      ..add(colossal);
+    state.player.handCostReductions
+      ..clear()
+      ..add(0);
+    state.player.handFragments
+      ..clear()
+      ..add(null);
+    state.player.heraldCount = 4;
+    state.player.mana = 8;
+    expect(controller.playCard(colossal, handIndex: 0), isTrue);
+    expect(state.player.board, hasLength(7));
+    expect(state.player.board.last.card.id, colossal.id);
+    expect(state.player.board.last.attack, 20);
+    expect(
+      state.player.board.any((unit) => unit.card.id == part['id']),
+      isFalse,
+    );
+    controller.dispose();
+  });
 
   test(
     'mobile rejects fake enemy placement and upgrades on a full recipient board',
@@ -2547,6 +2691,68 @@ void main() {
       expect(command['cardId'], shatter.id);
       expect(command['handIndex'], 0);
       expect(command.containsKey('target'), isFalse);
+      controller.dispose();
+      client.dispose();
+    },
+  );
+
+  test(
+    'online projects Herald progress and synthetic Colossal tokens',
+    () async {
+      final catalog = await loadCatalog();
+      final client = MultiplayerClient()
+        ..playerId = 'p-local'
+        ..isHost = true;
+      final controller = OnlineBattleController(
+        catalog: catalog,
+        client: client,
+      );
+      client.lastEvent = MultiplayerEvent(
+        type: 'action',
+        playerId: 'p-local',
+        action: 'command',
+        payload: {
+          'state': {
+            'version': 1,
+            'turn': 5,
+            'phase': 'main',
+            'activePlayer': 0,
+            'players': [
+              {
+                'hero': {'health': 30},
+                'heraldCount': 2,
+                'hand': <String>[],
+                'board': [
+                  {
+                    'entityId': 'synthetic-soldier',
+                    'cardId': 'void-season-08-appendage-soldier',
+                    'name': '深潮巨鳍士兵',
+                    'attack': 4,
+                    'health': 6,
+                    'maxHealth': 6,
+                    'keywords': ['lifesteal'],
+                  },
+                ],
+              },
+              {
+                'hero': {'health': 30},
+                'heraldCount': 4,
+                'hand': <String>[],
+                'board': <Object>[],
+              },
+            ],
+          },
+        },
+      );
+      client.eventSequence++;
+      client.notifyListeners();
+
+      expect(controller.localHeraldCount, 2);
+      expect(controller.remoteHeraldCount, 4);
+      expect(controller.localBoard, hasLength(1));
+      expect(controller.localBoard.single.card.name, '深潮巨鳍士兵');
+      expect(controller.localBoard.single.attack, 4);
+      expect(controller.localBoard.single.keywords, contains('lifesteal'));
       controller.dispose();
       client.dispose();
     },

@@ -17,6 +17,8 @@ class CardDefinition {
     this.bribe = false,
     this.disguised = false,
     this.shatter,
+    this.herald,
+    this.colossal,
     this.spellDamage = 0,
     this.keywords = const [],
     this.traits = const [],
@@ -48,6 +50,8 @@ class CardDefinition {
   final bool bribe;
   final bool disguised;
   final Map<String, dynamic>? shatter;
+  final Map<String, dynamic>? herald;
+  final Map<String, dynamic>? colossal;
   final int spellDamage;
   final List<String> keywords;
   final List<String> traits;
@@ -63,6 +67,8 @@ class CardDefinition {
 
   bool get isUnit => type == 'unit';
   bool get hasShatter => shatter != null;
+  bool get hasHerald => herald != null;
+  bool get hasColossal => colossal != null;
   bool get hasBattlecry => keywords.contains('battlecry') || onPlay.isNotEmpty;
   bool get hasDeathrattle =>
       keywords.contains('deathrattle') || onDeath.isNotEmpty;
@@ -80,6 +86,8 @@ class CardDefinition {
     List<Map<String, dynamic>>? onDeath,
     List<Map<String, dynamic>>? effect,
     Map<String, dynamic>? shatter,
+    Map<String, dynamic>? herald,
+    Map<String, dynamic>? colossal,
   }) {
     return CardDefinition(
       id: id,
@@ -99,6 +107,8 @@ class CardDefinition {
       bribe: bribe,
       disguised: disguised,
       shatter: shatter ?? this.shatter,
+      herald: herald ?? this.herald,
+      colossal: colossal ?? this.colossal,
       spellDamage: spellDamage,
       keywords: keywords ?? this.keywords,
       traits: traits,
@@ -149,6 +159,12 @@ class CardDefinition {
           strings(json['keywords']).contains('disguised'),
       shatter: json['shatter'] is Map
           ? Map<String, dynamic>.from(json['shatter'] as Map)
+          : null,
+      herald: json['herald'] is Map
+          ? Map<String, dynamic>.from(json['herald'] as Map)
+          : null,
+      colossal: json['colossal'] is Map
+          ? Map<String, dynamic>.from(json['colossal'] as Map)
           : null,
       spellDamage: (json['spellDamage'] as num?)?.toInt() ?? 0,
       keywords: strings(json['keywords']),
@@ -277,6 +293,7 @@ class BattleSide {
     this.coinAvailable = false,
     this.weapon,
     this.overloadLocked = 0,
+    this.heraldCount = 0,
     List<BattleSecret>? secrets,
   }) : handCostReductions = handCostReductions ?? <int>[],
        handFragments = handFragments ?? <HandFragment?>[],
@@ -296,6 +313,7 @@ class BattleSide {
   bool coinAvailable;
   BattleWeapon? weapon;
   int overloadLocked;
+  int heraldCount;
   int cardsPlayedThisTurn = 0;
   bool heroHasAttacked = false;
   final List<BattleSecret> secrets;

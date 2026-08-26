@@ -143,6 +143,8 @@ type CatalogCard = {
   preparable?: boolean;
   disguised?: boolean;
   shatter?: boolean;
+  herald?: boolean;
+  colossal?: boolean;
   target: CardTargetRule;
   keywords: Keyword[];
   traits: Trait[];
@@ -306,6 +308,7 @@ type BattleSide = {
   } | null;
   mana: number;
   maxMana: number;
+  heraldCount: number;
   deckCount: number;
   hand: Array<{
     instanceId: string;
@@ -589,6 +592,8 @@ function cardFromRaw(raw: Record<string, unknown>): CatalogCard {
     preparable: raw.preparable === true,
     disguised: raw.disguised === true,
     shatter: Boolean(raw.shatter),
+    herald: Boolean(raw.herald),
+    colossal: Boolean(raw.colossal),
     target: asString(raw.target, "none") as CardTargetRule,
     keywords: Array.isArray(raw.keywords)
       ? (raw.keywords.map(String) as Keyword[])
@@ -1516,6 +1521,7 @@ function battleFromRaw(value: unknown): BattleView | null {
         : null,
     mana: asNumber(side.mana ?? side.energy ?? side.currentMana),
     maxMana: asNumber(side.maxMana ?? side.maxEnergy, 1),
+    heraldCount: asNumber(side.heraldCount),
     deckCount: Array.isArray(side.deck)
       ? side.deck.length
       : asNumber(side.deckCount ?? side.remainingDeck),
@@ -6537,6 +6543,11 @@ function HeroCore({
           <i style={{ width: `${Math.min(100, Math.max(0, (side.health / Math.max(1, side.maxHealth)) * 100))}%` }} />
         </span>
         {side.armor > 0 && <em>护甲 {side.armor}</em>}
+        {side.heraldCount > 0 && (
+          <em className="hero-core__herald">
+            先驱 {side.heraldCount} · 巨型 ×{Math.min(4, 2 ** Math.floor(side.heraldCount / 2))}
+          </em>
+        )}
         {side.weapon && (
           <span className="hero-core__weapon" aria-label={`装备 ${side.weapon.name}，攻击 ${side.weapon.attack}，耐久 ${side.weapon.durability}/${side.weapon.maxDurability}`}>
             ⚔ {side.weapon.name} · {side.weapon.attack}/{side.weapon.durability}
@@ -6603,7 +6614,7 @@ function BoardUnit({
       attack: unit.attack,
       health: unit.maxHealth,
       target: "none",
-      keywords: [],
+      keywords: unit.keywords,
       traits: [],
       stealthActive: false,
     };

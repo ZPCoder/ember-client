@@ -84,6 +84,8 @@ class OnlineBattleController extends ChangeNotifier {
   int remoteMana = 0;
   int remoteMaxMana = 0;
   int localOverloadLocked = 0;
+  int localHeraldCount = 0;
+  int remoteHeraldCount = 0;
   bool localCoinAvailable = false;
   bool localHeroPowerUsed = false;
   bool localHeroHasAttacked = false;
@@ -572,11 +574,13 @@ class OnlineBattleController extends ChangeNotifier {
     final mana = (side['mana'] as num?)?.toInt() ?? 0;
     final maxMana = (side['maxMana'] as num?)?.toInt() ?? 0;
     final armor = (hero is Map ? (hero['armor'] as num?)?.toInt() : null) ?? 0;
+    final heraldCount = (side['heraldCount'] as num?)?.toInt() ?? 0;
     if (localSide) {
       localMana = mana;
       localMaxMana = maxMana;
       localArmor = armor;
       localOverloadLocked = (side['overloadLocked'] as num?)?.toInt() ?? 0;
+      localHeraldCount = heraldCount;
       localCoinAvailable = side['coinAvailable'] == true;
       localHeroPowerUsed = side['heroPowerUsed'] == true;
       localHeroHasAttacked = side['heroHasAttacked'] == true;
@@ -612,6 +616,7 @@ class OnlineBattleController extends ChangeNotifier {
       remoteMana = mana;
       remoteMaxMana = maxMana;
       remoteArmor = armor;
+      remoteHeraldCount = heraldCount;
     }
   }
 
@@ -707,16 +712,38 @@ class OnlineBattleController extends ChangeNotifier {
         .map((item) {
           final unit = Map<String, dynamic>.from(item);
           final cardId = unit['cardId']?.toString();
-          final definition = cardId == null ? null : card(cardId);
-          if (definition == null) return null;
-          final hasAttacked = unit['hasAttacked'] == true;
           final silenced = unit['silenced'] == true;
           final rawKeywords = unit['keywords'];
           final keywords = rawKeywords is List
               ? rawKeywords.map((item) => item.toString()).toList()
+              : <String>[];
+          final catalogDefinition = cardId == null ? null : card(cardId);
+          final definition =
+              catalogDefinition ??
+              (cardId == null
+                  ? null
+                  : CardDefinition(
+                      id: cardId,
+                      name: unit['name']?.toString() ?? '衍生附肢',
+                      description: '由权威对局状态生成的战场单位。',
+                      faction: '中立',
+                      type: 'unit',
+                      cost: 0,
+                      rarity: '衍生',
+                      attack: (unit['attack'] as num?)?.toInt() ?? 0,
+                      health:
+                          (unit['maxHealth'] as num?)?.toInt() ??
+                          (unit['health'] as num?)?.toInt() ??
+                          1,
+                      keywords: keywords,
+                    ));
+          if (definition == null) return null;
+          final projectedKeywords = rawKeywords is List
+              ? keywords
               : silenced
               ? <String>[]
               : List<String>.from(definition.keywords);
+          final hasAttacked = unit['hasAttacked'] == true;
           return OnlineUnit(
             instanceId: unit['entityId']?.toString() ?? definition.id,
             card: definition,
@@ -724,7 +751,7 @@ class OnlineBattleController extends ChangeNotifier {
             health: (unit['health'] as num?)?.toInt() ?? definition.health ?? 1,
             maxHealth:
                 (unit['maxHealth'] as num?)?.toInt() ?? definition.health ?? 1,
-            keywords: keywords,
+            keywords: projectedKeywords,
             hasAttacked: hasAttacked,
             attacksMade:
                 (unit['attacksMade'] as num?)?.toInt() ?? (hasAttacked ? 1 : 0),

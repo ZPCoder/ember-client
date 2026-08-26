@@ -123,6 +123,8 @@ const keywordLabels = <String, String>{
   'bribe': '贿赂',
   'disguised': '伪装',
   'shatter': '破碎',
+  'herald': '先驱',
+  'colossal': '巨型',
   'spell-damage': '法术伤害',
   'secret': '奥秘',
   'discover': '发现',

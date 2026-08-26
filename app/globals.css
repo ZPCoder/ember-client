@@ -1881,7 +1881,13 @@ button.resource-chip:hover {
   color: #5c6a64;
 }
 
+.filter-field > span {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
 .filter-field select {
+  min-width: 0;
   appearance: none;
   color: var(--paper-soft);
   font-size: 11px;
@@ -4532,6 +4538,13 @@ button.hero-core {
   line-height: 1.2;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.hero-core__herald {
+  display: block !important;
+  margin-top: 3px;
+  margin-left: 0 !important;
+  color: #8ddfd3 !important;
 }
 
 .hero-core__health {
