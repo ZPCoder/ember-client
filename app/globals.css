@@ -1255,6 +1255,44 @@ button.resource-chip:hover {
   line-height: 1.55;
 }
 
+.training-briefing__chapters {
+  grid-template-columns: 1fr;
+}
+
+.training-chapter {
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  align-items: center;
+  min-height: 98px;
+  transition: border-color 160ms ease, background 160ms ease, opacity 160ms ease;
+}
+
+.training-chapter small {
+  display: block;
+  margin-top: 8px;
+  color: #ddb36b;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.training-chapter.is-complete {
+  border-color: rgba(85, 185, 173, 0.3);
+  background: rgba(85, 185, 173, 0.055);
+}
+
+.training-chapter.is-complete > span {
+  color: #081713;
+  background: #72c9bd;
+}
+
+.training-chapter.is-locked {
+  opacity: 0.48;
+}
+
+.training-chapter > .button {
+  min-width: 104px;
+}
+
 .training-briefing__actions {
   display: flex;
   justify-content: flex-end;
@@ -8623,6 +8661,15 @@ button.hero-core {
 
   .training-lesson {
     min-height: 0;
+  }
+
+  .training-chapter {
+    grid-template-columns: 34px minmax(0, 1fr);
+  }
+
+  .training-chapter > .button {
+    grid-column: 2;
+    width: 100%;
   }
 
   .training-briefing__actions {

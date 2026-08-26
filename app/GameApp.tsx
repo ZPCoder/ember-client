@@ -88,17 +88,14 @@ import {
   RETURN_QUEST_STAGE_IDS,
   RETURN_QUEST_STAGES,
   returnQuestStageReady,
-  EMPTY_TRAINING_PROGRESS,
-  TRAINING_MATCH_SEED,
-  TRAINING_DIALOGUE_BY_STAGE,
-  TRAINING_OPPONENT_ARCHETYPE_ID,
+  EMPTY_TRAINING_CAMPAIGN,
+  TRAINING_CHAPTERS,
   TRAINING_PLAYER_DECK,
-  TRAINING_PLAY_CARD_ID,
-  TRAINING_STARTING_PLAYER,
-  currentTrainingStage,
-  trainingCommandAllowed,
-  trainingGateProgressForFacts,
-  trainingProgressForFacts,
+  getTrainingChapter,
+  normalizeTrainingCampaign,
+  trainingChapterCommandAllowed,
+  trainingChapterProgressForCommands,
+  trainingChapterUnlocked,
   planAiTurnReplay,
   previewDeckCode,
   shouldScheduleLocalAiTurn,
@@ -125,7 +122,8 @@ import {
   type RankedLadders,
   type RankedRewardState,
   type ReturnQuestStageId,
-  type TrainingProgress,
+  type TrainingCampaignState,
+  type TrainingChapterId,
   type SpellSchool,
   type Trait,
   type BattleVisualEffect,
@@ -261,6 +259,7 @@ type PlayerSnapshot = {
   };
   trialCards?: { activatedAt: string | null; expiresAt: string | null };
   returnJourney?: { claimedStageIds: ReturnQuestStageId[]; matchesPlayedAtActivation: number };
+  trainingCampaign?: TrainingCampaignState;
   recentMatches: RecentMatch[];
   stats: { wins: number; losses: number; matchesPlayed: number };
   updatedAt: string;
@@ -278,6 +277,7 @@ type GamePayload = {
   level?: number;
   reward?: { title: string; kind: "gold" | "pack" | "dust"; amount: number };
   apprenticeMilestoneId?: ApprenticeMilestoneId;
+  trainingChapterId?: TrainingChapterId;
   displayName?: string;
   friendId?: string;
   message?: { id: string; senderId: string; recipientId: string; text: string; createdAt: string };
@@ -296,6 +296,7 @@ type GamePayload = {
     playerDeck: string[];
     opponentArchetypeId: string;
     expiresAt: string;
+    trainingChapterId?: TrainingChapterId;
   };
   localFallback?: boolean;
 };
@@ -859,6 +860,7 @@ function readLocalPlayer(email: string): PlayerSnapshot | null {
         claimedStageIds: parsed.catchUpPack?.claimedAt ? ["reconnect"] : [],
         matchesPlayedAtActivation: parsed.stats?.matchesPlayed ?? 0,
       },
+      trainingCampaign: normalizeTrainingCampaign(parsed.trainingCampaign),
     };
     persistLocalPlayer(migrated);
     return migrated;
@@ -954,6 +956,7 @@ function makeDemoPlayer(identity?: {
     catchUpPack: { claimedAt: null, cardsGranted: 0, ...catchUpProgress },
     trialCards: { activatedAt: null, expiresAt: null },
     returnJourney: { claimedStageIds: [], matchesPlayedAtActivation: 0 },
+    trainingCampaign: { ...EMPTY_TRAINING_CAMPAIGN, completedChapterIds: [] },
     rankedLadders: {
       ...createRankedLadders(seasonKey),
       standard: { ...createRankedSnapshot(seasonKey), wins: 7, losses: 3 },
@@ -996,12 +999,18 @@ function applyLocalAction(
     return { ok: true, player, localFallback: true };
   }
   if (action === "create_ai_match") {
-    const training = body.training === true;
+    const requestedChapter = getTrainingChapter(
+      asString(body.trainingChapterId) || (body.training === true ? "mist-gate" : null),
+    );
+    const training = Boolean(requestedChapter);
     const ladderReadyDeckId = asString(body.ladderReadyDeckId);
     const offer = ladderReadyDeckId ? getLadderReadyDeck(ladderReadyDeckId) : undefined;
     let playerDeck: readonly string[];
     let rankedFormat: RankedFormat;
     if (training) {
+      if (!trainingChapterUnlocked(normalizeTrainingCampaign(current.trainingCampaign), requestedChapter!.id)) {
+        throw new Error("请先完成上一关教学。");
+      }
       playerDeck = TRAINING_PLAYER_DECK;
       rankedFormat = "standard";
     } else if (offer) {
@@ -1029,8 +1038,8 @@ function applyLocalAction(
     }
     const validation = validateDeckForFormat(playerDeck, rankedFormat);
     if (!validation.valid) throw new Error(validation.errors[0]?.message ?? "卡组不符合组牌规则。");
-    const archetypeId = training
-      ? TRAINING_OPPONENT_ARCHETYPE_ID
+    const archetypeId = requestedChapter
+      ? requestedChapter.bossArchetypeId
       : asString(body.opponentArchetypeId);
     if (!AI_ARCHETYPES.some((candidate) => candidate.id === archetypeId)) {
       throw new Error("AI 对手原型不存在。");
@@ -1041,13 +1050,38 @@ function applyLocalAction(
       player: current,
       aiMatch: {
         token: `local-${crypto.randomUUID()}`,
-        seed: training ? TRAINING_MATCH_SEED : (randomness[0] ?? 0) & 0x7fffffff,
-        startingPlayer: training ? TRAINING_STARTING_PLAYER : ((randomness[1] ?? 0) & 1) as 0 | 1,
+        seed: requestedChapter ? requestedChapter.seed : (randomness[0] ?? 0) & 0x7fffffff,
+        startingPlayer: requestedChapter ? requestedChapter.startingPlayer : ((randomness[1] ?? 0) & 1) as 0 | 1,
         rankedFormat,
         playerDeck: [...playerDeck],
         opponentArchetypeId: archetypeId,
         expiresAt: new Date(Date.now() + 2 * 60 * 60 * 1_000).toISOString(),
+        ...(requestedChapter ? { trainingChapterId: requestedChapter.id } : {}),
       },
+      localFallback: true,
+    };
+  }
+  if (action === "complete_training_chapter") {
+    const chapter = getTrainingChapter(asString(body.chapterId));
+    const proof = body.aiProof as AiMatchProofPayload | undefined;
+    if (!chapter || !proof) throw new Error("教学完成凭证无效。");
+    if (!trainingChapterUnlocked(normalizeTrainingCampaign(current.trainingCampaign), chapter.id)) {
+      throw new Error("请先完成上一关教学。");
+    }
+    const progress = trainingChapterProgressForCommands(chapter.id, proof.commands);
+    if (progress.invalid || progress.completed !== chapter.objectives.length) {
+      throw new Error("教学目标尚未全部完成。");
+    }
+    const trainingCampaign = normalizeTrainingCampaign({
+      completedChapterIds: [
+        ...(current.trainingCampaign?.completedChapterIds ?? []),
+        chapter.id,
+      ],
+    });
+    return {
+      ok: true,
+      player: { ...current, trainingCampaign, updatedAt: now },
+      trainingChapterId: chapter.id,
       localFallback: true,
     };
   }
@@ -3276,7 +3310,10 @@ export function GameApp({
   const [battleTurnClockSeconds, setBattleTurnClockSeconds] = useState<number | null>(null);
   const [trainingBriefingOpen, setTrainingBriefingOpen] = useState(false);
   const [trainingActive, setTrainingActive] = useState(false);
-  const [trainingProgress, setTrainingProgress] = useState<TrainingProgress>(() => ({ ...EMPTY_TRAINING_PROGRESS }));
+  const [trainingChapterId, setTrainingChapterId] = useState<TrainingChapterId | null>(null);
+  const [trainingProgress, setTrainingProgress] = useState(0);
+  const [trainingAttemptProgress, setTrainingAttemptProgress] = useState(0);
+  const trainingCompletionSubmittedRef = useRef<string | null>(null);
   const recordedBattleRef = useRef<string | null>(null);
   const aiMatchProofRef = useRef<AiMatchProofPayload | null>(null);
   const aiMatchStartingRef = useRef(false);
@@ -3719,6 +3756,35 @@ export function GameApp({
   const battleTurn = battleView?.turn;
   const hasBattleTurnClock = battleTurnClockSeconds !== null;
   const selectedAiArchetype = AI_ARCHETYPES.find((archetype) => archetype.id === aiArchetypeId) ?? AI_ARCHETYPES[0];
+
+  useEffect(() => {
+    if (!trainingActive || !trainingChapterId || !battle) return;
+    const chapter = getTrainingChapter(trainingChapterId);
+    const proof = aiMatchProofRef.current;
+    if (!chapter || !proof) return;
+    const progress = trainingChapterProgressForCommands(trainingChapterId, aiCommandTranscriptRef.current);
+    if (progress.invalid || progress.completed !== chapter.objectives.length) return;
+    if (player.trainingCampaign?.completedChapterIds.includes(trainingChapterId)) return;
+    const submissionKey = `${trainingChapterId}:${proof.ticketToken}`;
+    if (trainingCompletionSubmittedRef.current === submissionKey) return;
+    trainingCompletionSubmittedRef.current = submissionKey;
+    void postAction("complete_training_chapter", {
+      idempotencyKey: `training:${submissionKey}`,
+      chapterId: trainingChapterId,
+      aiProof: { ...proof, commands: [...proof.commands] },
+    }).then((payload) => {
+      if (!payload) {
+        trainingCompletionSubmittedRef.current = null;
+        return;
+      }
+      setNotice({
+        tone: "success",
+        text: chapter.order < TRAINING_CHAPTERS.length
+          ? `${chapter.title}已完成，下一关已经解锁。`
+          : "三关首领教学全部完成。",
+      });
+    });
+  }, [battle, player.trainingCampaign?.completedChapterIds, postAction, trainingActive, trainingChapterId]);
 
   const switchSection = (next: SectionKey) => {
     sectionRef.current = next;
@@ -4295,6 +4361,7 @@ export function GameApp({
       unlockAudio();
       let next = createMatch({ decks, startingPlayer, rankedFormat, ...(seed === undefined ? {} : { seed }) });
       aiCommandTranscriptRef.current = [];
+      setTrainingAttemptProgress(0);
       aiMatchProofRef.current = null;
       // In a local match the AI confirms its opening hand immediately; the
       // human player still gets a visible mulligan decision window.
@@ -4369,10 +4436,12 @@ export function GameApp({
     }
   };
 
-  const startBattle = async (training = false) => {
+  const startBattle = async (requestedTrainingChapterId: TrainingChapterId | null = null) => {
     if (aiMatchStartingRef.current) return;
-    const requestedOpponent = training
-      ? AI_ARCHETYPES.find((candidate) => candidate.id === TRAINING_OPPONENT_ARCHETYPE_ID) ?? AI_ARCHETYPES[0]
+    const trainingChapter = getTrainingChapter(requestedTrainingChapterId);
+    const training = Boolean(trainingChapter);
+    const requestedOpponent = trainingChapter
+      ? AI_ARCHETYPES.find((candidate) => candidate.id === trainingChapter.bossArchetypeId) ?? AI_ARCHETYPES[0]
       : selectedAiArchetype ?? AI_ARCHETYPES[0];
     const savedDeckId = editingDeckId;
     if (!training && !selectedLadderReadyDeckId && !savedDeckId) {
@@ -4394,7 +4463,7 @@ export function GameApp({
     try {
       const payload = await postAction("create_ai_match", {
         ...(training
-          ? { training: true }
+          ? { trainingChapterId: trainingChapter!.id }
           : selectedLadderReadyDeckId
             ? { ladderReadyDeckId: selectedLadderReadyDeckId }
             : { deckId: savedDeckId }),
@@ -4414,7 +4483,7 @@ export function GameApp({
         ticket.startingPlayer,
         false,
         ticket.rankedFormat,
-        opponent.name,
+        trainingChapter?.bossName ?? opponent.name,
         ticket.seed,
         ticket.opponentArchetypeId,
         ticket.token,
@@ -4429,28 +4498,33 @@ export function GameApp({
 
   const startStandardBattle = () => {
     setTrainingActive(false);
-    setTrainingProgress({ ...EMPTY_TRAINING_PROGRESS });
-    void startBattle(false);
+    setTrainingChapterId(null);
+    setTrainingProgress(0);
+    setTrainingAttemptProgress(0);
+    void startBattle();
   };
 
-  const startTrainingBattle = () => {
+  const startTrainingBattle = (chapterId: TrainingChapterId) => {
     setTrainingActive(true);
-    setTrainingProgress({ ...EMPTY_TRAINING_PROGRESS });
+    setTrainingChapterId(chapterId);
+    setTrainingProgress(0);
+    setTrainingAttemptProgress(0);
+    trainingCompletionSubmittedRef.current = null;
     setTrainingBriefingOpen(false);
-    void startBattle(true);
+    void startBattle(chapterId);
   };
 
   const retryTrainingBattle = () => {
-    if (battleView) {
-      setTrainingProgress((current) => trainingProgressForFacts(current, {
-        status: battleView.status,
-        cardsPlayed: battleView.report.cardsPlayed[0],
-        attacks: battleView.report.attacks[0],
-        log: battleView.log,
-      }));
+    if (!trainingChapterId) return;
+    const chapter = getTrainingChapter(trainingChapterId);
+    if (chapter) {
+      const attempt = trainingChapterProgressForCommands(trainingChapterId, aiCommandTranscriptRef.current);
+      setTrainingProgress((current) => Math.max(current, attempt.completed));
     }
     setTrainingActive(true);
-    void startBattle(true);
+    setTrainingAttemptProgress(0);
+    trainingCompletionSubmittedRef.current = null;
+    void startBattle(trainingChapterId);
   };
 
   // In PVP the server reducer is authoritative. The local client only sends a
@@ -4463,22 +4537,11 @@ export function GameApp({
         ...(command.commandId ? command : { ...command, commandId: makeId("command") }),
         expectedVersion: command.expectedVersion ?? previous.version,
       } as BattleCommand;
-      if (trainingActive && preparedCommand.player === 0) {
-        const gateProgress = trainingGateProgressForFacts(trainingProgress, {
-          status: battleView?.status ?? previous.status,
-          cardsPlayed: battleView?.report.cardsPlayed[0] ?? 0,
-          attacks: battleView?.report.attacks[0] ?? 0,
-          log: battleView?.log ?? previous.log,
-        });
-        if (!trainingCommandAllowed(gateProgress, preparedCommand)) {
-          const stage = currentTrainingStage(gateProgress);
-          const instruction = stage === "mulligan"
-            ? "教学起手固定，请直接确认。"
-            : stage === "play-card"
-              ? "请使用「晨辉斥候」。"
-              : stage === "end-turn"
-                ? "现在结束回合。"
-                : "请用晨辉斥候攻击敌方核心。";
+      if (trainingActive && trainingChapterId && preparedCommand.player === 0) {
+        if (!trainingChapterCommandAllowed(trainingChapterId, aiCommandTranscriptRef.current, preparedCommand)) {
+          const chapter = getTrainingChapter(trainingChapterId)!;
+          const progress = trainingChapterProgressForCommands(trainingChapterId, aiCommandTranscriptRef.current);
+          const instruction = chapter.objectives[progress.completed]?.instruction ?? "本关教学已经完成。";
           setBattleMessage(`训练步骤尚未完成：${instruction}`);
           playSound("error");
           return null;
@@ -4519,6 +4582,11 @@ export function GameApp({
       const next = unwrapTransition(result) as MatchState;
       if (!onlineMatch) {
         aiCommandTranscriptRef.current.push(preparedCommand);
+        if (trainingActive && trainingChapterId && preparedCommand.player === 0) {
+          const progress = trainingChapterProgressForCommands(trainingChapterId, aiCommandTranscriptRef.current);
+          setTrainingAttemptProgress(progress.completed);
+          setTrainingProgress((current) => Math.max(current, progress.completed));
+        }
       }
       setBattle(next);
       showBattleEffects(
@@ -4531,7 +4599,7 @@ export function GameApp({
       playSound("error");
       return null;
     }
-  }, [battle, battleView, onlineMatch, playSound, pvp, showBattleEffects, trainingActive, trainingProgress]);
+  }, [battle, onlineMatch, playSound, pvp, showBattleEffects, trainingActive, trainingChapterId]);
 
   const scheduleLocalAiTurn = useCallback((initialState: MatchState): boolean => {
     if (
@@ -5649,10 +5717,18 @@ export function GameApp({
                   onToggleSound={toggleSound}
                   onToggleReplaySpeed={toggleBattleReplaySpeed}
                   trainingActive={trainingActive}
+                  trainingChapterId={trainingChapterId}
                   trainingProgress={trainingProgress}
+                  trainingAttemptProgress={trainingAttemptProgress}
                   onExitTraining={() => {
                     setTrainingActive(false);
-                    setTrainingProgress({ ...EMPTY_TRAINING_PROGRESS });
+                    setTrainingChapterId(null);
+                    setTrainingProgress(0);
+                    setTrainingAttemptProgress(0);
+                    returnToBattleLobby();
+                    aiMatchProofRef.current = null;
+                    aiCommandTranscriptRef.current = [];
+                    switchSection("overview");
                   }}
                   onRetryTraining={retryTrainingBattle}
                   pvp={pvp.state}
@@ -5719,6 +5795,7 @@ export function GameApp({
         </main>
         {trainingBriefingOpen && (
           <TrainingBriefing
+            campaign={normalizeTrainingCampaign(player.trainingCampaign)}
             onClose={() => setTrainingBriefingOpen(false)}
             onStart={startTrainingBattle}
           />
@@ -5729,38 +5806,17 @@ export function GameApp({
 }
 
 function TrainingBriefing({
+  campaign,
   onClose,
   onStart,
 }: {
+  campaign: TrainingCampaignState;
   onClose: () => void;
-  onStart: () => void;
+  onStart: (chapterId: TrainingChapterId) => void;
 }) {
-  const lessons = [
-    {
-      number: "01",
-      title: "守住核心",
-      copy: "双方核心拥有 30 点生命。让敌方核心归零，即可赢得对局。",
-      accent: "core",
-    },
-    {
-      number: "02",
-      title: "规划能量",
-      copy: "每回合能量上限增加 1 点并补满。先部署低费单位，避免浪费行动窗口。",
-      accent: "mana",
-    },
-    {
-      number: "03",
-      title: "建立战线",
-      copy: "单位通常要等待一回合才能攻击；嘲讽会保护其他目标，护盾能抵消一次伤害。",
-      accent: "board",
-    },
-    {
-      number: "04",
-      title: "读懂协议",
-      copy: "同名单位可升为二星；部署 2/4 个不同同类单位，会启动更强的特质联动。",
-      accent: "trait",
-    },
-  ] as const;
+  const completed = new Set(campaign.completedChapterIds);
+  const nextChapter = TRAINING_CHAPTERS.find((chapter) =>
+    trainingChapterUnlocked(campaign, chapter.id) && !completed.has(chapter.id));
 
   return (
     <div className="training-briefing-backdrop" role="presentation" onClick={onClose}>
@@ -5773,27 +5829,40 @@ function TrainingBriefing({
       >
         <div className="training-briefing__heading">
           <div>
-            <span>CADET BRIEFING / 4 STEPS</span>
-            <h2 id="training-briefing-title">三分钟掌握第一场对局</h2>
-            <p>训练模式会固定练习对手、持续提示下一步；失败可安全重试，已完成步骤不会丢失，且不计正式战绩。</p>
+            <span>CADET CAMPAIGN / 3 BOSSES</span>
+            <h2 id="training-briefing-title">三关首领教学</h2>
+            <p>每关都有不同首领、确定性牌序与专属目标。完成后顺序解锁下一关；失败重试会保留本次已达成的步骤，且不计正式战绩。</p>
           </div>
           <button type="button" onClick={onClose} aria-label="关闭新手训练说明">
             <Icon name="close" size={18} />
           </button>
         </div>
-        <ol className="training-briefing__lessons">
-          {lessons.map((lesson) => (
-            <li className={`training-lesson training-lesson--${lesson.accent}`} key={lesson.number}>
-              <span>{lesson.number}</span>
-              <div><strong>{lesson.title}</strong><p>{lesson.copy}</p></div>
-            </li>
-          ))}
+        <ol className="training-briefing__lessons training-briefing__chapters">
+          {TRAINING_CHAPTERS.map((chapter) => {
+            const unlocked = trainingChapterUnlocked(campaign, chapter.id);
+            const isComplete = completed.has(chapter.id);
+            return (
+              <li className={`training-lesson training-chapter ${isComplete ? "is-complete" : unlocked ? "is-unlocked" : "is-locked"}`} key={chapter.id}>
+                <span>{String(chapter.order).padStart(2, "0")}</span>
+                <div>
+                  <strong>{chapter.title}</strong>
+                  <p>首领：{chapter.bossName} · {chapter.subtitle}</p>
+                  <small>{isComplete ? "已完成，可重新演练" : unlocked ? "已解锁" : "完成上一关后解锁"}</small>
+                </div>
+                <button className={unlocked ? "button button--outline" : "button button--ghost"} type="button" disabled={!unlocked} onClick={() => onStart(chapter.id)}>
+                  {isComplete ? "再次挑战" : unlocked ? "开始挑战" : "尚未解锁"}
+                </button>
+              </li>
+            );
+          })}
         </ol>
         <div className="training-briefing__actions">
           <button className="button button--ghost" type="button" onClick={onClose}>稍后再看</button>
-          <button className="button button--primary button--large" type="button" onClick={onStart}>
-            <Icon name="swords" />进入引导对局
-          </button>
+          {nextChapter && (
+            <button className="button button--primary button--large" type="button" onClick={() => onStart(nextChapter.id)}>
+              <Icon name="swords" />继续{nextChapter.title}
+            </button>
+          )}
         </div>
       </section>
     </div>
@@ -5888,17 +5957,16 @@ function OverviewSection({
         <span className="training-callout__sigil" aria-hidden="true"><Icon name="shield" size={26} /></span>
         <div className="training-callout__copy">
           <span>CADET ROUTE · 随时重练</span>
-          <h2 id="training-callout-title">第一次指挥？先完成一场三分钟训练</h2>
-          <p>固定教学牌序会逐步解锁指定卡牌与目标，从第一次部署一路带你完成攻击。</p>
+          <h2 id="training-callout-title">三位首领，三段确定性实战教学</h2>
+          <p>依次掌握冲锋直击、护盾交换与幸运币发现；每关完成后永久解锁下一关。</p>
         </div>
-        <div className="training-callout__route" aria-label="训练路线：换牌、部署、结束回合、攻击">
-          <span><i>1</i>换牌</span><b />
-          <span><i>2</i>部署</span><b />
-          <span><i>3</i>回合</span><b />
-          <span><i>4</i>攻击</span>
+        <div className="training-callout__route" aria-label="三关首领训练路线：雾门、棱镜、潮汐">
+          <span><i>1</i>雾门</span><b />
+          <span><i>2</i>棱镜</span><b />
+          <span><i>3</i>潮汐</span>
         </div>
         <button className="button button--accent" type="button" onClick={onOpenTraining}>
-          开始新手训练 <Icon name="arrow" />
+          进入首领教学 <Icon name="arrow" />
         </button>
       </section>
 
@@ -7661,7 +7729,9 @@ function BattleSection({
   onToggleSound,
   onToggleReplaySpeed,
   trainingActive,
+  trainingChapterId,
   trainingProgress,
+  trainingAttemptProgress,
   onExitTraining,
   onRetryTraining,
   pvp,
@@ -7726,7 +7796,9 @@ function BattleSection({
   onToggleSound: () => void;
   onToggleReplaySpeed: () => void;
   trainingActive: boolean;
-  trainingProgress: TrainingProgress;
+  trainingChapterId: TrainingChapterId | null;
+  trainingProgress: number;
+  trainingAttemptProgress: number;
   onExitTraining: () => void;
   onRetryTraining: () => void;
   pvp: PvpState;
@@ -7833,43 +7905,14 @@ function BattleSection({
   const playerCanAct = playerTurn && !effectsLocked && onlineTransportReady;
   const playerCanDiscover = discoverActive && battle.currentPlayer === "player" && !effectsLocked && onlineTransportReady;
   const playerCanChooseOne = chooseOneActive && battle.currentPlayer === "player" && !effectsLocked && onlineTransportReady;
-  const liveTrainingProgress = trainingProgressForFacts(trainingProgress, {
-    status: battle.status,
-    cardsPlayed: battle.report.cardsPlayed[0],
-    attacks: battle.report.attacks[0],
-    log: battle.log,
-  });
-  const gateTrainingProgress = trainingGateProgressForFacts(trainingProgress, {
-    status: battle.status,
-    cardsPlayed: battle.report.cardsPlayed[0],
-    attacks: battle.report.attacks[0],
-    log: battle.log,
-  });
-  const trainingStage = currentTrainingStage(gateTrainingProgress);
-  const trainingDialogue = TRAINING_DIALOGUE_BY_STAGE[trainingStage];
-  const trainingSteps = [
-    {
-      label: "确认起手",
-      detail: "教学起手已经固定；不要换牌，直接确认。",
-      done: liveTrainingProgress.mulligan || !mulliganActive,
-    },
-    {
-      label: "使用晨辉斥候",
-      detail: "使用高亮的 1 费晨辉斥候，建立第一条战线。",
-      done: liveTrainingProgress.cardPlayed,
-    },
-    {
-      label: "结束一个回合",
-      detail: "部署完成后结束回合；固定演练会把行动权交回给你。",
-      done: liveTrainingProgress.turnEnded,
-    },
-    {
-      label: "攻击敌方核心",
-      detail: "选择晨辉斥候，再点击敌方核心完成指定攻击。",
-      done: liveTrainingProgress.attack,
-    },
-  ];
-  const completedTrainingSteps = trainingSteps.filter((step) => step.done).length;
+  const trainingChapter = getTrainingChapter(trainingChapterId);
+  const trainingTotal = trainingChapter?.objectives.length ?? 0;
+  const completedTrainingSteps = Math.min(trainingTotal, Math.max(trainingProgress, trainingAttemptProgress));
+  const trainingRouteComplete = trainingTotal > 0 && completedTrainingSteps === trainingTotal;
+  const currentTrainingIndex = trainingRouteComplete ? trainingTotal : trainingAttemptProgress;
+  const currentTrainingObjective = trainingChapter?.objectives[currentTrainingIndex];
+  const trainingDialogue = trainingChapter?.dialogue[Math.min(currentTrainingIndex, trainingTotal)];
+  const trainingSteps = trainingChapter?.objectives ?? [];
   const pendingDefinition = pendingCard ? CARD_BY_ID.get(pendingCard.cardId) : undefined;
   const pendingRuleCard = pendingCard ? cardRuleForHandSlot(pendingCard) : undefined;
   const targetRule = pendingHeroPower
@@ -7965,7 +8008,17 @@ function BattleSection({
       if (unit.stealthActive) return false;
       return !attackBlockedByTaunt || unit.keywords.includes("taunt");
     }
-      return cardCanTarget("ai", "unit", unit) && !unit.stealthActive;
+    return cardCanTarget("ai", "unit") && !unit.stealthActive;
+  };
+  const trainingAllowsUnitSelection = !trainingActive
+    || trainingRouteComplete
+    || currentTrainingObjective?.kind === "attack-hero"
+    || currentTrainingObjective?.kind === "attack-unit";
+  const trainingAllowsCard = (cardId: string) => {
+    if (!trainingActive || trainingRouteComplete) return true;
+    if (mulliganActive) return false;
+    if (currentTrainingObjective?.kind === "use-coin") return cardId === "the-coin";
+    return currentTrainingObjective?.kind === "play-card" && currentTrainingObjective.cardId === cardId;
   };
   const targetPreviewForPendingUnit = (unit: BattleUnit, side: "player" | "ai"): string | undefined => {
     if (!pendingCard && !pendingHeroPower) return undefined;
@@ -8247,11 +8300,11 @@ function BattleSection({
                   key={unit.id}
                   unit={unit}
                   selected={selectedAttacker === unit.id}
-                  targetable={cardCanTarget("player", "unit", unit) && unit.health > 0}
+                  targetable={cardCanTarget("player", "unit") && unit.health > 0}
                   effect={effectForUnit(unit.id)}
                   impact={impactForUnit(unit.id)}
                   targetPreview={targetPreviewForUnit(unit, "player")}
-                  onSelect={pendingCard || pendingHeroPower || !playerCanAct || (trainingActive && trainingStage !== "attack" && trainingStage !== "complete") ? undefined : () => onSelectAttacker(unit.id)}
+                  onSelect={pendingCard || pendingHeroPower || !playerCanAct || !trainingAllowsUnitSelection ? undefined : () => onSelectAttacker(unit.id)}
                   onTarget={() => onCardTarget({ kind: "unit", side: "player", id: unit.id })}
                   onInspect={() => {
                     const card = CARD_BY_ID.get(unit.cardId);
@@ -8290,7 +8343,7 @@ function BattleSection({
                 <button
                   className={`weapon-attack-button ${selectedAttacker === "hero-0" ? "weapon-attack-button--selected" : ""}`}
                   type="button"
-                  disabled={!playerCanAct || battle.player.heroHasAttacked || (trainingActive && trainingStage !== "complete")}
+                  disabled={!playerCanAct || battle.player.heroHasAttacked || (trainingActive && !trainingRouteComplete)}
                   onClick={onSelectHeroAttacker}
                   aria-label={battle.player.heroHasAttacked ? "英雄本回合已经攻击" : `使用 ${battle.player.heroName} 发起英雄攻击`}
                 >
@@ -8301,7 +8354,7 @@ function BattleSection({
               <button
                 className={`hero-power-button ${battle.player.heroPowerUsed ? "hero-power-button--used" : ""} ${pendingHeroPower ? "hero-power-button--selected" : ""}`}
                 type="button"
-                disabled={!playerCanAct || battle.player.heroPowerUsed || battle.player.mana < battle.player.heroPowerCost || Boolean(pendingCard) || (trainingActive && trainingStage !== "complete")}
+                disabled={!playerCanAct || battle.player.heroPowerUsed || battle.player.mana < battle.player.heroPowerCost || Boolean(pendingCard) || (trainingActive && !trainingRouteComplete)}
                 onClick={onHeroPower}
                 title={battle.player.heroPowerDescription}
                 aria-label={battle.player.heroPowerUsed ? `${battle.player.heroPowerName}本回合已使用` : pendingHeroPower ? `取消${battle.player.heroPowerName}目标选择` : `使用${battle.player.heroPowerName}，消耗 ${battle.player.heroPowerCost} 点能量`}
@@ -8336,9 +8389,7 @@ function BattleSection({
                     entry.fragmentGroupId === handCard.fragmentGroupId && mulliganSelection.includes(index)));
                 const enemyUpgradeAvailable = card.type === "unit"
                   && battle.ai.board.some((unit) => unit.cardId === card.id && unit.stars === 1);
-                const trainingActionLocked = trainingActive
-                  && trainingStage !== "complete"
-                  && (mulliganActive || trainingStage !== "play-card" || card.id !== TRAINING_PLAY_CARD_ID);
+                const trainingActionLocked = !trainingAllowsCard(card.id);
                 const disabled = mulliganActive
                   ? !playerCanMulligan || trainingActionLocked
                   : !playerCanAct || effectiveCost > battle.player.mana || pendingHeroPower || trainingActionLocked;
@@ -8500,41 +8551,42 @@ function BattleSection({
             </p>
           </div>
           {trainingActive && (
-            <section className={`battle-training ${completedTrainingSteps === trainingSteps.length ? "battle-training--complete" : ""}`} aria-labelledby="battle-training-title">
+            <section className={`battle-training ${trainingRouteComplete ? "battle-training--complete" : ""}`} aria-labelledby="battle-training-title">
               <div className="battle-training__heading">
                 <div>
-                  <span>CADET ROUTE</span>
+                  <span>CADET ROUTE · {trainingChapter ? `${trainingChapter.order}/${TRAINING_CHAPTERS.length}` : "—"}</span>
                   <strong id="battle-training-title">
-                    {completedTrainingSteps === trainingSteps.length ? "基础训练完成" : "新手训练进行中"}
+                    {trainingRouteComplete ? `${trainingChapter?.title ?? "本关"}完成` : trainingChapter?.title ?? "新手训练进行中"}
                   </strong>
                 </div>
                 <span>{completedTrainingSteps} / {trainingSteps.length}</span>
               </div>
-              <div
+              {trainingDialogue && <div
                 className={`battle-training__dialogue battle-training__dialogue--${trainingDialogue.role}`}
                 role="status"
                 aria-live="polite"
-                key={trainingStage}
+                key={`${trainingChapterId}-${currentTrainingIndex}`}
               >
                 <span aria-hidden="true">{trainingDialogue.role === "mentor" ? "◆" : "◇"}</span>
                 <div>
                   <small>{trainingDialogue.speaker}</small>
                   <p>{trainingDialogue.line}</p>
                 </div>
-              </div>
+              </div>}
               <ol>
                 {trainingSteps.map((step, index) => {
-                  const current = trainingStage !== "complete" && index === ["mulligan", "play-card", "end-turn", "attack"].indexOf(trainingStage);
+                  const done = index < completedTrainingSteps;
+                  const current = !trainingRouteComplete && index === currentTrainingIndex;
                   return (
-                    <li className={`${step.done ? "is-done" : ""} ${current ? "is-current" : ""}`} key={step.label}>
-                      <span>{step.done ? <Icon name="check" size={12} /> : index + 1}</span>
+                    <li className={`${done ? "is-done" : ""} ${current ? "is-current" : ""}`} key={step.id}>
+                      <span>{done ? <Icon name="check" size={12} /> : index + 1}</span>
                       <div><strong>{step.label}</strong>{current && <small>{step.detail}</small>}</div>
                     </li>
                   );
                 })}
               </ol>
               <button type="button" onClick={onExitTraining}>
-                {completedTrainingSteps === trainingSteps.length ? "完成并继续对局" : "退出引导"}
+                {trainingRouteComplete ? "完成并离开本关" : "退出引导"}
               </button>
             </section>
           )}

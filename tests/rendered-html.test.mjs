@@ -44,7 +44,7 @@ test("build emits a deployable worker, D1 metadata, and migrations", async () =>
 });
 
 test("ships the complete product surface and removes starter assets", async () => {
-  const [page, game, styles, worker, ranked, rankedRewards, catchUpPack, gameStore, layout, packageJson, og, artManifest, imageGenManifest] = await Promise.all([
+  const [page, game, styles, worker, ranked, rankedRewards, catchUpPack, training, gameStore, gameRoute, layout, packageJson, og, artManifest, imageGenManifest] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/GameApp.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
@@ -52,7 +52,9 @@ test("ships the complete product surface and removes starter assets", async () =
     readFile(new URL("../lib/game/ranked.ts", import.meta.url), "utf8"),
     readFile(new URL("../lib/game/ranked-rewards.ts", import.meta.url), "utf8"),
     readFile(new URL("../lib/game/catch-up-pack.ts", import.meta.url), "utf8"),
+    readFile(new URL("../lib/game/training.ts", import.meta.url), "utf8"),
     readFile(new URL("../db/game-store.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/game/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
     stat(new URL("../public/og.png", import.meta.url)),
@@ -91,14 +93,20 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(game, /新兵专属匹配池/);
   assert.match(game, /保留进度并重试/);
   assert.match(game, /训练对局不计入正式战绩与奖励/);
-  assert.match(game, /trainingProgressForFacts/);
-  assert.match(game, /trainingCommandAllowed/);
-  assert.match(game, /trainingActive && preparedCommand\.player === 0/);
-  assert.match(game, /请使用「晨辉斥候」/);
-  assert.match(game, /请用晨辉斥候攻击敌方核心/);
-  assert.match(game, /TRAINING_DIALOGUE_BY_STAGE/);
+  assert.match(game, /三关首领教学/);
+  assert.match(game, /trainingChapterProgressForCommands/);
+  assert.match(game, /trainingChapterCommandAllowed/);
+  assert.match(game, /trainingActive && trainingChapterId && preparedCommand\.player === 0/);
+  assert.match(training, /雾门哨兵/);
+  assert.match(training, /棱镜守门人/);
+  assert.match(training, /逆流档案官/);
+  assert.match(training, /kind: "use-coin"/);
+  assert.match(training, /kind: "discover"/);
+  assert.match(gameStore, /export async function completeTrainingChapter/);
+  assert.match(gameStore, /replayAiProofState/);
+  assert.match(gameStore, /trainingCampaign/);
+  assert.match(gameRoute, /complete_training_chapter/);
   assert.match(gameStore, /TRAINING_MATCH_NO_SETTLEMENT/);
-  assert.match(gameStore, /TRAINING_MATCH_SEED/);
   assert.match(game, /改打 AI 演算/);
   assert.match(game, /apprenticeMatchPoolForFacts/);
   assert.match(game, /隐藏水平匹配 · 数值不公开/);
