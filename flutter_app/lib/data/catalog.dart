@@ -136,6 +136,8 @@ const keywordLabels = <String, String>{
   'end-of-turn': '回合结束',
   'start-of-turn': '回合开始',
   'spell-trigger': '法术触发',
+  'quickdraw': '快枪',
+  'casts-when-drawn': '抽到时施放',
 };
 
 const traitLabels = <String, String>{
@@ -195,6 +197,21 @@ bool hasMinionType(CardDefinition card, String minionType) =>
     (minionType != 'all' && card.minionTypes.contains('all'));
 
 const generatedBattleCards = <CardDefinition>[
+  CardDefinition(
+    id: 'generated-ember-mine',
+    name: '余烬地雷',
+    description: '抽到时施放：对你的核心造成 3 点伤害。',
+    faction: '中立',
+    type: 'spell',
+    cost: 1,
+    rarity: '普通',
+    collectible: false,
+    castsWhenDrawn: true,
+    keywords: <String>['casts-when-drawn'],
+    effect: <Map<String, dynamic>>[
+      <String, dynamic>{'kind': 'damage-friendly-hero', 'amount': 3},
+    ],
+  ),
   CardDefinition(
     id: 'generated-emberwing-matriarch',
     name: '熔翼龙母',

@@ -1070,7 +1070,7 @@ class GameController extends ChangeNotifier {
       final drawn = side.deck.removeLast();
       final costOverride = side.deckCostOverrides.removeLast();
       final startedInDeck = side.deckStartedInDeck.removeLast();
-      if (_addCardToHand(
+      if (_resolveDrawnCard(
         side,
         drawn,
         costOverride: costOverride,
@@ -1110,6 +1110,48 @@ class GameController extends ChangeNotifier {
     }
   }
 
+  bool _resolveDrawnCard(
+    BattleSide side,
+    CardDefinition drawn, {
+    int? costOverride,
+    bool startedInDeck = false,
+  }) {
+    if (!drawn.castsWhenDrawn) {
+      return _addCardToHand(
+        side,
+        drawn,
+        costOverride: costOverride,
+        startedInDeck: startedInDeck,
+      );
+    }
+    final state = battle;
+    if (state == null) return true;
+    final enemy = identical(side, state.player) ? state.ai : state.player;
+    stateLog(drawn.name, '抽到时自动施放，然后抽取替代牌。');
+    _emitFx(
+      'spell',
+      '${drawn.name} · 抽到时施放',
+      drawn.description,
+      Icons.bolt,
+      factionColors[drawn.faction] ?? 0xFFE46D3F,
+      sourceId: drawn.id,
+      amount: _cardEffectAmount(drawn),
+    );
+    if (drawn.school != null) {
+      side.spellSchoolsPlayedThisTurn.add(drawn.school!);
+    }
+    _resolveEffects(
+      drawn.effect,
+      source: side,
+      enemy: enemy,
+      sourceName: drawn.name,
+      sourceCard: drawn,
+    );
+    _resolveSpellTriggers(source: side, enemy: enemy);
+    _draw(side);
+    return true;
+  }
+
   bool _drawMinionType(BattleSide side, String minionType) {
     _syncDeckCostOverrides(side);
     final matchIndex = side.deck.lastIndexWhere(
@@ -1121,7 +1163,7 @@ class GameController extends ChangeNotifier {
     final drawn = side.deck.removeAt(matchIndex);
     final costOverride = side.deckCostOverrides.removeAt(matchIndex);
     final startedInDeck = side.deckStartedInDeck.removeAt(matchIndex);
-    if (_addCardToHand(
+    if (_resolveDrawnCard(
       side,
       drawn,
       costOverride: costOverride,
@@ -1145,7 +1187,7 @@ class GameController extends ChangeNotifier {
     final drawn = side.deck.removeAt(matchIndex);
     final costOverride = side.deckCostOverrides.removeAt(matchIndex);
     final startedInDeck = side.deckStartedInDeck.removeAt(matchIndex);
-    if (_addCardToHand(
+    if (_resolveDrawnCard(
       side,
       drawn,
       costOverride: costOverride,
@@ -3446,15 +3488,21 @@ class GameController extends ChangeNotifier {
                 : <CardDefinition>[];
             final count = (effect['count'] as num?)?.toInt() ?? 1;
             final fixedCost = (effect['cost'] as num?)?.toInt();
+            final recipient = effect['player'] == 'opponent' ? enemy : source;
             for (var i = 0; i < count && pool.isNotEmpty; i++) {
               final generated = pool[_random.nextInt(pool.length)];
-              _syncDeckCostOverrides(source);
-              final insertionIndex = _random.nextInt(source.deck.length + 1);
-              source.deck.insert(insertionIndex, generated);
-              source.deckCostOverrides.insert(insertionIndex, fixedCost);
-              source.deckStartedInDeck.insert(insertionIndex, false);
+              _syncDeckCostOverrides(recipient);
+              final insertionIndex = _random.nextInt(recipient.deck.length + 1);
+              recipient.deck.insert(insertionIndex, generated);
+              recipient.deckCostOverrides.insert(insertionIndex, fixedCost);
+              recipient.deckStartedInDeck.insert(insertionIndex, false);
             }
-            stateLog(sourceName, '将 $count 张传说龙裔洗入牌库。');
+            stateLog(
+              sourceName,
+              effect['player'] == 'opponent'
+                  ? '将 $count 张牌洗入对手牌库。'
+                  : '将 $count 张牌洗入牌库。',
+            );
             break;
           case 'draw-opponent':
             final count = (effect['count'] as num?)?.toInt() ?? 1;

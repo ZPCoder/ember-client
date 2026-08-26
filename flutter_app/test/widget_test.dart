@@ -67,6 +67,11 @@ void main() {
       expect(quickdraw.keywords, contains('quickdraw'));
       expect(quickdraw.quickdraw.single['kind'], 'draw');
       expect(quickdraw.quickdraw.single['count'], 1);
+      final mine = generatedBattleCards.singleWhere(
+        (card) => card.id == 'generated-ember-mine',
+      );
+      expect(mine.castsWhenDrawn, isTrue);
+      expect(mine.keywords, contains('casts-when-drawn'));
       expect(catalog.where((card) => card.preparable), hasLength(22));
       expect(catalog.where((card) => card.bribe), hasLength(20));
       expect(catalog.where((card) => card.disguised), hasLength(20));
@@ -258,7 +263,7 @@ void main() {
             .single['kind'],
         'recast-nondeck-spells-once',
       );
-      expect(generatedBattleCards, hasLength(18));
+      expect(generatedBattleCards, hasLength(19));
       expect(
         generatedBattleCards
             .where(
@@ -3091,6 +3096,79 @@ void main() {
     expect(state.player.hand.map((card) => card.id), [filler.id]);
     expect(state.player.deck.map((card) => card.id), [filler.id]);
     expect(state.logs.where((log) => log.contains('快枪触发')), hasLength(1));
+    controller.dispose();
+  });
+
+  test('mobile Casts When Drawn skips hand and draws a replacement', () async {
+    final catalog = await loadCatalog();
+    final shuffler = catalog.singleWhere(
+      (card) => card.id == 'neutral-masterwork-plating',
+    );
+    final mine = generatedBattleCards.singleWhere(
+      (card) => card.id == 'generated-ember-mine',
+    );
+    final filler = catalog.firstWhere((card) => card.isUnit && card.cost >= 8);
+    final controller = GameController(startingPlayer: 'player')
+      ..catalog = catalog
+      ..deckIds.addAll(List.filled(30, filler.id));
+    controller.startBattle();
+    await controller.confirmMulligan();
+    final state = controller.battle!;
+    state.player.hand
+      ..clear()
+      ..add(shuffler);
+    state.player.handCostReductions
+      ..clear()
+      ..add(0);
+    state.player.handFragments
+      ..clear()
+      ..add(null);
+    state.player.handStartedInDeck
+      ..clear()
+      ..add(true);
+    state.player.handEnteredTurns
+      ..clear()
+      ..add(0);
+    state.player.mana = 3;
+    state.ai.deck
+      ..clear()
+      ..add(filler);
+    state.ai.deckCostOverrides
+      ..clear()
+      ..add(null);
+    state.ai.deckStartedInDeck
+      ..clear()
+      ..add(true);
+
+    expect(controller.playCard(shuffler), isTrue);
+    expect(state.ai.deck.where((card) => card.id == mine.id), hasLength(2));
+
+    state.ai.deck
+      ..clear()
+      ..addAll([filler, mine]);
+    state.ai.deckCostOverrides
+      ..clear()
+      ..addAll([null, null]);
+    state.ai.deckStartedInDeck
+      ..clear()
+      ..addAll([true, false]);
+    state.ai.hand.clear();
+    state.ai.handCostReductions.clear();
+    state.ai.handFragments.clear();
+    state.ai.handStartedInDeck.clear();
+    state.ai.handEnteredTurns.clear();
+    state.ai.heroHealth = 30;
+    await controller.endTurn();
+
+    expect(state.ai.heroHealth, 27);
+    expect(state.ai.hand.map((card) => card.id), contains(filler.id));
+    expect(state.ai.hand.map((card) => card.id), isNot(contains(mine.id)));
+    expect(
+      state.logs.any(
+        (log) => log.contains(mine.name) && log.contains('抽到时自动施放'),
+      ),
+      isTrue,
+    );
     controller.dispose();
   });
 

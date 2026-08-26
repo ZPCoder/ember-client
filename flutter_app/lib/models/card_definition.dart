@@ -16,6 +16,7 @@ class CardDefinition {
     this.preparable = false,
     this.bribe = false,
     this.disguised = false,
+    this.castsWhenDrawn = false,
     this.shatter,
     this.herald,
     this.colossal,
@@ -54,6 +55,7 @@ class CardDefinition {
   final bool preparable;
   final bool bribe;
   final bool disguised;
+  final bool castsWhenDrawn;
   final Map<String, dynamic>? shatter;
   final Map<String, dynamic>? herald;
   final Map<String, dynamic>? colossal;
@@ -121,6 +123,7 @@ class CardDefinition {
       preparable: preparable,
       bribe: bribe,
       disguised: disguised,
+      castsWhenDrawn: castsWhenDrawn,
       shatter: shatter ?? this.shatter,
       herald: herald ?? this.herald,
       colossal: colossal ?? this.colossal,
@@ -177,6 +180,9 @@ class CardDefinition {
       disguised:
           json['disguised'] == true ||
           strings(json['keywords']).contains('disguised'),
+      castsWhenDrawn:
+          json['castsWhenDrawn'] == true ||
+          strings(json['keywords']).contains('casts-when-drawn'),
       shatter: json['shatter'] is Map
           ? Map<String, dynamic>.from(json['shatter'] as Map)
           : null,

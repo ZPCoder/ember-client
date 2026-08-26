@@ -2116,19 +2116,22 @@
   },
   {
     "id": "neutral-masterwork-plating",
-    "name": "大师级覆甲",
-    "description": "使一个友方单位获得 +3/+4。",
+    "name": "余烬埋雷",
+    "description": "将两张「余烬地雷」洗入对手的牌库。",
     "faction": "中立",
     "type": "spell",
-    "cost": 5,
+    "cost": 3,
     "rarity": "史诗",
     "school": "construct",
-    "target": "friendly-unit",
+    "target": "none",
     "effect": [
       {
-        "kind": "buff",
-        "attack": 3,
-        "health": 4
+        "kind": "shuffle-random-into-deck",
+        "cardIds": [
+          "generated-ember-mine"
+        ],
+        "count": 2,
+        "player": "opponent"
       }
     ],
     "keywords": [],
