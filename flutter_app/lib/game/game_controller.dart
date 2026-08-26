@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../data/catalog.dart';
 import '../data/deck_code.dart';
+import '../data/deck_share.dart';
 import '../data/deck_replacements.dart';
 import '../data/formats.dart';
 import '../models/card_definition.dart';
@@ -375,6 +376,13 @@ class GameController extends ChangeNotifier {
     format: deckFormat,
     name: _normalizeDeckName(deckName),
     cardIds: List<String>.from(deckIds),
+  );
+
+  String exportActiveDeckShareText() => formatDeckShareText(
+    format: deckFormat,
+    name: _normalizeDeckName(deckName),
+    cardIds: List<String>.from(deckIds),
+    catalog: catalog,
   );
 
   DeckCodePreview? previewClipboardDeckCode(String value) {

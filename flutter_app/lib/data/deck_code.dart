@@ -126,11 +126,7 @@ String encodeDeckCode({
   return base64Url.encode(utf8.encode(raw)).replaceAll('=', '');
 }
 
-DecodedDeckCode decodeDeckCode(String value) {
-  final trimmed = value.trim();
-  if (trimmed.isEmpty || trimmed.length > _maxEncodedLength) {
-    throw const FormatException('卡组代码为空或过长。');
-  }
+DecodedDeckCode _decodeSingleDeckCode(String trimmed) {
   if (trimmed.startsWith('$_deckCodeVersion|') ||
       trimmed.startsWith('$_legacyDeckCodeVersion|') ||
       (trimmed.contains(',') && !trimmed.contains('|'))) {
@@ -152,4 +148,37 @@ DecodedDeckCode decodeDeckCode(String value) {
   } catch (_) {
     throw const FormatException('卡组代码格式无效。');
   }
+}
+
+DecodedDeckCode decodeDeckCode(String value) {
+  final trimmed = value.trim();
+  if (trimmed.isEmpty || trimmed.length > _maxEncodedLength) {
+    throw const FormatException('卡组代码为空或过长。');
+  }
+
+  Object directError;
+  try {
+    return _decodeSingleDeckCode(trimmed);
+  } catch (error) {
+    directError = error;
+  }
+
+  for (final line in trimmed.split(RegExp(r'\r?\n')).reversed) {
+    var candidate = line.trim();
+    final labeledCode = RegExp(
+      r'^#\s*卡组代码\s*[:：]\s*(\S+)\s*$',
+    ).firstMatch(candidate);
+    if (labeledCode != null) {
+      candidate = labeledCode.group(1)!;
+    } else if (candidate.isEmpty || candidate.startsWith('#')) {
+      continue;
+    }
+    try {
+      return _decodeSingleDeckCode(candidate);
+    } catch (_) {
+      // A readable deck list contains many non-code lines; keep scanning upward.
+    }
+  }
+
+  throw directError;
 }

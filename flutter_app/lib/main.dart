@@ -1496,18 +1496,21 @@ class DeckPage extends StatelessWidget {
                     OutlinedButton.icon(
                       onPressed: controller.deckValid
                           ? () async {
-                              final code = controller.exportActiveDeckCode();
+                              final shareText = controller
+                                  .exportActiveDeckShareText();
                               await Clipboard.setData(
-                                ClipboardData(text: code),
+                                ClipboardData(text: shareText),
                               );
                               if (!context.mounted) return;
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('ASTRA2 卡组代码已复制')),
+                                const SnackBar(
+                                  content: Text('完整牌表与 ASTRA2 代码已复制'),
+                                ),
                               );
                             }
                           : null,
                       icon: const Icon(Icons.ios_share_outlined, size: 17),
-                      label: const Text('复制代码'),
+                      label: const Text('复制牌表'),
                     ),
                     OutlinedButton.icon(
                       onPressed: controller.canCreateDeck

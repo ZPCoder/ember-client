@@ -2668,7 +2668,8 @@ button.game-card:not(:disabled):hover .game-card__artwork,
   font-size: 8px;
 }
 
-.deck-code-tools input {
+.deck-code-tools input,
+.deck-code-tools textarea {
   width: 100%;
   min-height: 30px;
   padding: 0 8px;
@@ -2677,6 +2678,13 @@ button.game-card:not(:disabled):hover .game-card__artwork,
   color: var(--paper-soft);
   background: #101f1b;
   font-size: 9px;
+}
+
+.deck-code-tools textarea {
+  min-height: 62px;
+  padding-block: 7px;
+  line-height: 1.45;
+  resize: vertical;
 }
 
 .deck-code-tools > div {

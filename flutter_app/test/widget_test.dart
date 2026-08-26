@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:astra_protocol/data/catalog.dart';
 import 'package:astra_protocol/data/deck_code.dart';
+import 'package:astra_protocol/data/deck_share.dart';
 import 'package:astra_protocol/data/formats.dart';
 import 'package:astra_protocol/game/game_controller.dart';
 import 'package:astra_protocol/main.dart';
@@ -1326,7 +1327,7 @@ void main() {
     },
   );
 
-  test('ASTRA2 deck codes match web and retain format and name', () {
+  test('ASTRA2 deck codes and readable shares match web', () async {
     const expected =
         'QVNUUkEyfHdpbGR8JUU2JUEwJTg3JUU1JTg3JTg2JTIwJUU3JTgxJUFCJUU4JThBJUIxfHN1bi1kYXduLXNjb3V0LG5ldXRyYWwtbW9zcy1ydW5uZXI';
     final code = encodeDeckCode(
@@ -1340,6 +1341,38 @@ void main() {
     expect(decoded.format, RankedFormat.wild);
     expect(decoded.name, '标准 火花');
     expect(decoded.cardIds, ['sun-dawn-scout', 'neutral-moss-runner']);
+
+    final shareText = formatDeckShareText(
+      format: RankedFormat.wild,
+      name: '标准 火花',
+      cardIds: const ['sun-dawn-scout', 'neutral-moss-runner'],
+      catalog: await loadCatalog(),
+    );
+    expect(
+      shareText,
+      [
+        '# 余烬协议牌组：标准 火花',
+        '# 模式：狂野模式',
+        '# 2 张卡牌 · 2 种',
+        '',
+        '1x (1) 苔径奔行兽',
+        '1x (1) 晨辉斥候',
+        '',
+        '# 卡组代码',
+        expected,
+        '',
+        '# 复制完整牌表或仅复制上方代码，均可在余烬协议中导入。',
+      ].join('\n'),
+    );
+    final decodedShare = decodeDeckCode(shareText);
+    expect(decodedShare.version, 2);
+    expect(decodedShare.format, RankedFormat.wild);
+    expect(decodedShare.name, '标准 火花');
+    expect(decodedShare.cardIds, ['sun-dawn-scout', 'neutral-moss-runner']);
+    expect(decodeDeckCode('# 卡组代码：$expected').cardIds, [
+      'sun-dawn-scout',
+      'neutral-moss-runner',
+    ]);
 
     final legacy = decodeDeckCode(
       'QVNUUkExfHN1bi1kYXduLXNjb3V0LG5ldXRyYWwtbW9zcy1ydW5uZXI',
@@ -1375,16 +1408,17 @@ void main() {
     controller.setDeckName('移动狂野');
     expect(await controller.saveDeck(), isTrue);
     final originalId = controller.activeDeckId;
-    final code = controller.exportActiveDeckCode();
-    final preview = controller.previewClipboardDeckCode(code);
+    final shareText = controller.exportActiveDeckShareText();
+    expect(shareText, contains('# 卡组代码'));
+    final preview = controller.previewClipboardDeckCode(shareText);
     expect(preview?.name, '移动狂野');
     expect(preview?.format, RankedFormat.wild);
     expect(preview?.missingCount, 0);
-    controller.declineClipboardDeckCode(code);
-    expect(controller.previewClipboardDeckCode(code), isNull);
+    controller.declineClipboardDeckCode(shareText);
+    expect(controller.previewClipboardDeckCode(shareText), isNull);
 
     controller.setDeckFormat(RankedFormat.standard);
-    final result = await controller.importDeckCode(code);
+    final result = await controller.importDeckCode(shareText);
     expect(result.success, isTrue);
     expect(controller.savedDecks, hasLength(1));
     expect(controller.activeDeckId, isNull);
@@ -1392,7 +1426,7 @@ void main() {
     expect(controller.deckName, '移动狂野');
     expect(controller.deckIds, ids);
     expect(controller.deckPlayable, isTrue);
-    expect(controller.previewClipboardDeckCode(code), isNotNull);
+    expect(controller.previewClipboardDeckCode(shareText), isNotNull);
     expect(await controller.saveDeck(), isTrue);
     expect(controller.savedDecks, hasLength(2));
     expect(controller.activeDeckId, isNot(originalId));
@@ -1400,7 +1434,7 @@ void main() {
     final extra = cards.firstWhere((card) => !ids.contains(card.id));
     controller.collection[extra.id] = 2;
     controller.collection[ids.first] = 0;
-    final missingResult = await controller.importDeckCode(code);
+    final missingResult = await controller.importDeckCode(shareText);
     expect(missingResult.success, isTrue);
     expect(missingResult.message, contains('缺少 2 张'));
     expect(controller.deckValid, isTrue);
@@ -2608,15 +2642,16 @@ void main() {
       controller.collection[id] = 2;
     }
     await controller.saveDeck();
-    final clipboardCode = encodeDeckCode(
+    final clipboardShare = formatDeckShareText(
       format: RankedFormat.wild,
       name: '剪贴板狂野',
       cardIds: ids,
+      catalog: catalog,
     );
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(SystemChannels.platform, (call) async {
           if (call.method == 'Clipboard.getData') {
-            return <String, Object?>{'text': clipboardCode};
+            return <String, Object?>{'text': clipboardShare};
           }
           return null;
         });
@@ -2681,7 +2716,7 @@ void main() {
     expect(find.text('1 / 27 栏位'), findsOneWidget);
     expect(find.text('新建'), findsOneWidget);
     expect(find.text('复制'), findsOneWidget);
-    expect(find.text('复制代码'), findsOneWidget);
+    expect(find.text('复制牌表'), findsOneWidget);
     expect(find.text('导入代码'), findsOneWidget);
     expect(find.text('删除'), findsOneWidget);
     expect(find.byKey(const ValueKey('deck-format-selector')), findsOneWidget);

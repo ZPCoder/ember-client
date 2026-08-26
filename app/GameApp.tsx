@@ -37,6 +37,7 @@ import {
   createRankedRewardState,
   factionForDeck,
   findMissingDeckCards,
+  formatDeckShareText,
   getHeroPower,
   getLadderReadyDeck,
   getTraitStatuses,
@@ -5806,7 +5807,9 @@ function DeckSection({
   onClaimLadderReady: (deckId: LadderReadyDeckId) => void;
 }) {
   const [deckCode, setDeckCode] = useState("");
+  const [copiedDeckFingerprint, setCopiedDeckFingerprint] = useState<string | null>(null);
   const [claimConfirmation, setClaimConfirmation] = useState<LadderReadyDeckId | null>(null);
+  const deckFingerprint = `${format}\u0000${name}\u0000${deckIds.join(",")}`;
   const [clockNow, setClockNow] = useState(0);
   useEffect(() => {
     const tick = () => setClockNow(Date.now());
@@ -5860,7 +5863,12 @@ function DeckSection({
   const copyDeckCode = () => {
     const encoded = encodeDeckCode({ format, name, cardIds: deckIds });
     setDeckCode(encoded);
-    void navigator.clipboard?.writeText(encoded).catch(() => undefined);
+    const clipboard = navigator.clipboard;
+    if (!clipboard) return;
+    const shareText = formatDeckShareText({ format, name, cardIds: deckIds });
+    void clipboard.writeText(shareText)
+      .then(() => setCopiedDeckFingerprint(deckFingerprint))
+      .catch(() => setCopiedDeckFingerprint(null));
   };
 
   const importDeckCode = () => {
@@ -6013,9 +6021,9 @@ function DeckSection({
             <strong className={deckIds.length === 30 ? "is-complete" : ""}>{deckIds.length}<small>/30</small></strong>
           </div>
           <div className="deck-code-tools" aria-label="卡组代码">
-            <label><span>卡组代码</span><input value={deckCode} onChange={(event) => setDeckCode(event.target.value)} placeholder="粘贴 ASTRA2 或旧版 ASTRA1 卡组代码" /></label>
-            <div><button className="button button--small button--outline" type="button" onClick={importDeckCode} disabled={!deckCode.trim() || deckSlotsFull}>导入为新卡组</button><button className="button button--small button--outline" type="button" onClick={copyDeckCode} disabled={!validation.valid}>复制导出</button></div>
-            <small>ASTRA2 会携带名称及标准／狂野模式；缺少的卡牌会保留在草稿中，并提供合法替换建议。</small>
+            <label><span>卡组代码或完整牌表</span><textarea rows={3} value={deckCode} onChange={(event) => setDeckCode(event.target.value)} placeholder="粘贴完整牌表、ASTRA2 或旧版 ASTRA1 卡组代码" /></label>
+            <div><button className="button button--small button--outline" type="button" onClick={importDeckCode} disabled={!deckCode.trim() || deckSlotsFull}>导入为新卡组</button><button className="button button--small button--outline" type="button" onClick={copyDeckCode} disabled={!validation.valid}>{copiedDeckFingerprint === deckFingerprint ? "已复制牌表" : "复制牌表"}</button></div>
+            <small>复制内容包含可读牌表与 ASTRA2 代码；整段或仅代码均可导入，缺卡时会提供合法替换建议。</small>
           </div>
 
           {missingCards.length > 0 && (
