@@ -92,9 +92,11 @@ import {
   TRAINING_MATCH_SEED,
   TRAINING_OPPONENT_ARCHETYPE_ID,
   TRAINING_PLAYER_DECK,
+  TRAINING_PLAY_CARD_ID,
   TRAINING_STARTING_PLAYER,
   currentTrainingStage,
   trainingCommandAllowed,
+  trainingGateProgressForFacts,
   trainingProgressForFacts,
   planAiTurnReplay,
   previewDeckCode,
@@ -4416,6 +4418,9 @@ export function GameApp({
         ticket.opponentArchetypeId,
         ticket.token,
       );
+      if (training) {
+        setBattleMessage("固定教学起手已经就绪：不要换牌，直接确认起手。");
+      }
     } finally {
       aiMatchStartingRef.current = false;
     }
@@ -4458,21 +4463,21 @@ export function GameApp({
         expectedVersion: command.expectedVersion ?? previous.version,
       } as BattleCommand;
       if (trainingActive && preparedCommand.player === 0) {
-        const liveProgress = trainingProgressForFacts(trainingProgress, {
+        const gateProgress = trainingGateProgressForFacts(trainingProgress, {
           status: battleView?.status ?? previous.status,
           cardsPlayed: battleView?.report.cardsPlayed[0] ?? 0,
           attacks: battleView?.report.attacks[0] ?? 0,
           log: battleView?.log ?? previous.log,
         });
-        if (!trainingCommandAllowed(liveProgress, preparedCommand.type)) {
-          const stage = currentTrainingStage(liveProgress);
+        if (!trainingCommandAllowed(gateProgress, preparedCommand)) {
+          const stage = currentTrainingStage(gateProgress);
           const instruction = stage === "mulligan"
-            ? "先确认起手。"
+            ? "教学起手固定，请直接确认。"
             : stage === "play-card"
-              ? "先使用一张牌。"
+              ? "请使用「晨辉斥候」。"
               : stage === "end-turn"
                 ? "现在结束回合。"
-                : "先发动一次攻击。";
+                : "请用晨辉斥候攻击敌方核心。";
           setBattleMessage(`训练步骤尚未完成：${instruction}`);
           playSound("error");
           return null;
@@ -5883,7 +5888,7 @@ function OverviewSection({
         <div className="training-callout__copy">
           <span>CADET ROUTE · 随时重练</span>
           <h2 id="training-callout-title">第一次指挥？先完成一场三分钟训练</h2>
-          <p>从换牌、能量、部署到攻击，战场会逐步标记你当前应该关注的行动。</p>
+          <p>固定教学牌序会逐步解锁指定卡牌与目标，从第一次部署一路带你完成攻击。</p>
         </div>
         <div className="training-callout__route" aria-label="训练路线：换牌、部署、结束回合、攻击">
           <span><i>1</i>换牌</span><b />
@@ -7827,26 +7832,39 @@ function BattleSection({
   const playerCanAct = playerTurn && !effectsLocked && onlineTransportReady;
   const playerCanDiscover = discoverActive && battle.currentPlayer === "player" && !effectsLocked && onlineTransportReady;
   const playerCanChooseOne = chooseOneActive && battle.currentPlayer === "player" && !effectsLocked && onlineTransportReady;
+  const liveTrainingProgress = trainingProgressForFacts(trainingProgress, {
+    status: battle.status,
+    cardsPlayed: battle.report.cardsPlayed[0],
+    attacks: battle.report.attacks[0],
+    log: battle.log,
+  });
+  const gateTrainingProgress = trainingGateProgressForFacts(trainingProgress, {
+    status: battle.status,
+    cardsPlayed: battle.report.cardsPlayed[0],
+    attacks: battle.report.attacks[0],
+    log: battle.log,
+  });
+  const trainingStage = currentTrainingStage(gateTrainingProgress);
   const trainingSteps = [
     {
       label: "确认起手",
-      detail: "点击不想保留的牌，再确认起手。",
-      done: trainingProgress.mulligan || !mulliganActive,
+      detail: "教学起手已经固定；不要换牌，直接确认。",
+      done: liveTrainingProgress.mulligan || !mulliganActive,
     },
     {
-      label: "使用一张牌",
-      detail: "观察费用；若费用差 1，可先使用幸运币，再部署一张牌。",
-      done: trainingProgress.cardPlayed || battle.report.cardsPlayed[0] > 0,
+      label: "使用晨辉斥候",
+      detail: "使用高亮的 1 费晨辉斥候，建立第一条战线。",
+      done: liveTrainingProgress.cardPlayed,
     },
     {
       label: "结束一个回合",
       detail: "部署完成后结束回合；固定演练会把行动权交回给你。",
-      done: trainingProgress.turnEnded || battle.log.some((line) => line.includes("我方结束了回合")),
+      done: liveTrainingProgress.turnEnded,
     },
     {
-      label: "发动一次攻击",
-      detail: "下回合用已经准备好的单位攻击；先选单位，再选目标。",
-      done: trainingProgress.attack || battle.report.attacks[0] > 0,
+      label: "攻击敌方核心",
+      detail: "选择晨辉斥候，再点击敌方核心完成指定攻击。",
+      done: liveTrainingProgress.attack,
     },
   ];
   const completedTrainingSteps = trainingSteps.filter((step) => step.done).length;
@@ -8231,7 +8249,7 @@ function BattleSection({
                   effect={effectForUnit(unit.id)}
                   impact={impactForUnit(unit.id)}
                   targetPreview={targetPreviewForUnit(unit, "player")}
-                  onSelect={pendingCard || pendingHeroPower || !playerCanAct ? undefined : () => onSelectAttacker(unit.id)}
+                  onSelect={pendingCard || pendingHeroPower || !playerCanAct || (trainingActive && trainingStage !== "attack" && trainingStage !== "complete") ? undefined : () => onSelectAttacker(unit.id)}
                   onTarget={() => onCardTarget({ kind: "unit", side: "player", id: unit.id })}
                   onInspect={() => {
                     const card = CARD_BY_ID.get(unit.cardId);
@@ -8270,7 +8288,7 @@ function BattleSection({
                 <button
                   className={`weapon-attack-button ${selectedAttacker === "hero-0" ? "weapon-attack-button--selected" : ""}`}
                   type="button"
-                  disabled={!playerCanAct || battle.player.heroHasAttacked}
+                  disabled={!playerCanAct || battle.player.heroHasAttacked || (trainingActive && trainingStage !== "complete")}
                   onClick={onSelectHeroAttacker}
                   aria-label={battle.player.heroHasAttacked ? "英雄本回合已经攻击" : `使用 ${battle.player.heroName} 发起英雄攻击`}
                 >
@@ -8281,7 +8299,7 @@ function BattleSection({
               <button
                 className={`hero-power-button ${battle.player.heroPowerUsed ? "hero-power-button--used" : ""} ${pendingHeroPower ? "hero-power-button--selected" : ""}`}
                 type="button"
-                disabled={!playerCanAct || battle.player.heroPowerUsed || battle.player.mana < battle.player.heroPowerCost || Boolean(pendingCard)}
+                disabled={!playerCanAct || battle.player.heroPowerUsed || battle.player.mana < battle.player.heroPowerCost || Boolean(pendingCard) || (trainingActive && trainingStage !== "complete")}
                 onClick={onHeroPower}
                 title={battle.player.heroPowerDescription}
                 aria-label={battle.player.heroPowerUsed ? `${battle.player.heroPowerName}本回合已使用` : pendingHeroPower ? `取消${battle.player.heroPowerName}目标选择` : `使用${battle.player.heroPowerName}，消耗 ${battle.player.heroPowerCost} 点能量`}
@@ -8316,9 +8334,12 @@ function BattleSection({
                     entry.fragmentGroupId === handCard.fragmentGroupId && mulliganSelection.includes(index)));
                 const enemyUpgradeAvailable = card.type === "unit"
                   && battle.ai.board.some((unit) => unit.cardId === card.id && unit.stars === 1);
+                const trainingActionLocked = trainingActive
+                  && trainingStage !== "complete"
+                  && (mulliganActive || trainingStage !== "play-card" || card.id !== TRAINING_PLAY_CARD_ID);
                 const disabled = mulliganActive
-                  ? !playerCanMulligan
-                  : !playerCanAct || effectiveCost > battle.player.mana || pendingHeroPower;
+                  ? !playerCanMulligan || trainingActionLocked
+                  : !playerCanAct || effectiveCost > battle.player.mana || pendingHeroPower || trainingActionLocked;
                 return (
                   <div
                     className={`hand-card ${handCard.fragment ? `hand-card--fragment hand-card--fragment-${handCard.fragment}` : card.shatter ? "hand-card--reassembled" : ""} ${quickdrawActive ? "hand-card--quickdraw" : ""} ${disabled ? "hand-card--disabled" : ""} ${pendingCard?.instanceId === handCard.instanceId || selectedForMulligan ? "hand-card--selected" : ""}`}
@@ -8330,7 +8351,11 @@ function BattleSection({
                       showDescription
                       costOverride={effectiveCost}
                       action={() => mulliganActive ? onToggleMulligan(handIndex) : onPlayCard(handCard)}
-                      actionLabel={mulliganActive ? `${selectedForMulligan ? "保留" : "更换"}${card.name}` : `使用${card.name}`}
+                      actionLabel={mulliganActive
+                        ? trainingActive
+                          ? `教学固定保留${card.name}`
+                          : `${selectedForMulligan ? "保留" : "更换"}${card.name}`
+                        : `使用${card.name}`}
                       disabled={disabled}
                     />
                     <button
@@ -8485,7 +8510,7 @@ function BattleSection({
               </div>
               <ol>
                 {trainingSteps.map((step, index) => {
-                  const current = !step.done && trainingSteps.slice(0, index).every((item) => item.done);
+                  const current = trainingStage !== "complete" && index === ["mulligan", "play-card", "end-turn", "attack"].indexOf(trainingStage);
                   return (
                     <li className={`${step.done ? "is-done" : ""} ${current ? "is-current" : ""}`} key={step.label}>
                       <span>{step.done ? <Icon name="check" size={12} /> : index + 1}</span>
@@ -8503,7 +8528,11 @@ function BattleSection({
             <div className="mulligan-prompt" role="status">
               <div>
                 <strong>起手换牌</strong>
-                <p>{battle.mulliganDone ? "已确认，等待对手完成起手。" : "点击不想保留的手牌，再确认起手。换掉的牌会回到牌库并抽取替代牌。"}</p>
+                <p>{battle.mulliganDone
+                  ? "已确认，等待对手完成起手。"
+                  : trainingActive
+                    ? "教学牌序已经锁定；无需换牌，直接确认起手。"
+                    : "点击不想保留的手牌，再确认起手。换掉的牌会回到牌库并抽取替代牌。"}</p>
               </div>
               <button className="button button--primary" type="button" disabled={!playerCanMulligan} onClick={onConfirmMulligan}>
                 {battle.mulliganDone ? "等待对手" : `确认起手${mulliganSelection.length > 0 ? `（换 ${mulliganSelection.length} 张）` : ""}`}
