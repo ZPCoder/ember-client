@@ -1746,6 +1746,7 @@ class GameController extends ChangeNotifier {
             'draw-opponent',
             'draw-minion-type',
             'draw-spell-school',
+            'resurrect-friendly-unit',
             'summon',
           }.contains(kind)) {
             effect['count'] =
@@ -2556,6 +2557,56 @@ class GameController extends ChangeNotifier {
               if (!_drawSpellSchool(source, school)) break;
             }
             break;
+          case 'resurrect-friendly-unit':
+            final count = (effect['count'] as num?)?.toInt() ?? 1;
+            final minionType = effect['minionType']?.toString();
+            final eligible = source.deathHistory.reversed
+                .where((record) {
+                  final definition = card(record.cardId);
+                  if (definition == null || !definition.isUnit) return false;
+                  return minionType == null ||
+                      minionType.isEmpty ||
+                      hasMinionType(definition, minionType);
+                })
+                .take(count)
+                .toList(growable: false);
+            var resurrected = 0;
+            for (final record in eligible) {
+              if (source.board.length >= 7) break;
+              final definition = card(record.cardId);
+              if (definition == null || !definition.isUnit) continue;
+              final unit = _summonUnit(
+                definition,
+                owner: _ownerOf(source),
+                side: source,
+              );
+              source.board.add(unit);
+              resurrected++;
+              stateLog(sourceName, '${definition.name} 以印刷状态复活。');
+              _emitFx(
+                'summon',
+                '${definition.name} 复活',
+                '不保留原有增益',
+                Icons.restore,
+                factionColors[definition.faction] ?? 0xFFA692D1,
+                sourceId: unit.instanceId,
+              );
+              _triggerSecrets(
+                enemy,
+                'opponent-summons-unit',
+                triggeringSide: source,
+              );
+              _summonColossalParts(
+                card: definition,
+                source: source,
+                enemy: enemy,
+                owner: _ownerOf(source),
+              );
+            }
+            if (resurrected == 0) {
+              stateLog(sourceName, '没有可复活的友方单位。');
+            }
+            break;
           case 'spell-school-payoff':
             final nested = effect['effects'];
             if (_spellSchoolPayoffActive(source, effect) && nested is List) {
@@ -2721,6 +2772,41 @@ class GameController extends ChangeNotifier {
               sourceName,
               '${target.card.name} 变形为 ${transformed.name}。',
             );
+            break;
+          case 'return-unit-to-hand':
+            if (target == null) break;
+            final targetSide = source.board.contains(target)
+                ? source
+                : enemy.board.contains(target)
+                ? enemy
+                : null;
+            if (targetSide == null) break;
+            targetSide.board.remove(target);
+            _syncHandCostReductions(targetSide);
+            if (_occupiedHandSlots(targetSide) < 10) {
+              targetSide.hand.add(target.card);
+              targetSide.handCostReductions.add(0);
+              targetSide.handFragments.add(null);
+              stateLog(sourceName, '${target.card.name} 返回其控制者的手牌并移除全部增益。');
+              _emitFx(
+                'draw',
+                '${target.card.name} 返回手牌',
+                '战场增益已移除',
+                Icons.keyboard_return,
+                factionColors[target.card.faction] ?? 0xFFA692D1,
+                sourceId: target.instanceId,
+              );
+            } else {
+              stateLog(sourceName, '${target.card.name} 因控制者手牌已满而燃毁。');
+              _emitFx(
+                'burn',
+                '回手燃毁',
+                '${target.card.name} 因手牌已满被销毁',
+                Icons.local_fire_department,
+                0xFFE46D3F,
+                sourceId: target.instanceId,
+              );
+            }
             break;
           case 'choose-one':
             final options = effect['options'];
@@ -3186,6 +3272,20 @@ class GameController extends ChangeNotifier {
         while (deathIndex < deathQueue.length) {
           final entry = deathQueue[deathIndex++];
           final unit = entry.unit;
+          entry.side.deathHistory.add(
+            BattleDeathRecord(
+              entityId: unit.instanceId,
+              cardId: unit.card.id,
+              name: unit.card.name,
+              controller: identical(entry.side, state.player) ? 0 : 1,
+              diedTurn: state.turn,
+              deathOrder:
+                  state.player.deathHistory.length +
+                  state.ai.deathHistory.length +
+                  1,
+              minionTypes: List<String>.from(unit.card.minionTypes),
+            ),
+          );
           stateLog('亡语回响', '${unit.card.name} 离开战场。');
           _emitFx(
             'death',

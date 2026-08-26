@@ -132,6 +132,20 @@ void main() {
             .where((effect) => effect['kind'] == 'random-enemy-freeze'),
         hasLength(1),
       );
+      expect(
+        catalog
+            .singleWhere((card) => card.id == 'gloomwood-season-spell-03')
+            .effect
+            .single['kind'],
+        'resurrect-friendly-unit',
+      );
+      expect(
+        catalog
+            .singleWhere((card) => card.id == 'dusk-season-spell-10')
+            .effect
+            .single['kind'],
+        'return-unit-to-hand',
+      );
     },
   );
 
@@ -675,6 +689,133 @@ void main() {
       expect(controller.playCard(historian, handIndex: 0), isTrue);
       expect(state.player.deck, isEmpty);
       expect(state.player.hand, [filler, filler]);
+      controller.dispose();
+    },
+  );
+
+  test(
+    'mobile death history supports fresh resurrection and buff-clearing bounce',
+    () async {
+      final filler = CardDefinition(
+        id: 'zone-filler',
+        name: '区域占位牌',
+        description: '测试牌库。',
+        faction: '曜光',
+        type: 'unit',
+        cost: 9,
+        rarity: '普通',
+        attack: 0,
+        health: 1,
+      );
+      final victim = CardDefinition(
+        id: 'zone-victim',
+        name: '墓地测试单位',
+        description: '用于验证区域移动。',
+        faction: '曜光',
+        type: 'unit',
+        cost: 2,
+        rarity: '普通',
+        attack: 2,
+        health: 2,
+        minionTypes: const ['construct'],
+      );
+      final settleDeaths = CardDefinition(
+        id: 'zone-settle',
+        name: '结算死亡',
+        description: '触发死亡结算。',
+        faction: '曜光',
+        type: 'spell',
+        cost: 0,
+        rarity: '普通',
+        effect: const [
+          {'kind': 'armor', 'amount': 0},
+        ],
+      );
+      final resurrect = CardDefinition(
+        id: 'zone-resurrect',
+        name: '墓地重构',
+        description: '复活最近死亡的友方单位。',
+        faction: '曜光',
+        type: 'spell',
+        cost: 0,
+        rarity: '稀有',
+        effect: const [
+          {'kind': 'resurrect-friendly-unit', 'count': 1},
+        ],
+      );
+      final bounce = CardDefinition(
+        id: 'zone-bounce',
+        name: '战场撤回',
+        description: '使一个敌方单位返回手牌。',
+        faction: '曜光',
+        type: 'spell',
+        cost: 0,
+        rarity: '稀有',
+        target: 'enemy-unit',
+        effect: const [
+          {'kind': 'return-unit-to-hand'},
+        ],
+      );
+      final controller = GameController(startingPlayer: 'player')
+        ..catalog = [filler, victim, settleDeaths, resurrect, bounce]
+        ..deckIds.addAll(List.filled(30, filler.id));
+      controller.startBattle();
+      await controller.confirmMulligan();
+      final state = controller.battle!;
+      state.player.board.add(
+        BattleUnit(
+          instanceId: 'dead-zone-unit',
+          card: victim,
+          owner: 'player',
+          attack: 8,
+          health: 0,
+          maxHealth: 9,
+          permanentAttackBonus: 6,
+          permanentHealthBonus: 7,
+        ),
+      );
+      state.player.hand
+        ..clear()
+        ..addAll([settleDeaths, resurrect, bounce]);
+      state.player.handCostReductions
+        ..clear()
+        ..addAll([0, 0, 0]);
+      state.player.handFragments
+        ..clear()
+        ..addAll([null, null, null]);
+      state.player.mana = 10;
+
+      expect(controller.playCard(settleDeaths, handIndex: 0), isTrue);
+      expect(state.player.deathHistory.single.cardId, victim.id);
+      expect(state.player.board, isEmpty);
+      expect(controller.playCard(resurrect, handIndex: 0), isTrue);
+      expect(state.player.deathHistory, hasLength(1));
+      expect(state.player.board.single.attack, 2);
+      expect(state.player.board.single.health, 2);
+      expect(state.player.board.single.maxHealth, 2);
+
+      state.ai.hand.clear();
+      state.ai.handCostReductions.clear();
+      state.ai.handFragments.clear();
+      final bounced = BattleUnit(
+        instanceId: 'bounce-zone-unit',
+        card: victim,
+        owner: 'ai',
+        attack: 9,
+        health: 8,
+        maxHealth: 8,
+        temporaryAttackBonus: 7,
+        temporaryHealthBonus: 6,
+      );
+      state.ai.board.add(bounced);
+      expect(
+        controller.playCard(bounce, handIndex: 0, target: bounced),
+        isTrue,
+      );
+      expect(state.ai.board, isEmpty);
+      expect(state.ai.hand.single, victim);
+      expect(state.ai.handCostReductions, [0]);
+      expect(state.ai.deathHistory, isEmpty);
       controller.dispose();
     },
   );
@@ -2712,6 +2853,17 @@ void main() {
               'hand': ['sun-dawn-scout'],
               'spellSchoolsPlayedThisTurn': ['construct', 'astral'],
               'spellSchoolsPlayedLastTurn': ['radiance'],
+              'deathHistory': [
+                {
+                  'entityId': 'dead-1',
+                  'cardId': 'sun-dawn-scout',
+                  'name': '晨辉斥候',
+                  'controller': 0,
+                  'diedTurn': 1,
+                  'deathOrder': 4,
+                  'minionTypes': ['beast'],
+                },
+              ],
               'board': [
                 {
                   'entityId': 'u1',
@@ -2726,6 +2878,17 @@ void main() {
             {
               'hero': {'health': 24},
               'hand': ['__hidden-card__', '__hidden-card__'],
+              'deathHistory': [
+                {
+                  'entityId': 'dead-2',
+                  'cardId': 'neutral-clockwork-beetle',
+                  'name': '齿轮圣甲虫',
+                  'controller': 1,
+                  'diedTurn': 2,
+                  'deathOrder': 5,
+                  'minionTypes': ['beast', 'construct'],
+                },
+              ],
               'board': [],
             },
           ],
@@ -2741,6 +2904,11 @@ void main() {
     expect(controller.localBoard.single.minionTypes, ['beast', 'construct']);
     expect(controller.localSpellSchoolsThisTurn, ['construct', 'astral']);
     expect(controller.localSpellSchoolsLastTurn, ['radiance']);
+    expect(controller.localDeathHistory.single.cardId, 'sun-dawn-scout');
+    expect(controller.remoteDeathHistory.single.minionTypes, [
+      'beast',
+      'construct',
+    ]);
     expect(controller.canAct, isTrue);
 
     client.lastEvent = MultiplayerEvent(

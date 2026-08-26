@@ -15277,25 +15277,17 @@
   {
     "id": "dusk-season-spell-10",
     "name": "无光秘契·10",
-    "description": "奥秘：敌方攻击时对攻击者造成 2 点伤害。",
+    "description": "使一个敌方单位返回其控制者的手牌。返回时移除全部增益。",
     "faction": "暮影",
     "type": "spell",
     "cost": 2,
     "rarity": "史诗",
     "school": "tide",
-    "target": "none",
-    "keywords": [
-      "secret"
-    ],
+    "target": "enemy-unit",
+    "keywords": [],
     "effect": [
       {
-        "kind": "secret",
-        "secretId": "dusk-season-secret-10",
-        "trigger": "opponent-attacks-hero",
-        "effect": {
-          "kind": "damage-attacker",
-          "amount": 2
-        }
+        "kind": "return-unit-to-hand"
       }
     ],
     "onDeath": [],
@@ -24271,17 +24263,17 @@
   {
     "id": "gloomwood-season-spell-03",
     "name": "腐花复苏·03",
-    "description": "为一个友方角色恢复 5 点生命。",
+    "description": "复活本局最近死亡的一个友方单位。复活体使用印刷属性，不保留原有增益。",
     "faction": "幽森",
     "type": "spell",
     "cost": 3,
     "rarity": "普通",
     "school": "verdant",
-    "target": "friendly-character",
+    "target": "none",
     "effect": [
       {
-        "kind": "heal",
-        "amount": 5
+        "kind": "resurrect-friendly-unit",
+        "count": 1
       }
     ],
     "keywords": [],

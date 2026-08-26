@@ -2850,6 +2850,7 @@ class _BattleBoardState extends State<BattleBoard> {
                             state.ai.spellSchoolsPlayedThisTurn,
                         spellSchoolsLastTurn:
                             state.ai.spellSchoolsPlayedLastTurn,
+                        deathHistory: state.ai.deathHistory,
                         secretCount: state.ai.secrets.length,
                         heroAttackBonus: state.ai.heroAttackBonus,
                         ai: true,
@@ -2888,6 +2889,7 @@ class _BattleBoardState extends State<BattleBoard> {
                             state.player.spellSchoolsPlayedThisTurn,
                         spellSchoolsLastTurn:
                             state.player.spellSchoolsPlayedLastTurn,
+                        deathHistory: state.player.deathHistory,
                         secretCount: state.player.secrets.length,
                         heroAttackBonus: state.player.heroAttackBonus,
                         ai: false,
@@ -3903,6 +3905,7 @@ class _HeroBar extends StatelessWidget {
     required this.heraldCount,
     required this.spellSchoolsThisTurn,
     required this.spellSchoolsLastTurn,
+    required this.deathHistory,
     required this.secretCount,
     this.heroAttackBonus = 0,
     required this.ai,
@@ -3919,6 +3922,7 @@ class _HeroBar extends StatelessWidget {
   final int heraldCount;
   final List<String> spellSchoolsThisTurn;
   final List<String> spellSchoolsLastTurn;
+  final List<BattleDeathRecord> deathHistory;
   final int secretCount;
   final int heroAttackBonus;
   final bool ai;
@@ -4017,6 +4021,12 @@ class _HeroBar extends StatelessWidget {
                   '上回合 ${spellSchoolsLastTurn.toSet().map((school) => spellSchoolLabels[school] ?? school).join('/')}',
               ].join(' · '),
               style: const TextStyle(color: Color(0xFF9DBFE4), fontSize: 9),
+              overflow: TextOverflow.ellipsis,
+            ),
+          if (deathHistory.isNotEmpty)
+            Text(
+              '☠ 墓地 ${deathHistory.length} · ${deathHistory.reversed.take(2).map((record) => record.name).join('/')}',
+              style: const TextStyle(color: Color(0xFFC9AAA0), fontSize: 9),
               overflow: TextOverflow.ellipsis,
             ),
         ],
@@ -4933,6 +4943,22 @@ class OnlineBattlePanel extends StatelessWidget {
                         controller.remoteSpellSchoolsLastTurn.isNotEmpty)
                       Text(
                         '对手派系 ${{...controller.remoteSpellSchoolsThisTurn, ...controller.remoteSpellSchoolsLastTurn}.map((school) => spellSchoolLabels[school] ?? school).join('/')}',
+                        style: const TextStyle(
+                          color: Color(0xFFB99ACF),
+                          fontSize: 10,
+                        ),
+                      ),
+                    if (controller.localDeathHistory.isNotEmpty)
+                      Text(
+                        '墓地 ${controller.localDeathHistory.length} · ${controller.localDeathHistory.reversed.take(2).map((record) => record.name).join('/')}',
+                        style: const TextStyle(
+                          color: Color(0xFFC9AAA0),
+                          fontSize: 10,
+                        ),
+                      ),
+                    if (controller.remoteDeathHistory.isNotEmpty)
+                      Text(
+                        '对手墓地 ${controller.remoteDeathHistory.length} · ${controller.remoteDeathHistory.reversed.take(2).map((record) => record.name).join('/')}',
                         style: const TextStyle(
                           color: Color(0xFFB99ACF),
                           fontSize: 10,

@@ -312,6 +312,14 @@ type BattleSide = {
   overloadLocked: number;
   spellSchoolsPlayedThisTurn: SpellSchool[];
   spellSchoolsPlayedLastTurn: SpellSchool[];
+  deathHistory: Array<{
+    entityId: string;
+    cardId: string;
+    name: string;
+    diedTurn: number;
+    deathOrder: number;
+    minionTypes: MinionType[];
+  }>;
   weapon: {
     cardId: string;
     name: string;
@@ -1537,6 +1545,22 @@ function battleFromRaw(value: unknown): BattleView | null {
       ? side.spellSchoolsPlayedLastTurn
           .map(String)
           .filter((school): school is SpellSchool => SPELL_SCHOOL_ORDER.includes(school as SpellSchool))
+      : [],
+    deathHistory: Array.isArray(side.deathHistory)
+      ? side.deathHistory.map((entry, index) => {
+          const record = (entry ?? {}) as Record<string, unknown>;
+          const cardId = asString(record.cardId);
+          return {
+            entityId: asString(record.entityId, `death-${index}`),
+            cardId,
+            name: asString(record.name, CARD_BY_ID.get(cardId)?.name ?? "未知单位"),
+            diedTurn: asNumber(record.diedTurn, 1),
+            deathOrder: asNumber(record.deathOrder, index + 1),
+            minionTypes: Array.isArray(record.minionTypes)
+              ? (record.minionTypes.map(String) as MinionType[])
+              : [...(CARD_BY_ID.get(cardId)?.minionTypes ?? [])],
+          };
+        })
       : [],
     secrets: Array.isArray(side.secrets)
       ? side.secrets.map((entry) => {
@@ -6660,6 +6684,30 @@ function SecretTray({
   );
 }
 
+function DeathHistoryTray({
+  history,
+  enemy = false,
+}: {
+  history: BattleSide["deathHistory"];
+  enemy?: boolean;
+}) {
+  if (history.length === 0) return null;
+  const recent = [...history].reverse().slice(0, 3);
+  return (
+    <div className={`death-history ${enemy ? "death-history--enemy" : ""}`} aria-label={`${enemy ? "敌方" : "我方"}死亡历史 ${history.length} 个单位`}>
+      <span className="death-history__label">☠ {enemy ? "敌方" : "我方"}墓地 · {history.length}</span>
+      <div>
+        {recent.map((record) => (
+          <span title={`第 ${record.diedTurn} 回合死亡`} key={`${record.entityId}-${record.deathOrder}`}>
+            {record.name}
+          </span>
+        ))}
+        {history.length > recent.length && <small>+{history.length - recent.length}</small>}
+      </div>
+    </div>
+  );
+}
+
 function HeroCore({
   side,
   active,
@@ -7635,6 +7683,7 @@ function BattleSection({
               <small>{battle.ai.deckCount} 张牌库</small>
             </div>
             <SecretTray secrets={battle.ai.secrets} enemy />
+            <DeathHistoryTray history={battle.ai.deathHistory} enemy />
             <div
               className="board-row board-row--enemy"
               aria-label={`敌方战场 ${battle.ai.board.length}/${BOARD_SLOT_COUNT}`}
@@ -7756,6 +7805,7 @@ function BattleSection({
               </button>
             </div>
             <SecretTray secrets={battle.player.secrets} />
+            <DeathHistoryTray history={battle.player.deathHistory} />
             <div className="player-hand">
               <span className={`player-hand__count ${battle.player.hand.length + (battle.player.coinAvailable ? 1 : 0) >= 10 ? "player-hand__count--full" : ""}`}>
                 手牌 {battle.player.hand.length + (battle.player.coinAvailable ? 1 : 0)} / 10

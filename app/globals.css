@@ -4369,6 +4369,19 @@ button.game-card:not(:disabled):hover .game-card__artwork,
   align-self: center;
 }
 
+.battlefield__player-zone > .death-history {
+  grid-column: 2 / -1;
+  grid-row: 2;
+  align-self: center;
+  justify-self: end;
+}
+
+.battlefield__enemy-zone > .death-history {
+  position: absolute;
+  top: 56px;
+  right: 18px;
+}
+
 .battlefield__side-info {
   display: flex;
   align-items: center;
@@ -4881,6 +4894,60 @@ button.hero-core {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.death-history {
+  z-index: 3;
+  display: inline-flex;
+  min-width: 0;
+  max-width: min(52%, 430px);
+  align-items: center;
+  gap: 6px;
+  padding: 3px 7px;
+  border: 1px solid rgba(151, 117, 102, 0.28);
+  border-radius: 999px;
+  color: #c9aaa0;
+  background: rgba(28, 16, 14, 0.76);
+  font-size: 7px;
+  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.16);
+}
+
+.death-history--enemy {
+  color: #c5addb;
+  border-color: rgba(174, 137, 207, 0.27);
+  background: rgba(29, 20, 39, 0.78);
+}
+
+.death-history__label {
+  flex: 0 0 auto;
+  color: #e0c0b2;
+  letter-spacing: 0.04em;
+}
+
+.death-history--enemy .death-history__label {
+  color: #d8c2ea;
+}
+
+.death-history > div {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 4px;
+  overflow: hidden;
+}
+
+.death-history > div > span {
+  overflow: hidden;
+  max-width: 90px;
+  padding-left: 4px;
+  border-left: 1px solid currentColor;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0.86;
+}
+
+.death-history small {
+  flex: 0 0 auto;
 }
 
 .card-back {
@@ -8578,6 +8645,14 @@ button.hero-core {
 
   .player-hand .hand-card {
     scroll-snap-align: start;
+  }
+
+  .death-history {
+    max-width: 54%;
+  }
+
+  .death-history > div > span:not(:first-child) {
+    display: none;
   }
 
 }

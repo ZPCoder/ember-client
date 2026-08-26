@@ -290,6 +290,26 @@ class BattleUnit {
       !summoningSick && !isFrozen && attacksMade < attackLimit;
 }
 
+class BattleDeathRecord {
+  const BattleDeathRecord({
+    required this.entityId,
+    required this.cardId,
+    required this.name,
+    required this.controller,
+    required this.diedTurn,
+    required this.deathOrder,
+    this.minionTypes = const <String>[],
+  });
+
+  final String entityId;
+  final String cardId;
+  final String name;
+  final int controller;
+  final int diedTurn;
+  final int deathOrder;
+  final List<String> minionTypes;
+}
+
 class BattleSide {
   BattleSide({
     required this.heroHealth,
@@ -313,12 +333,14 @@ class BattleSide {
     this.heroAttackBonus = 0,
     List<String>? spellSchoolsPlayedThisTurn,
     List<String>? spellSchoolsPlayedLastTurn,
+    List<BattleDeathRecord>? deathHistory,
     List<BattleSecret>? secrets,
   }) : deckCostOverrides = List<int?>.from(deckCostOverrides ?? const <int?>[]),
        handCostReductions = handCostReductions ?? <int>[],
        handFragments = handFragments ?? <HandFragment?>[],
        spellSchoolsPlayedThisTurn = spellSchoolsPlayedThisTurn ?? <String>[],
        spellSchoolsPlayedLastTurn = spellSchoolsPlayedLastTurn ?? <String>[],
+       deathHistory = deathHistory ?? <BattleDeathRecord>[],
        secrets = secrets ?? <BattleSecret>[];
 
   int heroHealth;
@@ -343,6 +365,7 @@ class BattleSide {
   int cardsPlayedThisTurn = 0;
   final List<String> spellSchoolsPlayedThisTurn;
   final List<String> spellSchoolsPlayedLastTurn;
+  final List<BattleDeathRecord> deathHistory;
   bool heroHasAttacked = false;
   final List<BattleSecret> secrets;
 }
