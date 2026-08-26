@@ -105,6 +105,8 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(game, /天梯预备套牌/);
   assert.match(game, /activate_ladder_ready/);
   assert.match(game, /claim_ladder_ready_deck/);
+  assert.match(game, /claim_catch_up_pack/);
+  assert.match(game, /previewCatchUpPack/);
   assert.match(game, /LADDER_READY_DECKS/);
   assert.match(game, /AI 与在线对战均可使用/);
   assert.match(game, /预备 · 全部能量/);

@@ -47,6 +47,7 @@ import {
   getHeroPower,
   hasMinionType,
   getLadderReadyDeck,
+  generateCatchUpPack,
   getTraitStatuses,
   LADDER_DIAMOND_FIVE_PROGRESS,
   LADDER_READY_DECKS,
@@ -74,6 +75,7 @@ import {
   rankedFormatLabel,
   totalRankedWins,
   ladderReadyTrialIsActive,
+  previewCatchUpPack,
   planAiTurnReplay,
   previewDeckCode,
   shouldScheduleLocalAiTurn,
@@ -224,6 +226,7 @@ type PlayerSnapshot = {
     expiresAt: string | null;
     claimedDeckId: LadderReadyDeckId | null;
   };
+  catchUpPack?: { claimedAt: string | null; cardsGranted: number };
   recentMatches: RecentMatch[];
   stats: { wins: number; losses: number; matchesPlayed: number };
   updatedAt: string;
@@ -801,6 +804,7 @@ function readLocalPlayer(email: string): PlayerSnapshot | null {
       rankedRewards: rolled.rankedRewards,
       collection: rolled.collection,
       packsAvailable: rolled.packsAvailable,
+      catchUpPack: parsed.catchUpPack ?? { claimedAt: null, cardsGranted: 0 },
     };
     persistLocalPlayer(migrated);
     return migrated;
@@ -892,6 +896,7 @@ function makeDemoPlayer(identity?: {
     rewardTrack: { claimedLevels: [] },
     apprenticeTrack: { claimedMilestones: [] },
     ladderReady: { activatedAt: null, expiresAt: null, claimedDeckId: null },
+    catchUpPack: { claimedAt: null, cardsGranted: 0 },
     rankedLadders: {
       ...createRankedLadders(seasonKey),
       standard: { ...createRankedSnapshot(seasonKey), wins: 7, losses: 3 },
@@ -1022,6 +1027,32 @@ function applyLocalAction(
       updatedAt: now,
     };
     return { ok: true, player, claimedLadderReadyDeck, localFallback: true };
+  }
+  if (action === "claim_catch_up_pack") {
+    if (!current.ladderReady?.activatedAt) throw new Error("请先启动回归扶持计划。");
+    if (current.catchUpPack?.claimedAt) throw new Error("本档案已经领取过追赶包。");
+    const seed = current.stats.matchesPlayed
+      + (current.packPity?.packsOpened ?? 0) * 31
+      + Object.values(current.collection).reduce((sum, count) => sum + count, 0) * 131;
+    const cards = generateCatchUpPack(current.collection, seed);
+    const collection = { ...current.collection };
+    const counts = new Map<string, number>();
+    cards.forEach((cardId) => {
+      collection[cardId] = (collection[cardId] ?? 0) + 1;
+      counts.set(cardId, (counts.get(cardId) ?? 0) + 1);
+    });
+    const player = {
+      ...current,
+      collection,
+      catchUpPack: { claimedAt: now, cardsGranted: cards.length },
+      updatedAt: now,
+    };
+    return {
+      ok: true,
+      player,
+      openedCards: [...counts].map(([cardId, count]) => ({ cardId, count })),
+      localFallback: true,
+    };
   }
   if (action === "update_profile") {
     const displayName = asString(body.displayName, current.displayName).trim().replace(/\s+/g, " ");
@@ -3912,6 +3943,18 @@ export function GameApp({
     });
   };
 
+  const claimCatchUpPack = async () => {
+    const payload = await postAction("claim_catch_up_pack", {
+      idempotencyKey: makeId("catch-up-pack"),
+    });
+    if (!payload) return;
+    const granted = payload.openedCards?.reduce((sum, entry) => sum + entry.count, 0) ?? 0;
+    setNotice({
+      tone: payload.localFallback ? "info" : "success",
+      text: `追赶包已解密：根据领取前收藏缺口获得 ${granted} 张卡牌。`,
+    });
+  };
+
   const claimTask = async (task: PlayerTask) => {
     if (task.claimed || task.progress < task.target) return;
     const payload = await postAction("claim_task", {
@@ -5264,8 +5307,9 @@ export function GameApp({
                   saving={apiBusy === "save_deck"}
                   deleting={apiBusy === "delete_deck"}
                   ladderReady={player.ladderReady}
+                  catchUpPack={player.catchUpPack}
                   selectedLadderReadyDeckId={selectedLadderReadyDeckId}
-                  ladderReadyBusy={apiBusy === "activate_ladder_ready" || apiBusy === "claim_ladder_ready_deck"}
+                  ladderReadyBusy={apiBusy === "activate_ladder_ready" || apiBusy === "claim_ladder_ready_deck" || apiBusy === "claim_catch_up_pack"}
                   onName={setDeckName}
                   onFormat={(format) => {
                     setDeckFormat(format);
@@ -5291,6 +5335,7 @@ export function GameApp({
                   onActivateLadderReady={() => void activateLadderReady()}
                   onTrialLadderReady={trialLadderReadyDeck}
                   onClaimLadderReady={(deckId) => void claimLadderReady(deckId)}
+                  onClaimCatchUpPack={() => void claimCatchUpPack()}
                 />
               )}
               {section === "battle" && (
@@ -6171,6 +6216,7 @@ function DeckSection({
   saving,
   deleting,
   ladderReady,
+  catchUpPack,
   selectedLadderReadyDeckId,
   ladderReadyBusy,
   onName,
@@ -6189,6 +6235,7 @@ function DeckSection({
   onActivateLadderReady,
   onTrialLadderReady,
   onClaimLadderReady,
+  onClaimCatchUpPack,
 }: {
   cards: CatalogCard[];
   collection: Record<string, number>;
@@ -6205,6 +6252,7 @@ function DeckSection({
   saving: boolean;
   deleting: boolean;
   ladderReady?: PlayerSnapshot["ladderReady"];
+  catchUpPack?: PlayerSnapshot["catchUpPack"];
   selectedLadderReadyDeckId: LadderReadyDeckId | null;
   ladderReadyBusy: boolean;
   onName: (name: string) => void;
@@ -6223,6 +6271,7 @@ function DeckSection({
   onActivateLadderReady: () => void;
   onTrialLadderReady: (deckId: LadderReadyDeckId) => void;
   onClaimLadderReady: (deckId: LadderReadyDeckId) => void;
+  onClaimCatchUpPack: () => void;
 }) {
   const [deckCode, setDeckCode] = useState("");
   const [copiedDeckFingerprint, setCopiedDeckFingerprint] = useState<string | null>(null);
@@ -6242,6 +6291,7 @@ function DeckSection({
   const trialExpired = Boolean(ladderReady?.expiresAt && clockNow && Date.parse(ladderReady.expiresAt) <= clockNow);
   const trialClaimed = Boolean(ladderReady?.claimedDeckId);
   const trialPlayable = ladderReadyTrialIsActive(ladderReady, clockNow);
+  const catchUpPreview = previewCatchUpPack(collection);
   const uniqueDeckCards = Array.from(deckCounts.entries())
     .map(([id, count]) => ({ card: CARD_BY_ID.get(id), count }))
     .filter((entry): entry is { card: CatalogCard; count: number } => Boolean(entry.card))
@@ -6369,6 +6419,20 @@ function DeckSection({
           <span><Icon name="check" size={14} /> AI 与在线对战均可使用</span>
           <span><Icon name="clock" size={14} /> 激活后连续计时七天</span>
           <span><Icon name="shield" size={14} /> 每个账号仅能永久领取一套</span>
+          <span>
+            <Icon name="cards" size={14} />
+            {catchUpPack?.claimedAt
+              ? `追赶包已领取 · ${catchUpPack.cardsGranted} 张`
+              : `追赶包预估 ${catchUpPreview.cardCount} 张（收藏越少越多）`}
+          </span>
+          <button
+            className="button button--small"
+            type="button"
+            disabled={!trialActivated || Boolean(catchUpPack?.claimedAt) || ladderReadyBusy}
+            onClick={onClaimCatchUpPack}
+          >
+            {catchUpPack?.claimedAt ? "追赶包已领取" : "领取追赶包"}
+          </button>
         </div>
         <div className="ladder-ready__grid">
           {LADDER_READY_DECKS.map((offer) => {
