@@ -23,6 +23,7 @@ import {
   BULK_PACK_MAX_COUNT,
   BULK_PACK_MIN_COUNT,
   EXPANSION_PACK_SET_IDS,
+  GOLDEN_BULK_PACK_MAX_COUNT,
   drawPackBatch,
   ETERNAL_SCARAB_CARD_BACK_NAME,
   ETERNAL_SCARAB_LEGEND_SEASON_TARGET,
@@ -32,6 +33,8 @@ import {
   REWARD_TRACK,
   craftCost,
   disenchantValue,
+  goldenCraftCost,
+  goldenDisenchantValue,
   extraCardDisenchantPlan,
   TRAIT_DEFINITIONS,
   TRAIT_ORDER,
@@ -47,6 +50,7 @@ import {
   parseCardSearch,
   packTypeAvailable,
   packTypeLabel,
+  packLabel,
   chooseAiMulliganIndexes,
   completeDeckFromCollection,
   createMatch,
@@ -119,6 +123,7 @@ import {
   type BattleEffectKind,
   type BattleCommand,
   type CardDefinition,
+  type CardQuality,
   type CardSetId,
   type ExpansionPackSetId,
   type PackType,
@@ -242,7 +247,10 @@ type PlayerSnapshot = {
   packPity?: { packsOpened: number; packsSinceLegendary: number };
   expansionPacks?: Record<ExpansionPackSetId, number>;
   expansionPackPity?: Record<ExpansionPackSetId, { packsOpened: number; packsSinceLegendary: number }>;
+  goldenPacks?: Record<PackType, number>;
+  goldenPackPity?: Record<PackType, { packsOpened: number; packsSinceLegendary: number }>;
   collection: Record<string, number>;
+  goldenCollection?: Record<string, number>;
   decks: SavedDeck[];
   activeDeckId: string | null;
   tasks: PlayerTask[];
@@ -847,11 +855,24 @@ function emptyExpansionPackPity(): Record<ExpansionPackSetId, { packsOpened: num
   ])) as Record<ExpansionPackSetId, { packsOpened: number; packsSinceLegendary: number }>;
 }
 
-function playerPackCount(player: PlayerSnapshot, packType: PackType): number {
+function emptyGoldenPacks(): Record<PackType, number> {
+  return Object.fromEntries((["standard", ...EXPANSION_PACK_SET_IDS] as PackType[]).map((packType) => [packType, 0])) as Record<PackType, number>;
+}
+
+function emptyGoldenPackPity(): Record<PackType, { packsOpened: number; packsSinceLegendary: number }> {
+  return Object.fromEntries((["standard", ...EXPANSION_PACK_SET_IDS] as PackType[]).map((packType) => [
+    packType,
+    { packsOpened: 0, packsSinceLegendary: 0 },
+  ])) as Record<PackType, { packsOpened: number; packsSinceLegendary: number }>;
+}
+
+function playerPackCount(player: PlayerSnapshot, packType: PackType, quality: CardQuality = "normal"): number {
+  if (quality === "golden") return player.goldenPacks?.[packType] ?? 0;
   return packType === "standard" ? player.packsAvailable : player.expansionPacks?.[packType] ?? 0;
 }
 
-function playerPackPity(player: PlayerSnapshot, packType: PackType) {
+function playerPackPity(player: PlayerSnapshot, packType: PackType, quality: CardQuality = "normal") {
+  if (quality === "golden") return player.goldenPackPity?.[packType] ?? { packsOpened: 0, packsSinceLegendary: 0 };
   return packType === "standard"
     ? player.packPity ?? { packsOpened: 0, packsSinceLegendary: 0 }
     : player.expansionPackPity?.[packType] ?? { packsOpened: 0, packsSinceLegendary: 0 };
@@ -936,6 +957,9 @@ function readLocalPlayer(email: string): PlayerSnapshot | null {
         ...emptyExpansionPackPity(),
         ...(parsed.expansionPackPity ?? {}),
       },
+      goldenPacks: { ...emptyGoldenPacks(), ...(parsed.goldenPacks ?? {}) },
+      goldenPackPity: { ...emptyGoldenPackPity(), ...(parsed.goldenPackPity ?? {}) },
+      goldenCollection: parsed.goldenCollection ?? {},
       catchUpPack: {
         ...baseCatchUp,
         ...rolledCatchUpProgress,
@@ -993,7 +1017,10 @@ function makeDemoPlayer(identity?: {
     packPity: { packsOpened: 0, packsSinceLegendary: 0 },
     expansionPacks: emptyExpansionPacks(),
     expansionPackPity: emptyExpansionPackPity(),
+    goldenPacks: { ...emptyGoldenPacks(), standard: 1 },
+    goldenPackPity: emptyGoldenPackPity(),
     collection,
+    goldenCollection: {},
     decks: [deck],
     activeDeckId: deck.id,
     tasks: [
@@ -1388,18 +1415,20 @@ function applyLocalAction(
   }
   if (action === "open_pack" || action === "open_packs") {
     const packType: PackType = isPackType(body.packType) ? body.packType : "standard";
+    const quality: CardQuality = body.quality === "golden" ? "golden" : "normal";
     if (!packTypeAvailable(packType)) throw new Error(`${packTypeLabel(packType)}尚未开放。`);
     const packCount = action === "open_packs" ? asNumber(body.count) : 1;
-    if (!Number.isInteger(packCount) || packCount < 1 || packCount > BULK_PACK_MAX_COUNT) {
-      throw new Error(`开包数量必须是 1–${BULK_PACK_MAX_COUNT} 的整数。`);
+    const maxPackCount = quality === "golden" ? GOLDEN_BULK_PACK_MAX_COUNT : BULK_PACK_MAX_COUNT;
+    if (!Number.isInteger(packCount) || packCount < 1 || packCount > maxPackCount) {
+      throw new Error(`开包数量必须是 1–${maxPackCount} 的整数。`);
     }
     if (action === "open_packs" && packCount < BULK_PACK_MIN_COUNT) {
       throw new Error(`至少持有并开启 ${BULK_PACK_MIN_COUNT} 个同类卡包才能批量解密。`);
     }
-    const available = playerPackCount(current, packType);
-    if (available < packCount) throw new Error(`当前只有 ${available} 个可开启${packTypeLabel(packType)}。`);
+    const available = playerPackCount(current, packType, quality);
+    if (available < packCount) throw new Error(`当前只有 ${available} 个可开启${packLabel(packType, quality)}。`);
     const seed = current.stats.matchesPlayed + available + current.currencies.gold;
-    const packPity = playerPackPity(current, packType);
+    const packPity = playerPackPity(current, packType, quality);
     const currentCatchUp = current.catchUpPack ?? {
       claimedAt: null,
       cardsGranted: 0,
@@ -1421,7 +1450,16 @@ function applyLocalAction(
       batch.openedCards.flatMap((entry) => Array.from({ length: entry.count }, () => entry.cardId)),
     );
     const progressionXp = (current.progression?.xp ?? 0) + packCount * 50;
-    const selectedPackState = packType === "standard"
+    const selectedPackState = quality === "golden"
+      ? {
+          goldenPacks: { ...emptyGoldenPacks(), ...current.goldenPacks, [packType]: Math.max(0, available - packCount) },
+          goldenPackPity: {
+            ...emptyGoldenPackPity(),
+            ...current.goldenPackPity,
+            [packType]: { packsOpened: batch.packsOpened, packsSinceLegendary: batch.packsSinceLegendary },
+          },
+        }
+      : packType === "standard"
       ? {
           packsAvailable: Math.max(0, available - packCount),
           packPity: { packsOpened: batch.packsOpened, packsSinceLegendary: batch.packsSinceLegendary },
@@ -1434,11 +1472,18 @@ function applyLocalAction(
             [packType]: { packsOpened: batch.packsOpened, packsSinceLegendary: batch.packsSinceLegendary },
           },
         };
+    const goldenCollection = { ...(current.goldenCollection ?? {}) };
+    if (quality === "golden") {
+      for (const entry of batch.openedCards) {
+        goldenCollection[entry.cardId] = (goldenCollection[entry.cardId] ?? 0) + entry.count;
+      }
+    }
     const player = {
       ...current,
       ...selectedPackState,
       catchUpPack: { ...currentCatchUp, ...catchUpProgress },
       collection: batch.collection,
+      goldenCollection,
       progression: { xp: progressionXp, level: Math.floor(progressionXp / 1000) + 1 },
       tasks: current.tasks.map((task) =>
         task.id.includes("pack") || task.description.includes("卡包")
@@ -1453,6 +1498,7 @@ function applyLocalAction(
       openedCards: batch.openedCards,
       packsOpened: packCount,
       packType,
+      quality,
       localFallback: true,
     };
   }
@@ -1466,22 +1512,26 @@ function applyLocalAction(
 
   if (action === "buy_pack") {
     const packType: PackType = isPackType(body.packType) ? body.packType : "standard";
+    const quality: CardQuality = body.quality === "golden" ? "golden" : "normal";
     if (!packTypeAvailable(packType)) throw new Error(`${packTypeLabel(packType)}尚未开放。`);
     const cycle = current.taskCycle ?? { dayKey: now.slice(0, 10), weekKey: "demo", dailyRerollsRemaining: 1, packsBoughtToday: 0 };
-    if (current.currencies.gold < 100) throw new Error("金币不足，无法购买卡包。");
+    const costGold = quality === "golden" ? 400 : 100;
+    if (current.currencies.gold < costGold) throw new Error("金币不足，无法购买卡包。");
     if (cycle.packsBoughtToday >= 10) throw new Error("今日卡包购买次数已达上限。");
-    const available = playerPackCount(current, packType);
-    const selectedPackState = packType === "standard"
+    const available = playerPackCount(current, packType, quality);
+    const selectedPackState = quality === "golden"
+      ? { goldenPacks: { ...emptyGoldenPacks(), ...current.goldenPacks, [packType]: available + 1 } }
+      : packType === "standard"
       ? { packsAvailable: available + 1 }
       : { expansionPacks: { ...emptyExpansionPacks(), ...current.expansionPacks, [packType]: available + 1 } };
     const player = {
       ...current,
-      currencies: { ...current.currencies, gold: current.currencies.gold - 100 },
+      currencies: { ...current.currencies, gold: current.currencies.gold - costGold },
       ...selectedPackState,
       taskCycle: { ...cycle, packsBoughtToday: cycle.packsBoughtToday + 1 },
       updatedAt: now,
     };
-    return { ok: true, player, costGold: 100, packType, localFallback: true };
+    return { ok: true, player, costGold, packType, quality, localFallback: true };
   }
 
   if (action === "reroll_task") {
@@ -1507,17 +1557,26 @@ function applyLocalAction(
 
   if (action === "craft_card" || action === "disenchant_card") {
     const cardId = asString(body.cardId);
+    const quality: CardQuality = body.quality === "golden" ? "golden" : "normal";
     const card = CARD_BY_ID.get(cardId);
     if (!card) throw new Error("卡牌不存在。");
     if (action === "craft_card") {
       const cardRule = CARD_RULE_BY_ID.get(cardId);
       if (!cardRule || !cardAvailableInRankedFormat(cardRule, "wild")) throw new Error("该卡牌尚未发布，暂时不能制作。");
-      const cost = craftCost(card.rarity as "普通" | "稀有" | "史诗" | "传说");
+      const rarity = card.rarity as "普通" | "稀有" | "史诗" | "传说";
+      const cost = quality === "golden" ? goldenCraftCost(rarity) : craftCost(rarity);
       if (current.currencies.dust < cost) throw new Error("星尘不足，无法制作这张卡。");
+      const goldenOwned = current.goldenCollection?.[cardId] ?? 0;
+      const qualityOwned = quality === "golden" ? goldenOwned : Math.max(0, (current.collection[cardId] ?? 0) - goldenOwned);
+      const limit = rarity === "传说" ? 1 : 2;
+      if (qualityOwned >= limit) throw new Error(`该品质最多制作 ${limit} 张。`);
       const player = {
         ...current,
         currencies: { ...current.currencies, dust: current.currencies.dust - cost },
         collection: { ...current.collection, [cardId]: (current.collection[cardId] ?? 0) + 1 },
+        goldenCollection: quality === "golden"
+          ? { ...current.goldenCollection, [cardId]: goldenOwned + 1 }
+          : current.goldenCollection,
         catchUpPack: {
           ...(current.catchUpPack ?? { claimedAt: null, cardsGranted: 0 }),
           ...recordCatchUpCards(
@@ -1527,42 +1586,65 @@ function applyLocalAction(
         },
         updatedAt: now,
       };
-      return { ok: true, player, cardId, amount: cost, kind: "craft", localFallback: true };
+      return { ok: true, player, cardId, amount: cost, kind: "craft", quality, localFallback: true };
     }
     const owned = current.collection[cardId] ?? 0;
+    const goldenOwned = current.goldenCollection?.[cardId] ?? 0;
+    const qualityOwned = quality === "golden" ? goldenOwned : Math.max(0, owned - goldenOwned);
     const used = Math.max(0, ...current.decks.map(
       (deck) => deck.cardIds.filter((id) => id === cardId).length,
     ));
-    if (owned <= used) throw new Error("卡牌正在卡组中使用，至少保留卡组所需数量。");
-    const value = disenchantValue(card.rarity as "普通" | "稀有" | "史诗" | "传说");
+    if (qualityOwned < 1 || owned <= used) throw new Error("卡牌正在卡组中使用，至少保留卡组所需数量。");
+    const rarity = card.rarity as "普通" | "稀有" | "史诗" | "传说";
+    const value = quality === "golden" ? goldenDisenchantValue(rarity) : disenchantValue(rarity);
     const player = {
       ...current,
       currencies: { ...current.currencies, dust: current.currencies.dust + value },
       collection: { ...current.collection, [cardId]: owned - 1 },
+      goldenCollection: quality === "golden"
+        ? { ...current.goldenCollection, [cardId]: goldenOwned - 1 }
+        : current.goldenCollection,
       updatedAt: now,
     };
-    return { ok: true, player, cardId, amount: value, kind: "disenchant", localFallback: true };
+    return { ok: true, player, cardId, amount: value, kind: "disenchant", quality, localFallback: true };
   }
 
   if (action === "disenchant_extras") {
-    const plan = extraCardDisenchantPlan(current.collection, CARD_CATALOG);
-    if (plan.totalCopies === 0) throw new Error("收藏中没有超过可用套数的多余卡牌。");
+    const normalCollection = Object.fromEntries(Object.entries(current.collection).map(([cardId, count]) => [
+      cardId,
+      Math.max(0, count - (current.goldenCollection?.[cardId] ?? 0)),
+    ]));
+    const normalPlan = extraCardDisenchantPlan(normalCollection, CARD_CATALOG);
+    const goldenPlan = extraCardDisenchantPlan(current.goldenCollection ?? {}, CARD_CATALOG);
+    const goldenDust = goldenPlan.entries.reduce((sum, entry) => {
+      const rarity = CARD_BY_ID.get(entry.cardId)?.rarity as "普通" | "稀有" | "史诗" | "传说" | undefined;
+      return sum + entry.copies * (rarity ? goldenDisenchantValue(rarity) : 0);
+    }, 0);
+    const totalCopies = normalPlan.totalCopies + goldenPlan.totalCopies;
+    const totalDust = normalPlan.totalDust + goldenDust;
+    if (totalCopies === 0) throw new Error("收藏中没有超过可用套数的多余卡牌。");
     const collection = { ...current.collection };
-    for (const entry of plan.entries) {
+    const goldenCollection = { ...(current.goldenCollection ?? {}) };
+    for (const entry of normalPlan.entries) {
       collection[entry.cardId] = Math.max(0, (collection[entry.cardId] ?? 0) - entry.copies);
+    }
+    for (const entry of goldenPlan.entries) {
+      collection[entry.cardId] = Math.max(0, (collection[entry.cardId] ?? 0) - entry.copies);
+      goldenCollection[entry.cardId] = Math.max(0, (goldenCollection[entry.cardId] ?? 0) - entry.copies);
     }
     const player = {
       ...current,
-      currencies: { ...current.currencies, dust: current.currencies.dust + plan.totalDust },
+      currencies: { ...current.currencies, dust: current.currencies.dust + totalDust },
       collection,
+      goldenCollection,
       updatedAt: now,
     };
     return {
       ok: true,
       player,
-      amount: plan.totalDust,
-      cards: plan.totalCards,
-      copies: plan.totalCopies,
+      amount: totalDust,
+      cards: normalPlan.totalCards + goldenPlan.totalCards,
+      copies: totalCopies,
       kind: "bulk-disenchant",
       localFallback: true,
     };
@@ -3438,6 +3520,7 @@ export function GameApp({
   const [openedPackCount, setOpenedPackCount] = useState(0);
   const [revealedCardCount, setRevealedCardCount] = useState(0);
   const [selectedPackType, setSelectedPackType] = useState<PackType>("standard");
+  const [selectedPackQuality, setSelectedPackQuality] = useState<CardQuality>("normal");
   const [search, setSearch] = useState("");
   const [collectionEnvironment, setCollectionEnvironment] = useState<"released" | "standard" | "wild-only">("released");
   const [cardSetFilter, setCardSetFilter] = useState<"全部" | CardSetId>("全部");
@@ -4217,13 +4300,13 @@ export function GameApp({
   };
 
   const openPack = async (count = 1) => {
-    const available = playerPackCount(player, selectedPackType);
+    const available = playerPackCount(player, selectedPackType, selectedPackQuality);
     if (available < count) {
       setNotice({
         tone: "info",
         text: count > 1
-          ? `当前只有 ${available} 个可开启${packTypeLabel(selectedPackType)}。`
-          : `当前没有可开启${packTypeLabel(selectedPackType)}；可在此购买。`,
+          ? `当前只有 ${available} 个可开启${packLabel(selectedPackType, selectedPackQuality)}。`
+          : `当前没有可开启${packLabel(selectedPackType, selectedPackQuality)}；可在此购买。`,
       });
       return;
     }
@@ -4232,6 +4315,7 @@ export function GameApp({
       idempotencyKey: makeId(bulk ? "packs" : "pack"),
       ...(bulk ? { count } : {}),
       packType: selectedPackType,
+      quality: selectedPackQuality,
     });
     if (payload) {
       setOpenedCards(payload.openedCards ?? []);
@@ -4240,7 +4324,7 @@ export function GameApp({
       setRevealedCardCount((payload.packsOpened ?? count) > 1 ? physicalCardCount : 0);
       setNotice({
         tone: payload.localFallback ? "info" : "success",
-        text: `${payload.packsOpened ?? count} 个${packTypeLabel(selectedPackType)}解密完成，新卡牌已归入收藏${payload.localFallback ? "（本地演示）" : ""}。`,
+        text: `${payload.packsOpened ?? count} 个${packLabel(selectedPackType, selectedPackQuality)}解密完成，新卡牌已归入收藏${payload.localFallback ? "（本地演示）" : ""}。`,
       });
     }
   };
@@ -4261,11 +4345,12 @@ export function GameApp({
     const payload = await postAction("buy_pack", {
       idempotencyKey: makeId("shop-pack"),
       packType: selectedPackType,
+      quality: selectedPackQuality,
     });
     if (payload) {
       setNotice({
         tone: payload.localFallback ? "info" : "success",
-        text: `已购买 1 个${packTypeLabel(selectedPackType)}，消耗 ${payload.costGold ?? 100} 金币${payload.localFallback ? "（本地演示）" : ""}。`,
+        text: `已购买 1 个${packLabel(selectedPackType, selectedPackQuality)}，消耗 ${payload.costGold ?? (selectedPackQuality === "golden" ? 400 : 100)} 金币${payload.localFallback ? "（本地演示）" : ""}。`,
       });
     }
   };
@@ -4284,17 +4369,18 @@ export function GameApp({
     }
   };
 
-  const changeCardDust = async (action: "craft_card" | "disenchant_card", card: CatalogCard) => {
+  const changeCardDust = async (action: "craft_card" | "disenchant_card", card: CatalogCard, quality: CardQuality = "normal") => {
     const payload = await postAction(action, {
       idempotencyKey: makeId(`${action}-${card.id}`),
       cardId: card.id,
+      quality,
     });
     if (payload) {
       setNotice({
         tone: payload.localFallback ? "info" : "success",
         text: action === "craft_card"
-          ? `已制作「${card.name}」，消耗 ${payload.amount ?? craftCost(card.rarity as "普通" | "稀有" | "史诗" | "传说")} 星尘。`
-          : `已分解「${card.name}」，获得 ${payload.amount ?? disenchantValue(card.rarity as "普通" | "稀有" | "史诗" | "传说")} 星尘。`,
+          ? `已制作${quality === "golden" ? "金色" : ""}「${card.name}」，消耗 ${payload.amount ?? (quality === "golden" ? goldenCraftCost(card.rarity as "普通" | "稀有" | "史诗" | "传说") : craftCost(card.rarity as "普通" | "稀有" | "史诗" | "传说"))} 星尘。`
+          : `已分解${quality === "golden" ? "金色" : ""}「${card.name}」，获得 ${payload.amount ?? (quality === "golden" ? goldenDisenchantValue(card.rarity as "普通" | "稀有" | "史诗" | "传说") : disenchantValue(card.rarity as "普通" | "稀有" | "史诗" | "传说"))} 星尘。`,
       });
     }
   };
@@ -5572,7 +5658,7 @@ export function GameApp({
   const totalPacks = player.packsAvailable + EXPANSION_PACK_SET_IDS.reduce(
     (sum, setId) => sum + (player.expansionPacks?.[setId] ?? 0),
     0,
-  );
+  ) + Object.values(player.goldenPacks ?? {}).reduce((sum, count) => sum + count, 0);
   const uniqueOwned = Object.values(player.collection).filter((count) => count > 0).length;
   const winRate =
     player.stats.matchesPlayed > 0
@@ -5751,8 +5837,15 @@ export function GameApp({
                   revealedCardCount={revealedCardCount}
                   apiBusy={apiBusy}
                   selectedPackType={selectedPackType}
+                  selectedPackQuality={selectedPackQuality}
                   onSelectPackType={(packType) => {
                     setSelectedPackType(packType);
+                    setOpenedCards([]);
+                    setOpenedPackCount(0);
+                    setRevealedCardCount(0);
+                  }}
+                  onSelectPackQuality={(quality) => {
+                    setSelectedPackQuality(quality);
                     setOpenedCards([]);
                     setOpenedPackCount(0);
                     setRevealedCardCount(0);
@@ -5775,6 +5868,7 @@ export function GameApp({
                   cards={filteredCards}
                   collection={deckAccessCollection}
                   realCollection={player.collection}
+                  goldenCollection={player.goldenCollection ?? {}}
                   dust={player.currencies.dust}
                   deckCounts={deckCounts}
                   search={search}
@@ -5804,8 +5898,8 @@ export function GameApp({
                   onSpellSchool={setSpellSchoolFilter}
                   onAdd={addCard}
                   apiBusy={apiBusy}
-                  onCraft={(card) => void changeCardDust("craft_card", card)}
-                  onDisenchant={(card) => void changeCardDust("disenchant_card", card)}
+                  onCraft={(card, quality) => void changeCardDust("craft_card", card, quality)}
+                  onDisenchant={(card, quality) => void changeCardDust("disenchant_card", card, quality)}
                   onDisenchantExtras={() => void disenchantExtras()}
                   onOpenDeck={() => switchSection("deck")}
                 />
@@ -6082,7 +6176,9 @@ function OverviewSection({
   revealedCardCount,
   apiBusy,
   selectedPackType,
+  selectedPackQuality,
   onSelectPackType,
+  onSelectPackQuality,
   onOpenPack,
   onOpenPacks,
   onRevealNextCard,
@@ -6104,7 +6200,9 @@ function OverviewSection({
   revealedCardCount: number;
   apiBusy: string | null;
   selectedPackType: PackType;
+  selectedPackQuality: CardQuality;
   onSelectPackType: (packType: PackType) => void;
+  onSelectPackQuality: (quality: CardQuality) => void;
   onOpenPack: () => void;
   onOpenPacks: (count: number) => void;
   onRevealNextCard: () => void;
@@ -6126,8 +6224,9 @@ function OverviewSection({
   }, []);
   const availablePackTypes = (["standard", ...EXPANSION_PACK_SET_IDS] as PackType[])
     .filter((packType) => packTypeAvailable(packType));
-  const selectedPackCount = playerPackCount(player, selectedPackType);
-  const selectedPity = playerPackPity(player, selectedPackType);
+  const selectedPackCount = playerPackCount(player, selectedPackType, selectedPackQuality);
+  const selectedPity = playerPackPity(player, selectedPackType, selectedPackQuality);
+  const selectedBulkMax = selectedPackQuality === "golden" ? GOLDEN_BULK_PACK_MAX_COUNT : BULK_PACK_MAX_COUNT;
   const apprenticeFacts = {
     packsOpened: player.packPity?.packsOpened ?? 0,
     matchesPlayed: player.stats.matchesPlayed,
@@ -6394,16 +6493,21 @@ function OverviewSection({
           <div className="panel__header">
             <div>
               <span className="panel__eyebrow">ARCHIVE DROP</span>
-              <h2 id="pack-title">{packTypeLabel(selectedPackType)}</h2>
+              <h2 id="pack-title">{packLabel(selectedPackType, selectedPackQuality)}</h2>
             </div>
             <span className="pack-panel__timer"><Icon name="clock" size={15} /> {formatUtcResetCountdown("day", clockNow)} 刷新</span>
           </div>
           <label className="pack-type-picker">
             <span>选择卡包</span>
-            <select value={selectedPackType} onChange={(event) => onSelectPackType(event.target.value as PackType)}>
+            <select value={selectedPackType} disabled={apiBusy === "open_pack" || apiBusy === "open_packs" || apiBusy === "buy_pack"} onChange={(event) => onSelectPackType(event.target.value as PackType)}>
               {availablePackTypes.map((packType) => (
-                <option value={packType} key={packType}>{packTypeLabel(packType)} · {playerPackCount(player, packType)} 包</option>
+                <option value={packType} key={packType}>{packTypeLabel(packType)} · {playerPackCount(player, packType, selectedPackQuality)} 包</option>
               ))}
+            </select>
+            <span>卡牌品质</span>
+            <select value={selectedPackQuality} disabled={apiBusy === "open_pack" || apiBusy === "open_packs" || apiBusy === "buy_pack"} onChange={(event) => onSelectPackQuality(event.target.value as CardQuality)}>
+              <option value="normal">普通版本</option>
+              <option value="golden">全金色版本</option>
             </select>
             <small>本包型传说保底：{Math.min(selectedPity.packsSinceLegendary, 39)} / 40</small>
           </label>
@@ -6429,7 +6533,7 @@ function OverviewSection({
                     );
                   }
                   return (
-                    <div className={`mini-reveal mini-reveal--${card?.rarity ?? "common"} is-revealed`} key={`${entry.cardId}-${index}`}>
+                    <div className={`mini-reveal mini-reveal--${card?.rarity ?? "common"} ${selectedPackQuality === "golden" ? "mini-reveal--golden" : ""} is-revealed`} key={`${entry.cardId}-${index}`}>
                       {card && <CardArtwork card={card} className="mini-reveal__artwork" />}
                       <span className="mini-reveal__cost">{card?.cost ?? 0}</span>
                       <span className="mini-reveal__copy">
@@ -6476,18 +6580,18 @@ function OverviewSection({
                 <button
                   className="button button--outline button--wide"
                   type="button"
-                  onClick={() => onOpenPacks(Math.min(BULK_PACK_MAX_COUNT, selectedPackCount))}
+                  onClick={() => onOpenPacks(Math.min(selectedBulkMax, selectedPackCount))}
                   disabled={apiBusy === "open_pack" || apiBusy === "open_packs"}
                 >
                   <Icon name="cards" />
                   {apiBusy === "open_packs"
                     ? "批量解密中…"
-                    : `批量开启 ${Math.min(BULK_PACK_MAX_COUNT, selectedPackCount)} 包`}
+                    : `批量开启 ${Math.min(selectedBulkMax, selectedPackCount)} 包`}
                 </button>
               )}
-              <button className="button button--outline button--wide" type="button" onClick={onBuyPack} disabled={apiBusy === "buy_pack" || player.currencies.gold < 100}>
+              <button className="button button--outline button--wide" type="button" onClick={onBuyPack} disabled={apiBusy === "buy_pack" || player.currencies.gold < (selectedPackQuality === "golden" ? 400 : 100)}>
                 <Icon name="coin" />
-                {apiBusy === "buy_pack" ? "购买中…" : `100 金币购买${packTypeLabel(selectedPackType)}`}
+                {apiBusy === "buy_pack" ? "购买中…" : `${selectedPackQuality === "golden" ? 400 : 100} 金币购买${packLabel(selectedPackType, selectedPackQuality)}`}
               </button>
             </div>
           ) : (
@@ -6497,7 +6601,7 @@ function OverviewSection({
                 type="button"
                 onClick={onOpenPack}
                 disabled={apiBusy === "open_pack" || apiBusy === "open_packs" || selectedPackCount <= 0}
-                aria-label={`开启${packTypeLabel(selectedPackType)}`}
+                aria-label={`开启${packLabel(selectedPackType, selectedPackQuality)}`}
               >
                 <span className="pack-object__halo" />
                 <span className="pack-object__shell">
@@ -6506,7 +6610,7 @@ function OverviewSection({
                 <span className="pack-object__count">× {selectedPackCount}</span>
               </button>
               <h3>{selectedPackCount > 0 ? "有一份加密档案等待解锁" : "该卡包库存为空"}</h3>
-              <p>每份包含 5 张{selectedPackType === "standard" ? "当前标准环境" : CARD_SET_DEFINITIONS[selectedPackType].label}卡牌，至少 1 张稀有或更高品质；各包型独立计算传说保底。</p>
+              <p>每份包含 5 张{selectedPackType === "standard" ? "当前标准环境" : CARD_SET_DEFINITIONS[selectedPackType].label}{selectedPackQuality === "golden" ? "金色" : ""}卡牌，至少 1 张稀有或更高品质；普通与金色包独立计算传说保底。</p>
               <button
                 className="button button--primary button--wide"
                 type="button"
@@ -6520,23 +6624,23 @@ function OverviewSection({
                 <button
                   className="button button--outline button--wide"
                   type="button"
-                  onClick={() => onOpenPacks(Math.min(BULK_PACK_MAX_COUNT, selectedPackCount))}
+                  onClick={() => onOpenPacks(Math.min(selectedBulkMax, selectedPackCount))}
                   disabled={apiBusy === "open_pack" || apiBusy === "open_packs"}
                 >
                   <Icon name="cards" />
                   {apiBusy === "open_packs"
                     ? "批量解密中…"
-                    : `批量开启 ${Math.min(BULK_PACK_MAX_COUNT, selectedPackCount)} 包`}
+                    : `批量开启 ${Math.min(selectedBulkMax, selectedPackCount)} 包`}
                 </button>
               )}
               <button
                 className="button button--outline button--wide"
                 type="button"
                 onClick={onBuyPack}
-                disabled={apiBusy === "buy_pack" || player.currencies.gold < 100}
+                disabled={apiBusy === "buy_pack" || player.currencies.gold < (selectedPackQuality === "golden" ? 400 : 100)}
               >
                 <Icon name="coin" />
-                {apiBusy === "buy_pack" ? "购买中…" : `100 金币购买${packTypeLabel(selectedPackType)}`}
+                {apiBusy === "buy_pack" ? "购买中…" : `${selectedPackQuality === "golden" ? 400 : 100} 金币购买${packLabel(selectedPackType, selectedPackQuality)}`}
               </button>
             </div>
           )}
@@ -6589,6 +6693,7 @@ function CollectionSection({
   cards,
   collection,
   realCollection,
+  goldenCollection,
   dust,
   deckCounts,
   search,
@@ -6626,6 +6731,7 @@ function CollectionSection({
   cards: CatalogCard[];
   collection: Record<string, number>;
   realCollection: Record<string, number>;
+  goldenCollection: Record<string, number>;
   dust: number;
   deckCounts: Map<string, number>;
   search: string;
@@ -6655,16 +6761,29 @@ function CollectionSection({
   onSpellSchool: (value: string) => void;
   onAdd: (card: CatalogCard) => void;
   apiBusy: string | null;
-  onCraft: (card: CatalogCard) => void;
-  onDisenchant: (card: CatalogCard) => void;
+  onCraft: (card: CatalogCard, quality?: CardQuality) => void;
+  onDisenchant: (card: CatalogCard, quality?: CardQuality) => void;
   onDisenchantExtras: () => void;
   onOpenDeck: () => void;
 }) {
   const [confirmExtraDisenchant, setConfirmExtraDisenchant] = useState(false);
-  const extraPlan = useMemo(
-    () => extraCardDisenchantPlan(realCollection, CARD_CATALOG),
-    [realCollection],
-  );
+  const extraPlan = useMemo(() => {
+    const normalCollection = Object.fromEntries(Object.entries(realCollection).map(([cardId, count]) => [
+      cardId,
+      Math.max(0, count - (goldenCollection[cardId] ?? 0)),
+    ]));
+    const normal = extraCardDisenchantPlan(normalCollection, CARD_CATALOG);
+    const golden = extraCardDisenchantPlan(goldenCollection, CARD_CATALOG);
+    const goldenDust = golden.entries.reduce((sum, entry) => {
+      const rarity = CARD_BY_ID.get(entry.cardId)?.rarity as "普通" | "稀有" | "史诗" | "传说" | undefined;
+      return sum + entry.copies * (rarity ? goldenDisenchantValue(rarity) : 0);
+    }, 0);
+    return {
+      totalCards: normal.totalCards + golden.totalCards,
+      totalCopies: normal.totalCopies + golden.totalCopies,
+      totalDust: normal.totalDust + goldenDust,
+    };
+  }, [goldenCollection, realCollection]);
   const filterSignature = `${search}|${environment}|${cardSet}|${faction}|${type}|${rarity}|${trait}|${keyword}|${minionType}|${spellSchool}`;
   const [pagination, setPagination] = useState({ signature: filterSignature, count: 30 });
   const visibleCount = pagination.signature === filterSignature ? pagination.count : 30;
@@ -6841,10 +6960,15 @@ function CollectionSection({
             {visibleCards.map((card) => {
               const owned = collection[card.id] ?? 0;
               const permanentlyOwned = realCollection[card.id] ?? 0;
+              const goldenOwned = goldenCollection[card.id] ?? 0;
+              const normalOwned = Math.max(0, permanentlyOwned - goldenOwned);
               const inDeck = deckCounts.get(card.id) ?? 0;
               const rarity = card.rarity === "common" ? "普通" : card.rarity === "rare" ? "稀有" : card.rarity === "epic" ? "史诗" : "传说";
               const craftPrice = craftCost(rarity);
               const dustValue = disenchantValue(rarity);
+              const goldenCraftPrice = goldenCraftCost(rarity);
+              const goldenDustValue = goldenDisenchantValue(rarity);
+              const qualityLimit = rarity === "传说" ? 1 : 2;
               return (
                 <div className="collection-card-wrap" key={card.id}>
                   <CardTile
@@ -6860,10 +6984,11 @@ function CollectionSection({
                         试玩可用 {owned} · 永久拥有 {permanentlyOwned}
                       </small>
                     )}
+                    {goldenOwned > 0 && <small className="collection-card-actions__golden">金色 × {goldenOwned}</small>}
                     <button
                       className="button button--tiny button--outline"
                       type="button"
-                      disabled={apiBusy !== null || dust < craftPrice}
+                      disabled={apiBusy !== null || dust < craftPrice || normalOwned >= qualityLimit}
                       onClick={() => onCraft(card)}
                     >
                       制作 · {craftPrice} ✦
@@ -6871,10 +6996,26 @@ function CollectionSection({
                     <button
                       className="button button--tiny button--muted"
                       type="button"
-                      disabled={apiBusy !== null || permanentlyOwned <= inDeck}
+                      disabled={apiBusy !== null || normalOwned < 1 || permanentlyOwned <= inDeck}
                       onClick={() => onDisenchant(card)}
                     >
                       分解 · +{dustValue} ✦
+                    </button>
+                    <button
+                      className="button button--tiny button--golden"
+                      type="button"
+                      disabled={apiBusy !== null || dust < goldenCraftPrice || goldenOwned >= qualityLimit}
+                      onClick={() => onCraft(card, "golden")}
+                    >
+                      金色制作 · {goldenCraftPrice} ✦
+                    </button>
+                    <button
+                      className="button button--tiny button--golden-muted"
+                      type="button"
+                      disabled={apiBusy !== null || goldenOwned < 1 || permanentlyOwned <= inDeck}
+                      onClick={() => onDisenchant(card, "golden")}
+                    >
+                      金色分解 · +{goldenDustValue} ✦
                     </button>
                   </div>
                 </div>

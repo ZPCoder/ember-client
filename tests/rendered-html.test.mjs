@@ -92,6 +92,10 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(game, /全部揭示/);
   assert.match(gameRoute, /open_packs/);
   assert.match(gameStore, /export async function openPacks/);
+  assert.match(game, /全金色版本/);
+  assert.match(game, /GOLDEN_BULK_PACK_MAX_COUNT/);
+  assert.match(gameStore, /goldenCollection/);
+  assert.match(gameRoute, /parseCardQuality/);
   assert.match(game, /新兵晋升轨道/);
   assert.match(game, /claim_apprentice_reward/);
   assert.match(game, /APPRENTICE_MILESTONES/);

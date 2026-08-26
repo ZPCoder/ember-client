@@ -1566,6 +1566,38 @@ button.resource-chip:hover {
   color: var(--muted);
 }
 
+.mini-reveal--golden {
+  box-shadow: 0 0 0 1px rgba(255, 216, 109, 0.72), 0 0 24px rgba(216, 162, 81, 0.32);
+  background: linear-gradient(145deg, rgba(216, 162, 81, 0.22), rgba(8, 20, 17, 0.96));
+}
+
+.mini-reveal--golden::before {
+  content: "金色";
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 3;
+  color: #ffe09a;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+}
+
+.button--golden {
+  border-color: rgba(255, 216, 109, 0.56);
+  color: #ffe09a;
+  background: rgba(216, 162, 81, 0.14);
+}
+
+.button--golden-muted {
+  border-color: rgba(216, 162, 81, 0.28);
+  color: #c9a860;
+  background: transparent;
+}
+
+.collection-card-actions__golden {
+  color: #ffe09a;
+}
+
 .pack-offer {
   display: grid;
   min-height: 300px;
