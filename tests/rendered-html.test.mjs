@@ -44,13 +44,14 @@ test("build emits a deployable worker, D1 metadata, and migrations", async () =>
 });
 
 test("ships the complete product surface and removes starter assets", async () => {
-  const [page, game, styles, worker, ranked, rankedRewards, catchUpPack, training, gameStore, gameRoute, layout, packageJson, og, artManifest, imageGenManifest] = await Promise.all([
+  const [page, game, styles, worker, ranked, rankedRewards, cardBacks, catchUpPack, training, gameStore, gameRoute, layout, packageJson, og, artManifest, imageGenManifest] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/GameApp.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
     readFile(new URL("../worker/index.ts", import.meta.url), "utf8"),
     readFile(new URL("../lib/game/ranked.ts", import.meta.url), "utf8"),
     readFile(new URL("../lib/game/ranked-rewards.ts", import.meta.url), "utf8"),
+    readFile(new URL("../lib/game/card-backs.ts", import.meta.url), "utf8"),
     readFile(new URL("../lib/game/catch-up-pack.ts", import.meta.url), "utf8"),
     readFile(new URL("../lib/game/training.ts", import.meta.url), "utf8"),
     readFile(new URL("../db/game-store.ts", import.meta.url), "utf8"),
@@ -269,6 +270,14 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(rankedRewards, /rollRankedSeason/);
   assert.match(rankedRewards, /ETERNAL_SCARAB_LEGEND_SEASON_TARGET = 6/);
   assert.match(rankedRewards, /legendSeasonCardBackUnlocked/);
+  assert.match(cardBacks, /DEFAULT_CARD_BACK_ID = "ember-core"/);
+  assert.match(cardBacks, /cardBackIsUnlocked/);
+  assert.match(gameStore, /CARD_BACK_LOCKED/);
+  assert.match(gameRoute, /deck\.cardBackId/);
+  assert.match(game, /aria-label="选择牌组卡背"/);
+  assert.match(game, /battle-deck-back--\$\{cardBackDefinition\(cardBackId\)\.kind\}/);
+  assert.match(styles, /\.deck-card-back-select/);
+  assert.match(styles, /\.card-back-preview--legend/);
   assert.match(gameStore, /applyRankedMatchResult/);
   assert.match(gameStore, /rollRankedSeason/);
   assert.match(styles, /@keyframes battle-card-reveal/);

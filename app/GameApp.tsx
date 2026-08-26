@@ -20,6 +20,7 @@ import {
   AI_ARCHETYPES,
   DEFAULT_OPPONENT_DECK,
   DEFAULT_STARTER_DECK,
+  DEFAULT_CARD_BACK_ID,
   BULK_PACK_MAX_COUNT,
   BULK_PACK_MIN_COUNT,
   EXPANSION_PACK_SET_IDS,
@@ -46,6 +47,8 @@ import {
   apprenticeTrackComplete,
   battleEventsToEffects,
   cardAvailableInRankedFormat,
+  cardBackDefinition,
+  cardBackIsUnlocked,
   matchesParsedCardSearch,
   parseCardSearch,
   packTypeAvailable,
@@ -89,6 +92,8 @@ import {
   ladderProgressForRating,
   normalizeRankedRewardState,
   normalizeRankedLadders,
+  normalizeOwnedCardBackId,
+  seasonCardBackId,
   removeSavedDeck,
   RANKED_FIRST_TIME_REWARD_LEVELS,
   rankedSeasonRewardForPeak,
@@ -102,6 +107,7 @@ import {
   collectionWithTrialCards,
   TRIAL_CARD_ACCESS_MS,
   trialCardsAreActive,
+  unlockedCardBacks,
   RETURN_QUEST_STAGE_IDS,
   RETURN_QUEST_STAGES,
   returnQuestStageReady,
@@ -123,6 +129,7 @@ import {
   type BattleEffectKind,
   type BattleCommand,
   type CardDefinition,
+  type CardBackDefinition,
   type CardQuality,
   type CardSetId,
   type ExpansionPackSetId,
@@ -224,6 +231,7 @@ type SavedDeck = {
   name: string;
   cardIds: string[];
   format: RankedFormat;
+  cardBackId: string;
   updatedAt: string;
 };
 
@@ -948,6 +956,7 @@ function readLocalPlayer(email: string): PlayerSnapshot | null {
       decks: parsed.decks.map((deck) => ({
         ...deck,
         format: deck.format === "wild" || validateDeckForFormat(deck.cardIds, "standard").valid ? deck.format ?? "standard" : "wild",
+        cardBackId: normalizeOwnedCardBackId(deck.cardBackId, rolled.rankedRewards),
       })),
       rankedLadders: rolled.ladders,
       ladder: undefined,
@@ -1010,6 +1019,7 @@ function makeDemoPlayer(identity?: {
     name: "星火远征队",
     cardIds: [...STARTER_IDS],
     format: "standard",
+    cardBackId: seasonCardBackId(seasonKey),
     updatedAt: new Date().toISOString(),
   };
   const catchUpProgress = catchUpProgressFromCollection(collection);
@@ -1249,6 +1259,7 @@ function applyLocalAction(
       name: `${offer.faction} · ${offer.name}`,
       cardIds: [...offer.deck],
       format: "standard",
+      cardBackId: DEFAULT_CARD_BACK_ID,
       updatedAt: now,
     };
     if (current.decks.length >= MAX_SAVED_DECKS && !current.decks.some((deck) => deck.id === claimedLadderReadyDeck.id)) {
@@ -1717,8 +1728,12 @@ function applyLocalAction(
       name: asString(deckInput.name, "未命名卡组"),
       cardIds: Array.isArray(deckInput.cardIds) ? deckInput.cardIds.map(String) : [],
       format: deckInput.format === "wild" ? "wild" : "standard",
+      cardBackId: asString(deckInput.cardBackId, DEFAULT_CARD_BACK_ID),
       updatedAt: now,
     };
+    if (!cardBackIsUnlocked(savedDeck.cardBackId, normalizeRankedRewardState(current.rankedRewards))) {
+      throw new Error("该卡背尚未解锁。");
+    }
     const validation = validateDeckForFormat(savedDeck.cardIds, savedDeck.format);
     if (!validation.valid) {
       throw new Error(validation.errors[0]?.message ?? "卡组不符合组牌规则。");
@@ -3538,6 +3553,7 @@ export function GameApp({
   const [spellSchoolFilter, setSpellSchoolFilter] = useState("全部");
   const [deckName, setDeckName] = useState("星火远征队");
   const [deckFormat, setDeckFormat] = useState<RankedFormat>("standard");
+  const [deckCardBackId, setDeckCardBackId] = useState(DEFAULT_CARD_BACK_ID);
   const [deckIds, setDeckIds] = useState<string[]>(() => [...STARTER_IDS]);
   const [editingDeckId, setEditingDeckId] = useState<string | null>(null);
   const [selectedLadderReadyDeckId, setSelectedLadderReadyDeckId] = useState<LadderReadyDeckId | null>(null);
@@ -3757,6 +3773,7 @@ export function GameApp({
           setDeckIds([...firstDeck.cardIds]);
           setDeckName(firstDeck.name);
           setDeckFormat(firstDeck.format ?? "standard");
+          setDeckCardBackId(firstDeck.cardBackId ?? DEFAULT_CARD_BACK_ID);
         }
       } catch {
         if (!active) return;
@@ -3772,6 +3789,7 @@ export function GameApp({
             setDeckIds([...firstDeck.cardIds]);
             setDeckName(firstDeck.name);
             setDeckFormat(firstDeck.format ?? "standard");
+            setDeckCardBackId(firstDeck.cardBackId ?? DEFAULT_CARD_BACK_ID);
           }
           setNotice({
             tone: "warning",
@@ -3876,6 +3894,11 @@ export function GameApp({
     deckIds.forEach((id) => counts.set(id, (counts.get(id) ?? 0) + 1));
     return counts;
   }, [deckIds]);
+
+  const availableCardBacks = useMemo(
+    () => unlockedCardBacks(normalizeRankedRewardState(player.rankedRewards)),
+    [player.rankedRewards],
+  );
 
   const deckAccessCollection = useMemo(
     () => collectionWithTrialCards(player.collection, player.trialCards, CARD_CATALOG),
@@ -4142,6 +4165,7 @@ export function GameApp({
         name: deckName.trim() || "未命名卡组",
         cardIds: deckIds,
         format: deckFormat,
+        cardBackId: deckCardBackId,
       },
     });
     if (payload) {
@@ -4180,11 +4204,13 @@ export function GameApp({
       setDeckIds([...nextDeck.cardIds]);
       setDeckName(nextDeck.name);
       setDeckFormat(nextDeck.format ?? "standard");
+      setDeckCardBackId(nextDeck.cardBackId ?? DEFAULT_CARD_BACK_ID);
     } else {
       setEditingDeckId(null);
       setDeckIds([...DEFAULT_STARTER_DECK]);
       setDeckName("新建战术卡组");
       setDeckFormat("standard");
+      setDeckCardBackId(DEFAULT_CARD_BACK_ID);
     }
     setNotice({
       tone: payload.localFallback ? "info" : "success",
@@ -4219,6 +4245,7 @@ export function GameApp({
     setDeckIds([...decoded.cardIds]);
     setDeckName(decoded.name ?? "导入牌组");
     setDeckFormat(format);
+    setDeckCardBackId(DEFAULT_CARD_BACK_ID);
     setNotice({
       tone: missing.length > 0 ? "info" : "success",
       text: missing.length > 0
@@ -4259,6 +4286,7 @@ export function GameApp({
     setDeckIds([...selected.cardIds]);
     setDeckName(selected.name);
     setDeckFormat(selected.format ?? "standard");
+    setDeckCardBackId(selected.cardBackId ?? DEFAULT_CARD_BACK_ID);
     setNotice({ tone: "info", text: `已载入「${selected.name}」，保存后将设为当前卡组。` });
   };
 
@@ -4268,6 +4296,7 @@ export function GameApp({
     setDeckIds([...DEFAULT_STARTER_DECK]);
     setDeckName("新建战术卡组");
     setDeckFormat("standard");
+    setDeckCardBackId(DEFAULT_CARD_BACK_ID);
     setNotice({ tone: "info", text: "已创建新的卡组草稿，保存后会加入你的卡组列表。" });
   };
 
@@ -4453,6 +4482,7 @@ export function GameApp({
     setDeckIds([...offer.deck]);
     setDeckName(`${offer.faction} · ${offer.name}（试玩）`);
     setDeckFormat("standard");
+    setDeckCardBackId(DEFAULT_CARD_BACK_ID);
     setTrainingActive(false);
     switchSection("battle");
     setNotice({ tone: "info", text: `已载入「${offer.name}」试玩套牌，可进入 AI 演算或在线对战。` });
@@ -4472,6 +4502,7 @@ export function GameApp({
     setDeckIds([...saved.cardIds]);
     setDeckName(saved.name);
     setDeckFormat(saved.format ?? "standard");
+    setDeckCardBackId(saved.cardBackId ?? DEFAULT_CARD_BACK_ID);
     setNotice({
       tone: payload.localFallback ? "info" : "success",
       text: `已永久领取「${offer.name}」：缺少卡牌已补齐，卡组已加入收藏。`,
@@ -4526,6 +4557,7 @@ export function GameApp({
         setDeckIds([...firstDeck.cardIds]);
         setDeckName(firstDeck.name);
         setDeckFormat(firstDeck.format ?? "standard");
+        setDeckCardBackId(firstDeck.cardBackId ?? DEFAULT_CARD_BACK_ID);
       }
       setNotice({
         tone: payload.localFallback ? "info" : "success",
@@ -5924,6 +5956,8 @@ export function GameApp({
                   deckCounts={deckCounts}
                   name={deckName}
                   format={deckFormat}
+                  cardBackId={deckCardBackId}
+                  cardBacks={availableCardBacks}
                   validation={deckValidation}
                   missingCards={selectedLadderReadyDeckId ? [] : deckMissingCards}
                   playable={deckPlayable}
@@ -5939,6 +5973,7 @@ export function GameApp({
                   selectedLadderReadyDeckId={selectedLadderReadyDeckId}
                   ladderReadyBusy={apiBusy === "activate_ladder_ready" || apiBusy === "claim_ladder_ready_deck" || apiBusy === "claim_catch_up_pack" || apiBusy === "claim_return_quest"}
                   onName={setDeckName}
+                  onCardBack={setDeckCardBackId}
                   onFormat={(format) => {
                     setDeckFormat(format);
                     if (format === "standard") {
@@ -5984,6 +6019,7 @@ export function GameApp({
                   turnClockSeconds={battleTurnClockSeconds}
                   soundEnabled={soundEnabled}
                   replaySlow={battleReplaySlow}
+                  cardBackId={deckCardBackId}
                   onStart={startStandardBattle}
                   onRematch={requestOnlineRematch}
                   onReturnLobby={returnToBattleLobby}
@@ -7060,6 +7096,8 @@ function DeckSection({
   deckCounts,
   name,
   format,
+  cardBackId,
+  cardBacks,
   validation,
   missingCards,
   playable,
@@ -7075,6 +7113,7 @@ function DeckSection({
   selectedLadderReadyDeckId,
   ladderReadyBusy,
   onName,
+  onCardBack,
   onFormat,
   onSelectDeck,
   onNewDeck,
@@ -7102,6 +7141,8 @@ function DeckSection({
   deckCounts: Map<string, number>;
   name: string;
   format: RankedFormat;
+  cardBackId: string;
+  cardBacks: CardBackDefinition[];
   validation: ValidationView;
   missingCards: MissingDeckCard[];
   playable: boolean;
@@ -7117,6 +7158,7 @@ function DeckSection({
   selectedLadderReadyDeckId: LadderReadyDeckId | null;
   ladderReadyBusy: boolean;
   onName: (name: string) => void;
+  onCardBack: (cardBackId: string) => void;
   onFormat: (format: RankedFormat) => void;
   onSelectDeck: (deckId: string) => void;
   onNewDeck: () => void;
@@ -7522,6 +7564,26 @@ function DeckSection({
             </label>
             <strong className={deckIds.length === 30 ? "is-complete" : ""}>{deckIds.length}<small>/30</small></strong>
           </div>
+          <label className="deck-card-back-select">
+            <span
+              className={`card-back-preview card-back-preview--${cardBackDefinition(cardBackId).kind}`}
+              aria-hidden="true"
+            />
+            <span>
+              <strong>牌组卡背</strong>
+              <small>{cardBackDefinition(cardBackId).description}</small>
+            </span>
+            <select
+              value={cardBackId}
+              disabled={Boolean(selectedLadderReadyDeckId)}
+              onChange={(event) => onCardBack(event.target.value)}
+              aria-label="选择牌组卡背"
+            >
+              {cardBacks.map((cardBack) => (
+                <option value={cardBack.id} key={cardBack.id}>{cardBack.name}</option>
+              ))}
+            </select>
+          </label>
           <div className="deck-code-tools" aria-label="卡组代码">
             <label><span>卡组代码或完整牌表</span><textarea rows={3} value={deckCode} onChange={(event) => setDeckCode(event.target.value)} placeholder="粘贴完整牌表、ASTRA2 或旧版 ASTRA1 卡组代码" /></label>
             <div><button className="button button--small button--outline" type="button" onClick={importDeckCode} disabled={!deckCode.trim() || deckSlotsFull}>导入为新卡组</button><button className="button button--small button--outline" type="button" onClick={copyDeckCode} disabled={!validation.valid}>{copiedDeckFingerprint === deckFingerprint ? "已复制牌表" : "复制牌表"}</button></div>
@@ -8422,6 +8484,7 @@ function BattleSection({
   turnClockSeconds,
   soundEnabled,
   replaySlow,
+  cardBackId,
   onStart,
   onRematch,
   onReturnLobby,
@@ -8487,6 +8550,7 @@ function BattleSection({
   turnClockSeconds: number | null;
   soundEnabled: boolean;
   replaySlow: boolean;
+  cardBackId: string;
   onStart: () => void;
   onRematch: () => void;
   onReturnLobby: () => void;
@@ -9150,7 +9214,7 @@ function BattleSection({
               </div>
             </div>
             <div className="enemy-hand" aria-label={`敌方有 ${battle.ai.hand.length} 张手牌`}>
-              {battle.ai.hand.map((card, index) => <span className="card-back" key={`${card.instanceId}-${index}`} />)}
+              {battle.ai.hand.map((card, index) => <span className="card-back card-back--default" key={`${card.instanceId}-${index}`} />)}
               <small>{battle.ai.deckCount} 张牌库</small>
             </div>
             <SecretTray secrets={battle.ai.secrets} enemy />
@@ -9447,7 +9511,14 @@ function BattleSection({
                 </button>
               )}
             </div>
-            <span className="deck-counter"><Icon name="cards" size={16} /> 牌库 {battle.player.deckCount}</span>
+            <span className="deck-counter">
+              <span
+                className={`battle-deck-back battle-deck-back--${cardBackDefinition(cardBackId).kind}`}
+                title={cardBackDefinition(cardBackId).name}
+                aria-label={`已装备${cardBackDefinition(cardBackId).name}卡背`}
+              />
+              <Icon name="cards" size={16} /> 牌库 {battle.player.deckCount}
+            </span>
           </div>
         </div>
 

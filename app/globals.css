@@ -3073,6 +3073,70 @@ button.game-card:not(:disabled):hover .game-card__artwork,
   color: var(--green);
 }
 
+.deck-card-back-select {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 8px 12px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid rgba(224, 172, 94, 0.2);
+  border-radius: 12px;
+  background: rgba(8, 18, 16, 0.7);
+}
+
+.deck-card-back-select > span:nth-child(2) {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.deck-card-back-select strong {
+  color: #f2d49d;
+  font-size: 0.82rem;
+}
+
+.deck-card-back-select small {
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+.deck-card-back-select select {
+  grid-column: 1 / -1;
+  width: 100%;
+}
+
+.card-back-preview,
+.battle-deck-back {
+  display: inline-block;
+  width: 34px;
+  height: 46px;
+  flex: 0 0 auto;
+  border: 2px solid rgba(240, 201, 126, 0.55);
+  border-radius: 7px;
+  box-shadow: inset 0 0 0 3px rgba(6, 13, 12, 0.72), 0 4px 12px rgba(0, 0, 0, 0.32);
+  background:
+    radial-gradient(circle at 50% 42%, rgba(255, 170, 73, 0.72) 0 9%, transparent 10%),
+    conic-gradient(from 45deg, #56311f, #182b25, #a85d2d, #182b25, #56311f);
+}
+
+.card-back-preview--season,
+.battle-deck-back--season,
+.card-back--season {
+  border-color: rgba(137, 216, 255, 0.72);
+  background:
+    radial-gradient(circle at 50% 45%, rgba(219, 244, 255, 0.9) 0 9%, transparent 10% 23%, rgba(95, 190, 226, 0.62) 24% 29%, transparent 30%),
+    conic-gradient(from 20deg, #162a46, #397aa2, #182c4d, #70bfd1, #162a46);
+}
+
+.card-back-preview--legend,
+.battle-deck-back--legend,
+.card-back--legend {
+  border-color: rgba(255, 221, 112, 0.85);
+  background:
+    radial-gradient(ellipse at 50% 48%, #e9c95c 0 8%, #75501d 9% 17%, transparent 18%),
+    repeating-conic-gradient(from 0deg, #bd8833 0 12deg, #173e34 13deg 25deg);
+}
+
 .deck-code-tools {
   display: grid;
   gap: 7px;
