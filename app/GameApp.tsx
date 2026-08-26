@@ -90,6 +90,7 @@ import {
   returnQuestStageReady,
   EMPTY_TRAINING_PROGRESS,
   TRAINING_MATCH_SEED,
+  TRAINING_DIALOGUE_BY_STAGE,
   TRAINING_OPPONENT_ARCHETYPE_ID,
   TRAINING_PLAYER_DECK,
   TRAINING_PLAY_CARD_ID,
@@ -7845,6 +7846,7 @@ function BattleSection({
     log: battle.log,
   });
   const trainingStage = currentTrainingStage(gateTrainingProgress);
+  const trainingDialogue = TRAINING_DIALOGUE_BY_STAGE[trainingStage];
   const trainingSteps = [
     {
       label: "确认起手",
@@ -8507,6 +8509,18 @@ function BattleSection({
                   </strong>
                 </div>
                 <span>{completedTrainingSteps} / {trainingSteps.length}</span>
+              </div>
+              <div
+                className={`battle-training__dialogue battle-training__dialogue--${trainingDialogue.role}`}
+                role="status"
+                aria-live="polite"
+                key={trainingStage}
+              >
+                <span aria-hidden="true">{trainingDialogue.role === "mentor" ? "◆" : "◇"}</span>
+                <div>
+                  <small>{trainingDialogue.speaker}</small>
+                  <p>{trainingDialogue.line}</p>
+                </div>
               </div>
               <ol>
                 {trainingSteps.map((step, index) => {

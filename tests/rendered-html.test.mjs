@@ -96,6 +96,7 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(game, /trainingActive && preparedCommand\.player === 0/);
   assert.match(game, /请使用「晨辉斥候」/);
   assert.match(game, /请用晨辉斥候攻击敌方核心/);
+  assert.match(game, /TRAINING_DIALOGUE_BY_STAGE/);
   assert.match(gameStore, /TRAINING_MATCH_NO_SETTLEMENT/);
   assert.match(gameStore, /TRAINING_MATCH_SEED/);
   assert.match(game, /改打 AI 演算/);

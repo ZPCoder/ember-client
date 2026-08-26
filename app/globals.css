@@ -6036,6 +6036,63 @@ button.hero-core {
   font-size: 7px;
 }
 
+.battle-training__dialogue {
+  display: grid;
+  grid-template-columns: 23px 1fr;
+  gap: 7px;
+  margin-top: 8px;
+  padding: 7px;
+  border: 1px solid rgba(216, 162, 81, 0.16);
+  border-radius: 7px;
+  background: rgba(0, 0, 0, 0.16);
+}
+
+.battle-training__dialogue > span {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border: 1px solid rgba(216, 162, 81, 0.3);
+  border-radius: 50%;
+  color: #e6bd77;
+  background: rgba(216, 162, 81, 0.08);
+  font-size: 8px;
+}
+
+.battle-training__dialogue small,
+.battle-training__dialogue p {
+  display: block;
+  margin: 0;
+}
+
+.battle-training__dialogue small {
+  color: #c49d61;
+  font-size: 6px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.battle-training__dialogue p {
+  margin-top: 2px;
+  color: #c9c1a9;
+  font-size: 6px;
+  line-height: 1.45;
+}
+
+.battle-training__dialogue--opponent {
+  border-color: rgba(85, 185, 173, 0.18);
+}
+
+.battle-training__dialogue--opponent > span {
+  border-color: rgba(85, 185, 173, 0.32);
+  color: #72c7bb;
+  background: rgba(85, 185, 173, 0.08);
+}
+
+.battle-training__dialogue--opponent small {
+  color: #77b5ab;
+}
+
 .battle-training ol {
   display: grid;
   gap: 4px;
