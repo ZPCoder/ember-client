@@ -386,6 +386,7 @@ class BattleSide {
     this.nonDeckSpellRecastUsed = false,
     List<BattleDeathRecord>? deathHistory,
     List<BattleDiscardRecord>? discardHistory,
+    List<BattleGraveyardRecord>? cardGraveyard,
     List<BattleSecret>? secrets,
   }) : deckCostOverrides = List<int?>.from(deckCostOverrides ?? const <int?>[]),
        deckStartedInDeck = List<bool>.from(
@@ -420,6 +421,7 @@ class BattleSide {
        spellsPlayedFromStartingDeck = spellsPlayedFromStartingDeck ?? <bool>[],
        deathHistory = deathHistory ?? <BattleDeathRecord>[],
        discardHistory = discardHistory ?? <BattleDiscardRecord>[],
+       cardGraveyard = cardGraveyard ?? <BattleGraveyardRecord>[],
        secrets = secrets ?? <BattleSecret>[];
 
   final String faction;
@@ -457,6 +459,7 @@ class BattleSide {
   bool nonDeckSpellRecastUsed;
   final List<BattleDeathRecord> deathHistory;
   final List<BattleDiscardRecord> discardHistory;
+  final List<BattleGraveyardRecord> cardGraveyard;
   bool heroHasAttacked = false;
   final List<BattleSecret> secrets;
 }
@@ -491,6 +494,24 @@ class BattleSecret {
   final String secretId;
   final String trigger;
   final Map<String, dynamic> effect;
+}
+
+class BattleGraveyardRecord {
+  const BattleGraveyardRecord({
+    required this.entityId,
+    required this.card,
+    required this.fromZone,
+    required this.reason,
+    required this.turn,
+    required this.order,
+  });
+
+  final String entityId;
+  final CardDefinition card;
+  final String fromZone;
+  final String reason;
+  final int turn;
+  final int order;
 }
 
 class BattleState {

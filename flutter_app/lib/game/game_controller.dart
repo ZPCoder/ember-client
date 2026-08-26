@@ -1175,6 +1175,13 @@ class GameController extends ChangeNotifier {
       sourceCard: drawn,
     );
     _resolveSpellTriggers(source: side, enemy: enemy);
+    _sendCardToGraveyard(
+      side,
+      drawn,
+      entityId,
+      fromZone: 'deck',
+      reason: 'cast-when-drawn',
+    );
     _draw(side);
     return true;
   }
@@ -1332,7 +1339,7 @@ class GameController extends ChangeNotifier {
       final fragment = source.handFragments.removeAt(index);
       source.handStartedInDeck.removeAt(index);
       source.handEnteredTurns.removeAt(index);
-      source.handEntityIds.removeAt(index);
+      final entityId = source.handEntityIds.removeAt(index);
       final state = battle!;
       final discardId = 'discard-${_discardSequence++}';
       source.discardHistory.add(
@@ -1349,6 +1356,15 @@ class GameController extends ChangeNotifier {
           fragment: fragment?.piece,
         ),
       );
+      if (!removed.isUnit) {
+        _sendCardToGraveyard(
+          source,
+          removed,
+          entityId,
+          fromZone: 'hand',
+          reason: 'discarded',
+        );
+      }
       stateLog(
         sourceName,
         '弃掉 ${removed.name}${fragment == null ? '' : '·${fragment.isLeft ? '左片' : '右片'}'}。',
@@ -1616,6 +1632,13 @@ class GameController extends ChangeNotifier {
     );
     if (weapon != null && weapon.durability <= 0) {
       state.logs.insert(0, '${weapon.card.name} 耐久耗尽。');
+      _sendCardToGraveyard(
+        state.player,
+        weapon.card,
+        weapon.entityId,
+        fromZone: 'weapon',
+        reason: 'durability',
+      );
       state.player.weapon = null;
       _emitFx(
         'death',
@@ -2250,6 +2273,13 @@ class GameController extends ChangeNotifier {
     source.heroId = definition['heroId']?.toString() ?? card.id;
     source.heroName = definition['heroName']?.toString() ?? card.name;
     source.heroCardEntityId = handEntityId;
+    _sendCardToGraveyard(
+      source,
+      card,
+      handEntityId,
+      fromZone: 'hand',
+      reason: 'transformed',
+    );
     final armor = (definition['armor'] as num?)?.toInt() ?? 0;
     source.armor += max(0, armor);
     if (owner == 'player') {
@@ -2347,6 +2377,13 @@ class GameController extends ChangeNotifier {
           'opponent-plays-spell',
           triggeringSide: source,
         )) {
+      _sendCardToGraveyard(
+        source,
+        card,
+        handEntityId,
+        fromZone: 'hand',
+        reason: 'countered',
+      );
       stateLog(
         owner == 'player' ? '${card.name} 被奥秘反制。' : '敌方的 ${card.name} 被奥秘反制。',
       );
@@ -2367,6 +2404,18 @@ class GameController extends ChangeNotifier {
       source.spellsPlayedThisGame.add(card.id);
       source.spellsPlayedEntityIds.add(handEntityId);
       source.spellsPlayedFromStartingDeck.add(startedInDeck);
+      final armsSecret = card.effect.any(
+        (effect) => effect['kind']?.toString() == 'secret',
+      );
+      if (!armsSecret) {
+        _sendCardToGraveyard(
+          source,
+          card,
+          handEntityId,
+          fromZone: 'hand',
+          reason: 'resolved',
+        );
+      }
       if (card.school != null) {
         source.spellSchoolsPlayedThisTurn.add(card.school!);
       }
@@ -2381,6 +2430,16 @@ class GameController extends ChangeNotifier {
         owner: owner,
       );
     } else if (card.type == 'weapon') {
+      final previousWeapon = source.weapon;
+      if (previousWeapon != null) {
+        _sendCardToGraveyard(
+          source,
+          previousWeapon.card,
+          previousWeapon.entityId,
+          fromZone: 'weapon',
+          reason: 'replaced',
+        );
+      }
       final maxDurability = max(1, card.durability ?? card.health ?? 1);
       source.weapon = BattleWeapon(
         entityId: handEntityId,
@@ -3927,6 +3986,13 @@ class GameController extends ChangeNotifier {
     var countered = false;
     for (final secret in pending) {
       owner.secrets.remove(secret);
+      _sendCardToGraveyard(
+        owner,
+        secret.card,
+        secret.entityId,
+        fromZone: 'secret',
+        reason: 'triggered',
+      );
       final kind = secret.effect['kind']?.toString();
       final amount = (secret.effect['amount'] as num?)?.toInt() ?? 0;
       switch (kind) {
@@ -4310,6 +4376,28 @@ class GameController extends ChangeNotifier {
   String _ownerOf(BattleSide side) {
     final state = battle!;
     return identical(side, state.player) ? 'player' : 'ai';
+  }
+
+  void _sendCardToGraveyard(
+    BattleSide side,
+    CardDefinition card,
+    String entityId, {
+    required String fromZone,
+    required String reason,
+  }) {
+    if (card.isUnit || side.cardGraveyard.any((entry) => entry.entityId == entityId)) {
+      return;
+    }
+    side.cardGraveyard.add(
+      BattleGraveyardRecord(
+        entityId: entityId,
+        card: card,
+        fromZone: fromZone,
+        reason: reason,
+        turn: battle?.turn ?? 0,
+        order: side.cardGraveyard.length + 1,
+      ),
+    );
   }
 
   void _markHeroesForDeath(BattleState state) {
@@ -4787,7 +4875,16 @@ class GameController extends ChangeNotifier {
       targetId: target?.instanceId ?? 'player-hero',
       amount: dealt,
     );
-    if (weapon != null && weapon.durability <= 0) state.ai.weapon = null;
+    if (weapon != null && weapon.durability <= 0) {
+      _sendCardToGraveyard(
+        state.ai,
+        weapon.card,
+        weapon.entityId,
+        fromZone: 'weapon',
+        reason: 'durability',
+      );
+      state.ai.weapon = null;
+    }
     _processDeaths();
   }
 

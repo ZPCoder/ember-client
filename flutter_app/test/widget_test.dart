@@ -2566,6 +2566,11 @@ void main() {
     expect(state.ai.heroHealth, 27);
     expect(state.player.weapon?.durability, 1);
     expect(controller.heroAttack(targetHero: true), isFalse);
+    state.player.heroHasAttacked = false;
+    expect(controller.heroAttack(targetHero: true), isTrue);
+    expect(state.player.weapon, isNull);
+    expect(state.player.cardGraveyard.single.entityId, 'mobile-weapon-entity');
+    expect(state.player.cardGraveyard.single.reason, 'durability');
     controller.dispose();
   });
 
@@ -5320,6 +5325,8 @@ void main() {
       expect(state.player.spellsPlayedEntityIds, [
         'mobile-discover-spell-entity',
       ]);
+      expect(state.player.cardGraveyard.single.entityId, 'mobile-discover-spell-entity');
+      expect(state.player.cardGraveyard.single.reason, 'resolved');
       expect(state.phase, 'discover');
       expect(state.discoverChoices, [choice.id]);
       expect(controller.chooseDiscover(choice.id), isTrue);
@@ -5343,6 +5350,8 @@ void main() {
       await controller.endTurn();
       expect(state.player.heroHealth, beforeHealth);
       expect(state.player.secrets, isEmpty);
+      expect(state.player.cardGraveyard.last.entityId, 'mobile-secret-entity');
+      expect(state.player.cardGraveyard.last.reason, 'triggered');
       expect(state.logs.any((log) => log.contains('反制')), isTrue);
       controller.dispose();
     },
@@ -5526,6 +5535,8 @@ void main() {
       expect(controller.playCard(heroCard), isTrue);
       expect(state.player.heroName, '赤曜灭世者');
       expect(state.player.heroCardEntityId, 'mobile-hero-card-entity');
+      expect(state.player.cardGraveyard.single.entityId, 'mobile-hero-card-entity');
+      expect(state.player.cardGraveyard.single.reason, 'transformed');
       expect(state.player.armor, 12);
       expect(state.playerHeroPower.name, '残酷撕裂');
       expect(state.phase, 'choose-one');
