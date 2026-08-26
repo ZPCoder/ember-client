@@ -381,6 +381,8 @@ class BattleSide {
     this.heroName = '远征指挥官',
     this.heroCardEntityId,
     this.heroAttackBonus = 0,
+    this.heroFrozenTurns = 0,
+    this.heroFreezeBlocked = false,
     List<String>? spellSchoolsPlayedThisTurn,
     List<String>? spellSchoolsPlayedLastTurn,
     List<String>? spellsPlayedThisGame,
@@ -456,6 +458,8 @@ class BattleSide {
   String heroName;
   String? heroCardEntityId;
   int heroAttackBonus;
+  int heroFrozenTurns;
+  bool heroFreezeBlocked;
   int cardsPlayedThisTurn = 0;
   final List<String> spellSchoolsPlayedThisTurn;
   final List<String> spellSchoolsPlayedLastTurn;

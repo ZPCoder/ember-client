@@ -1663,6 +1663,7 @@ class GameController extends ChangeNotifier {
         state.phase != 'main' ||
         state.activePlayer != 'player' ||
         attack <= 0 ||
+        state.player.heroFrozenTurns > 0 ||
         state.player.heroHasAttacked) {
       return false;
     }
@@ -2602,7 +2603,6 @@ class GameController extends ChangeNotifier {
         durability: maxDurability,
         maxDurability: maxDurability,
       );
-      source.heroHasAttacked = false;
       stateLog(owner == 'player' ? '${card.name} 已装备。' : '敌方装备 ${card.name}。');
       _emitFx(
         'weapon',
@@ -3720,6 +3720,23 @@ class GameController extends ChangeNotifier {
             if (target != null && enemy.board.contains(target)) {
               target.frozenTurns = max(target.frozenTurns, max(1, amount));
               stateLog(sourceName, '${target.card.name} 被冻结。');
+            } else if (targetHero) {
+              final hero = targetFriendlyHero ? source : enemy;
+              hero.heroFrozenTurns = max(hero.heroFrozenTurns, max(1, amount));
+              final current = battle;
+              final targetOwner = identical(hero, source)
+                  ? _ownerOf(source)
+                  : _ownerOf(enemy);
+              if (current != null &&
+                  current.activePlayer == targetOwner &&
+                  !hero.heroHasAttacked) {
+                hero.heroHasAttacked = true;
+                hero.heroFreezeBlocked = true;
+              }
+              stateLog(
+                sourceName,
+                '${identical(hero, source) ? '友方' : '敌方'}英雄被冻结。',
+              );
             }
             break;
           case 'random-enemy-freeze':
@@ -4966,6 +4983,7 @@ class GameController extends ChangeNotifier {
     }
     if (!state.finished &&
         ((state.ai.weapon?.attack ?? 0) + state.ai.heroAttackBonus) > 0 &&
+        state.ai.heroFrozenTurns <= 0 &&
         !state.ai.heroHasAttacked &&
         (state.ai.weapon == null || state.ai.weapon!.durability > 0)) {
       final taunts = state.player.board
@@ -5046,7 +5064,7 @@ class GameController extends ChangeNotifier {
   void _aiHeroAttack(BattleState state, BattleUnit? target) {
     final weapon = state.ai.weapon;
     final attack = (weapon?.attack ?? 0) + state.ai.heroAttackBonus;
-    if (attack <= 0) return;
+    if (attack <= 0 || state.ai.heroFrozenTurns > 0) return;
     if (target == null) {
       _triggerSecrets(
         state.player,
@@ -5103,7 +5121,8 @@ class GameController extends ChangeNotifier {
   }
 
   void _refreshSideForTurn(BattleSide side) {
-    side.heroHasAttacked = false;
+    side.heroHasAttacked = side.heroFrozenTurns > 0;
+    side.heroFreezeBlocked = side.heroFrozenTurns > 0;
     side.cardsPlayedThisTurn = 0;
     for (final unit in side.board) {
       unit.attacksMade = 0;
@@ -5145,6 +5164,12 @@ class GameController extends ChangeNotifier {
         unit.frozenTurns = max(0, unit.frozenTurns - 1);
         unit.freezeBlocked = false;
       }
+    }
+    if (side.heroFrozenTurns <= 0) {
+      side.heroFreezeBlocked = false;
+    } else if (side.heroFreezeBlocked) {
+      side.heroFrozenTurns = max(0, side.heroFrozenTurns - 1);
+      side.heroFreezeBlocked = false;
     }
   }
 

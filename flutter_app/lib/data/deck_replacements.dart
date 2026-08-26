@@ -28,7 +28,13 @@ class DeckCompletionResult {
 }
 
 const _smartCurveTargets = [2, 5, 6, 5, 4, 3, 3, 2];
-const _smartTypeTargets = {'unit': 18, 'spell': 10, 'weapon': 2};
+const _smartTypeTargets = {
+  'unit': 18,
+  'spell': 10,
+  'weapon': 2,
+  'hero': 1,
+  'location': 1,
+};
 
 int _smartCurveBucket(int cost) => cost.clamp(0, 7);
 
@@ -88,7 +94,13 @@ DeckCompletionResult completeDeckFromCollection({
   final completed = List<String>.from(original);
   final addedCardIds = <String>[];
   final curveCounts = List<int>.filled(8, 0);
-  final typeCounts = {'unit': 0, 'spell': 0, 'weapon': 0};
+  final typeCounts = {
+    'unit': 0,
+    'spell': 0,
+    'weapon': 0,
+    'hero': 0,
+    'location': 0,
+  };
   final keywordCounts = <String, int>{};
   final traitCounts = <String, int>{};
 

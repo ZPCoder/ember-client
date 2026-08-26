@@ -120,7 +120,7 @@
   {
     "id": "sun-focused-ray",
     "name": "聚光灼流",
-    "description": "对一个敌方角色造成 2 点伤害。",
+    "description": "对一个敌方角色造成 2 点伤害并冻结它。",
     "faction": "曜光",
     "type": "spell",
     "cost": 1,
@@ -131,6 +131,10 @@
       {
         "kind": "damage",
         "amount": 2
+      },
+      {
+        "kind": "freeze",
+        "amount": 1
       }
     ],
     "keywords": [],

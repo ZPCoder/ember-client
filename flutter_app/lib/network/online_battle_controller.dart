@@ -123,6 +123,8 @@ class OnlineBattleController extends ChangeNotifier {
   String? remoteHeroName;
   int localHeroAttackBonus = 0;
   int remoteHeroAttackBonus = 0;
+  int localHeroFrozenTurns = 0;
+  int remoteHeroFrozenTurns = 0;
   bool localCoinAvailable = false;
   bool localHeroPowerUsed = false;
   bool localHeroHasAttacked = false;
@@ -338,6 +340,7 @@ class OnlineBattleController extends ChangeNotifier {
     if (!canAct ||
         localWeaponAttack + localHeroAttackBonus <= 0 ||
         (localWeaponCard != null && localWeaponDurability <= 0) ||
+        localHeroFrozenTurns > 0 ||
         localHeroHasAttacked) {
       return;
     }
@@ -672,6 +675,8 @@ class OnlineBattleController extends ChangeNotifier {
     final maxMana = (side['maxMana'] as num?)?.toInt() ?? 0;
     final armor = (hero is Map ? (hero['armor'] as num?)?.toInt() : null) ?? 0;
     final heroName = hero is Map ? hero['name']?.toString() : null;
+    final heroFrozenTurns =
+        (hero is Map ? (hero['frozenTurns'] as num?)?.toInt() : null) ?? 0;
     final heroAttackBonus = (side['heroAttackBonus'] as num?)?.toInt() ?? 0;
     final heraldCount = (side['heraldCount'] as num?)?.toInt() ?? 0;
     List<String> spellSchools(Object? value) => value is List
@@ -687,6 +692,7 @@ class OnlineBattleController extends ChangeNotifier {
       localArmor = armor;
       localHeroName = heroName;
       localHeroAttackBonus = heroAttackBonus;
+      localHeroFrozenTurns = heroFrozenTurns;
       localOverloadLocked = (side['overloadLocked'] as num?)?.toInt() ?? 0;
       localHeraldCount = heraldCount;
       localSpellSchoolsThisTurn = schoolsThisTurn;
@@ -730,6 +736,7 @@ class OnlineBattleController extends ChangeNotifier {
       remoteArmor = armor;
       remoteHeroName = heroName;
       remoteHeroAttackBonus = heroAttackBonus;
+      remoteHeroFrozenTurns = heroFrozenTurns;
       remoteHeraldCount = heraldCount;
       remoteSpellSchoolsThisTurn = schoolsThisTurn;
       remoteSpellSchoolsLastTurn = schoolsLastTurn;
@@ -1044,6 +1051,7 @@ class OnlineBattleController extends ChangeNotifier {
       canAct &&
       localWeaponAttack + localHeroAttackBonus > 0 &&
       (localWeaponCard == null || localWeaponDurability > 0) &&
+      localHeroFrozenTurns <= 0 &&
       !localHeroHasAttacked &&
       _visibleRemoteTaunts.isEmpty;
 

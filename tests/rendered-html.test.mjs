@@ -64,6 +64,7 @@ test("ships the complete product surface and removes starter assets", async () =
   ]);
   const cardIds = CARD_CATALOG.map((card) => card.id);
   const locationCard = CARD_CATALOG.find((card) => card.id === "sun-daybreak-order");
+  const heroFreezeCard = CARD_CATALOG.find((card) => card.id === "void-chill-needle");
   const cardArt = await Promise.all(
     cardIds.map(async (cardId) => {
       const assetUrl = new URL(`../public/cards/${cardId}.webp`, import.meta.url);
@@ -170,6 +171,9 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(game, /function BoardLocation/);
   assert.equal(locationCard?.type, "location");
   assert.equal(locationCard?.durability, 3);
+  assert.ok(heroFreezeCard?.effect?.some((effect) => effect.kind === "freeze"));
+  assert.match(game, /heroFrozenTurns/);
+  assert.match(game, /英雄被冻结，必须跳过下一次攻击/);
   assert.match(game, /伪装 · 敌方战场/);
   assert.match(game, /fragmentLabel/);
   assert.match(game, /card\.shatter/);

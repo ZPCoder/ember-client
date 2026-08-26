@@ -169,7 +169,7 @@ import {
 
 type SectionKey = "overview" | "collection" | "deck" | "battle" | "operations";
 type BattleTarget = { kind: "unit" | "hero"; id?: string };
-type BattleHeroEffect = "damage" | "heal" | "shield";
+type BattleHeroEffect = "damage" | "heal" | "shield" | "buff";
 type BattleUnitEffect =
   | "summon"
   | "attack"
@@ -408,6 +408,7 @@ type BattleSide = {
   coinAvailable: boolean;
   heroHasAttacked: boolean;
   heroAttackBonus: number;
+  heroFrozenTurns: number;
   secrets: Array<{ secretId: string; name: string; description: string }>;
   overload: number;
   overloadLocked: number;
@@ -723,7 +724,7 @@ function cardFromRaw(raw: Record<string, unknown>): CatalogCard {
     id: asString(raw.id ?? raw.cardId),
     name: asString(raw.name, "未命名协议"),
     cost: asNumber(raw.cost ?? raw.manaCost),
-    type: rawType === "weapon" ? "weapon" : rawType === "spell" ? "spell" : rawType === "hero" ? "hero" : "unit",
+    type: rawType === "weapon" ? "weapon" : rawType === "spell" ? "spell" : rawType === "hero" ? "hero" : rawType === "location" ? "location" : "unit",
     faction: asString(raw.faction ?? raw.camp, "中立") as Faction,
     rarity,
     description: asString(raw.description ?? raw.text, "战术资料尚未解密。"),
@@ -2234,6 +2235,10 @@ function battleFromRaw(value: unknown): BattleView | null {
     coinAvailable: Boolean(side.coinAvailable),
     heroHasAttacked: Boolean(side.heroHasAttacked),
     heroAttackBonus: asNumber(side.heroAttackBonus, 0),
+    heroFrozenTurns: asNumber(
+      (side.hero as Record<string, unknown> | undefined)?.frozenTurns,
+      0,
+    ),
     overload: asNumber(side.overload, 0),
     overloadLocked: asNumber(side.overloadLocked, 0),
     spellSchoolsPlayedThisTurn: Array.isArray(side.spellSchoolsPlayedThisTurn)
@@ -5749,6 +5754,10 @@ export function GameApp({
       !battleView ||
       (battleView.player.weapon?.attack ?? 0) + battleView.player.heroAttackBonus <= 0
     ) return;
+    if (battleView.player.heroFrozenTurns > 0) {
+      setBattleMessage("英雄被冻结，必须跳过下一次攻击。");
+      return;
+    }
     if (battleView.player.heroHasAttacked) {
       setBattleMessage("英雄本回合已经攻击过。");
       return;
@@ -7511,7 +7520,10 @@ function DeckSection({
   const heroCount = deckIds.filter(
     (id) => CARD_BY_ID.get(id)?.type === "hero",
   ).length;
-  const spellCount = deckIds.length - unitCount - weaponCount - heroCount;
+  const locationCount = deckIds.filter(
+    (id) => CARD_BY_ID.get(id)?.type === "location",
+  ).length;
+  const spellCount = deckIds.length - unitCount - weaponCount - heroCount - locationCount;
   const libraryClauses = parseCardSearch(librarySearch);
   const libraryCards = cards
     .filter((card) => {
@@ -7972,6 +7984,7 @@ function DeckSection({
             <span><small>战术</small><strong>{spellCount}</strong></span>
             <span><small>武器</small><strong>{weaponCount}</strong></span>
             <span><small>英雄</small><strong>{heroCount}</strong></span>
+            <span><small>地点</small><strong>{locationCount}</strong></span>
           </div>
 
           <div className="deck-hero-preview" aria-label={`阵营英雄技能：${deckHeroPower.name}`}>
@@ -8324,6 +8337,11 @@ function HeroCore({
         {side.heroAttackBonus > 0 && (
           <span className="hero-core__weapon" aria-label={`英雄本回合额外获得 ${side.heroAttackBonus} 点攻击`}>
             ⚔ 临时攻击 +{side.heroAttackBonus}
+          </span>
+        )}
+        {side.heroFrozenTurns > 0 && (
+          <span className="hero-core__frozen" aria-label={`英雄被冻结，还需跳过 ${side.heroFrozenTurns} 次攻击机会`}>
+            ❄ 冻结
           </span>
         )}
       </span>
@@ -9269,7 +9287,7 @@ function BattleSection({
     if (!effect || effect.targetKind !== "hero" || effect.targetSide !== side) {
       return undefined;
     }
-    if (effect.kind === "damage" || effect.kind === "heal" || effect.kind === "shield") {
+    if (effect.kind === "damage" || effect.kind === "heal" || effect.kind === "shield" || effect.kind === "buff") {
       return effect.kind;
     }
     return undefined;
@@ -9727,9 +9745,9 @@ function BattleSection({
                 <button
                   className={`weapon-attack-button ${selectedAttacker === "hero-0" ? "weapon-attack-button--selected" : ""}`}
                   type="button"
-                  disabled={!playerCanAct || battle.player.heroHasAttacked || (trainingActive && !trainingRouteComplete)}
+                  disabled={!playerCanAct || battle.player.heroHasAttacked || battle.player.heroFrozenTurns > 0 || (trainingActive && !trainingRouteComplete)}
                   onClick={onSelectHeroAttacker}
-                  aria-label={battle.player.heroHasAttacked ? "英雄本回合已经攻击" : `使用 ${battle.player.heroName} 发起英雄攻击`}
+                  aria-label={battle.player.heroFrozenTurns > 0 ? "英雄被冻结，必须跳过下一次攻击" : battle.player.heroHasAttacked ? "英雄本回合已经攻击" : `使用 ${battle.player.heroName} 发起英雄攻击`}
                 >
                   <span className="weapon-attack-button__icon">⚔</span>
                   <span><strong>{selectedAttacker === "hero-0" ? "选择攻击目标" : "英雄攻击"}</strong><small>{battle.player.weapon ? `${battle.player.weapon.name} · ${battle.player.weapon.attack} 攻击 · ${battle.player.weapon.durability} 耐久` : battle.player.heroName}{battle.player.heroAttackBonus > 0 ? ` · 临时 +${battle.player.heroAttackBonus}` : ""}</small></span>

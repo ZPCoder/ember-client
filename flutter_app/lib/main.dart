@@ -2900,6 +2900,7 @@ class _BattleBoardState extends State<BattleBoard> {
                         discardHistory: state.ai.discardHistory,
                         secretCount: state.ai.secrets.length,
                         heroAttackBonus: state.ai.heroAttackBonus,
+                        heroFrozenTurns: state.ai.heroFrozenTurns,
                         ai: true,
                       ),
                       const SizedBox(height: 13),
@@ -2959,6 +2960,7 @@ class _BattleBoardState extends State<BattleBoard> {
                         discardHistory: state.player.discardHistory,
                         secretCount: state.player.secrets.length,
                         heroAttackBonus: state.player.heroAttackBonus,
+                        heroFrozenTurns: state.player.heroFrozenTurns,
                         ai: false,
                       ),
                       const SizedBox(height: 12),
@@ -2994,7 +2996,8 @@ class _BattleBoardState extends State<BattleBoard> {
                                   state.player.heroAttackBonus > 0)
                                 OutlinedButton.icon(
                                   onPressed:
-                                      state.player.heroHasAttacked ||
+                                      state.player.heroFrozenTurns > 0 ||
+                                          state.player.heroHasAttacked ||
                                           state.activePlayer != 'player' ||
                                           state.finished ||
                                           state.phase != 'main'
@@ -3002,7 +3005,9 @@ class _BattleBoardState extends State<BattleBoard> {
                                       : () => _heroAttack(context),
                                   icon: const Icon(Icons.gavel, size: 15),
                                   label: Text(
-                                    state.player.heroHasAttacked
+                                    state.player.heroFrozenTurns > 0
+                                        ? '❄ 英雄冻结'
+                                        : state.player.heroHasAttacked
                                         ? '已攻击'
                                         : '英雄攻击 ${(state.player.weapon?.attack ?? 0) + state.player.heroAttackBonus}',
                                   ),
@@ -3983,6 +3988,7 @@ class _HeroBar extends StatelessWidget {
     required this.discardHistory,
     required this.secretCount,
     this.heroAttackBonus = 0,
+    this.heroFrozenTurns = 0,
     required this.ai,
   });
 
@@ -4001,6 +4007,7 @@ class _HeroBar extends StatelessWidget {
   final List<BattleDiscardRecord> discardHistory;
   final int secretCount;
   final int heroAttackBonus;
+  final int heroFrozenTurns;
   final bool ai;
 
   @override
@@ -4067,6 +4074,11 @@ class _HeroBar extends StatelessWidget {
             Text(
               '⚔ 临时攻击 +$heroAttackBonus',
               style: const TextStyle(color: Color(0xFFE46D3F), fontSize: 9),
+            ),
+          if (heroFrozenTurns > 0)
+            Text(
+              '❄ 冻结',
+              style: const TextStyle(color: Color(0xFF8EDBFF), fontSize: 9),
             ),
           if (secretCount > 0)
             Text(
@@ -5022,6 +5034,22 @@ class OnlineBattlePanel extends StatelessWidget {
                           fontSize: 10,
                         ),
                       ),
+                    if (controller.localHeroFrozenTurns > 0)
+                      const Text(
+                        '❄ 英雄冻结',
+                        style: TextStyle(
+                          color: Color(0xFF8EDBFF),
+                          fontSize: 10,
+                        ),
+                      ),
+                    if (controller.remoteHeroFrozenTurns > 0)
+                      const Text(
+                        '❄ 对手英雄冻结',
+                        style: TextStyle(
+                          color: Color(0xFF8EDBFF),
+                          fontSize: 10,
+                        ),
+                      ),
                     if (controller.localHeraldCount > 0)
                       Text(
                         '先驱 ${controller.localHeraldCount} · 巨型 ×${controller.localHeraldCount >= 4
@@ -5106,6 +5134,7 @@ class OnlineBattlePanel extends StatelessWidget {
                       OutlinedButton.icon(
                         onPressed:
                             controller.canAct &&
+                                controller.localHeroFrozenTurns <= 0 &&
                                 !controller.localHeroHasAttacked
                             ? () => _heroAttack(context)
                             : null,

@@ -4293,13 +4293,23 @@ void main() {
           },
           'players': [
             {
-              'hero': {'health': 28, 'armor': 12, 'name': '赤曜灭世者'},
+              'hero': {
+                'health': 28,
+                'armor': 12,
+                'name': '赤曜灭世者',
+                'frozenTurns': 1,
+              },
               'heroAttackBonus': 5,
               'hand': ['generated-emberwing-matriarch'],
               'board': [],
             },
             {
-              'hero': {'health': 24, 'armor': 0, 'name': '敌方英雄'},
+              'hero': {
+                'health': 24,
+                'armor': 0,
+                'name': '敌方英雄',
+                'frozenTurns': 2,
+              },
               'hand': ['__hidden-card__'],
               'board': [],
             },
@@ -4317,6 +4327,8 @@ void main() {
     expect(controller.localHeroName, '赤曜灭世者');
     expect(controller.remoteHeroName, '敌方英雄');
     expect(controller.localHeroAttackBonus, 5);
+    expect(controller.localHeroFrozenTurns, 1);
+    expect(controller.remoteHeroFrozenTurns, 2);
     expect(controller.hand.single.id, 'generated-emberwing-matriarch');
     controller.dispose();
     client.dispose();
@@ -5425,6 +5437,80 @@ void main() {
     expect(frozen.canAttack, isTrue);
     controller.dispose();
   });
+
+  test(
+    'mobile character freeze makes a weapon hero skip its next attack',
+    () async {
+      final filler = CardDefinition(
+        id: 'hero-freeze-filler',
+        name: '冻结测试单位',
+        description: '测试牌库占位',
+        faction: '中立',
+        type: 'unit',
+        cost: 9,
+        rarity: '普通',
+        attack: 1,
+        health: 1,
+      );
+      final freeze = CardDefinition(
+        id: 'hero-freeze-spell',
+        name: '核心寒潮',
+        description: '对一个敌方角色造成 2 点伤害并冻结它。',
+        faction: '中立',
+        type: 'spell',
+        cost: 1,
+        rarity: '普通',
+        target: 'enemy-character',
+        effect: const [
+          {'kind': 'damage', 'amount': 2},
+          {'kind': 'freeze', 'amount': 1},
+        ],
+      );
+      final weapon = CardDefinition(
+        id: 'hero-freeze-weapon',
+        name: '冻结测试武器',
+        description: '测试英雄攻击',
+        faction: '中立',
+        type: 'weapon',
+        cost: 1,
+        rarity: '普通',
+        attack: 3,
+        durability: 2,
+      );
+      final controller = GameController(startingPlayer: 'player')
+        ..catalog = [filler, freeze, weapon]
+        ..deckIds.addAll(List.filled(30, filler.id));
+      controller.startBattle();
+      controller.confirmMulligan();
+      final state = controller.battle!;
+      state.player.mana = 10;
+      state.player.hand.add(freeze);
+      state.ai.hand.clear();
+      state.ai.board.clear();
+      state.ai.weapon = BattleWeapon(
+        entityId: 'hero-freeze-weapon-entity',
+        card: weapon,
+        attack: 3,
+        durability: 2,
+        maxDurability: 2,
+      );
+      final startingHealth = state.player.heroHealth;
+
+      expect(controller.playCard(freeze, targetHero: true), isTrue);
+      expect(state.ai.heroHealth, 28);
+      expect(state.ai.heroFrozenTurns, 1);
+
+      await controller.endTurn();
+      expect(state.player.heroHealth, startingHealth);
+      expect(state.ai.weapon?.durability, 2);
+      expect(state.ai.heroFrozenTurns, 0);
+
+      await controller.endTurn();
+      expect(state.player.heroHealth, lessThan(startingHealth));
+      expect(state.ai.weapon?.durability, 1);
+      controller.dispose();
+    },
+  );
 
   test(
     'mobile Windfury freeze consumes the remaining attack this turn',
