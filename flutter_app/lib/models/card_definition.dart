@@ -7,6 +7,7 @@ class CardDefinition {
     required this.type,
     required this.cost,
     required this.rarity,
+    this.setId = 'core',
     this.attack,
     this.health,
     this.durability,
@@ -33,6 +34,7 @@ class CardDefinition {
   final String type;
   final int cost;
   final String rarity;
+  final String setId;
   final int? attack;
   final int? health;
   final int? durability;
@@ -76,6 +78,7 @@ class CardDefinition {
       type: type,
       cost: cost,
       rarity: rarity,
+      setId: setId,
       attack: attack,
       health: health,
       durability: durability,
@@ -115,6 +118,7 @@ class CardDefinition {
       type: json['type'] as String,
       cost: (json['cost'] as num?)?.toInt() ?? 0,
       rarity: json['rarity'] as String? ?? '普通',
+      setId: json['set'] as String? ?? 'core',
       attack: (json['attack'] as num?)?.toInt(),
       health: (json['health'] as num?)?.toInt(),
       durability: (json['durability'] as num?)?.toInt(),

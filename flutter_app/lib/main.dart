@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'
     show Clipboard, ClipboardData, HapticFeedback, SystemSound, SystemSoundType;
 import 'data/catalog.dart';
+import 'data/formats.dart';
 import 'game/game_controller.dart';
 import 'models/card_definition.dart';
 import 'network/multiplayer_client.dart';
@@ -812,15 +813,25 @@ class _CollectionPageState extends State<CollectionPage> {
   String query = '';
   String faction = '全部';
   String type = '全部';
+  String cardPool = 'all';
   int visible = 30;
 
   List<CardDefinition> get filtered {
     final needle = query.trim().toLowerCase();
     final result = widget.controller.catalog.where((card) {
+      final set = cardSetDefinition(card.setId);
       final textMatch =
           needle.isEmpty ||
-          '${card.name} ${card.description}'.toLowerCase().contains(needle);
+          '${card.name} ${card.description} ${set.label}'
+              .toLowerCase()
+              .contains(needle);
+      final poolMatch = switch (cardPool) {
+        'standard' => set.standard,
+        'wild-only' => !set.standard,
+        _ => true,
+      };
       return textMatch &&
+          poolMatch &&
           (faction == '全部' || card.faction == faction) &&
           (type == '全部' || card.type == type);
     }).toList();
@@ -852,13 +863,35 @@ class _CollectionPageState extends State<CollectionPage> {
           PageHeader(
             eyebrow: 'TACTICAL ARCHIVE / COLLECTION',
             title: '卡牌收藏',
-            description: '二十大阵营共 1000 张档案，按阵营、类型和关键词检索。',
+            description: '1000 张档案分属四个系列；标准卡池 800 张，狂野保留全部系列。',
             action: FilledButton.icon(
               onPressed: () => _showPackMessage(),
               icon: const Icon(Icons.inventory_2_outlined),
               label: const Text('开档案包'),
             ),
           ),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final option in const <(String, String)>[
+                ('all', '全部收藏 · 1000'),
+                ('standard', '标准卡池 · 800'),
+                ('wild-only', '狂野专属 · 200'),
+              ])
+                ChoiceChip(
+                  key: ValueKey('collection-pool-${option.$1}'),
+                  label: Text(option.$2),
+                  selected: cardPool == option.$1,
+                  onSelected: (_) => setState(() {
+                    cardPool = option.$1;
+                    visible = 30;
+                  }),
+                  selectedColor: const Color(0xFF1F514B),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
@@ -1131,11 +1164,11 @@ class CardTile extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    card.isUnit
+                    '${cardSetDefinition(card.setId).label} · ${card.isUnit
                         ? '单位'
                         : card.type == 'weapon'
                         ? '武器'
-                        : '战术',
+                        : '战术'}',
                     style: const TextStyle(
                       color: Color(0xFF84938A),
                       fontSize: 9,
@@ -1236,6 +1269,7 @@ class DeckPage extends StatelessWidget {
     for (final id in controller.deckIds) {
       counts[id] = (counts[id] ?? 0) + 1;
     }
+    final availableCards = controller.cardsAvailableForDeck;
     return PageFrame(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1264,6 +1298,64 @@ class DeckPage extends StatelessWidget {
               ],
             ),
           ),
+          GlassPanel(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final selector = SegmentedButton<RankedFormat>(
+                  key: const ValueKey('deck-format-selector'),
+                  showSelectedIcon: false,
+                  segments: const [
+                    ButtonSegment(
+                      value: RankedFormat.standard,
+                      icon: Icon(Icons.verified_outlined, size: 17),
+                      label: Text('标准'),
+                    ),
+                    ButtonSegment(
+                      value: RankedFormat.wild,
+                      icon: Icon(Icons.all_inclusive, size: 17),
+                      label: Text('狂野'),
+                    ),
+                  ],
+                  selected: {controller.deckFormat},
+                  onSelectionChanged: (selection) =>
+                      controller.setDeckFormat(selection.first),
+                );
+                final details = Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${controller.deckFormat.fullLabel} · ${availableCards.length} 张可用',
+                      style: const TextStyle(
+                        color: Color(0xFFF1E6C8),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      controller.deckFormat.description,
+                      style: const TextStyle(
+                        color: Color(0xFF84938A),
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                );
+                if (constraints.maxWidth < 520) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [details, const SizedBox(height: 12), selector],
+                  );
+                }
+                return Row(
+                  children: [
+                    Expanded(child: details),
+                    selector,
+                  ],
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 14),
           LayoutBuilder(
             builder: (context, constraints) {
               final wide = constraints.maxWidth >= 900;
@@ -1271,8 +1363,8 @@ class DeckPage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      '当前牌组',
+                    Text(
+                      '当前${controller.deckFormat.label}牌组',
                       style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.w700,
@@ -1319,8 +1411,8 @@ class DeckPage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      '可用卡牌',
+                    Text(
+                      '可用卡牌 · ${availableCards.length}',
                       style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.w700,
@@ -1332,7 +1424,7 @@ class DeckPage extends StatelessWidget {
                         builder: (context, inner) {
                           final columns = inner.maxWidth > 550 ? 4 : 2;
                           return GridView.builder(
-                            itemCount: controller.catalog.length,
+                            itemCount: availableCards.length,
                             gridDelegate:
                                 SliverGridDelegateWithFixedCrossAxisCount(
                                   crossAxisCount: columns,
@@ -1341,14 +1433,12 @@ class DeckPage extends StatelessWidget {
                                   childAspectRatio: .68,
                                 ),
                             itemBuilder: (_, index) => CardTile(
-                              card: controller.catalog[index],
-                              owned: controller.owned(
-                                controller.catalog[index].id,
-                              ),
+                              card: availableCards[index],
+                              owned: controller.owned(availableCards[index].id),
                               compact: true,
                               onTap: () {
                                 final added = controller.addToDeck(
-                                  controller.catalog[index],
+                                  availableCards[index],
                                 );
                                 if (!added) {
                                   ScaffoldMessenger.of(context).showSnackBar(
@@ -1479,9 +1569,22 @@ class BattlePage extends StatelessWidget {
                     textAlign: TextAlign.center,
                     style: TextStyle(color: Color(0xFF84938A)),
                   ),
+                  const SizedBox(height: 12),
+                  Text(
+                    '${controller.deckFormat.fullLabel} · ${controller.deckStatus}',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: controller.deckValid
+                          ? const Color(0xFF79B980)
+                          : const Color(0xFFE7BD7A),
+                      fontSize: 11,
+                    ),
+                  ),
                   const SizedBox(height: 24),
                   FilledButton.icon(
-                    onPressed: controller.startBattle,
+                    onPressed: controller.deckValid
+                        ? controller.startBattle
+                        : null,
                     icon: const Icon(Icons.play_arrow),
                     label: const Text('开始对战'),
                   ),
@@ -3153,9 +3256,7 @@ class MultiplayerPage extends StatefulWidget {
 class _MultiplayerPageState extends State<MultiplayerPage> {
   final MultiplayerClient client = MultiplayerClient();
   OnlineBattleController? onlineBattle;
-  final endpointController = TextEditingController(
-    text: 'ws://127.0.0.1:8787',
-  );
+  final endpointController = TextEditingController(text: 'ws://127.0.0.1:8787');
   final playerController = TextEditingController(text: '旅者 071');
   final roomController = TextEditingController();
 
@@ -3189,6 +3290,7 @@ class _MultiplayerPageState extends State<MultiplayerPage> {
         catalog: widget.controller.catalog,
         client: client,
         preferredDeckIds: widget.controller.deckIds,
+        rankedFormat: widget.controller.deckFormat,
       );
     });
   }
@@ -3210,7 +3312,8 @@ class _MultiplayerPageState extends State<MultiplayerPage> {
               PageHeader(
                 eyebrow: 'MULTIPLAYER / ROOM RELAY',
                 title: '联机协议调试',
-                description: '创建或加入本地 1v1 房间，检查 WebSocket 连接与消息流。正式 PVP 请使用发布网页。',
+                description:
+                    '创建或加入本地 1v1 房间，检查 WebSocket 连接与消息流。正式 PVP 请使用发布网页。',
                 action: _ConnectionPill(
                   status: client.status,
                   connected: connected,
@@ -4323,6 +4426,20 @@ class OperationsPage extends StatelessWidget {
                     label: '金币',
                     value: '${controller.gold}',
                     sub: '可用资源',
+                  ),
+                  _MetricCard(
+                    icon: Icons.verified_outlined,
+                    label: '标准卡池',
+                    value:
+                        '${rankedFormatCardCount(controller.catalog, RankedFormat.standard)}',
+                    sub: '当前轮换',
+                  ),
+                  _MetricCard(
+                    icon: Icons.all_inclusive,
+                    label: '狂野卡池',
+                    value:
+                        '${rankedFormatCardCount(controller.catalog, RankedFormat.wild)}',
+                    sub: '全部系列',
                   ),
                 ],
               );

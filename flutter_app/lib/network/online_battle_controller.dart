@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import '../data/formats.dart';
 import '../models/card_definition.dart';
 import 'multiplayer_client.dart';
 
@@ -55,6 +56,7 @@ class OnlineBattleController extends ChangeNotifier {
     required this.catalog,
     required this.client,
     List<String>? preferredDeckIds,
+    this.rankedFormat = RankedFormat.standard,
   }) {
     final preferred = preferredDeckIds ?? const <String>[];
     deckIds = _isValidDeck(preferred)
@@ -65,6 +67,7 @@ class OnlineBattleController extends ChangeNotifier {
 
   final List<CardDefinition> catalog;
   final MultiplayerClient client;
+  final RankedFormat rankedFormat;
   late final List<String> deckIds;
   List<CardDefinition> hand = <CardDefinition>[];
   List<OnlineUnit> localBoard = <OnlineUnit>[];
@@ -128,7 +131,11 @@ class OnlineBattleController extends ChangeNotifier {
 
   List<String> _buildDeck() {
     final pool = catalog
-        .where((item) => item.faction == '曜光' || item.faction == '中立')
+        .where(
+          (item) =>
+              cardAvailableInRankedFormat(item, rankedFormat) &&
+              (item.faction == '曜光' || item.faction == '中立'),
+        )
         .toList();
     final selected = pool.take(30).toList();
     if (selected.length == 30) return selected.map((item) => item.id).toList();
@@ -146,6 +153,9 @@ class OnlineBattleController extends ChangeNotifier {
     if (ids.length != 30) return false;
     final cards = ids.map(card).whereType<CardDefinition>().toList();
     if (cards.length != ids.length) return false;
+    if (cards.any((item) => !cardAvailableInRankedFormat(item, rankedFormat))) {
+      return false;
+    }
     final factions = cards
         .map((item) => item.faction)
         .where((faction) => faction != '中立')
@@ -164,7 +174,10 @@ class OnlineBattleController extends ChangeNotifier {
     if (localReady || !client.hasRoom) return;
     localReady = true;
     _log('你已提交合法 30 张牌组，等待对手确认。');
-    client.sendAction('ready', <String, dynamic>{'deckIds': deckIds});
+    client.sendAction('ready', <String, dynamic>{
+      'deckIds': deckIds,
+      'rankedFormat': rankedFormat.wireValue,
+    });
     _tryStart();
     notifyListeners();
   }

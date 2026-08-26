@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:astra_protocol/data/catalog.dart';
+import 'package:astra_protocol/data/formats.dart';
 import 'package:astra_protocol/game/game_controller.dart';
 import 'package:astra_protocol/main.dart';
 import 'package:astra_protocol/models/card_definition.dart';
@@ -15,6 +16,13 @@ void main() {
       final catalog = await loadCatalog();
       expect(catalog, hasLength(1000));
       expect(catalog.map((card) => card.faction).toSet(), hasLength(20));
+      expect(cardSetDefinitions, hasLength(4));
+      expect(rankedFormatCardCount(catalog, RankedFormat.standard), 800);
+      expect(rankedFormatCardCount(catalog, RankedFormat.wild), 1000);
+      expect(
+        catalog.where((card) => card.setId == 'pegasus-2024'),
+        hasLength(200),
+      );
       expect(factionOrder, hasLength(20));
       expect(catalog.where((card) => card.type == 'weapon'), hasLength(20));
       expect(
@@ -59,6 +67,7 @@ void main() {
       'type': 'unit',
       'cost': 2,
       'rarity': '稀有',
+      'set': 'scarab-2026',
       'attack': 3,
       'health': 4,
       'keywords': ['护盾'],
@@ -69,6 +78,7 @@ void main() {
     expect(card.isUnit, isTrue);
     expect(card.attack, 3);
     expect(card.keywords, contains('护盾'));
+    expect(card.setId, 'scarab-2026');
   });
 
   test('multiplayer events parse relay payloads', () {
@@ -1212,6 +1222,49 @@ void main() {
   });
 
   test(
+    'mobile decks enforce Standard rotation and preserve Wild legality',
+    () async {
+      final catalog = await loadCatalog();
+      final wildCards = catalog
+          .where((card) => card.faction == '曜光' && card.setId == 'pegasus-2024')
+          .take(10)
+          .toList();
+      final standardCards = catalog
+          .where(
+            (card) =>
+                card.faction == '曜光' &&
+                cardAvailableInRankedFormat(card, RankedFormat.standard),
+          )
+          .take(5)
+          .toList();
+      final controller = GameController(startingPlayer: 'player')
+        ..catalog = catalog
+        ..deckIds.addAll(
+          [...wildCards, ...standardCards].expand((card) => [card.id, card.id]),
+        );
+
+      expect(controller.deckFormat, RankedFormat.standard);
+      expect(controller.deckValid, isFalse);
+      expect(controller.deckStatus, contains('飞马年'));
+      expect(controller.cardsAvailableForDeck, hasLength(800));
+
+      controller.setDeckFormat(RankedFormat.wild);
+      expect(controller.deckValid, isTrue);
+      expect(controller.deckStatus, contains('狂野模式'));
+      expect(controller.cardsAvailableForDeck, hasLength(1000));
+
+      final rotated = wildCards.first;
+      controller.deckIds.clear();
+      controller.collection[rotated.id] = 2;
+      controller.setDeckFormat(RankedFormat.standard);
+      expect(controller.addToDeck(rotated), isFalse);
+      controller.setDeckFormat(RankedFormat.wild);
+      expect(controller.addToDeck(rotated), isTrue);
+      controller.dispose();
+    },
+  );
+
+  test(
     'drawing with a full hand burns the drawn card instead of hiding it',
     () {
       final drawCard = CardDefinition(
@@ -1392,6 +1445,37 @@ void main() {
     expect(controller.phase, 'choose-one');
     expect(controller.canChooseOne, isTrue);
     expect(controller.chooseOneOptions, hasLength(2));
+    controller.dispose();
+    client.dispose();
+  });
+
+  test('online readiness carries the selected ranked format', () async {
+    final catalog = await loadCatalog();
+    final deck = [
+      ...catalog.where(
+        (card) => card.faction == '曜光' && card.setId == 'pegasus-2024',
+      ),
+      ...catalog.where(
+        (card) =>
+            card.faction == '曜光' &&
+            cardAvailableInRankedFormat(card, RankedFormat.standard),
+      ),
+    ].take(15).expand((card) => [card.id, card.id]).toList();
+    final client = _RecordingMultiplayerClient()..roomCode = 'A7KQ';
+    final controller = OnlineBattleController(
+      catalog: catalog,
+      client: client,
+      preferredDeckIds: deck,
+      rankedFormat: RankedFormat.wild,
+    );
+
+    expect(controller.deckIds, deck);
+    controller.ready();
+    expect(client.actions, hasLength(1));
+    expect(client.actions.single['action'], 'ready');
+    final payload = client.actions.single['payload'] as Map<String, dynamic>;
+    expect(payload['rankedFormat'], 'wild');
+    expect(payload['deckIds'], deck);
     controller.dispose();
     client.dispose();
   });

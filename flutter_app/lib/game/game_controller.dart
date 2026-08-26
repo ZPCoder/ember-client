@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../data/catalog.dart';
+import '../data/formats.dart';
 import '../models/card_definition.dart';
 
 const int maxBattleActionWindows = 89;
@@ -35,6 +36,7 @@ class GameController extends ChangeNotifier {
   List<CardDefinition> catalog = const [];
   final Map<String, int> collection = <String, int>{};
   final List<String> deckIds = <String>[];
+  RankedFormat deckFormat = RankedFormat.standard;
   BattleState? battle;
   bool isLoading = true;
   String? errorMessage;
@@ -103,11 +105,16 @@ class GameController extends ChangeNotifier {
     wins = _prefs?.getInt('wins') ?? wins;
     losses = _prefs?.getInt('losses') ?? losses;
     matchesPlayed = _prefs?.getInt('matches') ?? matchesPlayed;
+    deckFormat = rankedFormatFromWire(_prefs?.getString('deck_format'));
   }
 
   void _seedStarterDeck() {
     final starter = catalog
-        .where((card) => card.faction == '曜光' || card.id.startsWith('neutral-'))
+        .where(
+          (card) =>
+              cardAvailableInRankedFormat(card, RankedFormat.standard) &&
+              (card.faction == '曜光' || card.id.startsWith('neutral-')),
+        )
         .take(15);
     for (final card in starter) {
       deckIds.add(card.id);
@@ -117,11 +124,26 @@ class GameController extends ChangeNotifier {
 
   CardDefinition? card(String id) => cardsById[id];
 
+  List<CardDefinition> get cardsAvailableForDeck => catalog
+      .where((card) => cardAvailableInRankedFormat(card, deckFormat))
+      .toList(growable: false);
+
+  bool cardAllowedInDeck(CardDefinition card) =>
+      cardAvailableInRankedFormat(card, deckFormat);
+
+  void setDeckFormat(RankedFormat format) {
+    if (deckFormat == format) return;
+    deckFormat = format;
+    _prefs?.setString('deck_format', format.wireValue);
+    notifyListeners();
+  }
+
   int owned(String id) => collection[id] ?? 0;
 
   bool addToDeck(CardDefinition card) {
     final copies = deckIds.where((id) => id == card.id).length;
     if (deckIds.length >= 30 ||
+        !cardAllowedInDeck(card) ||
         copies >= _copyLimit(card) ||
         owned(card.id) <= copies) {
       return false;
@@ -161,6 +183,13 @@ class GameController extends ChangeNotifier {
     if (deckIds.length < 30) return '还差 ${30 - deckIds.length} 张卡牌';
     if (deckIds.length > 30) return '卡组最多 30 张卡牌';
     if (deckIds.any((id) => card(id) == null)) return '卡组包含未知卡牌';
+    for (final id in deckIds) {
+      final definition = card(id)!;
+      if (!cardAllowedInDeck(definition)) {
+        return '${deckFormat.fullLabel}不能使用「${definition.name}」'
+            '（${cardSetDefinition(definition.setId).label}）';
+      }
+    }
     if (_deckFactions.length > 1) return '不能混合两个非中立阵营';
 
     final copies = <String, int>{};
@@ -180,10 +209,12 @@ class GameController extends ChangeNotifier {
 
   bool get deckValid => _deckValidationError == null;
 
-  String get deckStatus => _deckValidationError ?? '卡组协议有效';
+  String get deckStatus =>
+      _deckValidationError ?? '${deckFormat.fullLabel}卡组协议有效';
 
   Future<void> saveDeck() async {
     await _prefs?.setStringList('deck_ids', deckIds);
+    await _prefs?.setString('deck_format', deckFormat.wireValue);
     await _prefs?.setString('commander_name', commanderName);
     notifyListeners();
   }
@@ -312,14 +343,14 @@ class GameController extends ChangeNotifier {
               .map((definition) => definition.faction)
               .firstWhere((faction) => faction != '中立', orElse: () => '中立'),
         );
-    var pool = catalog
+    var pool = cardsAvailableForDeck
         .where(
           (definition) =>
               definition.faction == preferredFaction ||
               definition.faction == '中立',
         )
         .toList();
-    if (pool.isEmpty) pool = [...catalog];
+    if (pool.isEmpty) pool = [...cardsAvailableForDeck];
     if (pool.isEmpty) return const [];
 
     final fallback = <String>[];
@@ -360,7 +391,7 @@ class GameController extends ChangeNotifier {
     if (deck.isEmpty) return;
     final playerDeck = deck.map((id) => card(id)!).toList()..shuffle(_random);
     final playerFaction = _factionForCards(playerDeck);
-    final availableAiFactions = catalog
+    final availableAiFactions = cardsAvailableForDeck
         .map((card) => card.faction)
         .where((faction) => faction != '中立')
         .toSet()
@@ -369,7 +400,7 @@ class GameController extends ChangeNotifier {
         ? '幽潮'
         : availableAiFactions[_random.nextInt(availableAiFactions.length)];
     final aiCandidates =
-        catalog
+        cardsAvailableForDeck
             .where((card) => card.faction == aiFaction || card.faction == '中立')
             .toList()
           ..sort((left, right) => left.cost.compareTo(right.cost));
