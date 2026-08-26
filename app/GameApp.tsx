@@ -53,6 +53,7 @@ import {
   ladderProgressForRating,
   normalizeRankedRewardState,
   normalizeRankedLadders,
+  removeSavedDeck,
   RANKED_FIRST_TIME_REWARD_LEVELS,
   rankedSeasonRewardForPeak,
   rollRankedSeason,
@@ -221,6 +222,7 @@ type GamePayload = {
   amount?: number;
   kind?: "craft" | "disenchant";
   savedDeck?: SavedDeck;
+  deletedDeckId?: string;
   claimedLadderReadyDeck?: SavedDeck;
   aiMatch?: {
     token: string;
@@ -509,6 +511,7 @@ type IconName =
   | "user"
   | "bot"
   | "menu"
+  | "trash"
   | "close";
 
 const rawCatalog = CARD_CATALOG as readonly CardDefinition[] as unknown as ReadonlyArray<
@@ -1159,6 +1162,25 @@ function applyLocalAction(
     return { ok: true, player, savedDeck, localFallback: true };
   }
 
+  if (action === "delete_deck") {
+    const deckId = asString(body.deckId);
+    const removal = removeSavedDeck(
+      current.decks,
+      current.activeDeckId,
+      deckId,
+    );
+    if (!removal) {
+      throw new Error("要删除的卡组不存在。");
+    }
+    const player = {
+      ...current,
+      decks: removal.decks,
+      activeDeckId: removal.activeDeckId,
+      updatedAt: now,
+    };
+    return { ok: true, player, deletedDeckId: deckId, localFallback: true };
+  }
+
   if (action === "claim_task") {
     const taskId = asString(body.taskId);
     const task = current.tasks.find((item) => item.id === taskId);
@@ -1612,6 +1634,7 @@ function Icon({ name, size = 20 }: { name: IconName; size?: number }) {
     user: "●",
     bot: "◇",
     menu: "☰",
+    trash: "⌫",
     close: "×",
   };
 
@@ -3264,6 +3287,43 @@ export function GameApp({
     }
   };
 
+  const deleteCurrentDeck = async () => {
+    if (!editingDeckId || selectedLadderReadyDeckId) return;
+    const existing = player.decks.find((deck) => deck.id === editingDeckId);
+    if (!existing) return;
+    if (
+      typeof window !== "undefined" &&
+      !window.confirm(`删除卡组「${existing.name}」？此操作不会分解或移除收藏中的卡牌。`)
+    ) {
+      return;
+    }
+    const payload = await postAction("delete_deck", {
+      idempotencyKey: makeId(`delete-${editingDeckId}`),
+      deckId: editingDeckId,
+    });
+    if (!payload) return;
+    const nextDeck =
+      payload.player.decks.find(
+        (deck) => deck.id === payload.player.activeDeckId,
+      ) ?? payload.player.decks[0];
+    setSelectedLadderReadyDeckId(null);
+    if (nextDeck) {
+      setEditingDeckId(nextDeck.id);
+      setDeckIds([...nextDeck.cardIds]);
+      setDeckName(nextDeck.name);
+      setDeckFormat(nextDeck.format ?? "standard");
+    } else {
+      setEditingDeckId(null);
+      setDeckIds([...DEFAULT_STARTER_DECK]);
+      setDeckName("新建战术卡组");
+      setDeckFormat("standard");
+    }
+    setNotice({
+      tone: payload.localFallback ? "info" : "success",
+      text: `已删除「${existing.name}」，收藏中的卡牌保持不变。`,
+    });
+  };
+
   const importDeck = (ids: string[]) => {
     const validation = validateDeckForFormat(ids, deckFormat);
     if (!validation.valid) {
@@ -4719,6 +4779,7 @@ export function GameApp({
                   format={deckFormat}
                   validation={deckValidation}
                   saving={apiBusy === "save_deck"}
+                  deleting={apiBusy === "delete_deck"}
                   ladderReady={player.ladderReady}
                   selectedLadderReadyDeckId={selectedLadderReadyDeckId}
                   ladderReadyBusy={apiBusy === "activate_ladder_ready" || apiBusy === "claim_ladder_ready_deck"}
@@ -4738,6 +4799,7 @@ export function GameApp({
                   onAdd={addCard}
                   onRemove={removeCard}
                   onSave={() => void saveDeck()}
+                  onDelete={() => void deleteCurrentDeck()}
                   onImport={importDeck}
                   onBattle={startStandardBattle}
                   onActivateLadderReady={() => void activateLadderReady()}
@@ -5580,6 +5642,7 @@ function DeckSection({
   format,
   validation,
   saving,
+  deleting,
   ladderReady,
   selectedLadderReadyDeckId,
   ladderReadyBusy,
@@ -5590,6 +5653,7 @@ function DeckSection({
   onAdd,
   onRemove,
   onSave,
+  onDelete,
   onImport,
   onBattle,
   onActivateLadderReady,
@@ -5606,6 +5670,7 @@ function DeckSection({
   format: RankedFormat;
   validation: ValidationView;
   saving: boolean;
+  deleting: boolean;
   ladderReady?: PlayerSnapshot["ladderReady"];
   selectedLadderReadyDeckId: LadderReadyDeckId | null;
   ladderReadyBusy: boolean;
@@ -5616,6 +5681,7 @@ function DeckSection({
   onAdd: (card: CatalogCard) => void;
   onRemove: (cardId: string) => void;
   onSave: () => void;
+  onDelete: () => void;
   onImport: (ids: string[]) => void;
   onBattle: () => void;
   onActivateLadderReady: () => void;
@@ -5702,6 +5768,10 @@ function DeckSection({
             <button className="button button--outline" type="button" disabled={saving || Boolean(selectedLadderReadyDeckId)} onClick={onSave}>
               <Icon name="check" />
               {saving ? "保存中…" : selectedLadderReadyDeckId ? "试玩套牌只读" : "保存卡组"}
+            </button>
+            <button className="button button--outline button--danger" type="button" disabled={deleting || !editingDeckId || Boolean(selectedLadderReadyDeckId)} onClick={onDelete}>
+              <Icon name="trash" />
+              {deleting ? "删除中…" : "删除卡组"}
             </button>
             <button className="button button--primary" type="button" disabled={!validation.valid} onClick={onBattle}>
               <Icon name="swords" />

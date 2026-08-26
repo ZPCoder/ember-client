@@ -79,6 +79,9 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(game, /战情总览/);
   assert.match(game, /卡牌收藏/);
   assert.match(game, /卡组工坊/);
+  assert.match(game, /删除卡组/);
+  assert.match(game, /delete_deck/);
+  assert.match(gameStore, /export async function deleteDeck/);
   assert.match(game, /战术对战/);
   assert.match(game, /运营台/);
   assert.match(game, /新兵晋升轨道/);

@@ -678,6 +678,17 @@ button.resource-chip:hover {
   color: #9dd6cf;
 }
 
+.button--danger {
+  border-color: rgba(220, 109, 100, 0.38);
+  color: #ef9b93;
+  background: rgba(220, 109, 100, 0.07);
+}
+
+.button--danger:not(:disabled):hover {
+  border-color: rgba(220, 109, 100, 0.65);
+  background: rgba(220, 109, 100, 0.13);
+}
+
 .button--small {
   min-height: 32px;
   padding: 0 12px;
