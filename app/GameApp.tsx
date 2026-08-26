@@ -9,6 +9,7 @@ import {
   useState,
   type CSSProperties,
   type DragEvent as ReactDragEvent,
+  type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
 import {
@@ -5163,19 +5164,20 @@ export function GameApp({
     }
   };
 
-  const attackTarget = (target: BattleTarget) => {
+  const attackTarget = (target: BattleTarget, attackerOverride?: string) => {
     if (battleEffectLockRef.current) return;
-    if (!battleView || !selectedAttacker) return;
+    const attackerId = attackerOverride ?? selectedAttacker;
+    if (!battleView || !attackerId) return;
     const normalizedTarget =
       target.kind === "hero"
         ? { kind: "hero" as const, player: 1 as const }
         : { kind: "unit" as const, entityId: target.id ?? "" };
-    const next = selectedAttacker === "hero-0"
+    const next = attackerId === "hero-0"
       ? issueCommand({ type: "hero-attack", player: 0, target: normalizedTarget })
       : issueCommand({
           type: "attack",
           player: 0,
-          attackerId: selectedAttacker,
+          attackerId,
           target: normalizedTarget,
         });
     if (next) {
@@ -5710,6 +5712,7 @@ export function GameApp({
                     setBattleMessage("已取消目标选择，可继续行动。");
                   }}
                   onAttack={attackTarget}
+                  onDragAttack={(attackerId, target) => attackTarget(target, attackerId)}
                   onHeroPower={useHeroPower}
                   onEndTurn={endTurn}
                   onSkipEffects={skipBattleReplay}
@@ -7291,6 +7294,7 @@ function HeroCore({
   impact,
   targetPreview,
   dropTarget,
+  dropKey,
   onDropTarget,
 }: {
   side: BattleSide;
@@ -7304,6 +7308,7 @@ function HeroCore({
   impact?: BattleVisualEffect;
   targetPreview?: string;
   dropTarget?: boolean;
+  dropKey?: string;
   onDropTarget?: (event: ReactDragEvent<HTMLElement>) => void;
 }) {
   const effectClass = effect ? `hero-core--${effect}` : "";
@@ -7376,13 +7381,14 @@ function HeroCore({
           event.dataTransfer.dropEffect = "move";
         } : undefined}
         onDrop={dropTarget ? onDropTarget : undefined}
+        data-battle-drop={dropKey}
         aria-label={targetLabel ?? `选择${enemy ? "敌方" : "我方"}核心，剩余 ${side.health} 点生命`}
       >
         {core}
       </button>
     );
   }
-  return <div className={`hero-core ${enemy ? "hero-core--enemy" : ""} ${active ? "hero-core--active" : ""} ${effectClass}`}>{core}</div>;
+  return <div className={`hero-core ${enemy ? "hero-core--enemy" : ""} ${active ? "hero-core--active" : ""} ${effectClass}`} data-battle-drop={dropKey}>{core}</div>;
 }
 
 function BoardUnit({
@@ -7398,8 +7404,13 @@ function BoardUnit({
   draggable,
   dragging,
   dropTarget,
+  dropKey,
   onDragStart,
   onDragEnd,
+  onPointerDown,
+  onPointerMove,
+  onPointerUp,
+  onPointerCancel,
   onDropTarget,
 }: {
   unit: BattleUnit;
@@ -7414,8 +7425,13 @@ function BoardUnit({
   draggable?: boolean;
   dragging?: boolean;
   dropTarget?: boolean;
+  dropKey?: string;
   onDragStart?: (event: ReactDragEvent<HTMLButtonElement>) => void;
   onDragEnd?: () => void;
+  onPointerDown?: (event: ReactPointerEvent<HTMLButtonElement>) => void;
+  onPointerMove?: (event: ReactPointerEvent<HTMLButtonElement>) => void;
+  onPointerUp?: (event: ReactPointerEvent<HTMLButtonElement>) => void;
+  onPointerCancel?: (event: ReactPointerEvent<HTMLButtonElement>) => void;
   onDropTarget?: (event: ReactDragEvent<HTMLElement>) => void;
 }) {
   const card = CARD_BY_ID.get(unit.cardId);
@@ -7460,11 +7476,16 @@ function BoardUnit({
         draggable={draggable}
         onDragStart={onDragStart}
         onDragEnd={onDragEnd}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerCancel}
         onDragOver={dropTarget ? (event) => {
           event.preventDefault();
           event.dataTransfer.dropEffect = "move";
         } : undefined}
         onDrop={dropTarget ? onDropTarget : undefined}
+        data-battle-drop={dropKey}
         aria-pressed={onSelect ? selected : undefined}
         aria-label={`${unit.name}${unit.minionTypes.length > 0 ? `，${unit.minionTypes.map((type) => MINION_TYPE_DEFINITIONS[type].label).join("、")}` : ""}，${unit.stars} 星，攻击 ${unit.attack}，生命 ${unit.health}${targetable ? "，设为攻击目标" : unit.canAttack ? "，选择攻击" : "，本回合无法攻击"}${statusText ? `，${statusText.replaceAll("❄ ", "").replaceAll("↗ ", "").replaceAll("◌ ", "").replaceAll("↯ ", "")}` : ""}`}
         title={visualCard.description || `${unit.name} · ${unit.attack}/${unit.health}`}
@@ -7840,6 +7861,7 @@ function BattleSection({
   onCardTarget,
   onCancelTarget,
   onAttack,
+  onDragAttack,
   onHeroPower,
   onEndTurn,
   onSkipEffects,
@@ -7907,6 +7929,7 @@ function BattleSection({
   onCardTarget: (target: { kind: "unit" | "hero"; side: "player" | "ai"; id?: string }) => void;
   onCancelTarget: () => void;
   onAttack: (target: BattleTarget) => void;
+  onDragAttack: (attackerId: string, target: BattleTarget) => void;
   onHeroPower: () => void;
   onEndTurn: () => void;
   onSkipEffects: () => void;
@@ -7945,6 +7968,13 @@ function BattleSection({
     | { kind: "attacker"; unitId: string }
     | null
   >(null);
+  const pointerDragRef = useRef<{
+    pointerId: number;
+    startX: number;
+    startY: number;
+    active: boolean;
+    intent: Exclude<typeof dragIntent, null>;
+  } | null>(null);
 
   if (!battle) {
     return (
@@ -8065,9 +8095,77 @@ function BattleSection({
     finishDrag();
   };
   const dropAttack = (event: ReactDragEvent<HTMLElement>, target: BattleTarget) => {
-    if (!attackerDragActive) return;
+    if (dragIntent?.kind !== "attacker") return;
     event.preventDefault();
-    onAttack(target);
+    onDragAttack(dragIntent.unitId, target);
+    finishDrag();
+  };
+  const beginPointerDrag = (
+    event: ReactPointerEvent<HTMLElement>,
+    intent: Exclude<typeof dragIntent, null>,
+  ) => {
+    if (event.pointerType === "mouse") return;
+    pointerDragRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      active: false,
+      intent,
+    };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+  const movePointerDrag = (event: ReactPointerEvent<HTMLElement>) => {
+    const pointerDrag = pointerDragRef.current;
+    if (!pointerDrag || pointerDrag.pointerId !== event.pointerId) return;
+    if (!pointerDrag.active) {
+      const distance = Math.hypot(
+        event.clientX - pointerDrag.startX,
+        event.clientY - pointerDrag.startY,
+      );
+      if (distance < 12) return;
+      pointerDrag.active = true;
+      setDragIntent(pointerDrag.intent);
+      if (pointerDrag.intent.kind === "attacker" && selectedAttacker !== pointerDrag.intent.unitId) {
+        onSelectAttacker(pointerDrag.intent.unitId);
+      }
+    }
+    event.preventDefault();
+  };
+  const endPointerDrag = (event: ReactPointerEvent<HTMLElement>) => {
+    const pointerDrag = pointerDragRef.current;
+    if (!pointerDrag || pointerDrag.pointerId !== event.pointerId) return;
+    pointerDragRef.current = null;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    if (!pointerDrag.active) return;
+    event.preventDefault();
+    const dropElement = document
+      .elementFromPoint(event.clientX, event.clientY)
+      ?.closest<HTMLElement>("[data-battle-drop]");
+    const dropKey = dropElement?.dataset.battleDrop;
+    if (pointerDrag.intent.kind === "card") {
+      const handCard = battle.player.hand.find((card) => card.instanceId === pointerDrag.intent.instanceId);
+      const card = handCard ? CARD_BY_ID.get(handCard.cardId) : undefined;
+      if (handCard && dropKey === "friendly-board") {
+        onPlayCard(handCard, "friendly");
+      } else if (handCard && card?.disguised && dropKey === "enemy-board") {
+        onPlayCard(handCard, "enemy");
+      }
+    } else if (dropKey === "enemy-hero") {
+      onDragAttack(pointerDrag.intent.unitId, { kind: "hero" });
+    } else if (dropKey?.startsWith("enemy-unit:")) {
+      onDragAttack(pointerDrag.intent.unitId, { kind: "unit", id: dropKey.slice("enemy-unit:".length) });
+    } else {
+      onCancelTarget();
+    }
+    finishDrag();
+  };
+  const cancelPointerDrag = (event: ReactPointerEvent<HTMLElement>) => {
+    const pointerDrag = pointerDragRef.current;
+    if (pointerDrag?.pointerId !== event.pointerId) return;
+    pointerDragRef.current = null;
+    if (pointerDrag.active && pointerDrag.intent.kind === "attacker") onCancelTarget();
     finishDrag();
   };
   const pendingDefinition = pendingCard ? CARD_BY_ID.get(pendingCard.cardId) : undefined;
@@ -8388,6 +8486,7 @@ function BattleSection({
                 impact={impactForHero("ai")}
                 targetPreview={targetPreviewForHero("ai")}
                 dropTarget={attackerDragActive && enemyHeroTargetable}
+                dropKey="enemy-hero"
                 onDropTarget={(event) => dropAttack(event, { kind: "hero" })}
                 onTarget={() =>
                   pendingCard || pendingHeroPower
@@ -8417,6 +8516,7 @@ function BattleSection({
             <div
               className={`board-row board-row--enemy ${cardDragActive && draggedCardDefinition?.disguised ? "board-row--drop-ready" : ""}`}
               aria-label={`敌方战场 ${battle.ai.board.length}/${BOARD_SLOT_COUNT}`}
+              data-battle-drop="enemy-board"
               onDragOver={cardDragActive && draggedCardDefinition?.disguised ? allowDrop : undefined}
               onDrop={cardDragActive && draggedCardDefinition?.disguised ? (event) => dropCard(event, "enemy") : undefined}
             >
@@ -8429,6 +8529,7 @@ function BattleSection({
                   impact={impactForUnit(unit.id)}
                   targetPreview={targetPreviewForUnit(unit)}
                   dropTarget={attackerDragActive && enemyUnitTargetable(unit)}
+                  dropKey={`enemy-unit:${unit.id}`}
                   onDropTarget={(event) => dropAttack(event, { kind: "unit", id: unit.id })}
                   onTarget={() =>
                     pendingCard || pendingHeroPower
@@ -8458,6 +8559,7 @@ function BattleSection({
             <div
               className={`board-row board-row--player ${cardDragActive ? "board-row--drop-ready" : ""}`}
               aria-label={`我方战场 ${battle.player.board.length}/${BOARD_SLOT_COUNT}`}
+              data-battle-drop="friendly-board"
               onDragOver={cardDragActive ? allowDrop : undefined}
               onDrop={cardDragActive ? (event) => dropCard(event, "friendly") : undefined}
             >
@@ -8479,6 +8581,12 @@ function BattleSection({
                     if (selectedAttacker !== unit.id) onSelectAttacker(unit.id);
                   }}
                   onDragEnd={finishDrag}
+                  onPointerDown={playerCanAct && trainingAllowsUnitSelection && unit.canAttack
+                    ? (event) => beginPointerDrag(event, { kind: "attacker", unitId: unit.id })
+                    : undefined}
+                  onPointerMove={playerCanAct && trainingAllowsUnitSelection && unit.canAttack ? movePointerDrag : undefined}
+                  onPointerUp={playerCanAct && trainingAllowsUnitSelection && unit.canAttack ? endPointerDrag : undefined}
+                  onPointerCancel={playerCanAct && trainingAllowsUnitSelection && unit.canAttack ? cancelPointerDrag : undefined}
                   onSelect={pendingCard || pendingHeroPower || !playerCanAct || !trainingAllowsUnitSelection ? undefined : () => onSelectAttacker(unit.id)}
                   onTarget={() => onCardTarget({ kind: "unit", side: "player", id: unit.id })}
                   onInspect={() => {
@@ -8580,6 +8688,12 @@ function BattleSection({
                       setDragIntent({ kind: "card", instanceId: handCard.instanceId });
                     }}
                     onDragEnd={finishDrag}
+                    onPointerDown={!mulliganActive && !disabled
+                      ? (event) => beginPointerDrag(event, { kind: "card", instanceId: handCard.instanceId })
+                      : undefined}
+                    onPointerMove={!mulliganActive && !disabled ? movePointerDrag : undefined}
+                    onPointerUp={!mulliganActive && !disabled ? endPointerDrag : undefined}
+                    onPointerCancel={!mulliganActive && !disabled ? cancelPointerDrag : undefined}
                   >
                     <CardTile
                       card={visualCard}

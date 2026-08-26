@@ -5379,6 +5379,8 @@ button.hero-core {
 
 .board-unit--draggable {
   cursor: grab;
+  touch-action: none;
+  user-select: none;
 }
 
 .board-unit--dragging {
@@ -5925,6 +5927,8 @@ button.hero-core {
 
 .hand-card[draggable="true"] {
   cursor: grab;
+  touch-action: none;
+  user-select: none;
 }
 
 .hand-card--dragging {
