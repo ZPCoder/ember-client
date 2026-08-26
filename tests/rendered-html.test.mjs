@@ -88,6 +88,9 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(game, /claim_apprentice_reward/);
   assert.match(game, /APPRENTICE_MILESTONES/);
   assert.match(game, /新兵专属匹配池/);
+  assert.match(game, /保留进度并重试/);
+  assert.match(game, /训练对局不计入正式战绩与奖励/);
+  assert.match(game, /trainingProgressForFacts/);
   assert.match(game, /改打 AI 演算/);
   assert.match(game, /apprenticeMatchPoolForFacts/);
   assert.match(game, /隐藏水平匹配 · 数值不公开/);

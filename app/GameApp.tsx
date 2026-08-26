@@ -82,6 +82,8 @@ import {
   RETURN_QUEST_STAGE_IDS,
   RETURN_QUEST_STAGES,
   returnQuestStageReady,
+  EMPTY_TRAINING_PROGRESS,
+  trainingProgressForFacts,
   planAiTurnReplay,
   previewDeckCode,
   shouldScheduleLocalAiTurn,
@@ -107,6 +109,7 @@ import {
   type RankedLadders,
   type RankedRewardState,
   type ReturnQuestStageId,
+  type TrainingProgress,
   type SpellSchool,
   type Trait,
   type BattleVisualEffect,
@@ -3178,6 +3181,7 @@ export function GameApp({
   const [battleTurnClockSeconds, setBattleTurnClockSeconds] = useState<number | null>(null);
   const [trainingBriefingOpen, setTrainingBriefingOpen] = useState(false);
   const [trainingActive, setTrainingActive] = useState(false);
+  const [trainingProgress, setTrainingProgress] = useState<TrainingProgress>(() => ({ ...EMPTY_TRAINING_PROGRESS }));
   const recordedBattleRef = useRef<string | null>(null);
   const aiMatchProofRef = useRef<AiMatchProofPayload | null>(null);
   const aiMatchStartingRef = useRef(false);
@@ -4270,9 +4274,11 @@ export function GameApp({
     }
   };
 
-  const startBattle = async () => {
+  const startBattle = async (training = false) => {
     if (aiMatchStartingRef.current) return;
-    const requestedOpponent = selectedAiArchetype ?? AI_ARCHETYPES[0];
+    const requestedOpponent = training
+      ? AI_ARCHETYPES.find((candidate) => candidate.faction === "曜光") ?? AI_ARCHETYPES[0]
+      : selectedAiArchetype ?? AI_ARCHETYPES[0];
     const savedDeckId = editingDeckId;
     if (!selectedLadderReadyDeckId && !savedDeckId) {
       switchSection("deck");
@@ -4323,13 +4329,28 @@ export function GameApp({
 
   const startStandardBattle = () => {
     setTrainingActive(false);
-    void startBattle();
+    setTrainingProgress({ ...EMPTY_TRAINING_PROGRESS });
+    void startBattle(false);
   };
 
   const startTrainingBattle = () => {
     setTrainingActive(true);
+    setTrainingProgress({ ...EMPTY_TRAINING_PROGRESS });
     setTrainingBriefingOpen(false);
-    void startBattle();
+    void startBattle(true);
+  };
+
+  const retryTrainingBattle = () => {
+    if (battleView) {
+      setTrainingProgress((current) => trainingProgressForFacts(current, {
+        status: battleView.status,
+        cardsPlayed: battleView.report.cardsPlayed[0],
+        attacks: battleView.report.attacks[0],
+        log: battleView.log,
+      }));
+    }
+    setTrainingActive(true);
+    void startBattle(true);
   };
 
   // In PVP the server reducer is authoritative. The local client only sends a
@@ -5139,13 +5160,19 @@ export function GameApp({
     const key = `${battleView.turn}-${result}`;
     if (recordedBattleRef.current === key) return;
     recordedBattleRef.current = key;
-    setBattleMessage(
+    if (trainingActive) {
+      queueMicrotask(() => setBattleMessage(result === "win"
+        ? "训练目标完成；本局不计入正式战绩，可继续练习或返回大厅。"
+        : "训练数据已保留；本局不计入正式战绩，可从头安全重试。"));
+      return;
+    }
+    queueMicrotask(() => setBattleMessage(
       result === "win"
         ? "敌方核心已离线，战术演算胜利。"
         : result === "draw"
           ? "双方核心状态已锁定，本场演算平局。"
           : "我方核心失守，演算数据已回收。",
-    );
+    ));
     void postAction("record_match", {
       idempotencyKey: makeId("match"),
       result,
@@ -5170,7 +5197,7 @@ export function GameApp({
       });
       }
     });
-  }, [battleView, onlineMatch, onlineOpponent, postAction, pvp.state.format, pvp.state.rankedFormat]);
+  }, [battleView, onlineMatch, onlineOpponent, postAction, pvp.state.format, pvp.state.rankedFormat, trainingActive]);
 
   const totalOwned = Object.values(player.collection).reduce((sum, count) => sum + count, 0);
   const uniqueOwned = Object.values(player.collection).filter((count) => count > 0).length;
@@ -5501,7 +5528,12 @@ export function GameApp({
                   onToggleSound={toggleSound}
                   onToggleReplaySpeed={toggleBattleReplaySpeed}
                   trainingActive={trainingActive}
-                  onExitTraining={() => setTrainingActive(false)}
+                  trainingProgress={trainingProgress}
+                  onExitTraining={() => {
+                    setTrainingActive(false);
+                    setTrainingProgress({ ...EMPTY_TRAINING_PROGRESS });
+                  }}
+                  onRetryTraining={retryTrainingBattle}
                   pvp={pvp.state}
                   apprenticePool={apprenticePool}
                   aiArchetypes={AI_ARCHETYPES}
@@ -5622,7 +5654,7 @@ function TrainingBriefing({
           <div>
             <span>CADET BRIEFING / 4 STEPS</span>
             <h2 id="training-briefing-title">三分钟掌握第一场对局</h2>
-            <p>训练模式会在战场侧边持续提示下一步，但不会替你做决定。</p>
+            <p>训练模式会固定练习对手、持续提示下一步；失败可安全重试，已完成步骤不会丢失，且不计正式战绩。</p>
           </div>
           <button type="button" onClick={onClose} aria-label="关闭新手训练说明">
             <Icon name="close" size={18} />
@@ -7497,7 +7529,9 @@ function BattleSection({
   onToggleSound,
   onToggleReplaySpeed,
   trainingActive,
+  trainingProgress,
   onExitTraining,
+  onRetryTraining,
   pvp,
   apprenticePool,
   aiArchetypes,
@@ -7560,7 +7594,9 @@ function BattleSection({
   onToggleSound: () => void;
   onToggleReplaySpeed: () => void;
   trainingActive: boolean;
+  trainingProgress: TrainingProgress;
   onExitTraining: () => void;
+  onRetryTraining: () => void;
   pvp: PvpState;
   apprenticePool: boolean;
   aiArchetypes: readonly AiArchetype[];
@@ -7669,22 +7705,22 @@ function BattleSection({
     {
       label: "确认起手",
       detail: "点击不想保留的牌，再确认起手。",
-      done: !mulliganActive,
+      done: trainingProgress.mulligan || !mulliganActive,
     },
     {
       label: "使用一张牌",
       detail: "观察费用；若费用差 1，可先使用幸运币，再部署一张牌。",
-      done: battle.report.cardsPlayed[0] > 0,
+      done: trainingProgress.cardPlayed || battle.report.cardsPlayed[0] > 0,
     },
     {
       label: "发动一次攻击",
       detail: "可行动单位会亮起；先选单位，再选目标。",
-      done: battle.report.attacks[0] > 0,
+      done: trainingProgress.attack || battle.report.attacks[0] > 0,
     },
     {
       label: "结束一个回合",
       detail: "行动完成后结束回合，能量会在下回合补满。",
-      done: battle.log.some((line) => line.includes("我方结束了回合")),
+      done: trainingProgress.turnEnded || battle.log.some((line) => line.includes("我方结束了回合")),
     },
   ];
   const completedTrainingSteps = trainingSteps.filter((step) => step.done).length;
@@ -8479,7 +8515,9 @@ function BattleSection({
                       ? "敌方核心生命归零"
                       : "我方核心生命归零";
               const resultTitle = battle.winner === "player" ? "演算胜利" : battle.winner === null ? "战术平局" : "核心失守";
-              const resultMessage = busy
+              const resultMessage = trainingActive
+                ? "训练对局不计入正式战绩与奖励；失败时会保留已完成步骤。"
+                : busy
                 ? "正在归档战报与奖励…"
                 : battle.winner === "player"
                   ? "获得 60 金币，任务进度已更新。"
@@ -8521,7 +8559,11 @@ function BattleSection({
                   </div>
                   <p>{resultMessage}</p>
                   <div className="battle-result__actions">
-                    {online ? (
+                    {trainingActive ? (
+                      <button className="button button--primary button--wide" type="button" onClick={onRetryTraining}>
+                        {battle.winner === "player" ? "再练一次" : "保留进度并重试"}
+                      </button>
+                    ) : online ? (
                       <button
                         className="button button--primary button--wide"
                         type="button"
