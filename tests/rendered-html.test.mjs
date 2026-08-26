@@ -152,7 +152,9 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(game, /claim_return_quest/);
   assert.match(game, /RETURN_QUEST_STAGES/);
   assert.match(gameStore, /export async function claimReturnQuest/);
-  assert.match(game, /LADDER_READY_DECKS/);
+  assert.match(game, /ladderReadyDecksForTrial/);
+  assert.match(game, /激活时锁定当前环境版本/);
+  assert.match(gameStore, /catalogVersionId/);
   assert.match(game, /AI 与在线对战均可使用/);
   assert.match(game, /预备 · 全部能量/);
   assert.match(game, /type: "prepare-card"/);

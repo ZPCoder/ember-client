@@ -66,6 +66,9 @@ import {
   hasMinionType,
   isPackType,
   getLadderReadyDeck,
+  ladderReadyCatalogAt,
+  ladderReadyCatalogForTrial,
+  ladderReadyDecksForTrial,
   generateCatchUpPackReward,
   catchUpProgressFromCollection,
   recordCatchUpCards,
@@ -75,7 +78,6 @@ import {
   CATCH_UP_LEGENDARY_GUARANTEE_CARDS,
   getTraitStatuses,
   LADDER_DIAMOND_FIVE_PROGRESS,
-  LADDER_READY_DECKS,
   LADDER_READY_TRIAL_DAYS,
   LADDER_READY_TRIAL_MS,
   LADDER_START_RATING,
@@ -144,6 +146,7 @@ import {
   type Keyword,
   type MinionType,
   type LadderReadyDeckId,
+  type LadderReadyCatalogVersionId,
   type MatchQuality,
   type MissingDeckCard,
   type MatchState,
@@ -287,6 +290,7 @@ type PlayerSnapshot = {
     activatedAt: string | null;
     expiresAt: string | null;
     claimedDeckId: LadderReadyDeckId | null;
+    catalogVersionId: LadderReadyCatalogVersionId | null;
   };
   catchUpPack?: {
     claimedAt: string | null;
@@ -1095,7 +1099,7 @@ function makeDemoPlayer(identity?: {
     progression: { xp: 850, level: 1 },
     rewardTrack: { claimedLevels: [] },
     apprenticeTrack: { claimedMilestones: [] },
-    ladderReady: { activatedAt: null, expiresAt: null, claimedDeckId: null },
+    ladderReady: { activatedAt: null, expiresAt: null, claimedDeckId: null, catalogVersionId: null },
     catchUpPack: { claimedAt: null, cardsGranted: 0, ...catchUpProgress },
     trialCards: { activatedAt: null, expiresAt: null },
     returnJourney: { claimedStageIds: [], matchesPlayedAtActivation: 0 },
@@ -1147,7 +1151,9 @@ function applyLocalAction(
     );
     const training = Boolean(requestedChapter);
     const ladderReadyDeckId = asString(body.ladderReadyDeckId);
-    const offer = ladderReadyDeckId ? getLadderReadyDeck(ladderReadyDeckId) : undefined;
+    const offer = ladderReadyDeckId
+      ? getLadderReadyDeck(ladderReadyDeckId, ladderReadyCatalogForTrial(current.ladderReady, now).id)
+      : undefined;
     let playerDeck: readonly string[];
     let rankedFormat: RankedFormat;
     if (training) {
@@ -1229,10 +1235,11 @@ function applyLocalAction(
     };
   }
   if (action === "activate_ladder_ready") {
-    const trial = current.ladderReady ?? { activatedAt: null, expiresAt: null, claimedDeckId: null };
+    const trial = current.ladderReady ?? { activatedAt: null, expiresAt: null, claimedDeckId: null, catalogVersionId: null };
     if (trial.claimedDeckId) throw new Error("本档案已经领取过一套天梯预备套牌。");
     if (trial.activatedAt) throw new Error("七日试玩已经激活。");
     const activatedAt = new Date(now);
+    const catalogVersionId = ladderReadyCatalogAt(activatedAt).id;
     return {
       ok: true,
       player: {
@@ -1241,6 +1248,7 @@ function applyLocalAction(
           activatedAt: activatedAt.toISOString(),
           expiresAt: new Date(activatedAt.getTime() + LADDER_READY_TRIAL_MS).toISOString(),
           claimedDeckId: null,
+          catalogVersionId,
         },
         trialCards: {
           activatedAt: activatedAt.toISOString(),
@@ -1256,11 +1264,12 @@ function applyLocalAction(
     };
   }
   if (action === "claim_ladder_ready_deck") {
-    const offer = getLadderReadyDeck(asString(body.deckId));
-    if (!offer) throw new Error("天梯预备套牌不存在。");
     const trial = current.ladderReady;
     if (!trial?.activatedAt) throw new Error("请先激活七日试玩。");
     if (trial.claimedDeckId) throw new Error("本档案已经领取过一套天梯预备套牌。");
+    const catalog = ladderReadyCatalogForTrial(trial, now);
+    const offer = getLadderReadyDeck(asString(body.deckId), catalog.id);
+    if (!offer) throw new Error("天梯预备套牌不存在。");
     const claimedLadderReadyDeck: SavedDeck = {
       id: `ladder-ready-${offer.id}`,
       name: `${offer.faction} · ${offer.name}`,
@@ -1290,7 +1299,7 @@ function applyLocalAction(
       collection,
       decks: [...current.decks.filter((deck) => deck.id !== claimedLadderReadyDeck.id), claimedLadderReadyDeck],
       activeDeckId: claimedLadderReadyDeck.id,
-      ladderReady: { ...trial, claimedDeckId: offer.id },
+      ladderReady: { ...trial, claimedDeckId: offer.id, catalogVersionId: catalog.id },
       catchUpPack: {
         ...(current.catchUpPack ?? { claimedAt: null, cardsGranted: 0 }),
         ...catchUpProgress,
@@ -4521,8 +4530,8 @@ export function GameApp({
   };
 
   const trialLadderReadyDeck = (deckId: LadderReadyDeckId) => {
-    const offer = getLadderReadyDeck(deckId);
     const trial = player.ladderReady;
+    const offer = getLadderReadyDeck(deckId, ladderReadyCatalogForTrial(trial).id);
     if (!offer || !trial?.activatedAt || !trial.expiresAt) {
       setNotice({ tone: "warning", text: "请先激活七日试玩。" });
       return;
@@ -4543,7 +4552,7 @@ export function GameApp({
   };
 
   const claimLadderReady = async (deckId: LadderReadyDeckId) => {
-    const offer = getLadderReadyDeck(deckId);
+    const offer = getLadderReadyDeck(deckId, ladderReadyCatalogForTrial(player.ladderReady).id);
     if (!offer) return;
     const payload = await postAction("claim_ladder_ready_deck", {
       idempotencyKey: makeId(`ladder-ready-claim-${deckId}`),
@@ -7271,6 +7280,8 @@ function DeckSection({
   }, []);
   const formatTimestamp = clockNow || Date.parse(snapshotAt);
   const trialActivated = Boolean(ladderReady?.activatedAt && ladderReady.expiresAt);
+  const ladderReadyCatalog = ladderReadyCatalogForTrial(ladderReady, formatTimestamp);
+  const ladderReadyOffers = ladderReadyDecksForTrial(ladderReady, formatTimestamp);
   const standardSnapshot = standardFormatSnapshot(formatTimestamp);
   const standardCardCount = rankedFormatCardCount(CARD_CATALOG, "standard", formatTimestamp);
   const wildCardCount = rankedFormatCardCount(CARD_CATALOG, "wild", formatTimestamp);
@@ -7421,14 +7432,14 @@ function DeckSection({
           <div>
             <span className="panel__eyebrow">LADDER READY / 7-DAY ARMORY</span>
             <h2 id="ladder-ready-title">天梯预备套牌</h2>
-            <p>六套完整 30 张卡组可在七天内无限试玩；最终任选一套永久领取，缺少卡牌会自动补齐。</p>
+            <p>六套完整 30 张卡组可在七天内无限试玩；激活时锁定当前环境版本，最终任选一套永久领取。</p>
           </div>
           <div className={`ladder-ready__status ${trialClaimed ? "is-claimed" : trialPlayable ? "is-live" : ""}`}>
             <Icon name={trialClaimed ? "check" : "clock"} size={18} />
             <span>
               <small>{trialClaimed ? "领取完成" : trialPlayable ? "试玩剩余" : trialExpired ? "试玩到期" : "尚未启动"}</small>
               <strong>{trialClaimed
-                ? getLadderReadyDeck(ladderReady?.claimedDeckId ?? "")?.name ?? "已领取"
+                ? getLadderReadyDeck(ladderReady?.claimedDeckId ?? "", ladderReadyCatalog.id)?.name ?? "已领取"
                 : formatLadderReadyCountdown(ladderReady?.expiresAt, clockNow)}</strong>
             </span>
           </div>
@@ -7443,6 +7454,7 @@ function DeckSection({
           <span><Icon name="check" size={14} /> AI 与在线对战均可使用</span>
           <span><Icon name="clock" size={14} /> 激活后连续计时七天</span>
           <span><Icon name="shield" size={14} /> 每个账号仅能永久领取一套</span>
+          <span><Icon name="cards" size={14} /> 当前目录：{ladderReadyCatalog.label}</span>
           <span>
             <Icon name="cards" size={14} />
             {catchUpPack?.claimedAt
@@ -7496,7 +7508,7 @@ function DeckSection({
           </div>
         </section>
         <div className="ladder-ready__grid">
-          {LADDER_READY_DECKS.map((offer) => {
+          {ladderReadyOffers.map((offer) => {
             const definition = FACTION_DEFINITIONS[offer.faction];
             const averageCost = offer.deck.reduce((sum, cardId) => sum + (CARD_BY_ID.get(cardId)?.cost ?? 0), 0) / offer.deck.length;
             const legendaryCount = offer.deck.filter((cardId) => CARD_BY_ID.get(cardId)?.rarity === "legendary").length;
@@ -7534,7 +7546,7 @@ function DeckSection({
       </section>
 
       {claimConfirmation && (() => {
-        const offer = getLadderReadyDeck(claimConfirmation);
+        const offer = getLadderReadyDeck(claimConfirmation, ladderReadyCatalog.id);
         if (!offer) return null;
         return (
           <div className="ladder-ready-confirm" role="presentation" onClick={() => setClaimConfirmation(null)}>
