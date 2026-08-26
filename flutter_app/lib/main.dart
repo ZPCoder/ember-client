@@ -533,7 +533,7 @@ class OverviewPage extends StatelessWidget {
                     label: '已收藏卡牌',
                     value:
                         '${controller.collection.values.where((value) => value > 0).length}',
-                    sub: '/ 210 档案',
+                    sub: '/ 1000 档案',
                   ),
                   _MetricCard(
                     icon: Icons.sports_kabaddi_outlined,
@@ -565,7 +565,7 @@ class OverviewPage extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  '七大阵营协议',
+                  '二十大阵营协议',
                   style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 6),
@@ -598,7 +598,7 @@ class OverviewPage extends StatelessWidget {
                 _QuickAction(
                   icon: Icons.grid_view_rounded,
                   title: '浏览卡牌收藏',
-                  description: '检索 210 张原创档案',
+                  description: '检索 1000 张原创档案',
                   onTap: () => onNavigate(1),
                 ),
                 _QuickAction(
@@ -852,7 +852,7 @@ class _CollectionPageState extends State<CollectionPage> {
           PageHeader(
             eyebrow: 'TACTICAL ARCHIVE / COLLECTION',
             title: '卡牌收藏',
-            description: '七大阵营共 210 张档案，按阵营、类型和关键词检索。',
+            description: '二十大阵营共 1000 张档案，按阵营、类型和关键词检索。',
             action: FilledButton.icon(
               onPressed: () => _showPackMessage(),
               icon: const Icon(Icons.inventory_2_outlined),
@@ -2141,11 +2141,17 @@ class _BattleBoardState extends State<BattleBoard> {
                 child: Column(
                   children: [
                     Text(
-                      state.winner == 'player' ? '演算胜利' : '演算结束',
+                      state.winner == 'player'
+                          ? '演算胜利'
+                          : state.winner == null
+                          ? '演算平局'
+                          : '演算结束',
                       style: TextStyle(
                         fontSize: 24,
                         color: state.winner == 'player'
                             ? const Color(0xFF79B980)
+                            : state.winner == null
+                            ? const Color(0xFFE7BD7A)
                             : const Color(0xFFE46D3F),
                         fontWeight: FontWeight.w700,
                       ),
@@ -2154,6 +2160,8 @@ class _BattleBoardState extends State<BattleBoard> {
                     Text(
                       state.winner == 'player'
                           ? '战报已归档，获得 60 金币。'
+                          : state.winner == null
+                          ? '双方核心同时失效或达到回合上限，本局不计胜负。'
                           : '保留战术日志，获得 20 金币。',
                       style: const TextStyle(color: Color(0xFF84938A)),
                     ),
@@ -3146,7 +3154,7 @@ class _MultiplayerPageState extends State<MultiplayerPage> {
   final MultiplayerClient client = MultiplayerClient();
   OnlineBattleController? onlineBattle;
   final endpointController = TextEditingController(
-    text: 'wss://ember-protocol-beta.harriettvgyfi43.chatgpt.site/api/pvp',
+    text: 'ws://127.0.0.1:8787',
   );
   final playerController = TextEditingController(text: '旅者 071');
   final roomController = TextEditingController();
@@ -3201,8 +3209,8 @@ class _MultiplayerPageState extends State<MultiplayerPage> {
             children: [
               PageHeader(
                 eyebrow: 'MULTIPLAYER / ROOM RELAY',
-                title: '联机大厅',
-                description: '创建或加入 1v1 房间，服务器权威校验每一条卡牌、攻击与回合指令。',
+                title: '联机协议调试',
+                description: '创建或加入本地 1v1 房间，检查 WebSocket 连接与消息流。正式 PVP 请使用发布网页。',
                 action: _ConnectionPill(
                   status: client.status,
                   connected: connected,
@@ -3224,7 +3232,7 @@ class _MultiplayerPageState extends State<MultiplayerPage> {
                         ),
                         const SizedBox(height: 6),
                         const Text(
-                          '默认连接生产权威 PVP；本地调试可填入兼容的 wss:// 或 ws:// WebSocket 地址。',
+                          '该入口是开发用 WebSocket 协议演示，不进行身份绑定、权威规则结算或排位记录。',
                           style: TextStyle(
                             color: Color(0xFF84938A),
                             fontSize: 11,
@@ -3521,7 +3529,7 @@ class _MultiplayerPageState extends State<MultiplayerPage> {
     keyboardType: TextInputType.url,
     decoration: const InputDecoration(
       labelText: 'WebSocket 地址',
-      hintText: 'wss://当前站点/api/pvp',
+      hintText: 'ws://127.0.0.1:8787',
       prefixIcon: Icon(Icons.dns_outlined),
     ),
   );
@@ -4275,7 +4283,7 @@ class OperationsPage extends StatelessWidget {
           const PageHeader(
             eyebrow: 'OPERATIONS / TELEMETRY',
             title: '运营台',
-            description: '七大阵营、对局表现与本地档案运行状态。',
+            description: '二十大阵营、对局表现与本地档案运行状态。',
           ),
           LayoutBuilder(
             builder: (context, constraints) {

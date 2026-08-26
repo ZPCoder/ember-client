@@ -345,6 +345,108 @@ p {
   margin-left: var(--sidebar);
 }
 
+/* Active matches shed the collection/dashboard chrome and claim the viewport.
+ * This keeps the tactical surface, hand and combat feedback at game scale
+ * instead of squeezing them into an application panel. The battle lobby keeps
+ * the normal navigation so players can still prepare decks and queue freely. */
+.game-shell--battle-focus {
+  min-height: 100dvh;
+  overflow-x: hidden;
+  background:
+    radial-gradient(circle at 50% 48%, rgba(228, 109, 63, 0.07), transparent 34rem),
+    linear-gradient(155deg, #06100e, #0a1713 52%, #050d0b);
+}
+
+.game-shell--battle-focus .sidebar {
+  visibility: hidden;
+  opacity: 0;
+  transform: translateX(-100%);
+  pointer-events: none;
+}
+
+.game-shell--battle-focus .game-workspace {
+  margin-left: 0;
+}
+
+.game-shell--battle-focus .topbar {
+  display: none;
+}
+
+.game-shell--battle-focus .main-content {
+  width: 100%;
+  max-width: none;
+  padding: 12px clamp(12px, 1.5vw, 24px) 14px;
+}
+
+.game-shell--battle-focus .battle-room__top {
+  min-height: 42px;
+  margin-bottom: 8px;
+}
+
+.game-shell--battle-focus .battle-room__top h1 {
+  font-size: 18px;
+}
+
+.game-shell--battle-focus .battlefield {
+  border-color: rgba(226, 217, 186, 0.2);
+  border-radius: 24px;
+  box-shadow:
+    0 24px 80px rgba(0, 0, 0, 0.34),
+    inset 0 0 80px rgba(85, 185, 173, 0.025);
+}
+
+.game-shell--battle-focus .battle-console {
+  border-color: rgba(226, 217, 186, 0.18);
+  box-shadow: 0 18px 58px rgba(0, 0, 0, 0.26);
+}
+
+@media (min-width: 901px) {
+  .game-shell--battle-focus .battle-layout {
+    grid-template-columns: minmax(0, 1fr) clamp(250px, 22vw, 300px);
+    gap: 10px;
+  }
+
+  .game-shell--battle-focus .battlefield,
+  .game-shell--battle-focus .battle-console {
+    height: calc(100dvh - 76px);
+    min-height: 560px;
+  }
+}
+
+@media (min-width: 1181px) {
+  .game-shell--battle-focus .board-row {
+    min-height: 150px;
+    gap: 8px;
+  }
+
+  .game-shell--battle-focus .board-slot,
+  .game-shell--battle-focus .board-unit-shell {
+    width: 108px;
+    min-width: 108px;
+  }
+
+  .game-shell--battle-focus .board-slot,
+  .game-shell--battle-focus .board-unit {
+    height: 142px;
+    min-height: 142px;
+    border-radius: 13px;
+  }
+
+  .game-shell--battle-focus .board-unit__art {
+    height: 86px;
+  }
+
+  .game-shell--battle-focus .board-unit > strong {
+    padding-inline: 7px;
+    font-size: 9px;
+  }
+
+  .game-shell--battle-focus .board-unit__stats {
+    padding-inline: 9px;
+    font-size: 10px;
+  }
+}
+
 .topbar {
   position: sticky;
   top: 0;

@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-08-17T03:09:41.221Z",
+  "generatedAt": "2026-08-25T13:51:03.766Z",
   "catalogCount": 1000,
   "generatedCount": 0,
-  "individuallyGeneratedCount": 159,
+  "individuallyGeneratedCount": 1000,
   "generatedBy": "imagegen-per-card-plus-legacy-variants",
   "anchor": "public/card-art-sources/frost-anchor.png",
   "cards": [
@@ -95,7 +95,7 @@
       "faction": "幽潮",
       "type": "unit",
       "art": "/cards/void-abyss-whale.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "void-chill-needle",
@@ -179,154 +179,154 @@
       "faction": "曜光",
       "type": "unit",
       "art": "/cards/sun-lumen-page.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sun-glasswing-courier",
       "faction": "曜光",
       "type": "unit",
       "art": "/cards/sun-glasswing-courier.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sun-prism-squire",
       "faction": "曜光",
       "type": "unit",
       "art": "/cards/sun-prism-squire.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sun-horizon-hunter",
       "faction": "曜光",
       "type": "unit",
       "art": "/cards/sun-horizon-hunter.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sun-choir-acolyte",
       "faction": "曜光",
       "type": "unit",
       "art": "/cards/sun-choir-acolyte.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sun-gilded-lancer",
       "faction": "曜光",
       "type": "unit",
       "art": "/cards/sun-gilded-lancer.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sun-sunwell-artificer",
       "faction": "曜光",
       "type": "unit",
       "art": "/cards/sun-sunwell-artificer.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sun-aurora-duelist",
       "faction": "曜光",
       "type": "unit",
       "art": "/cards/sun-aurora-duelist.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sun-halo-captain",
       "faction": "曜光",
       "type": "unit",
       "art": "/cards/sun-halo-captain.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sun-whitefire-priest",
       "faction": "曜光",
       "type": "unit",
       "art": "/cards/sun-whitefire-priest.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sun-prism-huntress",
       "faction": "曜光",
       "type": "unit",
       "art": "/cards/sun-prism-huntress.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sun-zenith-golem",
       "faction": "曜光",
       "type": "unit",
       "art": "/cards/sun-zenith-golem.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sun-radiant-griffin",
       "faction": "曜光",
       "type": "unit",
       "art": "/cards/sun-radiant-griffin.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sun-corona-archon",
       "faction": "曜光",
       "type": "unit",
       "art": "/cards/sun-corona-archon.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sun-daystar-titan",
       "faction": "曜光",
       "type": "unit",
       "art": "/cards/sun-daystar-titan.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sun-flare-spark",
       "faction": "曜光",
       "type": "spell",
       "art": "/cards/sun-flare-spark.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sun-refraction-aid",
       "faction": "曜光",
       "type": "spell",
       "art": "/cards/sun-refraction-aid.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sun-mirror-tempering",
       "faction": "曜光",
       "type": "spell",
       "art": "/cards/sun-mirror-tempering.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sun-orbit-insight",
       "faction": "曜光",
       "type": "spell",
       "art": "/cards/sun-orbit-insight.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sun-spear-descent",
       "faction": "曜光",
       "type": "spell",
       "art": "/cards/sun-spear-descent.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sun-dawn-muster",
       "faction": "曜光",
       "type": "spell",
       "art": "/cards/sun-dawn-muster.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sun-supernova-judgment",
       "faction": "曜光",
       "type": "weapon",
       "art": "/cards/sun-supernova-judgment.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "void-brine-skulker",
@@ -417,70 +417,70 @@
       "faction": "幽潮",
       "type": "unit",
       "art": "/cards/void-drowned-leviathan.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "void-tempest-manta",
       "faction": "幽潮",
       "type": "unit",
       "art": "/cards/void-tempest-manta.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "void-thalassic-sovereign",
       "faction": "幽潮",
       "type": "unit",
       "art": "/cards/void-thalassic-sovereign.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "void-saltbite",
       "faction": "幽潮",
       "type": "spell",
       "art": "/cards/void-saltbite.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "void-deepwater-draught",
       "faction": "幽潮",
       "type": "spell",
       "art": "/cards/void-deepwater-draught.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "void-pressure-spike",
       "faction": "幽潮",
       "type": "spell",
       "art": "/cards/void-pressure-spike.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "void-echoing-current",
       "faction": "幽潮",
       "type": "spell",
       "art": "/cards/void-echoing-current.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "void-moonpool-mutation",
       "faction": "幽潮",
       "type": "spell",
       "art": "/cards/void-moonpool-mutation.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "void-blackwake-torpedo",
       "faction": "幽潮",
       "type": "spell",
       "art": "/cards/void-blackwake-torpedo.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "void-maelstrom-memory",
       "faction": "幽潮",
       "type": "weapon",
       "art": "/cards/void-maelstrom-memory.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "neutral-lantern-mouse",
@@ -676,175 +676,175 @@
       "faction": "烬火",
       "type": "unit",
       "art": "/cards/ember-flamespine-vanguard.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-forge-smith",
       "faction": "烬火",
       "type": "unit",
       "art": "/cards/ember-forge-smith.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-heart-drinker",
       "faction": "烬火",
       "type": "unit",
       "art": "/cards/ember-heart-drinker.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-slag-sentinel",
       "faction": "烬火",
       "type": "unit",
       "art": "/cards/ember-slag-sentinel.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-crimson-duelist",
       "faction": "烬火",
       "type": "unit",
       "art": "/cards/ember-crimson-duelist.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-magma-hornbeast",
       "faction": "烬火",
       "type": "unit",
       "art": "/cards/ember-magma-hornbeast.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-oath-pyromancer",
       "faction": "烬火",
       "type": "unit",
       "art": "/cards/ember-oath-pyromancer.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-volcanic-ram",
       "faction": "烬火",
       "type": "unit",
       "art": "/cards/ember-volcanic-ram.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-heatbound-colossus",
       "faction": "烬火",
       "type": "unit",
       "art": "/cards/ember-heatbound-colossus.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-ashwing-phoenix",
       "faction": "烬火",
       "type": "unit",
       "art": "/cards/ember-ashwing-phoenix.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-war-drummer",
       "faction": "烬火",
       "type": "unit",
       "art": "/cards/ember-war-drummer.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-scorchland-hydra",
       "faction": "烬火",
       "type": "unit",
       "art": "/cards/ember-scorchland-hydra.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-forgecrown-general",
       "faction": "烬火",
       "type": "unit",
       "art": "/cards/ember-forgecrown-general.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-caldera-core",
       "faction": "烬火",
       "type": "unit",
       "art": "/cards/ember-caldera-core.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-spark-artificer",
       "faction": "烬火",
       "type": "unit",
       "art": "/cards/ember-spark-artificer.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-leaping-spark",
       "faction": "烬火",
       "type": "spell",
       "art": "/cards/ember-leaping-spark.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-flame-pierce",
       "faction": "烬火",
       "type": "spell",
       "art": "/cards/ember-flame-pierce.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-ignite-morale",
       "faction": "烬火",
       "type": "spell",
       "art": "/cards/ember-ignite-morale.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-cinder-dispatch",
       "faction": "烬火",
       "type": "spell",
       "art": "/cards/ember-cinder-dispatch.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-fireline-lockdown",
       "faction": "烬火",
       "type": "spell",
       "art": "/cards/ember-fireline-lockdown.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-ash-rekindling",
       "faction": "烬火",
       "type": "spell",
       "art": "/cards/ember-ash-rekindling.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-molten-core-overload",
       "faction": "烬火",
       "type": "spell",
       "art": "/cards/ember-molten-core-overload.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-cinder-rain",
       "faction": "烬火",
       "type": "spell",
       "art": "/cards/ember-cinder-rain.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-calamity-verdict",
       "faction": "烬火",
       "type": "spell",
       "art": "/cards/ember-calamity-verdict.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-red-lotus-finale",
       "faction": "烬火",
       "type": "weapon",
       "art": "/cards/ember-red-lotus-finale.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-stardust-familiar",
@@ -858,203 +858,203 @@
       "faction": "星穹",
       "type": "unit",
       "art": "/cards/astral-skychart-apprentice.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-prism-guard",
       "faction": "星穹",
       "type": "unit",
       "art": "/cards/astral-prism-guard.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-comet-scribe",
       "faction": "星穹",
       "type": "unit",
       "art": "/cards/astral-comet-scribe.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-orbit-moonhare",
       "faction": "星穹",
       "type": "unit",
       "art": "/cards/astral-orbit-moonhare.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-veil-seer",
       "faction": "星穹",
       "type": "unit",
       "art": "/cards/astral-veil-seer.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-mirror-adept",
       "faction": "星穹",
       "type": "unit",
       "art": "/cards/astral-mirror-adept.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-constellation-gardener",
       "faction": "星穹",
       "type": "unit",
       "art": "/cards/astral-constellation-gardener.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-nebula-knight",
       "faction": "星穹",
       "type": "unit",
       "art": "/cards/astral-nebula-knight.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-archive-stargazer",
       "faction": "星穹",
       "type": "unit",
       "art": "/cards/astral-archive-stargazer.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-eclipse-stalker",
       "faction": "星穹",
       "type": "unit",
       "art": "/cards/astral-eclipse-stalker.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-prismatic-stag",
       "faction": "星穹",
       "type": "unit",
       "art": "/cards/astral-prismatic-stag.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-comet-rider",
       "faction": "星穹",
       "type": "unit",
       "art": "/cards/astral-comet-rider.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-galaxy-weaver",
       "faction": "星穹",
       "type": "unit",
       "art": "/cards/astral-galaxy-weaver.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-lunar-vessel",
       "faction": "星穹",
       "type": "unit",
       "art": "/cards/astral-lunar-vessel.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-deepspace-oracle",
       "faction": "星穹",
       "type": "unit",
       "art": "/cards/astral-deepspace-oracle.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-zenith-dragon",
       "faction": "星穹",
       "type": "unit",
       "art": "/cards/astral-zenith-dragon.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-horizon-guardian",
       "faction": "星穹",
       "type": "unit",
       "art": "/cards/astral-horizon-guardian.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-cosmos-sovereign",
       "faction": "星穹",
       "type": "unit",
       "art": "/cards/astral-cosmos-sovereign.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-infinite-observer",
       "faction": "星穹",
       "type": "unit",
       "art": "/cards/astral-infinite-observer.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-glimmer-echo",
       "faction": "星穹",
       "type": "spell",
       "art": "/cards/astral-glimmer-echo.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-chart-revelation",
       "faction": "星穹",
       "type": "spell",
       "art": "/cards/astral-chart-revelation.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-phase-shift",
       "faction": "星穹",
       "type": "spell",
       "art": "/cards/astral-phase-shift.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-gentle-orbit",
       "faction": "星穹",
       "type": "spell",
       "art": "/cards/astral-gentle-orbit.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-lucid-script",
       "faction": "星穹",
       "type": "spell",
       "art": "/cards/astral-lucid-script.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-mirror-lesson",
       "faction": "星穹",
       "type": "spell",
       "art": "/cards/astral-mirror-lesson.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-constellation-call",
       "faction": "星穹",
       "type": "spell",
       "art": "/cards/astral-constellation-call.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-meteor-pin",
       "faction": "星穹",
       "type": "spell",
       "art": "/cards/astral-meteor-pin.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-deep-divination",
       "faction": "星穹",
       "type": "spell",
       "art": "/cards/astral-deep-divination.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-supernova-ripple",
       "faction": "星穹",
       "type": "weapon",
       "art": "/cards/astral-supernova-ripple.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-spore-scout",
@@ -1068,413 +1068,413 @@
       "faction": "苍林",
       "type": "unit",
       "art": "/cards/verdant-dewleaf-apprentice.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-mossback-keeper",
       "faction": "苍林",
       "type": "unit",
       "art": "/cards/verdant-mossback-keeper.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-thornstep-runner",
       "faction": "苍林",
       "type": "unit",
       "art": "/cards/verdant-thornstep-runner.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-seedsong-sprite",
       "faction": "苍林",
       "type": "unit",
       "art": "/cards/verdant-seedsong-sprite.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-antler-pathfinder",
       "faction": "苍林",
       "type": "unit",
       "art": "/cards/verdant-antler-pathfinder.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-barkshield-sentinel",
       "faction": "苍林",
       "type": "unit",
       "art": "/cards/verdant-barkshield-sentinel.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-nectar-mender",
       "faction": "苍林",
       "type": "unit",
       "art": "/cards/verdant-nectar-mender.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-vinewhip-duelist",
       "faction": "苍林",
       "type": "unit",
       "art": "/cards/verdant-vinewhip-duelist.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-canopy-archer",
       "faction": "苍林",
       "type": "unit",
       "art": "/cards/verdant-canopy-archer.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-rootweave-artisan",
       "faction": "苍林",
       "type": "unit",
       "art": "/cards/verdant-rootweave-artisan.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-bloom-banner",
       "faction": "苍林",
       "type": "unit",
       "art": "/cards/verdant-bloom-banner.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-moonfern-stalker",
       "faction": "苍林",
       "type": "unit",
       "art": "/cards/verdant-moonfern-stalker.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-grovebond-shaman",
       "faction": "苍林",
       "type": "unit",
       "art": "/cards/verdant-grovebond-shaman.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-briarhide-boar",
       "faction": "苍林",
       "type": "unit",
       "art": "/cards/verdant-briarhide-boar.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-ancient-bough-guardian",
       "faction": "苍林",
       "type": "unit",
       "art": "/cards/verdant-ancient-bough-guardian.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-dawnpetal-stag",
       "faction": "苍林",
       "type": "unit",
       "art": "/cards/verdant-dawnpetal-stag.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-seedvault-engineer",
       "faction": "苍林",
       "type": "unit",
       "art": "/cards/verdant-seedvault-engineer.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-thousandleaf-titan",
       "faction": "苍林",
       "type": "unit",
       "art": "/cards/verdant-thousandleaf-titan.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-worldroot-matriarch",
       "faction": "苍林",
       "type": "unit",
       "art": "/cards/verdant-worldroot-matriarch.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-sprout-pact",
       "faction": "苍林",
       "type": "spell",
       "art": "/cards/verdant-sprout-pact.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-morning-dew",
       "faction": "苍林",
       "type": "spell",
       "art": "/cards/verdant-morning-dew.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-thorn-lash",
       "faction": "苍林",
       "type": "spell",
       "art": "/cards/verdant-thorn-lash.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-rooting-rite",
       "faction": "苍林",
       "type": "spell",
       "art": "/cards/verdant-rooting-rite.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-pathfinder-call",
       "faction": "苍林",
       "type": "spell",
       "art": "/cards/verdant-pathfinder-call.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-canopy-ambush",
       "faction": "苍林",
       "type": "spell",
       "art": "/cards/verdant-canopy-ambush.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-seedburst",
       "faction": "苍林",
       "type": "spell",
       "art": "/cards/verdant-seedburst.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-wild-regrowth",
       "faction": "苍林",
       "type": "spell",
       "art": "/cards/verdant-wild-regrowth.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-flourishing-chorus",
       "faction": "苍林",
       "type": "spell",
       "art": "/cards/verdant-flourishing-chorus.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-all-roots-as-one",
       "faction": "苍林",
       "type": "weapon",
       "art": "/cards/verdant-all-roots-as-one.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "storm-spark-mite",
       "faction": "雷铸",
       "type": "unit",
       "art": "/cards/storm-spark-mite.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "storm-coppercoil-cadet",
       "faction": "雷铸",
       "type": "unit",
       "art": "/cards/storm-coppercoil-cadet.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "storm-lightning-courier",
       "faction": "雷铸",
       "type": "unit",
       "art": "/cards/storm-lightning-courier.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "storm-capacitor-sentry",
       "faction": "雷铸",
       "type": "unit",
       "art": "/cards/storm-capacitor-sentry.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "storm-ironcloud-scavenger",
       "faction": "雷铸",
       "type": "unit",
       "art": "/cards/storm-ironcloud-scavenger.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "storm-voltedge-duelist",
       "faction": "雷铸",
       "type": "unit",
       "art": "/cards/storm-voltedge-duelist.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "storm-relay-shieldguard",
       "faction": "雷铸",
       "type": "unit",
       "art": "/cards/storm-relay-shieldguard.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "storm-coil-sage",
       "faction": "雷铸",
       "type": "unit",
       "art": "/cards/storm-coil-sage.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "storm-thundertrack-hound",
       "faction": "雷铸",
       "type": "unit",
       "art": "/cards/storm-thundertrack-hound.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "storm-magnetic-salvager",
       "faction": "雷铸",
       "type": "unit",
       "art": "/cards/storm-magnetic-salvager.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "storm-forge-armorer",
       "faction": "雷铸",
       "type": "unit",
       "art": "/cards/storm-forge-armorer.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "storm-arcspark-marksman",
       "faction": "雷铸",
       "type": "unit",
       "art": "/cards/storm-arcspark-marksman.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "storm-turbine-lancer",
       "faction": "雷铸",
       "type": "unit",
       "art": "/cards/storm-turbine-lancer.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "storm-overcharge-golem",
       "faction": "雷铸",
       "type": "unit",
       "art": "/cards/storm-overcharge-golem.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "storm-cloudbreaker-captain",
       "faction": "雷铸",
       "type": "unit",
       "art": "/cards/storm-cloudbreaker-captain.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "storm-tempest-bulwark",
       "faction": "雷铸",
       "type": "unit",
       "art": "/cards/storm-tempest-bulwark.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "storm-chainbolt-colossus",
       "faction": "雷铸",
       "type": "unit",
       "art": "/cards/storm-chainbolt-colossus.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "storm-skyrail-ace",
       "faction": "雷铸",
       "type": "unit",
       "art": "/cards/storm-skyrail-ace.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "storm-living-dynamo",
       "faction": "雷铸",
       "type": "unit",
       "art": "/cards/storm-living-dynamo.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "storm-skyforge-thunderking",
       "faction": "雷铸",
       "type": "unit",
       "art": "/cards/storm-skyforge-thunderking.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "storm-static-spark",
       "faction": "雷铸",
       "type": "spell",
       "art": "/cards/storm-static-spark.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "storm-bolt-calibration",
       "faction": "雷铸",
       "type": "spell",
       "art": "/cards/storm-bolt-calibration.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "storm-emergency-plating",
       "faction": "雷铸",
       "type": "spell",
       "art": "/cards/storm-emergency-plating.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "storm-capacitor-draw",
       "faction": "雷铸",
       "type": "spell",
       "art": "/cards/storm-capacitor-draw.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "storm-chain-discharge",
       "faction": "雷铸",
       "type": "spell",
       "art": "/cards/storm-chain-discharge.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "storm-forge-temper",
       "faction": "雷铸",
       "type": "spell",
       "art": "/cards/storm-forge-temper.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "storm-drone-deployment",
       "faction": "雷铸",
       "type": "spell",
       "art": "/cards/storm-drone-deployment.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "storm-thunder-salvo",
       "faction": "雷铸",
       "type": "spell",
       "art": "/cards/storm-thunder-salvo.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "storm-overload-reactor",
       "faction": "雷铸",
       "type": "spell",
       "art": "/cards/storm-overload-reactor.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "storm-ninefold-tempest",
       "faction": "雷铸",
       "type": "weapon",
       "art": "/cards/storm-ninefold-tempest.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sun-season-01",
@@ -1656,105 +1656,105 @@
       "faction": "幽潮",
       "type": "unit",
       "art": "/cards/void-season-06.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "void-season-07",
       "faction": "幽潮",
       "type": "unit",
       "art": "/cards/void-season-07.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "void-season-08",
       "faction": "幽潮",
       "type": "unit",
       "art": "/cards/void-season-08.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "void-season-09",
       "faction": "幽潮",
       "type": "unit",
       "art": "/cards/void-season-09.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "void-season-10",
       "faction": "幽潮",
       "type": "unit",
       "art": "/cards/void-season-10.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "void-season-11",
       "faction": "幽潮",
       "type": "unit",
       "art": "/cards/void-season-11.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "void-season-12",
       "faction": "幽潮",
       "type": "unit",
       "art": "/cards/void-season-12.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "void-season-13",
       "faction": "幽潮",
       "type": "unit",
       "art": "/cards/void-season-13.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "void-season-14",
       "faction": "幽潮",
       "type": "unit",
       "art": "/cards/void-season-14.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "void-season-15",
       "faction": "幽潮",
       "type": "unit",
       "art": "/cards/void-season-15.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "void-season-spell-01",
       "faction": "幽潮",
       "type": "spell",
       "art": "/cards/void-season-spell-01.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "void-season-spell-02",
       "faction": "幽潮",
       "type": "spell",
       "art": "/cards/void-season-spell-02.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "void-season-spell-03",
       "faction": "幽潮",
       "type": "spell",
       "art": "/cards/void-season-spell-03.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "void-season-spell-04",
       "faction": "幽潮",
       "type": "spell",
       "art": "/cards/void-season-spell-04.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "void-season-spell-05",
       "faction": "幽潮",
       "type": "spell",
       "art": "/cards/void-season-spell-05.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "neutral-season-01",
@@ -1901,4760 +1901,4760 @@
       "faction": "烬火",
       "type": "unit",
       "art": "/cards/ember-season-01.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-season-02",
       "faction": "烬火",
       "type": "unit",
       "art": "/cards/ember-season-02.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-season-03",
       "faction": "烬火",
       "type": "unit",
       "art": "/cards/ember-season-03.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-season-04",
       "faction": "烬火",
       "type": "unit",
       "art": "/cards/ember-season-04.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-season-05",
       "faction": "烬火",
       "type": "unit",
       "art": "/cards/ember-season-05.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-season-06",
       "faction": "烬火",
       "type": "unit",
       "art": "/cards/ember-season-06.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-season-07",
       "faction": "烬火",
       "type": "unit",
       "art": "/cards/ember-season-07.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-season-08",
       "faction": "烬火",
       "type": "unit",
       "art": "/cards/ember-season-08.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-season-09",
       "faction": "烬火",
       "type": "unit",
       "art": "/cards/ember-season-09.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-season-10",
       "faction": "烬火",
       "type": "unit",
       "art": "/cards/ember-season-10.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-season-11",
       "faction": "烬火",
       "type": "unit",
       "art": "/cards/ember-season-11.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-season-12",
       "faction": "烬火",
       "type": "unit",
       "art": "/cards/ember-season-12.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-season-13",
       "faction": "烬火",
       "type": "unit",
       "art": "/cards/ember-season-13.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-season-14",
       "faction": "烬火",
       "type": "unit",
       "art": "/cards/ember-season-14.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-season-15",
       "faction": "烬火",
       "type": "unit",
       "art": "/cards/ember-season-15.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-season-spell-01",
       "faction": "烬火",
       "type": "spell",
       "art": "/cards/ember-season-spell-01.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-season-spell-02",
       "faction": "烬火",
       "type": "spell",
       "art": "/cards/ember-season-spell-02.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-season-spell-03",
       "faction": "烬火",
       "type": "spell",
       "art": "/cards/ember-season-spell-03.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-season-spell-04",
       "faction": "烬火",
       "type": "spell",
       "art": "/cards/ember-season-spell-04.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "ember-season-spell-05",
       "faction": "烬火",
       "type": "spell",
       "art": "/cards/ember-season-spell-05.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-season-01",
       "faction": "星穹",
       "type": "unit",
       "art": "/cards/astral-season-01.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-season-02",
       "faction": "星穹",
       "type": "unit",
       "art": "/cards/astral-season-02.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-season-03",
       "faction": "星穹",
       "type": "unit",
       "art": "/cards/astral-season-03.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-season-04",
       "faction": "星穹",
       "type": "unit",
       "art": "/cards/astral-season-04.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-season-05",
       "faction": "星穹",
       "type": "unit",
       "art": "/cards/astral-season-05.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-season-06",
       "faction": "星穹",
       "type": "unit",
       "art": "/cards/astral-season-06.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-season-07",
       "faction": "星穹",
       "type": "unit",
       "art": "/cards/astral-season-07.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-season-08",
       "faction": "星穹",
       "type": "unit",
       "art": "/cards/astral-season-08.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-season-09",
       "faction": "星穹",
       "type": "unit",
       "art": "/cards/astral-season-09.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-season-10",
       "faction": "星穹",
       "type": "unit",
       "art": "/cards/astral-season-10.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-season-11",
       "faction": "星穹",
       "type": "unit",
       "art": "/cards/astral-season-11.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-season-12",
       "faction": "星穹",
       "type": "unit",
       "art": "/cards/astral-season-12.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-season-13",
       "faction": "星穹",
       "type": "unit",
       "art": "/cards/astral-season-13.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-season-14",
       "faction": "星穹",
       "type": "unit",
       "art": "/cards/astral-season-14.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-season-15",
       "faction": "星穹",
       "type": "unit",
       "art": "/cards/astral-season-15.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-season-spell-01",
       "faction": "星穹",
       "type": "spell",
       "art": "/cards/astral-season-spell-01.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-season-spell-02",
       "faction": "星穹",
       "type": "spell",
       "art": "/cards/astral-season-spell-02.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-season-spell-03",
       "faction": "星穹",
       "type": "spell",
       "art": "/cards/astral-season-spell-03.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-season-spell-04",
       "faction": "星穹",
       "type": "spell",
       "art": "/cards/astral-season-spell-04.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "astral-season-spell-05",
       "faction": "星穹",
       "type": "spell",
       "art": "/cards/astral-season-spell-05.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-season-01",
       "faction": "苍林",
       "type": "unit",
       "art": "/cards/verdant-season-01.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-season-02",
       "faction": "苍林",
       "type": "unit",
       "art": "/cards/verdant-season-02.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-season-03",
       "faction": "苍林",
       "type": "unit",
       "art": "/cards/verdant-season-03.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-season-04",
       "faction": "苍林",
       "type": "unit",
       "art": "/cards/verdant-season-04.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-season-05",
       "faction": "苍林",
       "type": "unit",
       "art": "/cards/verdant-season-05.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-season-06",
       "faction": "苍林",
       "type": "unit",
       "art": "/cards/verdant-season-06.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-season-07",
       "faction": "苍林",
       "type": "unit",
       "art": "/cards/verdant-season-07.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-season-08",
       "faction": "苍林",
       "type": "unit",
       "art": "/cards/verdant-season-08.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-season-09",
       "faction": "苍林",
       "type": "unit",
       "art": "/cards/verdant-season-09.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-season-10",
       "faction": "苍林",
       "type": "unit",
       "art": "/cards/verdant-season-10.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-season-11",
       "faction": "苍林",
       "type": "unit",
       "art": "/cards/verdant-season-11.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-season-12",
       "faction": "苍林",
       "type": "unit",
       "art": "/cards/verdant-season-12.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-season-13",
       "faction": "苍林",
       "type": "unit",
       "art": "/cards/verdant-season-13.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-season-14",
       "faction": "苍林",
       "type": "unit",
       "art": "/cards/verdant-season-14.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-season-15",
       "faction": "苍林",
       "type": "unit",
       "art": "/cards/verdant-season-15.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-season-spell-01",
       "faction": "苍林",
       "type": "spell",
       "art": "/cards/verdant-season-spell-01.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-season-spell-02",
       "faction": "苍林",
       "type": "spell",
       "art": "/cards/verdant-season-spell-02.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-season-spell-03",
       "faction": "苍林",
       "type": "spell",
       "art": "/cards/verdant-season-spell-03.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-season-spell-04",
       "faction": "苍林",
       "type": "spell",
       "art": "/cards/verdant-season-spell-04.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "verdant-season-spell-05",
       "faction": "苍林",
       "type": "spell",
       "art": "/cards/verdant-season-spell-05.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "storm-season-01",
       "faction": "雷铸",
       "type": "unit",
       "art": "/cards/storm-season-01.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "storm-season-02",
       "faction": "雷铸",
       "type": "unit",
       "art": "/cards/storm-season-02.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "storm-season-03",
       "faction": "雷铸",
       "type": "unit",
       "art": "/cards/storm-season-03.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "storm-season-04",
       "faction": "雷铸",
       "type": "unit",
       "art": "/cards/storm-season-04.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "storm-season-05",
       "faction": "雷铸",
       "type": "unit",
       "art": "/cards/storm-season-05.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "storm-season-06",
       "faction": "雷铸",
       "type": "unit",
       "art": "/cards/storm-season-06.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "storm-season-07",
       "faction": "雷铸",
       "type": "unit",
       "art": "/cards/storm-season-07.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "storm-season-08",
       "faction": "雷铸",
       "type": "unit",
       "art": "/cards/storm-season-08.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "storm-season-09",
       "faction": "雷铸",
       "type": "unit",
       "art": "/cards/storm-season-09.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "storm-season-10",
       "faction": "雷铸",
       "type": "unit",
       "art": "/cards/storm-season-10.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "storm-season-11",
       "faction": "雷铸",
       "type": "unit",
       "art": "/cards/storm-season-11.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "storm-season-12",
       "faction": "雷铸",
       "type": "unit",
       "art": "/cards/storm-season-12.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "storm-season-13",
       "faction": "雷铸",
       "type": "unit",
       "art": "/cards/storm-season-13.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "storm-season-14",
       "faction": "雷铸",
       "type": "unit",
       "art": "/cards/storm-season-14.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "storm-season-15",
       "faction": "雷铸",
       "type": "unit",
       "art": "/cards/storm-season-15.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "storm-season-spell-01",
       "faction": "雷铸",
       "type": "spell",
       "art": "/cards/storm-season-spell-01.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "storm-season-spell-02",
       "faction": "雷铸",
       "type": "spell",
       "art": "/cards/storm-season-spell-02.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "storm-season-spell-03",
       "faction": "雷铸",
       "type": "spell",
       "art": "/cards/storm-season-spell-03.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "storm-season-spell-04",
       "faction": "雷铸",
       "type": "spell",
       "art": "/cards/storm-season-spell-04.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "storm-season-spell-05",
       "faction": "雷铸",
       "type": "spell",
       "art": "/cards/storm-season-spell-05.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "frost-season-01",
       "faction": "霜境",
       "type": "unit",
       "art": "/cards/frost-season-01.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "frost-season-02",
       "faction": "霜境",
       "type": "unit",
       "art": "/cards/frost-season-02.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "frost-season-03",
       "faction": "霜境",
       "type": "unit",
       "art": "/cards/frost-season-03.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "frost-season-04",
       "faction": "霜境",
       "type": "unit",
       "art": "/cards/frost-season-04.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "frost-season-05",
       "faction": "霜境",
       "type": "unit",
       "art": "/cards/frost-season-05.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "frost-season-06",
       "faction": "霜境",
       "type": "unit",
       "art": "/cards/frost-season-06.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "frost-season-07",
       "faction": "霜境",
       "type": "unit",
       "art": "/cards/frost-season-07.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "frost-season-08",
       "faction": "霜境",
       "type": "unit",
       "art": "/cards/frost-season-08.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "frost-season-09",
       "faction": "霜境",
       "type": "unit",
       "art": "/cards/frost-season-09.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "frost-season-10",
       "faction": "霜境",
       "type": "unit",
       "art": "/cards/frost-season-10.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "frost-season-11",
       "faction": "霜境",
       "type": "unit",
       "art": "/cards/frost-season-11.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "frost-season-12",
       "faction": "霜境",
       "type": "unit",
       "art": "/cards/frost-season-12.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "frost-season-13",
       "faction": "霜境",
       "type": "unit",
       "art": "/cards/frost-season-13.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "frost-season-14",
       "faction": "霜境",
       "type": "unit",
       "art": "/cards/frost-season-14.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "frost-season-15",
       "faction": "霜境",
       "type": "unit",
       "art": "/cards/frost-season-15.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "frost-season-16",
       "faction": "霜境",
       "type": "unit",
       "art": "/cards/frost-season-16.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "frost-season-17",
       "faction": "霜境",
       "type": "unit",
       "art": "/cards/frost-season-17.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "frost-season-18",
       "faction": "霜境",
       "type": "unit",
       "art": "/cards/frost-season-18.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "frost-season-19",
       "faction": "霜境",
       "type": "unit",
       "art": "/cards/frost-season-19.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "frost-season-20",
       "faction": "霜境",
       "type": "unit",
       "art": "/cards/frost-season-20.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "frost-season-21",
       "faction": "霜境",
       "type": "unit",
       "art": "/cards/frost-season-21.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "frost-season-22",
       "faction": "霜境",
       "type": "unit",
       "art": "/cards/frost-season-22.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "frost-season-23",
       "faction": "霜境",
       "type": "unit",
       "art": "/cards/frost-season-23.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "frost-season-24",
       "faction": "霜境",
       "type": "unit",
       "art": "/cards/frost-season-24.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "frost-season-25",
       "faction": "霜境",
       "type": "unit",
       "art": "/cards/frost-season-25.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "frost-season-26",
       "faction": "霜境",
       "type": "unit",
       "art": "/cards/frost-season-26.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "frost-season-27",
       "faction": "霜境",
       "type": "unit",
       "art": "/cards/frost-season-27.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "frost-season-28",
       "faction": "霜境",
       "type": "unit",
       "art": "/cards/frost-season-28.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "frost-season-29",
       "faction": "霜境",
       "type": "unit",
       "art": "/cards/frost-season-29.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "frost-season-30",
       "faction": "霜境",
       "type": "unit",
       "art": "/cards/frost-season-30.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "frost-season-31",
       "faction": "霜境",
       "type": "unit",
       "art": "/cards/frost-season-31.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "frost-season-32",
       "faction": "霜境",
       "type": "unit",
       "art": "/cards/frost-season-32.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "frost-season-33",
       "faction": "霜境",
       "type": "unit",
       "art": "/cards/frost-season-33.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "frost-season-34",
       "faction": "霜境",
       "type": "unit",
       "art": "/cards/frost-season-34.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "frost-season-35",
       "faction": "霜境",
       "type": "unit",
       "art": "/cards/frost-season-35.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "frost-season-spell-01",
       "faction": "霜境",
       "type": "spell",
       "art": "/cards/frost-season-spell-01.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "frost-season-spell-02",
       "faction": "霜境",
       "type": "spell",
       "art": "/cards/frost-season-spell-02.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "frost-season-spell-03",
       "faction": "霜境",
       "type": "spell",
       "art": "/cards/frost-season-spell-03.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "frost-season-spell-04",
       "faction": "霜境",
       "type": "spell",
       "art": "/cards/frost-season-spell-04.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "frost-season-spell-05",
       "faction": "霜境",
       "type": "spell",
       "art": "/cards/frost-season-spell-05.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "frost-season-spell-06",
       "faction": "霜境",
       "type": "spell",
       "art": "/cards/frost-season-spell-06.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "frost-season-spell-07",
       "faction": "霜境",
       "type": "spell",
       "art": "/cards/frost-season-spell-07.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "frost-season-spell-08",
       "faction": "霜境",
       "type": "spell",
       "art": "/cards/frost-season-spell-08.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "frost-season-spell-09",
       "faction": "霜境",
       "type": "spell",
       "art": "/cards/frost-season-spell-09.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "frost-season-spell-10",
       "faction": "霜境",
       "type": "spell",
       "art": "/cards/frost-season-spell-10.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "frost-season-spell-11",
       "faction": "霜境",
       "type": "spell",
       "art": "/cards/frost-season-spell-11.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "frost-season-spell-12",
       "faction": "霜境",
       "type": "spell",
       "art": "/cards/frost-season-spell-12.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "frost-season-spell-13",
       "faction": "霜境",
       "type": "spell",
       "art": "/cards/frost-season-spell-13.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "frost-season-spell-14",
       "faction": "霜境",
       "type": "spell",
       "art": "/cards/frost-season-spell-14.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "frost-season-weapon",
       "faction": "霜境",
       "type": "weapon",
       "art": "/cards/frost-season-weapon.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sand-season-01",
       "faction": "砂海",
       "type": "unit",
       "art": "/cards/sand-season-01.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sand-season-02",
       "faction": "砂海",
       "type": "unit",
       "art": "/cards/sand-season-02.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sand-season-03",
       "faction": "砂海",
       "type": "unit",
       "art": "/cards/sand-season-03.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sand-season-04",
       "faction": "砂海",
       "type": "unit",
       "art": "/cards/sand-season-04.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sand-season-05",
       "faction": "砂海",
       "type": "unit",
       "art": "/cards/sand-season-05.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sand-season-06",
       "faction": "砂海",
       "type": "unit",
       "art": "/cards/sand-season-06.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sand-season-07",
       "faction": "砂海",
       "type": "unit",
       "art": "/cards/sand-season-07.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sand-season-08",
       "faction": "砂海",
       "type": "unit",
       "art": "/cards/sand-season-08.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sand-season-09",
       "faction": "砂海",
       "type": "unit",
       "art": "/cards/sand-season-09.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sand-season-10",
       "faction": "砂海",
       "type": "unit",
       "art": "/cards/sand-season-10.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sand-season-11",
       "faction": "砂海",
       "type": "unit",
       "art": "/cards/sand-season-11.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sand-season-12",
       "faction": "砂海",
       "type": "unit",
       "art": "/cards/sand-season-12.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sand-season-13",
       "faction": "砂海",
       "type": "unit",
       "art": "/cards/sand-season-13.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sand-season-14",
       "faction": "砂海",
       "type": "unit",
       "art": "/cards/sand-season-14.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sand-season-15",
       "faction": "砂海",
       "type": "unit",
       "art": "/cards/sand-season-15.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sand-season-16",
       "faction": "砂海",
       "type": "unit",
       "art": "/cards/sand-season-16.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sand-season-17",
       "faction": "砂海",
       "type": "unit",
       "art": "/cards/sand-season-17.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sand-season-18",
       "faction": "砂海",
       "type": "unit",
       "art": "/cards/sand-season-18.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sand-season-19",
       "faction": "砂海",
       "type": "unit",
       "art": "/cards/sand-season-19.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sand-season-20",
       "faction": "砂海",
       "type": "unit",
       "art": "/cards/sand-season-20.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sand-season-21",
       "faction": "砂海",
       "type": "unit",
       "art": "/cards/sand-season-21.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sand-season-22",
       "faction": "砂海",
       "type": "unit",
       "art": "/cards/sand-season-22.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sand-season-23",
       "faction": "砂海",
       "type": "unit",
       "art": "/cards/sand-season-23.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sand-season-24",
       "faction": "砂海",
       "type": "unit",
       "art": "/cards/sand-season-24.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sand-season-25",
       "faction": "砂海",
       "type": "unit",
       "art": "/cards/sand-season-25.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sand-season-26",
       "faction": "砂海",
       "type": "unit",
       "art": "/cards/sand-season-26.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sand-season-27",
       "faction": "砂海",
       "type": "unit",
       "art": "/cards/sand-season-27.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sand-season-28",
       "faction": "砂海",
       "type": "unit",
       "art": "/cards/sand-season-28.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sand-season-29",
       "faction": "砂海",
       "type": "unit",
       "art": "/cards/sand-season-29.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sand-season-30",
       "faction": "砂海",
       "type": "unit",
       "art": "/cards/sand-season-30.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sand-season-31",
       "faction": "砂海",
       "type": "unit",
       "art": "/cards/sand-season-31.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sand-season-32",
       "faction": "砂海",
       "type": "unit",
       "art": "/cards/sand-season-32.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sand-season-33",
       "faction": "砂海",
       "type": "unit",
       "art": "/cards/sand-season-33.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sand-season-34",
       "faction": "砂海",
       "type": "unit",
       "art": "/cards/sand-season-34.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sand-season-35",
       "faction": "砂海",
       "type": "unit",
       "art": "/cards/sand-season-35.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sand-season-spell-01",
       "faction": "砂海",
       "type": "spell",
       "art": "/cards/sand-season-spell-01.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sand-season-spell-02",
       "faction": "砂海",
       "type": "spell",
       "art": "/cards/sand-season-spell-02.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sand-season-spell-03",
       "faction": "砂海",
       "type": "spell",
       "art": "/cards/sand-season-spell-03.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sand-season-spell-04",
       "faction": "砂海",
       "type": "spell",
       "art": "/cards/sand-season-spell-04.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sand-season-spell-05",
       "faction": "砂海",
       "type": "spell",
       "art": "/cards/sand-season-spell-05.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sand-season-spell-06",
       "faction": "砂海",
       "type": "spell",
       "art": "/cards/sand-season-spell-06.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sand-season-spell-07",
       "faction": "砂海",
       "type": "spell",
       "art": "/cards/sand-season-spell-07.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sand-season-spell-08",
       "faction": "砂海",
       "type": "spell",
       "art": "/cards/sand-season-spell-08.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sand-season-spell-09",
       "faction": "砂海",
       "type": "spell",
       "art": "/cards/sand-season-spell-09.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sand-season-spell-10",
       "faction": "砂海",
       "type": "spell",
       "art": "/cards/sand-season-spell-10.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sand-season-spell-11",
       "faction": "砂海",
       "type": "spell",
       "art": "/cards/sand-season-spell-11.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sand-season-spell-12",
       "faction": "砂海",
       "type": "spell",
       "art": "/cards/sand-season-spell-12.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sand-season-spell-13",
       "faction": "砂海",
       "type": "spell",
       "art": "/cards/sand-season-spell-13.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sand-season-spell-14",
       "faction": "砂海",
       "type": "spell",
       "art": "/cards/sand-season-spell-14.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "sand-season-weapon",
       "faction": "砂海",
       "type": "weapon",
       "art": "/cards/sand-season-weapon.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "bloodmoon-season-01",
       "faction": "赤月",
       "type": "unit",
       "art": "/cards/bloodmoon-season-01.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "bloodmoon-season-02",
       "faction": "赤月",
       "type": "unit",
       "art": "/cards/bloodmoon-season-02.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "bloodmoon-season-03",
       "faction": "赤月",
       "type": "unit",
       "art": "/cards/bloodmoon-season-03.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "bloodmoon-season-04",
       "faction": "赤月",
       "type": "unit",
       "art": "/cards/bloodmoon-season-04.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "bloodmoon-season-05",
       "faction": "赤月",
       "type": "unit",
       "art": "/cards/bloodmoon-season-05.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "bloodmoon-season-06",
       "faction": "赤月",
       "type": "unit",
       "art": "/cards/bloodmoon-season-06.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "bloodmoon-season-07",
       "faction": "赤月",
       "type": "unit",
       "art": "/cards/bloodmoon-season-07.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "bloodmoon-season-08",
       "faction": "赤月",
       "type": "unit",
       "art": "/cards/bloodmoon-season-08.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "bloodmoon-season-09",
       "faction": "赤月",
       "type": "unit",
       "art": "/cards/bloodmoon-season-09.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "bloodmoon-season-10",
       "faction": "赤月",
       "type": "unit",
       "art": "/cards/bloodmoon-season-10.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "bloodmoon-season-11",
       "faction": "赤月",
       "type": "unit",
       "art": "/cards/bloodmoon-season-11.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "bloodmoon-season-12",
       "faction": "赤月",
       "type": "unit",
       "art": "/cards/bloodmoon-season-12.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "bloodmoon-season-13",
       "faction": "赤月",
       "type": "unit",
       "art": "/cards/bloodmoon-season-13.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "bloodmoon-season-14",
       "faction": "赤月",
       "type": "unit",
       "art": "/cards/bloodmoon-season-14.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "bloodmoon-season-15",
       "faction": "赤月",
       "type": "unit",
       "art": "/cards/bloodmoon-season-15.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "bloodmoon-season-16",
       "faction": "赤月",
       "type": "unit",
       "art": "/cards/bloodmoon-season-16.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "bloodmoon-season-17",
       "faction": "赤月",
       "type": "unit",
       "art": "/cards/bloodmoon-season-17.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "bloodmoon-season-18",
       "faction": "赤月",
       "type": "unit",
       "art": "/cards/bloodmoon-season-18.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "bloodmoon-season-19",
       "faction": "赤月",
       "type": "unit",
       "art": "/cards/bloodmoon-season-19.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "bloodmoon-season-20",
       "faction": "赤月",
       "type": "unit",
       "art": "/cards/bloodmoon-season-20.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "bloodmoon-season-21",
       "faction": "赤月",
       "type": "unit",
       "art": "/cards/bloodmoon-season-21.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "bloodmoon-season-22",
       "faction": "赤月",
       "type": "unit",
       "art": "/cards/bloodmoon-season-22.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "bloodmoon-season-23",
       "faction": "赤月",
       "type": "unit",
       "art": "/cards/bloodmoon-season-23.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "bloodmoon-season-24",
       "faction": "赤月",
       "type": "unit",
       "art": "/cards/bloodmoon-season-24.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "bloodmoon-season-25",
       "faction": "赤月",
       "type": "unit",
       "art": "/cards/bloodmoon-season-25.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "bloodmoon-season-26",
       "faction": "赤月",
       "type": "unit",
       "art": "/cards/bloodmoon-season-26.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "bloodmoon-season-27",
       "faction": "赤月",
       "type": "unit",
       "art": "/cards/bloodmoon-season-27.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "bloodmoon-season-28",
       "faction": "赤月",
       "type": "unit",
       "art": "/cards/bloodmoon-season-28.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "bloodmoon-season-29",
       "faction": "赤月",
       "type": "unit",
       "art": "/cards/bloodmoon-season-29.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "bloodmoon-season-30",
       "faction": "赤月",
       "type": "unit",
       "art": "/cards/bloodmoon-season-30.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "bloodmoon-season-31",
       "faction": "赤月",
       "type": "unit",
       "art": "/cards/bloodmoon-season-31.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "bloodmoon-season-32",
       "faction": "赤月",
       "type": "unit",
       "art": "/cards/bloodmoon-season-32.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "bloodmoon-season-33",
       "faction": "赤月",
       "type": "unit",
       "art": "/cards/bloodmoon-season-33.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "bloodmoon-season-34",
       "faction": "赤月",
       "type": "unit",
       "art": "/cards/bloodmoon-season-34.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "bloodmoon-season-35",
       "faction": "赤月",
       "type": "unit",
       "art": "/cards/bloodmoon-season-35.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "bloodmoon-season-spell-01",
       "faction": "赤月",
       "type": "spell",
       "art": "/cards/bloodmoon-season-spell-01.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "bloodmoon-season-spell-02",
       "faction": "赤月",
       "type": "spell",
       "art": "/cards/bloodmoon-season-spell-02.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "bloodmoon-season-spell-03",
       "faction": "赤月",
       "type": "spell",
       "art": "/cards/bloodmoon-season-spell-03.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "bloodmoon-season-spell-04",
       "faction": "赤月",
       "type": "spell",
       "art": "/cards/bloodmoon-season-spell-04.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "bloodmoon-season-spell-05",
       "faction": "赤月",
       "type": "spell",
       "art": "/cards/bloodmoon-season-spell-05.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "bloodmoon-season-spell-06",
       "faction": "赤月",
       "type": "spell",
       "art": "/cards/bloodmoon-season-spell-06.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "bloodmoon-season-spell-07",
       "faction": "赤月",
       "type": "spell",
       "art": "/cards/bloodmoon-season-spell-07.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "bloodmoon-season-spell-08",
       "faction": "赤月",
       "type": "spell",
       "art": "/cards/bloodmoon-season-spell-08.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "bloodmoon-season-spell-09",
       "faction": "赤月",
       "type": "spell",
       "art": "/cards/bloodmoon-season-spell-09.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "bloodmoon-season-spell-10",
       "faction": "赤月",
       "type": "spell",
       "art": "/cards/bloodmoon-season-spell-10.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "bloodmoon-season-spell-11",
       "faction": "赤月",
       "type": "spell",
       "art": "/cards/bloodmoon-season-spell-11.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "bloodmoon-season-spell-12",
       "faction": "赤月",
       "type": "spell",
       "art": "/cards/bloodmoon-season-spell-12.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "bloodmoon-season-spell-13",
       "faction": "赤月",
       "type": "spell",
       "art": "/cards/bloodmoon-season-spell-13.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "bloodmoon-season-spell-14",
       "faction": "赤月",
       "type": "spell",
       "art": "/cards/bloodmoon-season-spell-14.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "bloodmoon-season-weapon",
       "faction": "赤月",
       "type": "weapon",
       "art": "/cards/bloodmoon-season-weapon.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "leyline-season-01",
       "faction": "灵脉",
       "type": "unit",
       "art": "/cards/leyline-season-01.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "leyline-season-02",
       "faction": "灵脉",
       "type": "unit",
       "art": "/cards/leyline-season-02.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "leyline-season-03",
       "faction": "灵脉",
       "type": "unit",
       "art": "/cards/leyline-season-03.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "leyline-season-04",
       "faction": "灵脉",
       "type": "unit",
       "art": "/cards/leyline-season-04.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "leyline-season-05",
       "faction": "灵脉",
       "type": "unit",
       "art": "/cards/leyline-season-05.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "leyline-season-06",
       "faction": "灵脉",
       "type": "unit",
       "art": "/cards/leyline-season-06.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "leyline-season-07",
       "faction": "灵脉",
       "type": "unit",
       "art": "/cards/leyline-season-07.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "leyline-season-08",
       "faction": "灵脉",
       "type": "unit",
       "art": "/cards/leyline-season-08.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "leyline-season-09",
       "faction": "灵脉",
       "type": "unit",
       "art": "/cards/leyline-season-09.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "leyline-season-10",
       "faction": "灵脉",
       "type": "unit",
       "art": "/cards/leyline-season-10.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "leyline-season-11",
       "faction": "灵脉",
       "type": "unit",
       "art": "/cards/leyline-season-11.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "leyline-season-12",
       "faction": "灵脉",
       "type": "unit",
       "art": "/cards/leyline-season-12.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "leyline-season-13",
       "faction": "灵脉",
       "type": "unit",
       "art": "/cards/leyline-season-13.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "leyline-season-14",
       "faction": "灵脉",
       "type": "unit",
       "art": "/cards/leyline-season-14.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "leyline-season-15",
       "faction": "灵脉",
       "type": "unit",
       "art": "/cards/leyline-season-15.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "leyline-season-16",
       "faction": "灵脉",
       "type": "unit",
       "art": "/cards/leyline-season-16.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "leyline-season-17",
       "faction": "灵脉",
       "type": "unit",
       "art": "/cards/leyline-season-17.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "leyline-season-18",
       "faction": "灵脉",
       "type": "unit",
       "art": "/cards/leyline-season-18.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "leyline-season-19",
       "faction": "灵脉",
       "type": "unit",
       "art": "/cards/leyline-season-19.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "leyline-season-20",
       "faction": "灵脉",
       "type": "unit",
       "art": "/cards/leyline-season-20.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "leyline-season-21",
       "faction": "灵脉",
       "type": "unit",
       "art": "/cards/leyline-season-21.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "leyline-season-22",
       "faction": "灵脉",
       "type": "unit",
       "art": "/cards/leyline-season-22.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "leyline-season-23",
       "faction": "灵脉",
       "type": "unit",
       "art": "/cards/leyline-season-23.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "leyline-season-24",
       "faction": "灵脉",
       "type": "unit",
       "art": "/cards/leyline-season-24.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "leyline-season-25",
       "faction": "灵脉",
       "type": "unit",
       "art": "/cards/leyline-season-25.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "leyline-season-26",
       "faction": "灵脉",
       "type": "unit",
       "art": "/cards/leyline-season-26.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "leyline-season-27",
       "faction": "灵脉",
       "type": "unit",
       "art": "/cards/leyline-season-27.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "leyline-season-28",
       "faction": "灵脉",
       "type": "unit",
       "art": "/cards/leyline-season-28.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "leyline-season-29",
       "faction": "灵脉",
       "type": "unit",
       "art": "/cards/leyline-season-29.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "leyline-season-30",
       "faction": "灵脉",
       "type": "unit",
       "art": "/cards/leyline-season-30.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "leyline-season-31",
       "faction": "灵脉",
       "type": "unit",
       "art": "/cards/leyline-season-31.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "leyline-season-32",
       "faction": "灵脉",
       "type": "unit",
       "art": "/cards/leyline-season-32.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "leyline-season-33",
       "faction": "灵脉",
       "type": "unit",
       "art": "/cards/leyline-season-33.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "leyline-season-34",
       "faction": "灵脉",
       "type": "unit",
       "art": "/cards/leyline-season-34.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "leyline-season-35",
       "faction": "灵脉",
       "type": "unit",
       "art": "/cards/leyline-season-35.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "leyline-season-spell-01",
       "faction": "灵脉",
       "type": "spell",
       "art": "/cards/leyline-season-spell-01.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "leyline-season-spell-02",
       "faction": "灵脉",
       "type": "spell",
       "art": "/cards/leyline-season-spell-02.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "leyline-season-spell-03",
       "faction": "灵脉",
       "type": "spell",
       "art": "/cards/leyline-season-spell-03.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "leyline-season-spell-04",
       "faction": "灵脉",
       "type": "spell",
       "art": "/cards/leyline-season-spell-04.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "leyline-season-spell-05",
       "faction": "灵脉",
       "type": "spell",
       "art": "/cards/leyline-season-spell-05.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "leyline-season-spell-06",
       "faction": "灵脉",
       "type": "spell",
       "art": "/cards/leyline-season-spell-06.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "leyline-season-spell-07",
       "faction": "灵脉",
       "type": "spell",
       "art": "/cards/leyline-season-spell-07.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "leyline-season-spell-08",
       "faction": "灵脉",
       "type": "spell",
       "art": "/cards/leyline-season-spell-08.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "leyline-season-spell-09",
       "faction": "灵脉",
       "type": "spell",
       "art": "/cards/leyline-season-spell-09.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "leyline-season-spell-10",
       "faction": "灵脉",
       "type": "spell",
       "art": "/cards/leyline-season-spell-10.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "leyline-season-spell-11",
       "faction": "灵脉",
       "type": "spell",
       "art": "/cards/leyline-season-spell-11.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "leyline-season-spell-12",
       "faction": "灵脉",
       "type": "spell",
       "art": "/cards/leyline-season-spell-12.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "leyline-season-spell-13",
       "faction": "灵脉",
       "type": "spell",
       "art": "/cards/leyline-season-spell-13.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "leyline-season-spell-14",
       "faction": "灵脉",
       "type": "spell",
       "art": "/cards/leyline-season-spell-14.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "leyline-season-weapon",
       "faction": "灵脉",
       "type": "weapon",
       "art": "/cards/leyline-season-weapon.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dusk-season-01",
       "faction": "暮影",
       "type": "unit",
       "art": "/cards/dusk-season-01.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dusk-season-02",
       "faction": "暮影",
       "type": "unit",
       "art": "/cards/dusk-season-02.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dusk-season-03",
       "faction": "暮影",
       "type": "unit",
       "art": "/cards/dusk-season-03.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dusk-season-04",
       "faction": "暮影",
       "type": "unit",
       "art": "/cards/dusk-season-04.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dusk-season-05",
       "faction": "暮影",
       "type": "unit",
       "art": "/cards/dusk-season-05.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dusk-season-06",
       "faction": "暮影",
       "type": "unit",
       "art": "/cards/dusk-season-06.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dusk-season-07",
       "faction": "暮影",
       "type": "unit",
       "art": "/cards/dusk-season-07.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dusk-season-08",
       "faction": "暮影",
       "type": "unit",
       "art": "/cards/dusk-season-08.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dusk-season-09",
       "faction": "暮影",
       "type": "unit",
       "art": "/cards/dusk-season-09.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dusk-season-10",
       "faction": "暮影",
       "type": "unit",
       "art": "/cards/dusk-season-10.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dusk-season-11",
       "faction": "暮影",
       "type": "unit",
       "art": "/cards/dusk-season-11.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dusk-season-12",
       "faction": "暮影",
       "type": "unit",
       "art": "/cards/dusk-season-12.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dusk-season-13",
       "faction": "暮影",
       "type": "unit",
       "art": "/cards/dusk-season-13.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dusk-season-14",
       "faction": "暮影",
       "type": "unit",
       "art": "/cards/dusk-season-14.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dusk-season-15",
       "faction": "暮影",
       "type": "unit",
       "art": "/cards/dusk-season-15.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dusk-season-16",
       "faction": "暮影",
       "type": "unit",
       "art": "/cards/dusk-season-16.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dusk-season-17",
       "faction": "暮影",
       "type": "unit",
       "art": "/cards/dusk-season-17.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dusk-season-18",
       "faction": "暮影",
       "type": "unit",
       "art": "/cards/dusk-season-18.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dusk-season-19",
       "faction": "暮影",
       "type": "unit",
       "art": "/cards/dusk-season-19.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dusk-season-20",
       "faction": "暮影",
       "type": "unit",
       "art": "/cards/dusk-season-20.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dusk-season-21",
       "faction": "暮影",
       "type": "unit",
       "art": "/cards/dusk-season-21.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dusk-season-22",
       "faction": "暮影",
       "type": "unit",
       "art": "/cards/dusk-season-22.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dusk-season-23",
       "faction": "暮影",
       "type": "unit",
       "art": "/cards/dusk-season-23.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dusk-season-24",
       "faction": "暮影",
       "type": "unit",
       "art": "/cards/dusk-season-24.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dusk-season-25",
       "faction": "暮影",
       "type": "unit",
       "art": "/cards/dusk-season-25.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dusk-season-26",
       "faction": "暮影",
       "type": "unit",
       "art": "/cards/dusk-season-26.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dusk-season-27",
       "faction": "暮影",
       "type": "unit",
       "art": "/cards/dusk-season-27.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dusk-season-28",
       "faction": "暮影",
       "type": "unit",
       "art": "/cards/dusk-season-28.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dusk-season-29",
       "faction": "暮影",
       "type": "unit",
       "art": "/cards/dusk-season-29.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dusk-season-30",
       "faction": "暮影",
       "type": "unit",
       "art": "/cards/dusk-season-30.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dusk-season-31",
       "faction": "暮影",
       "type": "unit",
       "art": "/cards/dusk-season-31.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dusk-season-32",
       "faction": "暮影",
       "type": "unit",
       "art": "/cards/dusk-season-32.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dusk-season-33",
       "faction": "暮影",
       "type": "unit",
       "art": "/cards/dusk-season-33.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dusk-season-34",
       "faction": "暮影",
       "type": "unit",
       "art": "/cards/dusk-season-34.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dusk-season-35",
       "faction": "暮影",
       "type": "unit",
       "art": "/cards/dusk-season-35.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dusk-season-spell-01",
       "faction": "暮影",
       "type": "spell",
       "art": "/cards/dusk-season-spell-01.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dusk-season-spell-02",
       "faction": "暮影",
       "type": "spell",
       "art": "/cards/dusk-season-spell-02.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dusk-season-spell-03",
       "faction": "暮影",
       "type": "spell",
       "art": "/cards/dusk-season-spell-03.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dusk-season-spell-04",
       "faction": "暮影",
       "type": "spell",
       "art": "/cards/dusk-season-spell-04.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dusk-season-spell-05",
       "faction": "暮影",
       "type": "spell",
       "art": "/cards/dusk-season-spell-05.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dusk-season-spell-06",
       "faction": "暮影",
       "type": "spell",
       "art": "/cards/dusk-season-spell-06.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dusk-season-spell-07",
       "faction": "暮影",
       "type": "spell",
       "art": "/cards/dusk-season-spell-07.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dusk-season-spell-08",
       "faction": "暮影",
       "type": "spell",
       "art": "/cards/dusk-season-spell-08.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dusk-season-spell-09",
       "faction": "暮影",
       "type": "spell",
       "art": "/cards/dusk-season-spell-09.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dusk-season-spell-10",
       "faction": "暮影",
       "type": "spell",
       "art": "/cards/dusk-season-spell-10.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dusk-season-spell-11",
       "faction": "暮影",
       "type": "spell",
       "art": "/cards/dusk-season-spell-11.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dusk-season-spell-12",
       "faction": "暮影",
       "type": "spell",
       "art": "/cards/dusk-season-spell-12.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dusk-season-spell-13",
       "faction": "暮影",
       "type": "spell",
       "art": "/cards/dusk-season-spell-13.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dusk-season-spell-14",
       "faction": "暮影",
       "type": "spell",
       "art": "/cards/dusk-season-spell-14.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dusk-season-weapon",
       "faction": "暮影",
       "type": "weapon",
       "art": "/cards/dusk-season-weapon.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "cloudfall-season-01",
       "faction": "云瀑",
       "type": "unit",
       "art": "/cards/cloudfall-season-01.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "cloudfall-season-02",
       "faction": "云瀑",
       "type": "unit",
       "art": "/cards/cloudfall-season-02.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "cloudfall-season-03",
       "faction": "云瀑",
       "type": "unit",
       "art": "/cards/cloudfall-season-03.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "cloudfall-season-04",
       "faction": "云瀑",
       "type": "unit",
       "art": "/cards/cloudfall-season-04.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "cloudfall-season-05",
       "faction": "云瀑",
       "type": "unit",
       "art": "/cards/cloudfall-season-05.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "cloudfall-season-06",
       "faction": "云瀑",
       "type": "unit",
       "art": "/cards/cloudfall-season-06.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "cloudfall-season-07",
       "faction": "云瀑",
       "type": "unit",
       "art": "/cards/cloudfall-season-07.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "cloudfall-season-08",
       "faction": "云瀑",
       "type": "unit",
       "art": "/cards/cloudfall-season-08.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "cloudfall-season-09",
       "faction": "云瀑",
       "type": "unit",
       "art": "/cards/cloudfall-season-09.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "cloudfall-season-10",
       "faction": "云瀑",
       "type": "unit",
       "art": "/cards/cloudfall-season-10.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "cloudfall-season-11",
       "faction": "云瀑",
       "type": "unit",
       "art": "/cards/cloudfall-season-11.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "cloudfall-season-12",
       "faction": "云瀑",
       "type": "unit",
       "art": "/cards/cloudfall-season-12.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "cloudfall-season-13",
       "faction": "云瀑",
       "type": "unit",
       "art": "/cards/cloudfall-season-13.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "cloudfall-season-14",
       "faction": "云瀑",
       "type": "unit",
       "art": "/cards/cloudfall-season-14.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "cloudfall-season-15",
       "faction": "云瀑",
       "type": "unit",
       "art": "/cards/cloudfall-season-15.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "cloudfall-season-16",
       "faction": "云瀑",
       "type": "unit",
       "art": "/cards/cloudfall-season-16.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "cloudfall-season-17",
       "faction": "云瀑",
       "type": "unit",
       "art": "/cards/cloudfall-season-17.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "cloudfall-season-18",
       "faction": "云瀑",
       "type": "unit",
       "art": "/cards/cloudfall-season-18.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "cloudfall-season-19",
       "faction": "云瀑",
       "type": "unit",
       "art": "/cards/cloudfall-season-19.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "cloudfall-season-20",
       "faction": "云瀑",
       "type": "unit",
       "art": "/cards/cloudfall-season-20.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "cloudfall-season-21",
       "faction": "云瀑",
       "type": "unit",
       "art": "/cards/cloudfall-season-21.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "cloudfall-season-22",
       "faction": "云瀑",
       "type": "unit",
       "art": "/cards/cloudfall-season-22.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "cloudfall-season-23",
       "faction": "云瀑",
       "type": "unit",
       "art": "/cards/cloudfall-season-23.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "cloudfall-season-24",
       "faction": "云瀑",
       "type": "unit",
       "art": "/cards/cloudfall-season-24.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "cloudfall-season-25",
       "faction": "云瀑",
       "type": "unit",
       "art": "/cards/cloudfall-season-25.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "cloudfall-season-26",
       "faction": "云瀑",
       "type": "unit",
       "art": "/cards/cloudfall-season-26.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "cloudfall-season-27",
       "faction": "云瀑",
       "type": "unit",
       "art": "/cards/cloudfall-season-27.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "cloudfall-season-28",
       "faction": "云瀑",
       "type": "unit",
       "art": "/cards/cloudfall-season-28.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "cloudfall-season-29",
       "faction": "云瀑",
       "type": "unit",
       "art": "/cards/cloudfall-season-29.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "cloudfall-season-30",
       "faction": "云瀑",
       "type": "unit",
       "art": "/cards/cloudfall-season-30.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "cloudfall-season-31",
       "faction": "云瀑",
       "type": "unit",
       "art": "/cards/cloudfall-season-31.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "cloudfall-season-32",
       "faction": "云瀑",
       "type": "unit",
       "art": "/cards/cloudfall-season-32.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "cloudfall-season-33",
       "faction": "云瀑",
       "type": "unit",
       "art": "/cards/cloudfall-season-33.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "cloudfall-season-34",
       "faction": "云瀑",
       "type": "unit",
       "art": "/cards/cloudfall-season-34.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "cloudfall-season-35",
       "faction": "云瀑",
       "type": "unit",
       "art": "/cards/cloudfall-season-35.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "cloudfall-season-spell-01",
       "faction": "云瀑",
       "type": "spell",
       "art": "/cards/cloudfall-season-spell-01.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "cloudfall-season-spell-02",
       "faction": "云瀑",
       "type": "spell",
       "art": "/cards/cloudfall-season-spell-02.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "cloudfall-season-spell-03",
       "faction": "云瀑",
       "type": "spell",
       "art": "/cards/cloudfall-season-spell-03.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "cloudfall-season-spell-04",
       "faction": "云瀑",
       "type": "spell",
       "art": "/cards/cloudfall-season-spell-04.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "cloudfall-season-spell-05",
       "faction": "云瀑",
       "type": "spell",
       "art": "/cards/cloudfall-season-spell-05.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "cloudfall-season-spell-06",
       "faction": "云瀑",
       "type": "spell",
       "art": "/cards/cloudfall-season-spell-06.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "cloudfall-season-spell-07",
       "faction": "云瀑",
       "type": "spell",
       "art": "/cards/cloudfall-season-spell-07.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "cloudfall-season-spell-08",
       "faction": "云瀑",
       "type": "spell",
       "art": "/cards/cloudfall-season-spell-08.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "cloudfall-season-spell-09",
       "faction": "云瀑",
       "type": "spell",
       "art": "/cards/cloudfall-season-spell-09.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "cloudfall-season-spell-10",
       "faction": "云瀑",
       "type": "spell",
       "art": "/cards/cloudfall-season-spell-10.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "cloudfall-season-spell-11",
       "faction": "云瀑",
       "type": "spell",
       "art": "/cards/cloudfall-season-spell-11.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "cloudfall-season-spell-12",
       "faction": "云瀑",
       "type": "spell",
       "art": "/cards/cloudfall-season-spell-12.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "cloudfall-season-spell-13",
       "faction": "云瀑",
       "type": "spell",
       "art": "/cards/cloudfall-season-spell-13.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "cloudfall-season-spell-14",
       "faction": "云瀑",
       "type": "spell",
       "art": "/cards/cloudfall-season-spell-14.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "cloudfall-season-weapon",
       "faction": "云瀑",
       "type": "weapon",
       "art": "/cards/cloudfall-season-weapon.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "magnet-season-01",
       "faction": "磁风",
       "type": "unit",
       "art": "/cards/magnet-season-01.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "magnet-season-02",
       "faction": "磁风",
       "type": "unit",
       "art": "/cards/magnet-season-02.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "magnet-season-03",
       "faction": "磁风",
       "type": "unit",
       "art": "/cards/magnet-season-03.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "magnet-season-04",
       "faction": "磁风",
       "type": "unit",
       "art": "/cards/magnet-season-04.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "magnet-season-05",
       "faction": "磁风",
       "type": "unit",
       "art": "/cards/magnet-season-05.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "magnet-season-06",
       "faction": "磁风",
       "type": "unit",
       "art": "/cards/magnet-season-06.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "magnet-season-07",
       "faction": "磁风",
       "type": "unit",
       "art": "/cards/magnet-season-07.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "magnet-season-08",
       "faction": "磁风",
       "type": "unit",
       "art": "/cards/magnet-season-08.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "magnet-season-09",
       "faction": "磁风",
       "type": "unit",
       "art": "/cards/magnet-season-09.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "magnet-season-10",
       "faction": "磁风",
       "type": "unit",
       "art": "/cards/magnet-season-10.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "magnet-season-11",
       "faction": "磁风",
       "type": "unit",
       "art": "/cards/magnet-season-11.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "magnet-season-12",
       "faction": "磁风",
       "type": "unit",
       "art": "/cards/magnet-season-12.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "magnet-season-13",
       "faction": "磁风",
       "type": "unit",
       "art": "/cards/magnet-season-13.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "magnet-season-14",
       "faction": "磁风",
       "type": "unit",
       "art": "/cards/magnet-season-14.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "magnet-season-15",
       "faction": "磁风",
       "type": "unit",
       "art": "/cards/magnet-season-15.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "magnet-season-16",
       "faction": "磁风",
       "type": "unit",
       "art": "/cards/magnet-season-16.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "magnet-season-17",
       "faction": "磁风",
       "type": "unit",
       "art": "/cards/magnet-season-17.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "magnet-season-18",
       "faction": "磁风",
       "type": "unit",
       "art": "/cards/magnet-season-18.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "magnet-season-19",
       "faction": "磁风",
       "type": "unit",
       "art": "/cards/magnet-season-19.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "magnet-season-20",
       "faction": "磁风",
       "type": "unit",
       "art": "/cards/magnet-season-20.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "magnet-season-21",
       "faction": "磁风",
       "type": "unit",
       "art": "/cards/magnet-season-21.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "magnet-season-22",
       "faction": "磁风",
       "type": "unit",
       "art": "/cards/magnet-season-22.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "magnet-season-23",
       "faction": "磁风",
       "type": "unit",
       "art": "/cards/magnet-season-23.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "magnet-season-24",
       "faction": "磁风",
       "type": "unit",
       "art": "/cards/magnet-season-24.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "magnet-season-25",
       "faction": "磁风",
       "type": "unit",
       "art": "/cards/magnet-season-25.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "magnet-season-26",
       "faction": "磁风",
       "type": "unit",
       "art": "/cards/magnet-season-26.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "magnet-season-27",
       "faction": "磁风",
       "type": "unit",
       "art": "/cards/magnet-season-27.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "magnet-season-28",
       "faction": "磁风",
       "type": "unit",
       "art": "/cards/magnet-season-28.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "magnet-season-29",
       "faction": "磁风",
       "type": "unit",
       "art": "/cards/magnet-season-29.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "magnet-season-30",
       "faction": "磁风",
       "type": "unit",
       "art": "/cards/magnet-season-30.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "magnet-season-31",
       "faction": "磁风",
       "type": "unit",
       "art": "/cards/magnet-season-31.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "magnet-season-32",
       "faction": "磁风",
       "type": "unit",
       "art": "/cards/magnet-season-32.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "magnet-season-33",
       "faction": "磁风",
       "type": "unit",
       "art": "/cards/magnet-season-33.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "magnet-season-34",
       "faction": "磁风",
       "type": "unit",
       "art": "/cards/magnet-season-34.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "magnet-season-35",
       "faction": "磁风",
       "type": "unit",
       "art": "/cards/magnet-season-35.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "magnet-season-spell-01",
       "faction": "磁风",
       "type": "spell",
       "art": "/cards/magnet-season-spell-01.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "magnet-season-spell-02",
       "faction": "磁风",
       "type": "spell",
       "art": "/cards/magnet-season-spell-02.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "magnet-season-spell-03",
       "faction": "磁风",
       "type": "spell",
       "art": "/cards/magnet-season-spell-03.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "magnet-season-spell-04",
       "faction": "磁风",
       "type": "spell",
       "art": "/cards/magnet-season-spell-04.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "magnet-season-spell-05",
       "faction": "磁风",
       "type": "spell",
       "art": "/cards/magnet-season-spell-05.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "magnet-season-spell-06",
       "faction": "磁风",
       "type": "spell",
       "art": "/cards/magnet-season-spell-06.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "magnet-season-spell-07",
       "faction": "磁风",
       "type": "spell",
       "art": "/cards/magnet-season-spell-07.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "magnet-season-spell-08",
       "faction": "磁风",
       "type": "spell",
       "art": "/cards/magnet-season-spell-08.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "magnet-season-spell-09",
       "faction": "磁风",
       "type": "spell",
       "art": "/cards/magnet-season-spell-09.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "magnet-season-spell-10",
       "faction": "磁风",
       "type": "spell",
       "art": "/cards/magnet-season-spell-10.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "magnet-season-spell-11",
       "faction": "磁风",
       "type": "spell",
       "art": "/cards/magnet-season-spell-11.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "magnet-season-spell-12",
       "faction": "磁风",
       "type": "spell",
       "art": "/cards/magnet-season-spell-12.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "magnet-season-spell-13",
       "faction": "磁风",
       "type": "spell",
       "art": "/cards/magnet-season-spell-13.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "magnet-season-spell-14",
       "faction": "磁风",
       "type": "spell",
       "art": "/cards/magnet-season-spell-14.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "magnet-season-weapon",
       "faction": "磁风",
       "type": "weapon",
       "art": "/cards/magnet-season-weapon.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "crystal-season-01",
       "faction": "晶核",
       "type": "unit",
       "art": "/cards/crystal-season-01.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "crystal-season-02",
       "faction": "晶核",
       "type": "unit",
       "art": "/cards/crystal-season-02.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "crystal-season-03",
       "faction": "晶核",
       "type": "unit",
       "art": "/cards/crystal-season-03.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "crystal-season-04",
       "faction": "晶核",
       "type": "unit",
       "art": "/cards/crystal-season-04.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "crystal-season-05",
       "faction": "晶核",
       "type": "unit",
       "art": "/cards/crystal-season-05.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "crystal-season-06",
       "faction": "晶核",
       "type": "unit",
       "art": "/cards/crystal-season-06.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "crystal-season-07",
       "faction": "晶核",
       "type": "unit",
       "art": "/cards/crystal-season-07.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "crystal-season-08",
       "faction": "晶核",
       "type": "unit",
       "art": "/cards/crystal-season-08.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "crystal-season-09",
       "faction": "晶核",
       "type": "unit",
       "art": "/cards/crystal-season-09.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "crystal-season-10",
       "faction": "晶核",
       "type": "unit",
       "art": "/cards/crystal-season-10.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "crystal-season-11",
       "faction": "晶核",
       "type": "unit",
       "art": "/cards/crystal-season-11.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "crystal-season-12",
       "faction": "晶核",
       "type": "unit",
       "art": "/cards/crystal-season-12.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "crystal-season-13",
       "faction": "晶核",
       "type": "unit",
       "art": "/cards/crystal-season-13.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "crystal-season-14",
       "faction": "晶核",
       "type": "unit",
       "art": "/cards/crystal-season-14.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "crystal-season-15",
       "faction": "晶核",
       "type": "unit",
       "art": "/cards/crystal-season-15.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "crystal-season-16",
       "faction": "晶核",
       "type": "unit",
       "art": "/cards/crystal-season-16.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "crystal-season-17",
       "faction": "晶核",
       "type": "unit",
       "art": "/cards/crystal-season-17.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "crystal-season-18",
       "faction": "晶核",
       "type": "unit",
       "art": "/cards/crystal-season-18.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "crystal-season-19",
       "faction": "晶核",
       "type": "unit",
       "art": "/cards/crystal-season-19.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "crystal-season-20",
       "faction": "晶核",
       "type": "unit",
       "art": "/cards/crystal-season-20.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "crystal-season-21",
       "faction": "晶核",
       "type": "unit",
       "art": "/cards/crystal-season-21.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "crystal-season-22",
       "faction": "晶核",
       "type": "unit",
       "art": "/cards/crystal-season-22.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "crystal-season-23",
       "faction": "晶核",
       "type": "unit",
       "art": "/cards/crystal-season-23.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "crystal-season-24",
       "faction": "晶核",
       "type": "unit",
       "art": "/cards/crystal-season-24.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "crystal-season-25",
       "faction": "晶核",
       "type": "unit",
       "art": "/cards/crystal-season-25.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "crystal-season-26",
       "faction": "晶核",
       "type": "unit",
       "art": "/cards/crystal-season-26.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "crystal-season-27",
       "faction": "晶核",
       "type": "unit",
       "art": "/cards/crystal-season-27.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "crystal-season-28",
       "faction": "晶核",
       "type": "unit",
       "art": "/cards/crystal-season-28.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "crystal-season-29",
       "faction": "晶核",
       "type": "unit",
       "art": "/cards/crystal-season-29.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "crystal-season-30",
       "faction": "晶核",
       "type": "unit",
       "art": "/cards/crystal-season-30.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "crystal-season-31",
       "faction": "晶核",
       "type": "unit",
       "art": "/cards/crystal-season-31.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "crystal-season-32",
       "faction": "晶核",
       "type": "unit",
       "art": "/cards/crystal-season-32.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "crystal-season-33",
       "faction": "晶核",
       "type": "unit",
       "art": "/cards/crystal-season-33.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "crystal-season-34",
       "faction": "晶核",
       "type": "unit",
       "art": "/cards/crystal-season-34.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "crystal-season-35",
       "faction": "晶核",
       "type": "unit",
       "art": "/cards/crystal-season-35.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "crystal-season-spell-01",
       "faction": "晶核",
       "type": "spell",
       "art": "/cards/crystal-season-spell-01.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "crystal-season-spell-02",
       "faction": "晶核",
       "type": "spell",
       "art": "/cards/crystal-season-spell-02.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "crystal-season-spell-03",
       "faction": "晶核",
       "type": "spell",
       "art": "/cards/crystal-season-spell-03.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "crystal-season-spell-04",
       "faction": "晶核",
       "type": "spell",
       "art": "/cards/crystal-season-spell-04.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "crystal-season-spell-05",
       "faction": "晶核",
       "type": "spell",
       "art": "/cards/crystal-season-spell-05.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "crystal-season-spell-06",
       "faction": "晶核",
       "type": "spell",
       "art": "/cards/crystal-season-spell-06.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "crystal-season-spell-07",
       "faction": "晶核",
       "type": "spell",
       "art": "/cards/crystal-season-spell-07.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "crystal-season-spell-08",
       "faction": "晶核",
       "type": "spell",
       "art": "/cards/crystal-season-spell-08.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "crystal-season-spell-09",
       "faction": "晶核",
       "type": "spell",
       "art": "/cards/crystal-season-spell-09.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "crystal-season-spell-10",
       "faction": "晶核",
       "type": "spell",
       "art": "/cards/crystal-season-spell-10.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "crystal-season-spell-11",
       "faction": "晶核",
       "type": "spell",
       "art": "/cards/crystal-season-spell-11.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "crystal-season-spell-12",
       "faction": "晶核",
       "type": "spell",
       "art": "/cards/crystal-season-spell-12.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "crystal-season-spell-13",
       "faction": "晶核",
       "type": "spell",
       "art": "/cards/crystal-season-spell-13.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "crystal-season-spell-14",
       "faction": "晶核",
       "type": "spell",
       "art": "/cards/crystal-season-spell-14.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "crystal-season-weapon",
       "faction": "晶核",
       "type": "weapon",
       "art": "/cards/crystal-season-weapon.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dream-season-01",
       "faction": "梦境",
       "type": "unit",
       "art": "/cards/dream-season-01.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dream-season-02",
       "faction": "梦境",
       "type": "unit",
       "art": "/cards/dream-season-02.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dream-season-03",
       "faction": "梦境",
       "type": "unit",
       "art": "/cards/dream-season-03.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dream-season-04",
       "faction": "梦境",
       "type": "unit",
       "art": "/cards/dream-season-04.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dream-season-05",
       "faction": "梦境",
       "type": "unit",
       "art": "/cards/dream-season-05.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dream-season-06",
       "faction": "梦境",
       "type": "unit",
       "art": "/cards/dream-season-06.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dream-season-07",
       "faction": "梦境",
       "type": "unit",
       "art": "/cards/dream-season-07.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dream-season-08",
       "faction": "梦境",
       "type": "unit",
       "art": "/cards/dream-season-08.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dream-season-09",
       "faction": "梦境",
       "type": "unit",
       "art": "/cards/dream-season-09.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dream-season-10",
       "faction": "梦境",
       "type": "unit",
       "art": "/cards/dream-season-10.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dream-season-11",
       "faction": "梦境",
       "type": "unit",
       "art": "/cards/dream-season-11.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dream-season-12",
       "faction": "梦境",
       "type": "unit",
       "art": "/cards/dream-season-12.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dream-season-13",
       "faction": "梦境",
       "type": "unit",
       "art": "/cards/dream-season-13.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dream-season-14",
       "faction": "梦境",
       "type": "unit",
       "art": "/cards/dream-season-14.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dream-season-15",
       "faction": "梦境",
       "type": "unit",
       "art": "/cards/dream-season-15.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dream-season-16",
       "faction": "梦境",
       "type": "unit",
       "art": "/cards/dream-season-16.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dream-season-17",
       "faction": "梦境",
       "type": "unit",
       "art": "/cards/dream-season-17.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dream-season-18",
       "faction": "梦境",
       "type": "unit",
       "art": "/cards/dream-season-18.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dream-season-19",
       "faction": "梦境",
       "type": "unit",
       "art": "/cards/dream-season-19.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dream-season-20",
       "faction": "梦境",
       "type": "unit",
       "art": "/cards/dream-season-20.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dream-season-21",
       "faction": "梦境",
       "type": "unit",
       "art": "/cards/dream-season-21.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dream-season-22",
       "faction": "梦境",
       "type": "unit",
       "art": "/cards/dream-season-22.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dream-season-23",
       "faction": "梦境",
       "type": "unit",
       "art": "/cards/dream-season-23.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dream-season-24",
       "faction": "梦境",
       "type": "unit",
       "art": "/cards/dream-season-24.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dream-season-25",
       "faction": "梦境",
       "type": "unit",
       "art": "/cards/dream-season-25.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dream-season-26",
       "faction": "梦境",
       "type": "unit",
       "art": "/cards/dream-season-26.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dream-season-27",
       "faction": "梦境",
       "type": "unit",
       "art": "/cards/dream-season-27.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dream-season-28",
       "faction": "梦境",
       "type": "unit",
       "art": "/cards/dream-season-28.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dream-season-29",
       "faction": "梦境",
       "type": "unit",
       "art": "/cards/dream-season-29.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dream-season-30",
       "faction": "梦境",
       "type": "unit",
       "art": "/cards/dream-season-30.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dream-season-31",
       "faction": "梦境",
       "type": "unit",
       "art": "/cards/dream-season-31.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dream-season-32",
       "faction": "梦境",
       "type": "unit",
       "art": "/cards/dream-season-32.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dream-season-33",
       "faction": "梦境",
       "type": "unit",
       "art": "/cards/dream-season-33.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dream-season-34",
       "faction": "梦境",
       "type": "unit",
       "art": "/cards/dream-season-34.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dream-season-35",
       "faction": "梦境",
       "type": "unit",
       "art": "/cards/dream-season-35.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dream-season-spell-01",
       "faction": "梦境",
       "type": "spell",
       "art": "/cards/dream-season-spell-01.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dream-season-spell-02",
       "faction": "梦境",
       "type": "spell",
       "art": "/cards/dream-season-spell-02.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dream-season-spell-03",
       "faction": "梦境",
       "type": "spell",
       "art": "/cards/dream-season-spell-03.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dream-season-spell-04",
       "faction": "梦境",
       "type": "spell",
       "art": "/cards/dream-season-spell-04.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dream-season-spell-05",
       "faction": "梦境",
       "type": "spell",
       "art": "/cards/dream-season-spell-05.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dream-season-spell-06",
       "faction": "梦境",
       "type": "spell",
       "art": "/cards/dream-season-spell-06.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dream-season-spell-07",
       "faction": "梦境",
       "type": "spell",
       "art": "/cards/dream-season-spell-07.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dream-season-spell-08",
       "faction": "梦境",
       "type": "spell",
       "art": "/cards/dream-season-spell-08.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dream-season-spell-09",
       "faction": "梦境",
       "type": "spell",
       "art": "/cards/dream-season-spell-09.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dream-season-spell-10",
       "faction": "梦境",
       "type": "spell",
       "art": "/cards/dream-season-spell-10.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dream-season-spell-11",
       "faction": "梦境",
       "type": "spell",
       "art": "/cards/dream-season-spell-11.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dream-season-spell-12",
       "faction": "梦境",
       "type": "spell",
       "art": "/cards/dream-season-spell-12.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dream-season-spell-13",
       "faction": "梦境",
       "type": "spell",
       "art": "/cards/dream-season-spell-13.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dream-season-spell-14",
       "faction": "梦境",
       "type": "spell",
       "art": "/cards/dream-season-spell-14.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "dream-season-weapon",
       "faction": "梦境",
       "type": "weapon",
       "art": "/cards/dream-season-weapon.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "rift-season-01",
       "faction": "裂星",
       "type": "unit",
       "art": "/cards/rift-season-01.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "rift-season-02",
       "faction": "裂星",
       "type": "unit",
       "art": "/cards/rift-season-02.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "rift-season-03",
       "faction": "裂星",
       "type": "unit",
       "art": "/cards/rift-season-03.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "rift-season-04",
       "faction": "裂星",
       "type": "unit",
       "art": "/cards/rift-season-04.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "rift-season-05",
       "faction": "裂星",
       "type": "unit",
       "art": "/cards/rift-season-05.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "rift-season-06",
       "faction": "裂星",
       "type": "unit",
       "art": "/cards/rift-season-06.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "rift-season-07",
       "faction": "裂星",
       "type": "unit",
       "art": "/cards/rift-season-07.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "rift-season-08",
       "faction": "裂星",
       "type": "unit",
       "art": "/cards/rift-season-08.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "rift-season-09",
       "faction": "裂星",
       "type": "unit",
       "art": "/cards/rift-season-09.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "rift-season-10",
       "faction": "裂星",
       "type": "unit",
       "art": "/cards/rift-season-10.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "rift-season-11",
       "faction": "裂星",
       "type": "unit",
       "art": "/cards/rift-season-11.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "rift-season-12",
       "faction": "裂星",
       "type": "unit",
       "art": "/cards/rift-season-12.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "rift-season-13",
       "faction": "裂星",
       "type": "unit",
       "art": "/cards/rift-season-13.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "rift-season-14",
       "faction": "裂星",
       "type": "unit",
       "art": "/cards/rift-season-14.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "rift-season-15",
       "faction": "裂星",
       "type": "unit",
       "art": "/cards/rift-season-15.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "rift-season-16",
       "faction": "裂星",
       "type": "unit",
       "art": "/cards/rift-season-16.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "rift-season-17",
       "faction": "裂星",
       "type": "unit",
       "art": "/cards/rift-season-17.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "rift-season-18",
       "faction": "裂星",
       "type": "unit",
       "art": "/cards/rift-season-18.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "rift-season-19",
       "faction": "裂星",
       "type": "unit",
       "art": "/cards/rift-season-19.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "rift-season-20",
       "faction": "裂星",
       "type": "unit",
       "art": "/cards/rift-season-20.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "rift-season-21",
       "faction": "裂星",
       "type": "unit",
       "art": "/cards/rift-season-21.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "rift-season-22",
       "faction": "裂星",
       "type": "unit",
       "art": "/cards/rift-season-22.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "rift-season-23",
       "faction": "裂星",
       "type": "unit",
       "art": "/cards/rift-season-23.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "rift-season-24",
       "faction": "裂星",
       "type": "unit",
       "art": "/cards/rift-season-24.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "rift-season-25",
       "faction": "裂星",
       "type": "unit",
       "art": "/cards/rift-season-25.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "rift-season-26",
       "faction": "裂星",
       "type": "unit",
       "art": "/cards/rift-season-26.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "rift-season-27",
       "faction": "裂星",
       "type": "unit",
       "art": "/cards/rift-season-27.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "rift-season-28",
       "faction": "裂星",
       "type": "unit",
       "art": "/cards/rift-season-28.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "rift-season-29",
       "faction": "裂星",
       "type": "unit",
       "art": "/cards/rift-season-29.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "rift-season-30",
       "faction": "裂星",
       "type": "unit",
       "art": "/cards/rift-season-30.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "rift-season-31",
       "faction": "裂星",
       "type": "unit",
       "art": "/cards/rift-season-31.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "rift-season-32",
       "faction": "裂星",
       "type": "unit",
       "art": "/cards/rift-season-32.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "rift-season-33",
       "faction": "裂星",
       "type": "unit",
       "art": "/cards/rift-season-33.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "rift-season-34",
       "faction": "裂星",
       "type": "unit",
       "art": "/cards/rift-season-34.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "rift-season-35",
       "faction": "裂星",
       "type": "unit",
       "art": "/cards/rift-season-35.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "rift-season-spell-01",
       "faction": "裂星",
       "type": "spell",
       "art": "/cards/rift-season-spell-01.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "rift-season-spell-02",
       "faction": "裂星",
       "type": "spell",
       "art": "/cards/rift-season-spell-02.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "rift-season-spell-03",
       "faction": "裂星",
       "type": "spell",
       "art": "/cards/rift-season-spell-03.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "rift-season-spell-04",
       "faction": "裂星",
       "type": "spell",
       "art": "/cards/rift-season-spell-04.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "rift-season-spell-05",
       "faction": "裂星",
       "type": "spell",
       "art": "/cards/rift-season-spell-05.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "rift-season-spell-06",
       "faction": "裂星",
       "type": "spell",
       "art": "/cards/rift-season-spell-06.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "rift-season-spell-07",
       "faction": "裂星",
       "type": "spell",
       "art": "/cards/rift-season-spell-07.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "rift-season-spell-08",
       "faction": "裂星",
       "type": "spell",
       "art": "/cards/rift-season-spell-08.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "rift-season-spell-09",
       "faction": "裂星",
       "type": "spell",
       "art": "/cards/rift-season-spell-09.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "rift-season-spell-10",
       "faction": "裂星",
       "type": "spell",
       "art": "/cards/rift-season-spell-10.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "rift-season-spell-11",
       "faction": "裂星",
       "type": "spell",
       "art": "/cards/rift-season-spell-11.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "rift-season-spell-12",
       "faction": "裂星",
       "type": "spell",
       "art": "/cards/rift-season-spell-12.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "rift-season-spell-13",
       "faction": "裂星",
       "type": "spell",
       "art": "/cards/rift-season-spell-13.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "rift-season-spell-14",
       "faction": "裂星",
       "type": "spell",
       "art": "/cards/rift-season-spell-14.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "rift-season-weapon",
       "faction": "裂星",
       "type": "weapon",
       "art": "/cards/rift-season-weapon.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "timesand-season-01",
       "faction": "时砂",
       "type": "unit",
       "art": "/cards/timesand-season-01.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "timesand-season-02",
       "faction": "时砂",
       "type": "unit",
       "art": "/cards/timesand-season-02.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "timesand-season-03",
       "faction": "时砂",
       "type": "unit",
       "art": "/cards/timesand-season-03.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "timesand-season-04",
       "faction": "时砂",
       "type": "unit",
       "art": "/cards/timesand-season-04.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "timesand-season-05",
       "faction": "时砂",
       "type": "unit",
       "art": "/cards/timesand-season-05.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "timesand-season-06",
       "faction": "时砂",
       "type": "unit",
       "art": "/cards/timesand-season-06.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "timesand-season-07",
       "faction": "时砂",
       "type": "unit",
       "art": "/cards/timesand-season-07.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "timesand-season-08",
       "faction": "时砂",
       "type": "unit",
       "art": "/cards/timesand-season-08.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "timesand-season-09",
       "faction": "时砂",
       "type": "unit",
       "art": "/cards/timesand-season-09.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "timesand-season-10",
       "faction": "时砂",
       "type": "unit",
       "art": "/cards/timesand-season-10.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "timesand-season-11",
       "faction": "时砂",
       "type": "unit",
       "art": "/cards/timesand-season-11.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "timesand-season-12",
       "faction": "时砂",
       "type": "unit",
       "art": "/cards/timesand-season-12.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "timesand-season-13",
       "faction": "时砂",
       "type": "unit",
       "art": "/cards/timesand-season-13.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "timesand-season-14",
       "faction": "时砂",
       "type": "unit",
       "art": "/cards/timesand-season-14.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "timesand-season-15",
       "faction": "时砂",
       "type": "unit",
       "art": "/cards/timesand-season-15.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "timesand-season-16",
       "faction": "时砂",
       "type": "unit",
       "art": "/cards/timesand-season-16.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "timesand-season-17",
       "faction": "时砂",
       "type": "unit",
       "art": "/cards/timesand-season-17.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "timesand-season-18",
       "faction": "时砂",
       "type": "unit",
       "art": "/cards/timesand-season-18.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "timesand-season-19",
       "faction": "时砂",
       "type": "unit",
       "art": "/cards/timesand-season-19.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "timesand-season-20",
       "faction": "时砂",
       "type": "unit",
       "art": "/cards/timesand-season-20.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "timesand-season-21",
       "faction": "时砂",
       "type": "unit",
       "art": "/cards/timesand-season-21.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "timesand-season-22",
       "faction": "时砂",
       "type": "unit",
       "art": "/cards/timesand-season-22.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "timesand-season-23",
       "faction": "时砂",
       "type": "unit",
       "art": "/cards/timesand-season-23.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "timesand-season-24",
       "faction": "时砂",
       "type": "unit",
       "art": "/cards/timesand-season-24.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "timesand-season-25",
       "faction": "时砂",
       "type": "unit",
       "art": "/cards/timesand-season-25.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "timesand-season-26",
       "faction": "时砂",
       "type": "unit",
       "art": "/cards/timesand-season-26.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "timesand-season-27",
       "faction": "时砂",
       "type": "unit",
       "art": "/cards/timesand-season-27.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "timesand-season-28",
       "faction": "时砂",
       "type": "unit",
       "art": "/cards/timesand-season-28.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "timesand-season-29",
       "faction": "时砂",
       "type": "unit",
       "art": "/cards/timesand-season-29.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "timesand-season-30",
       "faction": "时砂",
       "type": "unit",
       "art": "/cards/timesand-season-30.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "timesand-season-31",
       "faction": "时砂",
       "type": "unit",
       "art": "/cards/timesand-season-31.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "timesand-season-32",
       "faction": "时砂",
       "type": "unit",
       "art": "/cards/timesand-season-32.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "timesand-season-33",
       "faction": "时砂",
       "type": "unit",
       "art": "/cards/timesand-season-33.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "timesand-season-34",
       "faction": "时砂",
       "type": "unit",
       "art": "/cards/timesand-season-34.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "timesand-season-35",
       "faction": "时砂",
       "type": "unit",
       "art": "/cards/timesand-season-35.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "timesand-season-spell-01",
       "faction": "时砂",
       "type": "spell",
       "art": "/cards/timesand-season-spell-01.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "timesand-season-spell-02",
       "faction": "时砂",
       "type": "spell",
       "art": "/cards/timesand-season-spell-02.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "timesand-season-spell-03",
       "faction": "时砂",
       "type": "spell",
       "art": "/cards/timesand-season-spell-03.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "timesand-season-spell-04",
       "faction": "时砂",
       "type": "spell",
       "art": "/cards/timesand-season-spell-04.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "timesand-season-spell-05",
       "faction": "时砂",
       "type": "spell",
       "art": "/cards/timesand-season-spell-05.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "timesand-season-spell-06",
       "faction": "时砂",
       "type": "spell",
       "art": "/cards/timesand-season-spell-06.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "timesand-season-spell-07",
       "faction": "时砂",
       "type": "spell",
       "art": "/cards/timesand-season-spell-07.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "timesand-season-spell-08",
       "faction": "时砂",
       "type": "spell",
       "art": "/cards/timesand-season-spell-08.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "timesand-season-spell-09",
       "faction": "时砂",
       "type": "spell",
       "art": "/cards/timesand-season-spell-09.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "timesand-season-spell-10",
       "faction": "时砂",
       "type": "spell",
       "art": "/cards/timesand-season-spell-10.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "timesand-season-spell-11",
       "faction": "时砂",
       "type": "spell",
       "art": "/cards/timesand-season-spell-11.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "timesand-season-spell-12",
       "faction": "时砂",
       "type": "spell",
       "art": "/cards/timesand-season-spell-12.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "timesand-season-spell-13",
       "faction": "时砂",
       "type": "spell",
       "art": "/cards/timesand-season-spell-13.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "timesand-season-spell-14",
       "faction": "时砂",
       "type": "spell",
       "art": "/cards/timesand-season-spell-14.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "timesand-season-weapon",
       "faction": "时砂",
       "type": "weapon",
       "art": "/cards/timesand-season-weapon.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "gloomwood-season-01",
       "faction": "幽森",
       "type": "unit",
       "art": "/cards/gloomwood-season-01.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "gloomwood-season-02",
       "faction": "幽森",
       "type": "unit",
       "art": "/cards/gloomwood-season-02.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "gloomwood-season-03",
       "faction": "幽森",
       "type": "unit",
       "art": "/cards/gloomwood-season-03.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "gloomwood-season-04",
       "faction": "幽森",
       "type": "unit",
       "art": "/cards/gloomwood-season-04.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "gloomwood-season-05",
       "faction": "幽森",
       "type": "unit",
       "art": "/cards/gloomwood-season-05.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "gloomwood-season-06",
       "faction": "幽森",
       "type": "unit",
       "art": "/cards/gloomwood-season-06.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "gloomwood-season-07",
       "faction": "幽森",
       "type": "unit",
       "art": "/cards/gloomwood-season-07.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "gloomwood-season-08",
       "faction": "幽森",
       "type": "unit",
       "art": "/cards/gloomwood-season-08.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "gloomwood-season-09",
       "faction": "幽森",
       "type": "unit",
       "art": "/cards/gloomwood-season-09.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "gloomwood-season-10",
       "faction": "幽森",
       "type": "unit",
       "art": "/cards/gloomwood-season-10.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "gloomwood-season-11",
       "faction": "幽森",
       "type": "unit",
       "art": "/cards/gloomwood-season-11.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "gloomwood-season-12",
       "faction": "幽森",
       "type": "unit",
       "art": "/cards/gloomwood-season-12.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "gloomwood-season-13",
       "faction": "幽森",
       "type": "unit",
       "art": "/cards/gloomwood-season-13.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "gloomwood-season-14",
       "faction": "幽森",
       "type": "unit",
       "art": "/cards/gloomwood-season-14.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "gloomwood-season-15",
       "faction": "幽森",
       "type": "unit",
       "art": "/cards/gloomwood-season-15.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "gloomwood-season-16",
       "faction": "幽森",
       "type": "unit",
       "art": "/cards/gloomwood-season-16.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "gloomwood-season-17",
       "faction": "幽森",
       "type": "unit",
       "art": "/cards/gloomwood-season-17.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "gloomwood-season-18",
       "faction": "幽森",
       "type": "unit",
       "art": "/cards/gloomwood-season-18.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "gloomwood-season-19",
       "faction": "幽森",
       "type": "unit",
       "art": "/cards/gloomwood-season-19.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "gloomwood-season-20",
       "faction": "幽森",
       "type": "unit",
       "art": "/cards/gloomwood-season-20.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "gloomwood-season-21",
       "faction": "幽森",
       "type": "unit",
       "art": "/cards/gloomwood-season-21.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "gloomwood-season-22",
       "faction": "幽森",
       "type": "unit",
       "art": "/cards/gloomwood-season-22.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "gloomwood-season-23",
       "faction": "幽森",
       "type": "unit",
       "art": "/cards/gloomwood-season-23.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "gloomwood-season-24",
       "faction": "幽森",
       "type": "unit",
       "art": "/cards/gloomwood-season-24.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "gloomwood-season-25",
       "faction": "幽森",
       "type": "unit",
       "art": "/cards/gloomwood-season-25.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "gloomwood-season-26",
       "faction": "幽森",
       "type": "unit",
       "art": "/cards/gloomwood-season-26.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "gloomwood-season-27",
       "faction": "幽森",
       "type": "unit",
       "art": "/cards/gloomwood-season-27.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "gloomwood-season-28",
       "faction": "幽森",
       "type": "unit",
       "art": "/cards/gloomwood-season-28.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "gloomwood-season-29",
       "faction": "幽森",
       "type": "unit",
       "art": "/cards/gloomwood-season-29.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "gloomwood-season-30",
       "faction": "幽森",
       "type": "unit",
       "art": "/cards/gloomwood-season-30.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "gloomwood-season-31",
       "faction": "幽森",
       "type": "unit",
       "art": "/cards/gloomwood-season-31.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "gloomwood-season-32",
       "faction": "幽森",
       "type": "unit",
       "art": "/cards/gloomwood-season-32.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "gloomwood-season-33",
       "faction": "幽森",
       "type": "unit",
       "art": "/cards/gloomwood-season-33.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "gloomwood-season-34",
       "faction": "幽森",
       "type": "unit",
       "art": "/cards/gloomwood-season-34.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "gloomwood-season-35",
       "faction": "幽森",
       "type": "unit",
       "art": "/cards/gloomwood-season-35.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "gloomwood-season-spell-01",
       "faction": "幽森",
       "type": "spell",
       "art": "/cards/gloomwood-season-spell-01.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "gloomwood-season-spell-02",
       "faction": "幽森",
       "type": "spell",
       "art": "/cards/gloomwood-season-spell-02.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "gloomwood-season-spell-03",
       "faction": "幽森",
       "type": "spell",
       "art": "/cards/gloomwood-season-spell-03.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "gloomwood-season-spell-04",
       "faction": "幽森",
       "type": "spell",
       "art": "/cards/gloomwood-season-spell-04.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "gloomwood-season-spell-05",
       "faction": "幽森",
       "type": "spell",
       "art": "/cards/gloomwood-season-spell-05.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "gloomwood-season-spell-06",
       "faction": "幽森",
       "type": "spell",
       "art": "/cards/gloomwood-season-spell-06.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "gloomwood-season-spell-07",
       "faction": "幽森",
       "type": "spell",
       "art": "/cards/gloomwood-season-spell-07.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "gloomwood-season-spell-08",
       "faction": "幽森",
       "type": "spell",
       "art": "/cards/gloomwood-season-spell-08.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "gloomwood-season-spell-09",
       "faction": "幽森",
       "type": "spell",
       "art": "/cards/gloomwood-season-spell-09.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "gloomwood-season-spell-10",
       "faction": "幽森",
       "type": "spell",
       "art": "/cards/gloomwood-season-spell-10.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "gloomwood-season-spell-11",
       "faction": "幽森",
       "type": "spell",
       "art": "/cards/gloomwood-season-spell-11.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "gloomwood-season-spell-12",
       "faction": "幽森",
       "type": "spell",
       "art": "/cards/gloomwood-season-spell-12.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "gloomwood-season-spell-13",
       "faction": "幽森",
       "type": "spell",
       "art": "/cards/gloomwood-season-spell-13.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "gloomwood-season-spell-14",
       "faction": "幽森",
       "type": "spell",
       "art": "/cards/gloomwood-season-spell-14.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "gloomwood-season-weapon",
       "faction": "幽森",
       "type": "weapon",
       "art": "/cards/gloomwood-season-weapon.webp",
-      "source": "legacy-variant"
+      "source": "imagegen"
     },
     {
       "id": "firmament-season-01",

@@ -12,6 +12,7 @@
     "test": "npm run test:game && npm run build && node --test tests/rendered-html.test.mjs",
     "test:game": "node --test tests/game-engine.test.ts",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
+    "export:flutter-catalog": "node scripts/export-flutter-catalog.mjs",
     "db:generate": "drizzle-kit generate"
   },
   "dependencies": {

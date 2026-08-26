@@ -4,7 +4,10 @@ import 'package:flutter/services.dart';
 
 import '../models/card_definition.dart';
 
-const factionOrder = <String>['曜光', '幽潮', '中立', '烬火', '星穹', '苍林', '雷铸'];
+const factionOrder = <String>[
+  '曜光', '幽潮', '中立', '烬火', '星穹', '苍林', '雷铸', '霜境', '砂海', '赤月',
+  '灵脉', '暮影', '云瀑', '磁风', '晶核', '梦境', '裂星', '时砂', '幽森', '天穹',
+];
 
 const factionDoctrine = <String, String>{
   '曜光': '护盾 · 增益',
@@ -14,6 +17,19 @@ const factionDoctrine = <String, String>{
   '星穹': '秘契 · 护盾',
   '苍林': '治疗 · 猎痕',
   '雷铸': '巧铸 · 激昂',
+  '霜境': '冻结 · 冰甲',
+  '砂海': '沙暴 · 资源',
+  '赤月': '献祭 · 吸血',
+  '灵脉': '法术 · 共鸣',
+  '暮影': '潜伏 · 反制',
+  '云瀑': '风行 · 回旋',
+  '磁风': '磁场 · 装配',
+  '晶核': '护晶 · 变形',
+  '梦境': '幻术 · 发现',
+  '裂星': '撕裂 · 直伤',
+  '时砂': '延时 · 复写',
+  '幽森': '亡语 · 毒荆',
+  '天穹': '巨像 · 终局',
 };
 
 const factionSigil = <String, String>{
@@ -24,6 +40,19 @@ const factionSigil = <String, String>{
   '星穹': '✦',
   '苍林': '♧',
   '雷铸': 'ϟ',
+  '霜境': '❄',
+  '砂海': '⌁',
+  '赤月': '☾',
+  '灵脉': '⌬',
+  '暮影': '◐',
+  '云瀑': '≋',
+  '磁风': '⊕',
+  '晶核': '◈',
+  '梦境': '✧',
+  '裂星': '✺',
+  '时砂': '⌛',
+  '幽森': '♠',
+  '天穹': '⬡',
 };
 
 const factionColors = <String, int>{
@@ -34,6 +63,19 @@ const factionColors = <String, int>{
   '星穹': 0xFFA692D1,
   '苍林': 0xFF79B980,
   '雷铸': 0xFF65CDDA,
+  '霜境': 0xFF79DCFF,
+  '砂海': 0xFFE2B45D,
+  '赤月': 0xFFE24D62,
+  '灵脉': 0xFF67E8D4,
+  '暮影': 0xFF7359A8,
+  '云瀑': 0xFF8BD7EC,
+  '磁风': 0xFFE08E55,
+  '晶核': 0xFFDCECFF,
+  '梦境': 0xFFF0A9E6,
+  '裂星': 0xFFF36B52,
+  '时砂': 0xFFE5C779,
+  '幽森': 0xFF7BBF76,
+  '天穹': 0xFFFFE3A2,
 };
 
 const rarityColors = <String, int>{

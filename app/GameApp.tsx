@@ -29,14 +29,20 @@ import {
   factionForDeck,
   getHeroPower,
   getTraitStatuses,
+  LADDER_START_RATING,
+  ladderStarsForRating,
+  ladderTierForRating,
+  planAiTurnReplay,
+  shouldScheduleLocalAiTurn,
+  updateRankedSnapshot,
   EXPANDED_FACTION_THEMES,
-  runAiTurn,
   validateDeck,
   type BattleEffectKind,
   type BattleCommand,
   type CardDefinition,
   type CardTargetRule,
   type Faction,
+  type HeroPowerEffect,
   type Keyword,
   type MatchState,
   type SpellSchool,
@@ -111,7 +117,7 @@ type SavedDeck = {
 
 type RecentMatch = {
   id: string;
-  result: "win" | "loss";
+  result: "win" | "loss" | "draw";
   mode: string;
   format?: "ranked" | "casual";
   opponent: string;
@@ -139,7 +145,7 @@ type PlayerSnapshot = {
     weeklyFreePackClaimed?: boolean;
   };
   progression?: { xp: number; level: number };
-  ladder?: { seasonKey?: string; rating: number; tier: string; stars: number; wins: number; losses: number; highestRating?: number };
+  ladder?: { seasonKey?: string; rating: number; tier: string; stars: number; wins: number; losses: number; highestRating?: number; winStreak?: number };
   friends?: Array<{ id: string; displayName: string; status: "pending" | "accepted"; direction: "incoming" | "outgoing" }>;
   chatMessages?: Array<{ id: string; senderId: string; recipientId: string; text: string; createdAt: string }>;
   blockedPlayerIds?: string[];
@@ -168,10 +174,19 @@ type GamePayload = {
   amount?: number;
   kind?: "craft" | "disenchant";
   savedDeck?: SavedDeck;
+  aiMatch?: {
+    token: string;
+    seed: number;
+    startingPlayer: 0 | 1;
+    playerDeck: string[];
+    opponentArchetypeId: string;
+    expiresAt: string;
+  };
   localFallback?: boolean;
 };
 
 type AiMatchProofPayload = {
+  ticketToken: string;
   seed: number;
   startingPlayer: 0 | 1;
   playerDeck: string[];
@@ -209,6 +224,7 @@ type BattleSide = {
   heroPowerDescription: string;
   heroPowerCost: number;
   heroPowerTarget: CardTargetRule;
+  heroPowerEffect: HeroPowerEffect;
   coinAvailable: boolean;
   heroHasAttacked: boolean;
   secrets: Array<{ secretId: string; name: string; description: string }>;
@@ -277,6 +293,23 @@ type PvpIncoming =
   | { id: number; type: "room-reset" }
   | { id: number; type: "rejected"; message: string; resync?: boolean };
 
+function swapPlayerReferences(message: string): string {
+  return message.replace(/玩家 ([01])/g, (_match, player: string) =>
+    `玩家 ${player === "0" ? "1" : "0"}`,
+  );
+}
+
+function formatBattleLogMessage(message: string): string {
+  return message
+    .replace(/玩家 0 的英雄/g, "我方核心")
+    .replace(/玩家 1 的英雄/g, "敌方核心")
+    .replace(/玩家 0 的核心/g, "我方核心")
+    .replace(/玩家 1 的核心/g, "敌方核心")
+    .replace(/玩家 0/g, "我方")
+    .replace(/玩家 1/g, "敌方")
+    .replace(/(?<=[\u4e00-\u9fff」])\s+(?=[\u4e00-\u9fff「])/g, "");
+}
+
 function orientPvpMatchForLocal(state: MatchState, role: PvpRole): MatchState {
   if (role === "host") return state;
   const swap = (player: 0 | 1): 0 | 1 => (player === 0 ? 1 : 0);
@@ -316,6 +349,7 @@ function orientPvpMatchForLocal(state: MatchState, role: PvpRole): MatchState {
       : null,
     events: state.events.map((event) => ({
       ...event,
+      message: swapPlayerReferences(event.message),
       player: event.player === undefined ? undefined : swap(event.player),
       data: event.data ? (() => {
         const target = event.data?.target as { kind?: string; player?: number } | undefined;
@@ -521,6 +555,23 @@ function formatTime(value: string) {
   }).format(date);
 }
 
+function formatUtcResetCountdown(period: "day" | "week", now: number): string {
+  if (!now) return "计算中…";
+  const next = new Date(now);
+  if (period === "day") {
+    next.setUTCHours(24, 0, 0, 0);
+  } else {
+    const day = next.getUTCDay() || 7;
+    next.setUTCDate(next.getUTCDate() + (8 - day));
+    next.setUTCHours(0, 0, 0, 0);
+  }
+  const seconds = Math.max(0, Math.floor((next.getTime() - now) / 1000));
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const remainingSeconds = seconds % 60;
+  return `${hours}时 ${minutes.toString().padStart(2, "0")}分 ${remainingSeconds.toString().padStart(2, "0")}秒`;
+}
+
 function makeId(prefix: string) {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
     return `${prefix}-${crypto.randomUUID()}`;
@@ -649,7 +700,7 @@ function makeDemoPlayer(identity?: {
     taskCycle: { dayKey: new Date().toISOString().slice(0, 10), weekKey: "demo", dailyRerollsRemaining: 1, packsBoughtToday: 0, aiRewardsToday: 0, weeklyFreePackClaimed: false },
     progression: { xp: 850, level: 1 },
     rewardTrack: { claimedLevels: [] },
-    ladder: { seasonKey: new Date().toISOString().slice(0, 7), rating: 1000, tier: "白银", stars: 0, wins: 7, losses: 3, highestRating: 1000 },
+    ladder: { seasonKey: new Date().toISOString().slice(0, 7), rating: LADDER_START_RATING, tier: ladderTierForRating(LADDER_START_RATING), stars: ladderStarsForRating(LADDER_START_RATING), wins: 7, losses: 3, highestRating: LADDER_START_RATING, winStreak: 0 },
     recentMatches: [
       {
         id: "demo-match-1",
@@ -685,6 +736,31 @@ function applyLocalAction(
       email: current.email,
     });
     return { ok: true, player, localFallback: true };
+  }
+  if (action === "create_ai_match") {
+    const deckId = asString(body.deckId);
+    const deck = current.decks.find((candidate) => candidate.id === deckId);
+    if (!deck) throw new Error("AI 对局必须使用已保存的卡组。");
+    const validation = validateDeck(deck.cardIds);
+    if (!validation.valid) throw new Error(validation.errors[0]?.message ?? "卡组不符合组牌规则。");
+    const archetypeId = asString(body.opponentArchetypeId);
+    if (!AI_ARCHETYPES.some((candidate) => candidate.id === archetypeId)) {
+      throw new Error("AI 对手原型不存在。");
+    }
+    const randomness = crypto.getRandomValues(new Uint32Array(2));
+    return {
+      ok: true,
+      player: current,
+      aiMatch: {
+        token: `local-${crypto.randomUUID()}`,
+        seed: (randomness[0] ?? 0) & 0x7fffffff,
+        startingPlayer: ((randomness[1] ?? 0) & 1) as 0 | 1,
+        playerDeck: [...deck.cardIds],
+        opponentArchetypeId: archetypeId,
+        expiresAt: new Date(Date.now() + 2 * 60 * 60 * 1_000).toISOString(),
+      },
+      localFallback: true,
+    };
   }
   if (action === "update_profile") {
     const displayName = asString(body.displayName, current.displayName).trim().replace(/\s+/g, " ");
@@ -924,12 +1000,12 @@ function applyLocalAction(
   }
 
   if (action === "record_match") {
-    if (body.result !== "win" && body.result !== "loss") throw new Error("对局结果无效。");
+    if (body.result !== "win" && body.result !== "loss" && body.result !== "draw") throw new Error("对局结果无效。");
     if (body.mode !== "ai" && body.mode !== "pvp") throw new Error("对战模式无效。");
     const result = body.result;
     const cycle = current.taskCycle ?? { dayKey: now.slice(0, 10), weekKey: "demo", dailyRerollsRemaining: 1, packsBoughtToday: 0, aiRewardsToday: 0, weeklyFreePackClaimed: false };
     const aiRewardEligible = body.mode !== "ai" || (cycle.aiRewardsToday ?? 0) < 20;
-    const rewardGold = aiRewardEligible ? result === "win" ? 60 : 20 : 0;
+    const rewardGold = result === "draw" ? 0 : aiRewardEligible ? result === "win" ? 60 : 20 : 0;
     const match: RecentMatch = {
       id: makeId("local-match"),
       result,
@@ -944,7 +1020,8 @@ function applyLocalAction(
         task.id.includes("battle") ||
         task.description.includes("对战") ||
         task.description.includes("演算");
-      return tracksBattle && !task.claimed
+      const tracksWin = task.id.includes("win") || task.description.includes("赢得");
+      return tracksBattle && (!tracksWin || result === "win") && !task.claimed
         ? { ...task, progress: Math.min(task.target, task.progress + 1) }
         : task;
     });
@@ -971,16 +1048,11 @@ function applyLocalAction(
       },
       ladder: body.mode === "pvp" && body.format !== "casual"
         ? (() => {
-            const existing = current.ladder ?? { seasonKey: now.slice(0, 7), rating: 1000, tier: "白银", stars: 0, wins: 0, losses: 0, highestRating: 1000 };
-            const rating = Math.max(0, existing.rating + (result === "win" ? 25 : -20));
+            const existing = current.ladder ?? { seasonKey: now.slice(0, 7), rating: LADDER_START_RATING, tier: ladderTierForRating(LADDER_START_RATING), stars: ladderStarsForRating(LADDER_START_RATING), wins: 0, losses: 0, highestRating: LADDER_START_RATING, winStreak: 0 };
+            const ranked = updateRankedSnapshot(existing, result);
             return {
-              rating,
-              tier: rating >= 1800 ? "传说" : rating >= 1600 ? "钻石" : rating >= 1400 ? "白金" : rating >= 1200 ? "黄金" : rating >= 1000 ? "白银" : "青铜",
-              stars: Math.floor((rating % 200) / 50),
-              wins: existing.wins + (result === "win" ? 1 : 0),
-              losses: existing.losses + (result === "loss" ? 1 : 0),
+              ...ranked,
               seasonKey: existing.seasonKey ?? now.slice(0, 7),
-              highestRating: Math.max(existing.highestRating ?? existing.rating, rating),
             };
           })()
         : current.ladder,
@@ -1123,6 +1195,11 @@ function battleFromRaw(value: unknown): BattleView | null {
       (side.heroPower as Record<string, unknown> | undefined)?.target ?? side.heroPowerTarget,
       "none",
     ) as CardTargetRule,
+    heroPowerEffect: (
+      (side.heroPower as Record<string, unknown> | undefined)?.effect ??
+      side.heroPowerEffect ??
+      { kind: "damage-enemy-hero", amount: 1 }
+    ) as HeroPowerEffect,
     coinAvailable: Boolean(side.coinAvailable),
     heroHasAttacked: Boolean(side.heroHasAttacked),
     overload: asNumber(side.overload, 0),
@@ -1237,14 +1314,16 @@ function battleFromRaw(value: unknown): BattleView | null {
     ? events
         .slice(-12)
         .map((event) =>
-          typeof event === "string"
-            ? event
-            : asString(
+          formatBattleLogMessage(
+            typeof event === "string"
+              ? event
+              : asString(
                 (event as Record<string, unknown>)?.message ??
                   (event as Record<string, unknown>)?.text ??
                   (event as Record<string, unknown>)?.type,
                 "战场状态已更新",
               ),
+          ),
         )
     : [];
   return {
@@ -1870,6 +1949,10 @@ function useWebPvp(displayName: string) {
   const pollResumeClientRef = useRef<string | null>(null);
   const pollTimerRef = useRef<number | null>(null);
   const pollInFlightRef = useRef(false);
+  // A browser can issue ready/start/command requests in the same render tick.
+  // Serialize polling writes so HTTP scheduling cannot reorder the player's
+  // intent before the Worker assigns an authoritative room sequence.
+  const pollSendTailRef = useRef<Promise<void>>(Promise.resolve());
   const incomingQueueRef = useRef<PvpIncoming[]>([]);
   const lastSequenceRef = useRef(0);
   const [state, setState] = useState<PvpState>({
@@ -2073,6 +2156,7 @@ function useWebPvp(displayName: string) {
     pollEndpointRef.current = null;
     pollCursorRef.current = 0;
     pollInFlightRef.current = false;
+    pollSendTailRef.current = Promise.resolve();
     if (leaveRoom && clientId && endpoint) {
       void fetch(`${endpoint}?clientId=${encodeURIComponent(clientId)}`, { method: "DELETE", keepalive: true }).catch(() => undefined);
     }
@@ -2137,7 +2221,9 @@ function useWebPvp(displayName: string) {
         }),
       });
       const payload = await response.json() as Record<string, unknown>;
-      if (!response.ok || payload.ok !== true || typeof payload.clientId !== "string") throw new Error("poll connect failed");
+      if (!response.ok || payload.ok !== true || typeof payload.clientId !== "string") {
+        throw new Error(asString(payload.message, "联机大厅连接失败。"));
+      }
       if (connectionIdRef.current !== connectionId || transportRef.current !== "poll") return;
       pollClientRef.current = payload.clientId;
       pollCursorRef.current = Number(payload.cursor) || 0;
@@ -2150,25 +2236,39 @@ function useWebPvp(displayName: string) {
         try {
           const result = await fetch(`${endpoint}?clientId=${encodeURIComponent(clientId)}&cursor=${pollCursorRef.current}`, { cache: "no-store" });
           const next = await result.json() as Record<string, unknown>;
-          if (!result.ok || next.ok !== true) throw new Error("poll session expired");
+          if (!result.ok || next.ok !== true) {
+            throw new Error(asString(next.message, "联机会话已过期。"));
+          }
           pollCursorRef.current = Number(next.cursor) || pollCursorRef.current;
           if (Array.isArray(next.messages)) next.messages.forEach((message) => handleMessage(connectionId, message));
-        } catch {
+        } catch (error) {
           if (connectionIdRef.current === connectionId && transportRef.current === "poll") {
             transportRef.current = null;
             stopPolling(false);
-            setState((current) => ({ ...current, status: "error", message: "联机大厅连接已断开，请重新连接。" }));
+            setState((current) => ({
+              ...current,
+              status: "error",
+              message: error instanceof Error && error.message
+                ? error.message
+                : "联机大厅连接已断开，请重新连接。",
+            }));
           }
         } finally {
           pollInFlightRef.current = false;
         }
       };
       pollTimerRef.current = window.setInterval(() => void pollOnce(), 700);
-    } catch {
+    } catch (error) {
       if (connectionIdRef.current !== connectionId) return;
       transportRef.current = null;
       stopPolling(false);
-      setState((current) => ({ ...current, status: "error", message: "联机大厅连接失败，请稍后重试。" }));
+      setState((current) => ({
+        ...current,
+        status: "error",
+        message: error instanceof Error && error.message
+          ? error.message
+          : "联机大厅连接失败，请稍后重试。",
+      }));
     }
   }, [displayName, handleMessage, stopPolling]);
 
@@ -2271,11 +2371,51 @@ function useWebPvp(displayName: string) {
         setState((current) => ({ ...current, status: "error", message: "联机连接尚未就绪。" }));
         return false;
       }
-      void fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ clientId, type: "message", message }),
-      }).catch(() => undefined);
+      const connectionId = connectionIdRef.current;
+      const submit = async () => {
+        if (
+          connectionIdRef.current !== connectionId ||
+          transportRef.current !== "poll" ||
+          pollClientRef.current !== clientId ||
+          pollEndpointRef.current !== endpoint
+        ) return;
+        try {
+          const response = await fetch(endpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ clientId, type: "message", message }),
+          });
+          const payload = await response.json().catch(() => ({})) as Record<string, unknown>;
+          if (!response.ok || payload.ok !== true) {
+            throw new Error(asString(payload.message, "服务器未接受这条联机指令。"));
+          }
+        } catch (error) {
+          if (
+            connectionIdRef.current !== connectionId ||
+            transportRef.current !== "poll" ||
+            pollClientRef.current !== clientId
+          ) return;
+          const failure = error instanceof Error && error.message
+            ? error.message
+            : "联机指令发送失败，请重试。";
+          const isReady = message.type === "action" && message.action === "ready";
+          setState((current) => ({
+            ...current,
+            localReady: isReady ? false : current.localReady,
+            status: isReady && current.roomCode ? "room" : current.status,
+            message: failure,
+          }));
+          enqueueIncoming({
+            id: ++incomingIdRef.current,
+            type: "rejected",
+            message: failure,
+            resync: true,
+          });
+        }
+      };
+      // `submit` contains its own error handling, so a failed request cannot
+      // poison the tail and prevent later retry/sync messages from running.
+      pollSendTailRef.current = pollSendTailRef.current.then(submit, submit);
       return true;
     }
     const socket = socketRef.current;
@@ -2285,7 +2425,7 @@ function useWebPvp(displayName: string) {
     }
     socket.send(JSON.stringify(message));
     return true;
-  }, []);
+  }, [enqueueIncoming]);
 
   const createRoom = useCallback((format: PvpFormat = "ranked") => {
     send({ type: "create_room", format });
@@ -2416,6 +2556,7 @@ export function GameApp({
   const [battleTurnClockSeconds, setBattleTurnClockSeconds] = useState<number | null>(null);
   const recordedBattleRef = useRef<string | null>(null);
   const aiMatchProofRef = useRef<AiMatchProofPayload | null>(null);
+  const aiMatchStartingRef = useRef(false);
   const aiCommandTranscriptRef = useRef<BattleCommand[]>([]);
   const sectionRef = useRef<SectionKey>("overview");
   const battleEffectQueueRef = useRef<BattleVisualEffect[]>([]);
@@ -2428,6 +2569,8 @@ export function GameApp({
   const battleReplaySlowRef = useRef(false);
   const aiReplayFinalStateRef = useRef<MatchState | null>(null);
   const aiTurnTimerRef = useRef<number | null>(null);
+  const aiTurnGenerationRef = useRef(0);
+  const mulliganSubmissionRef = useRef(false);
   const turnTimeoutHandledRef = useRef<number | null>(null);
   const endTurnRef = useRef<() => void>(() => undefined);
   const { soundEnabled, unlockAudio, playSound, toggleSound } = useBattleAudio();
@@ -2439,6 +2582,10 @@ export function GameApp({
   const [aiArchetypeId, setAiArchetypeId] = useState(AI_ARCHETYPES[0]?.id ?? "tide-control");
   const onlineStartSentRef = useRef(false);
   const pvpMatchTokenRef = useRef<string | null>(null);
+  // Keep the seat assigned when this match began. Room ownership can move to
+  // the guest after the original host leaves, but an archived match token
+  // continues to identify that guest as player 1 for orientation/settlement.
+  const pvpMatchPlayerRef = useRef<0 | 1 | null>(null);
   const pendingPvpCommandRef = useRef(false);
   const pvpEventCursorRef = useRef(0);
 
@@ -2458,6 +2605,7 @@ export function GameApp({
   }, []);
 
   const skipBattleReplay = useCallback(() => {
+    aiTurnGenerationRef.current += 1;
     if (aiTurnTimerRef.current !== null) {
       window.clearTimeout(aiTurnTimerRef.current);
       aiTurnTimerRef.current = null;
@@ -2563,6 +2711,7 @@ export function GameApp({
 
   useEffect(
     () => () => {
+      aiTurnGenerationRef.current += 1;
       if (battleEffectTimerRef.current !== null) {
         window.clearTimeout(battleEffectTimerRef.current);
       }
@@ -3103,17 +3252,21 @@ export function GameApp({
 
   // This transition is shared by AI and transport-driven PVP starts.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const beginBattle = (decks: [string[], string[]], startingPlayer: 0 | 1, online: boolean, opponentName?: string, seed?: number, opponentArchetypeId?: string) => {
-    if (!online && !deckValidation.valid) {
+  const beginBattle = (decks: [string[], string[]], startingPlayer: 0 | 1, online: boolean, opponentName?: string, seed?: number, opponentArchetypeId?: string, aiTicketToken?: string) => {
+    const launchDeckValidation = validateDeck(decks[0]);
+    if (!online && !launchDeckValidation.valid) {
       switchSection("deck");
-      setNotice({ tone: "warning", text: `无法部署：${deckValidation.errors[0]}` });
+      setNotice({ tone: "warning", text: `无法部署：${launchDeckValidation.errors[0]?.message ?? "服务端卡组无效"}` });
       return;
     }
     try {
+      aiTurnGenerationRef.current += 1;
       if (aiTurnTimerRef.current !== null) {
         window.clearTimeout(aiTurnTimerRef.current);
         aiTurnTimerRef.current = null;
       }
+      aiReplayFinalStateRef.current = null;
+      mulliganSubmissionRef.current = false;
       unlockAudio();
       let next = createMatch({ decks, startingPlayer, ...(seed === undefined ? {} : { seed }) });
       aiCommandTranscriptRef.current = [];
@@ -3121,6 +3274,7 @@ export function GameApp({
       // In a local match the AI confirms its opening hand immediately; the
       // human player still gets a visible mulligan decision window.
       if (!online) {
+        if (!aiTicketToken) throw new Error("缺少服务端签发的 AI 对局凭证。");
         const aiMulliganCommand: BattleCommand = {
           type: "mulligan",
           player: 1,
@@ -3130,6 +3284,7 @@ export function GameApp({
         if (aiMulligan.accepted) next = aiMulligan.state;
         if (aiMulligan.accepted) aiCommandTranscriptRef.current.push(aiMulliganCommand);
         aiMatchProofRef.current = {
+          ticketToken: aiTicketToken,
           seed: next.seed,
           startingPlayer,
           playerDeck: [...decks[0]],
@@ -3141,7 +3296,10 @@ export function GameApp({
       setInspectedCard(null);
       setOnlineMatch(online);
       setOnlineOpponent(opponentName ?? (online ? "联机对手" : "镜像演算体 K-7"));
-      if (!online) pvpMatchTokenRef.current = null;
+      if (!online) {
+        pvpMatchTokenRef.current = null;
+        pvpMatchPlayerRef.current = null;
+      }
       pendingPvpCommandRef.current = false;
       setSelectedAttacker(null);
       setPendingCard(null);
@@ -3185,14 +3343,42 @@ export function GameApp({
     }
   };
 
-  const startBattle = () => {
-    if (!deckValidation.valid) {
+  const startBattle = async () => {
+    if (aiMatchStartingRef.current) return;
+    const requestedOpponent = selectedAiArchetype ?? AI_ARCHETYPES[0];
+    const savedDeckId = editingDeckId ?? player.activeDeckId;
+    if (!savedDeckId) {
       switchSection("deck");
-      setNotice({ tone: "warning", text: `无法部署：${deckValidation.errors[0]}` });
+      setNotice({ tone: "warning", text: "请先保存当前卡组，再开始 AI 演算。" });
       return;
     }
-    const opponent = selectedAiArchetype ?? AI_ARCHETYPES[0];
-    beginBattle([[...deckIds], [...(opponent?.deck ?? DEFAULT_OPPONENT_DECK)]], 0, false, opponent?.name, undefined, opponent?.id);
+    aiMatchStartingRef.current = true;
+    try {
+      const payload = await postAction("create_ai_match", {
+        deckId: savedDeckId,
+        opponentArchetypeId: requestedOpponent?.id ?? "tide-control",
+      });
+      const ticket = payload?.aiMatch;
+      if (!ticket) return;
+      const opponent = AI_ARCHETYPES.find(
+        (candidate) => candidate.id === ticket.opponentArchetypeId,
+      );
+      if (!opponent) {
+        setNotice({ tone: "warning", text: "服务端签发的 AI 对手已不可用，请稍后重试。" });
+        return;
+      }
+      beginBattle(
+        [[...ticket.playerDeck], [...(opponent.deck ?? DEFAULT_OPPONENT_DECK)]],
+        ticket.startingPlayer,
+        false,
+        opponent.name,
+        ticket.seed,
+        ticket.opponentArchetypeId,
+        ticket.token,
+      );
+    } finally {
+      aiMatchStartingRef.current = false;
+    }
   };
 
   // In PVP the server reducer is authoritative. The local client only sends a
@@ -3254,12 +3440,143 @@ export function GameApp({
     }
   }, [battle, onlineMatch, playSound, pvp, showBattleEffects]);
 
+  const scheduleLocalAiTurn = useCallback((initialState: MatchState): boolean => {
+    if (
+      !shouldScheduleLocalAiTurn(initialState, onlineMatch) ||
+      aiTurnTimerRef.current !== null ||
+      aiReplayActiveRef.current
+    ) {
+      return false;
+    }
+
+    const generation = aiTurnGenerationRef.current;
+    setBattleMessage("演算体正在规划反制路线…");
+    aiTurnTimerRef.current = window.setTimeout(() => {
+      aiTurnTimerRef.current = null;
+      if (generation !== aiTurnGenerationRef.current) return;
+
+      try {
+        const plan = planAiTurnReplay(initialState, 1);
+        if (generation !== aiTurnGenerationRef.current) return;
+        aiCommandTranscriptRef.current.push(...plan.commands);
+
+        const states = plan.steps.length > 0
+          ? plan.steps.map((step, index) => {
+              const previousEventCount = index === 0
+                ? plan.initialEventCount
+                : plan.steps[index - 1]?.eventCount ?? plan.initialEventCount;
+              return {
+                ...step,
+                visualEffectCount: battleEventsToEffects(
+                  step.state.events.slice(previousEventCount, step.eventCount),
+                ).length,
+              };
+            })
+          : [{
+              state: plan.finalState,
+              eventCount: plan.finalState.events.length,
+              visualEffectCount: battleEventsToEffects(
+                plan.finalState.events.slice(plan.initialEventCount),
+              ).length,
+            }];
+        const replayFrames = [{
+          state: initialState,
+          eventCount: plan.initialEventCount,
+          visualEffectCount: 0,
+        }, ...states];
+        const replayEffects = battleEventsToEffects(
+          states.flatMap((step, index) => {
+            const previousEventCount = index === 0
+              ? plan.initialEventCount
+              : states[index - 1]?.eventCount ?? plan.initialEventCount;
+            return step.state.events.slice(previousEventCount, step.eventCount);
+          }),
+        );
+
+        // Reveal each accepted AI command as a real board transition instead
+        // of jumping directly to the final turn snapshot. The effect queue
+        // remains the timing authority, so the board and the combat overlay
+        // move at the same readable cadence on mobile and desktop.
+        if (sectionRef.current === "battle") {
+          aiReplayFinalStateRef.current = plan.finalState;
+          aiReplayActiveRef.current = true;
+          aiReplayCompletionMessageRef.current = plan.finalState.phase === "game-over"
+            ? "敌方行动完成，正在结算演算结果。"
+            : "敌方行动已结束，新的能量窗口已开启。";
+          // Start from the pre-command board. Each post-command snapshot is
+          // revealed only after that command's effects have had their full
+          // playback window, so damage/death animation never trails a board
+          // that has already jumped to the result.
+          setBattle(replayFrames[0]?.state ?? plan.finalState);
+          showBattleEffects(replayEffects, {
+            lock: true,
+            maxEffects: BATTLE_EFFECT_QUEUE_LIMIT,
+          });
+          let replayIndex = 1;
+          const replayStepDuration = (frame: (typeof replayFrames)[number]) => {
+            const beat = battleReplaySlowRef.current
+              ? BATTLE_EFFECT_SLOW_STEP_MS
+              : BATTLE_EFFECT_STANDARD_STEP_MS;
+            return Math.max(1, frame.visualEffectCount) * beat;
+          };
+          const revealNext = () => {
+            if (generation !== aiTurnGenerationRef.current) return;
+            const step = replayFrames[replayIndex];
+            if (!step) {
+              aiTurnTimerRef.current = null;
+              aiReplayFinalStateRef.current = null;
+              aiReplayActiveRef.current = false;
+              if (battleEffectLockRef.current && battleEffectQueueRef.current.length === 0) {
+                battleEffectLockRef.current = false;
+                setBattleEffectsLocked(false);
+                setBattleEffect(null);
+                setBattleEffectCount(0);
+                aiReplayCompletionMessageRef.current = null;
+                setBattleMessage(
+                  plan.finalState.phase === "game-over"
+                    ? "敌方行动完成，正在结算演算结果。"
+                    : "敌方行动已结束，新的能量窗口已开启。",
+                );
+              } else {
+                setBattleMessage("敌方动作已结算，正在完成战况回放…");
+              }
+              return;
+            }
+            replayIndex += 1;
+            aiTurnTimerRef.current = window.setTimeout(
+              () => {
+                if (generation !== aiTurnGenerationRef.current) return;
+                setBattle(step.state);
+                revealNext();
+              },
+              replayStepDuration(step),
+            );
+          };
+          revealNext();
+          setBattleMessage("敌方正在逐步执行战术动作…");
+        } else {
+          setBattle(plan.finalState);
+          setBattleMessage(
+            plan.finalState.phase === "game-over"
+              ? "敌方行动完成，正在结算演算结果。"
+              : "敌方行动已结束，新的能量窗口已开启。",
+          );
+        }
+      } catch (error) {
+        setBattleMessage(error instanceof Error ? error.message : "AI 回合演算异常。");
+        playSound("error");
+      }
+    }, AI_TURN_DELAY_MS);
+    return true;
+  }, [onlineMatch, playSound, showBattleEffects]);
+
   useEffect(() => {
     const event = pvp.incoming;
     if (!event || event.id <= pvpEventCursorRef.current) return;
     pvpEventCursorRef.current = event.id;
     if (event.type === "rejected") {
       pendingPvpCommandRef.current = false;
+      mulliganSubmissionRef.current = false;
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setBattleMessage(event.message);
       playSound("error");
@@ -3268,9 +3585,17 @@ export function GameApp({
       return;
     }
     if (event.type === "room-reset") {
+      aiTurnGenerationRef.current += 1;
+      if (aiTurnTimerRef.current !== null) {
+        window.clearTimeout(aiTurnTimerRef.current);
+        aiTurnTimerRef.current = null;
+      }
+      aiReplayFinalStateRef.current = null;
+      mulliganSubmissionRef.current = false;
       onlineStartSentRef.current = false;
       pendingPvpCommandRef.current = false;
       pvpMatchTokenRef.current = null;
+      pvpMatchPlayerRef.current = null;
       recordedBattleRef.current = null;
       stopBattleEffects();
       setBattle(null);
@@ -3301,6 +3626,7 @@ export function GameApp({
       // opens the local mulligan shell without exposing the real deck list.
       const orderedDecks: [string[], string[]] = [[...localDeck], [...DEFAULT_OPPONENT_DECK]];
       pvpMatchTokenRef.current = event.payload.matchToken ?? null;
+      pvpMatchPlayerRef.current = localIndex;
       const canonicalStartingPlayer = event.payload.startingPlayer ?? 0;
       const localStartingPlayer = role === "host"
         ? canonicalStartingPlayer
@@ -3315,10 +3641,16 @@ export function GameApp({
         pvp.acknowledgeIncoming(event.id);
         return;
       }
-      const oriented = orientPvpMatchForLocal(event.payload.state, role);
-      pvpMatchTokenRef.current = event.payload.matchToken ?? null;
+      const nextMatchToken = event.payload.matchToken ?? null;
+      if (pvpMatchPlayerRef.current === null || nextMatchToken !== pvpMatchTokenRef.current) {
+        pvpMatchPlayerRef.current = role === "host" ? 0 : 1;
+      }
+      pvpMatchTokenRef.current = nextMatchToken;
+      const stableRole = pvpMatchPlayerRef.current === 0 ? "host" : "guest";
+      const oriented = orientPvpMatchForLocal(event.payload.state, stableRole);
       pendingPvpCommandRef.current = false;
       setBattle(oriented);
+      mulliganSubmissionRef.current = false;
       setOnlineMatch(true);
       setOnlineOpponent(pvp.state.peerName ?? "联机对手");
       setSelectedAttacker(null);
@@ -3333,6 +3665,7 @@ export function GameApp({
     }
     if (event.type === "command") {
       pendingPvpCommandRef.current = false;
+      mulliganSubmissionRef.current = false;
       if (event.state) {
         const role = pvp.state.role;
         if (!role) {
@@ -3340,8 +3673,13 @@ export function GameApp({
           return;
         }
         const previous = battle as MatchState | null;
-        const oriented = orientPvpMatchForLocal(event.state, role);
-        pvpMatchTokenRef.current = event.matchToken ?? pvpMatchTokenRef.current;
+        const nextMatchToken = event.matchToken ?? pvpMatchTokenRef.current;
+        if (pvpMatchPlayerRef.current === null || nextMatchToken !== pvpMatchTokenRef.current) {
+          pvpMatchPlayerRef.current = role === "host" ? 0 : 1;
+        }
+        pvpMatchTokenRef.current = nextMatchToken;
+        const stableRole = pvpMatchPlayerRef.current === 0 ? "host" : "guest";
+        const oriented = orientPvpMatchForLocal(event.state, stableRole);
         setBattle(oriented);
         setSelectedAttacker(null);
         setPendingCard(null);
@@ -3355,7 +3693,11 @@ export function GameApp({
         }
         setBattleMessage(
           oriented.phase === "game-over"
-            ? oriented.result?.winner === 0 ? "对局结束：我方核心存活。" : "对局结束：敌方核心存活。"
+            ? oriented.result?.winner === null
+              ? "对局结束：双方战平。"
+              : oriented.result?.winner === 0
+                ? "对局结束：我方核心存活。"
+                : "对局结束：敌方核心存活。"
             : oriented.activePlayer === 0 ? "服务器已结算，你的行动窗口已开启。" : "服务器已结算，等待对手行动…",
         );
         pvp.acknowledgeIncoming(event.id);
@@ -3363,7 +3705,9 @@ export function GameApp({
       }
       const remote = event.command;
       const target = remote.target;
-      const role = pvp.state.role;
+      const role = pvpMatchPlayerRef.current === null
+        ? pvp.state.role
+        : pvpMatchPlayerRef.current === 0 ? "host" : "guest";
       const localPlayer = role === "guest" ? (remote.player === 0 ? 1 : 0) : remote.player;
       const mappedTarget = target?.kind === "hero" && role === "guest"
         ? { ...target, player: target.player === 0 ? 1 : 0 }
@@ -3415,19 +3759,33 @@ export function GameApp({
   };
 
   const confirmMulligan = () => {
-    if (!battle || !battleView || battleView.status !== "mulligan" || battleView.mulliganDone) return;
+    if (
+      !battle ||
+      !battleView ||
+      battleView.status !== "mulligan" ||
+      battleView.mulliganDone ||
+      mulliganSubmissionRef.current
+    ) return;
+    mulliganSubmissionRef.current = true;
     const next = issueCommand({
       type: "mulligan",
       player: 0,
       cardIndexes: [...mulliganSelection].sort((left, right) => left - right),
     });
     setMulliganSelection([]);
+    if (!next && (!onlineMatch || !pendingPvpCommandRef.current)) {
+      mulliganSubmissionRef.current = false;
+    }
     if (next) {
-      setBattleMessage(
-        (next as MatchState).phase === "mulligan"
-          ? "起手已确认，等待对手完成换牌…"
-          : "起手完成，第一回合行动窗口已开启。",
-      );
+      const nextState = next as MatchState;
+      const aiScheduled = scheduleLocalAiTurn(nextState);
+      if (!aiScheduled) {
+        setBattleMessage(
+          nextState.phase === "mulligan"
+            ? "起手已确认，等待对手完成换牌…"
+            : "起手完成，第一回合行动窗口已开启。",
+        );
+      }
     }
   };
 
@@ -3650,10 +4008,6 @@ export function GameApp({
   const endTurn = () => {
     if (battleEffectLockRef.current) return;
     if (!battle || !battleView || battleView.currentPlayer !== "player") return;
-    if (aiTurnTimerRef.current !== null) {
-      window.clearTimeout(aiTurnTimerRef.current);
-      aiTurnTimerRef.current = null;
-    }
     const ended = issueCommand({
       type: "end-turn",
       player: 0,
@@ -3662,127 +4016,11 @@ export function GameApp({
     setSelectedAttacker(null);
     setPendingCard(null);
     setPendingHeroPower(false);
-    setBattleMessage(onlineMatch ? "指令已同步，等待对手行动…" : "演算体正在规划反制路线…");
-    if ((ended as MatchState).phase === "game-over") return;
-
-    if (onlineMatch) return;
-
-    aiTurnTimerRef.current = window.setTimeout(() => {
-      aiTurnTimerRef.current = null;
-      try {
-        const beforeAiEvents = (ended as MatchState).events.length;
-        const replaySteps: Array<{
-          state: MatchState;
-          eventCount: number;
-          visualEffectCount: number;
-        }> = [];
-        const result = runAiTurn(
-          ended as MatchState,
-          1,
-          (stepState, command) => {
-            aiCommandTranscriptRef.current.push(command);
-            const previousEventCount = replaySteps.at(-1)?.eventCount ?? beforeAiEvents;
-            const visualEffectCount = battleEventsToEffects(
-              stepState.events.slice(previousEventCount),
-            ).length;
-            replaySteps.push({
-              state: stepState,
-              eventCount: stepState.events.length,
-              visualEffectCount,
-            });
-          },
-        );
-        const next = unwrapTransition(result) as MatchState;
-        const states = replaySteps.length > 0
-          ? replaySteps
-          : [{
-              state: next,
-              eventCount: next.events.length,
-              visualEffectCount: battleEventsToEffects(
-                next.events.slice(beforeAiEvents),
-              ).length,
-            }];
-        const replayFrames = [{
-          state: ended as MatchState,
-          eventCount: beforeAiEvents,
-          visualEffectCount: 0,
-        }, ...states];
-        const replayEffects = battleEventsToEffects(
-          states.flatMap((step, index) => {
-            const previousEventCount = index === 0
-              ? beforeAiEvents
-              : states[index - 1]?.eventCount ?? beforeAiEvents;
-            return step.state.events.slice(previousEventCount, step.eventCount);
-          }),
-        );
-
-        // Reveal each accepted AI command as a real board transition instead
-        // of jumping directly to the final turn snapshot. The effect queue
-        // remains the timing authority, so the board and the combat overlay
-        // move at the same readable cadence on mobile and desktop.
-        if (sectionRef.current === "battle") {
-          aiReplayFinalStateRef.current = next;
-          aiReplayActiveRef.current = true;
-          aiReplayCompletionMessageRef.current = next.phase === "game-over"
-            ? "敌方行动完成，正在结算演算结果。"
-            : "敌方行动已结束，新的能量窗口已开启。";
-          // Start from the pre-command board. Each post-command snapshot is
-          // revealed only after that command's effects have had their full
-          // playback window, so damage/death animation never trails a board
-          // that has already jumped to the result.
-          setBattle(replayFrames[0]?.state ?? next);
-          showBattleEffects(replayEffects, {
-            lock: true,
-            maxEffects: BATTLE_EFFECT_QUEUE_LIMIT,
-          });
-          let replayIndex = 1;
-          const replayStepDuration = (frame: (typeof replayFrames)[number]) => {
-            const beat = battleReplaySlowRef.current
-              ? BATTLE_EFFECT_SLOW_STEP_MS
-              : BATTLE_EFFECT_STANDARD_STEP_MS;
-            return Math.max(1, frame.visualEffectCount) * beat;
-          };
-          const revealNext = () => {
-            const step = replayFrames[replayIndex];
-            if (!step) {
-              aiTurnTimerRef.current = null;
-              aiReplayFinalStateRef.current = null;
-              aiReplayActiveRef.current = false;
-              if (battleEffectLockRef.current && battleEffectQueueRef.current.length === 0) {
-                battleEffectLockRef.current = false;
-                setBattleEffectsLocked(false);
-                setBattleEffect(null);
-                setBattleEffectCount(0);
-                aiReplayCompletionMessageRef.current = null;
-                setBattleMessage(
-                  next.phase === "game-over"
-                    ? "敌方行动完成，正在结算演算结果。"
-                    : "敌方行动已结束，新的能量窗口已开启。",
-                );
-              } else {
-                setBattleMessage("敌方动作已结算，正在完成战况回放…");
-              }
-              return;
-            }
-            replayIndex += 1;
-            aiTurnTimerRef.current = window.setTimeout(
-              () => {
-                setBattle(step.state);
-                revealNext();
-              },
-              replayStepDuration(step),
-            );
-          };
-          revealNext();
-        } else {
-          setBattle(next);
-        }
-        setBattleMessage("敌方正在逐步执行战术动作…");
-      } catch (error) {
-        setBattleMessage(error instanceof Error ? error.message : "AI 回合演算异常。");
-        playSound("error");
-      }
-    }, AI_TURN_DELAY_MS);
+    const endedState = ended as MatchState;
+    if (endedState.phase === "game-over") return;
+    if (!scheduleLocalAiTurn(endedState)) {
+      setBattleMessage(onlineMatch ? "指令已同步，等待对手行动…" : "敌方行动窗尚未开启。");
+    }
   };
 
   useEffect(() => {
@@ -3855,6 +4093,12 @@ export function GameApp({
   };
 
   const returnToBattleLobby = () => {
+    aiTurnGenerationRef.current += 1;
+    if (aiTurnTimerRef.current !== null) {
+      window.clearTimeout(aiTurnTimerRef.current);
+      aiTurnTimerRef.current = null;
+    }
+    aiReplayFinalStateRef.current = null;
     stopBattleEffects();
     if (onlineMatch) pvp.disconnect();
     setBattle(null);
@@ -3868,12 +4112,25 @@ export function GameApp({
   };
 
   useEffect(() => {
-    if (!battleView || battleView.status !== "finished" || !battleView.winner) return;
-    const result = battleView.winner === "player" ? "win" : "loss";
+    if (!battleView || battleView.status !== "finished") return;
+    const result = battleView.winner === "player"
+      ? "win"
+      : battleView.winner === "ai"
+        ? "loss"
+        : battleView.report.reason === "draw"
+          ? "draw"
+          : null;
+    if (!result) return;
     const key = `${battleView.turn}-${result}`;
     if (recordedBattleRef.current === key) return;
     recordedBattleRef.current = key;
-    setBattleMessage(result === "win" ? "敌方核心已离线，战术演算胜利。" : "我方核心失守，演算数据已回收。");
+    setBattleMessage(
+      result === "win"
+        ? "敌方核心已离线，战术演算胜利。"
+        : result === "draw"
+          ? "双方核心状态已锁定，本场演算平局。"
+          : "我方核心失守，演算数据已回收。",
+    );
     void postAction("record_match", {
       idempotencyKey: makeId("match"),
       result,
@@ -3884,19 +4141,21 @@ export function GameApp({
         ? { aiProof: { ...aiMatchProofRef.current, commands: [...aiCommandTranscriptRef.current] } }
         : {}),
       ...(onlineMatch && pvpMatchTokenRef.current ? { pvpToken: pvpMatchTokenRef.current } : {}),
-      ...(onlineMatch && pvp.state.role ? { pvpPlayer: pvp.state.role === "host" ? 0 : 1 } : {}),
+      ...(onlineMatch && pvpMatchPlayerRef.current !== null ? { pvpPlayer: pvpMatchPlayerRef.current } : {}),
     }).then((payload) => {
       if (payload) {
-      const rewardGold = payload.rewardGold ?? (result === "win" ? 60 : 20);
+      const rewardGold = payload.rewardGold ?? (result === "draw" ? 0 : result === "win" ? 60 : 20);
       setNotice({
         tone: payload.localFallback ? "info" : "success",
-        text: rewardGold > 0
-          ? `对局已${payload.localFallback ? "归入本地演示档案" : "归档"}，获得 ${rewardGold} 金币，任务进度已同步。`
-          : "对局已归档；今日演算奖励已达上限，本局仅计入战绩。",
+        text: result === "draw"
+          ? `对局已${payload.localFallback ? "归入本地演示档案" : "归档"}为平局，任务进度已同步；本局无金币奖励。`
+          : rewardGold > 0
+            ? `对局已${payload.localFallback ? "归入本地演示档案" : "归档"}，获得 ${rewardGold} 金币，任务进度已同步。`
+            : "对局已归档；今日演算奖励已达上限，本局仅计入战绩。",
       });
       }
     });
-  }, [battleView, onlineMatch, onlineOpponent, postAction, pvp.state.format, pvp.state.role]);
+  }, [battleView, onlineMatch, onlineOpponent, postAction, pvp.state.format]);
 
   const totalOwned = Object.values(player.collection).reduce((sum, count) => sum + count, 0);
   const uniqueOwned = Object.values(player.collection).filter((count) => count > 0).length;
@@ -3906,7 +4165,7 @@ export function GameApp({
       : 0;
 
   return (
-    <div className="game-shell">
+    <div className={`game-shell ${section === "battle" && battleView ? "game-shell--battle-focus" : ""}`}>
       <a className="skip-link" href="#main-content">
         跳到主要内容
       </a>
@@ -4252,6 +4511,14 @@ function OverviewSection({
   onNavigate: (section: SectionKey) => void;
   onStartBattle: () => void;
 }) {
+  const [clockNow, setClockNow] = useState(0);
+  useEffect(() => {
+    const tick = () => setClockNow(Date.now());
+    tick();
+    const timer = window.setInterval(tick, 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
   return (
     <section className="screen screen--overview" aria-labelledby="overview-title">
       <SectionHeading
@@ -4406,7 +4673,7 @@ function OverviewSection({
               <span className="panel__eyebrow">ARCHIVE DROP</span>
               <h2 id="pack-title">免费档案包</h2>
             </div>
-            <span className="pack-panel__timer"><Icon name="clock" size={15} /> 04:00 刷新</span>
+            <span className="pack-panel__timer"><Icon name="clock" size={15} /> {formatUtcResetCountdown("day", clockNow)} 刷新</span>
           </div>
           {openedCards.length > 0 ? (
             <div className="pack-reveal">
@@ -4496,14 +4763,18 @@ function RecentMatches({ matches }: { matches: RecentMatch[] }) {
           {matches.slice(0, 5).map((match) => (
             <article className="match-row" key={match.id}>
               <span className={`match-row__result match-row__result--${match.result}`}>
-                {match.result === "win" ? "胜" : "负"}
+                {match.result === "win" ? "胜" : match.result === "draw" ? "平" : "负"}
               </span>
               <div className="match-row__opponent">
                 <span className="match-row__avatar"><Icon name="bot" /></span>
                 <span><strong>{match.opponent}</strong><small>{match.mode === "pvp" ? (match.format === "casual" ? "CASUAL 休闲" : "RANKED 天梯") : "AI 演算"}</small></span>
               </div>
               <span className="match-row__time">{formatTime(match.createdAt)}</span>
-              <span className="match-row__reward"><Icon name="coin" size={15} /> +{match.rewardGold}</span>
+              <span className="match-row__reward">
+                {match.result === "draw" && match.rewardGold === 0
+                  ? "无金币"
+                  : <><Icon name="coin" size={15} /> +{match.rewardGold}</>}
+              </span>
             </article>
           ))}
         </div>
@@ -5699,7 +5970,7 @@ function BattleSection({
   const targetPreviewForPendingUnit = (unit: BattleUnit, side: "player" | "ai"): string | undefined => {
     if (!pendingCard && !pendingHeroPower) return undefined;
     if (pendingHeroPower) {
-      const power = battle.player.heroPower.effect;
+      const power = battle.player.heroPowerEffect;
       if (power.kind === "damage-enemy-unit" && side === "ai") {
         return unit.keywords.includes("shield") ? "先破护盾" : `预计 −${Math.min(unit.health, power.amount)}`;
       }
@@ -5787,7 +6058,7 @@ function BattleSection({
     }
     if (!pendingCard && !pendingHeroPower || !cardCanTarget(side, "hero")) return undefined;
     if (pendingHeroPower) {
-      const power = battle.player.heroPower.effect;
+      const power = battle.player.heroPowerEffect;
       if (power.kind === "damage-enemy-hero" && side === "ai") {
         const armorAbsorbed = Math.min(battle.ai.armor, power.amount);
         return armorAbsorbed > 0
@@ -5923,8 +6194,9 @@ function BattleSection({
                 {battle.ai.overload > 0 && <small className="mana-readout__overload">下回合锁定 {battle.ai.overload}</small>}
               </div>
             </div>
-            <div className="enemy-hand" aria-label={`敌方有 ${battle.ai.hand.length} 张手牌`}>
+            <div className="enemy-hand" aria-label={`敌方有 ${battle.ai.hand.length + (battle.ai.coinAvailable ? 1 : 0)} 张手牌`}>
               {battle.ai.hand.map((card, index) => <span className="card-back" key={`${card.instanceId}-${index}`} />)}
+              {battle.ai.coinAvailable && <span className="card-back" key="enemy-coin" />}
               <small>{battle.ai.deckCount} 张牌库</small>
             </div>
             <SecretTray secrets={battle.ai.secrets} enemy />
@@ -6050,8 +6322,8 @@ function BattleSection({
             </div>
             <SecretTray secrets={battle.player.secrets} />
             <div className="player-hand">
-              <span className={`player-hand__count ${battle.player.hand.length >= 10 ? "player-hand__count--full" : ""}`}>
-                手牌 {battle.player.hand.length} / 10
+              <span className={`player-hand__count ${battle.player.hand.length + (battle.player.coinAvailable ? 1 : 0) >= 10 ? "player-hand__count--full" : ""}`}>
+                手牌 {battle.player.hand.length + (battle.player.coinAvailable ? 1 : 0)} / 10
               </span>
               {battle.player.hand.map((handCard, handIndex) => {
                 const card = CARD_BY_ID.get(handCard.cardId);
@@ -6096,7 +6368,7 @@ function BattleSection({
                   </div>
                 );
               })}
-              {battle.player.hand.length === 0 && <span className="player-hand__empty">手牌为空</span>}
+              {battle.player.hand.length === 0 && !battle.player.coinAvailable && <span className="player-hand__empty">手牌为空</span>}
             </div>
             <div className="battle-mobile-dock" aria-label="移动端战斗操作">
               {effectsLocked ? (
@@ -6303,7 +6575,9 @@ function BattleSection({
                 : battle.report.reason === "fatigue"
                   ? "疲劳损伤结束对局"
                   : battle.report.reason === "draw"
-                    ? "双方核心同时失守"
+                    ? battle.player.health <= 0 && battle.ai.health <= 0
+                      ? "双方核心同时失守"
+                      : "达到对局回合上限"
                     : battle.winner === "player"
                       ? "敌方核心生命归零"
                       : "我方核心生命归零";
@@ -6360,7 +6634,7 @@ function BattleSection({
                         {pvp.role === "host" ? "再来一局" : "等待房主重新开始"}
                       </button>
                     ) : (
-                      <button className="button button--primary button--wide" type="button" onClick={onStart}>再次演算</button>
+                      <button className="button button--primary button--wide" type="button" disabled={busy} onClick={onStart}>再次演算</button>
                     )}
                     <button className="button button--outline button--wide" type="button" onClick={onReturnLobby}>返回战术大厅</button>
                   </div>
@@ -6446,6 +6720,7 @@ function OperationsSection({
   socialBusy: boolean;
 }) {
   const [profileName, setProfileName] = useState(player.displayName);
+  const [clockNow, setClockNow] = useState(0);
   const [friendId, setFriendId] = useState("");
   const [selectedFriendId, setSelectedFriendId] = useState<string | null>(null);
   const [chatText, setChatText] = useState("");
@@ -6458,19 +6733,28 @@ function OperationsSection({
       .filter((message) => (message.senderId === player.id && message.recipientId === selectedFriend.id) || (message.senderId === selectedFriend.id && message.recipientId === player.id))
       .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
     : [];
+  useEffect(() => {
+    const tick = () => setClockNow(Date.now());
+    tick();
+    const timer = window.setInterval(tick, 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+  const completedTasks = player.tasks.filter((task) => task.claimed).length;
+  const readyTasks = player.tasks.filter((task) => !task.claimed && task.progress >= task.target).length;
+  const uniqueOwned = Object.values(player.collection).filter((count) => count > 0).length;
   const metrics = [
-    { label: "内测活跃指挥官", value: "486", delta: "+12.4%", icon: "user" as IconName },
-    { label: "今日完成对局", value: "1,284", delta: "+8.1%", icon: "swords" as IconName },
-    { label: "平均回合数", value: "8.6", delta: "−0.3", icon: "clock" as IconName },
-    { label: "规则异常率", value: "0.04%", delta: "稳定", icon: "shield" as IconName },
+    { label: "累计对局", value: player.stats.matchesPlayed.toLocaleString("zh-CN"), delta: `${player.stats.wins} 胜`, icon: "swords" as IconName },
+    { label: "个人胜率", value: `${winRate}%`, delta: `${player.stats.losses} 负`, icon: "user" as IconName },
+    { label: "待领取任务", value: readyTasks.toString(), delta: `${completedTasks} 已领取`, icon: "check" as IconName },
+    { label: "收藏完成度", value: `${Math.round((uniqueOwned / CATALOG.length) * 100)}%`, delta: `${uniqueOwned} / ${CATALOG.length}`, icon: "cards" as IconName },
   ];
   return (
     <section className="screen screen--operations" aria-labelledby="operations-title">
       <SectionHeading
         eyebrow="LIVE OPS / INTERNAL BETA"
         title="运营观测台"
-        description="一期内测数据快照。玩家资产及对局查询为只读，敏感调整必须经补偿单审计。"
-        action={<span className="live-badge"><i /> 数据每 5 分钟刷新</span>}
+        description="个人运营面板：任务、奖励、赛季和社交状态均由服务端规则结算。"
+        action={<span className="live-badge"><i /> UTC 日界线倒计时 {formatUtcResetCountdown("day", clockNow)}</span>}
       />
 
       <div className="ops-metrics">
@@ -6495,12 +6779,12 @@ function OperationsSection({
           <div><span>卡包商店</span><strong>{player.taskCycle?.packsBoughtToday ?? 0} / 10</strong><small>100 金币 / 个，日限购 10 个</small></div>
           <div><span>传奇保底</span><strong>{Math.min(player.packPity?.packsSinceLegendary ?? 0, 39)} / 40</strong><small>第 40 包首槽必出传说，出货后重置</small></div>
           <div><span>演算奖励</span><strong>{player.taskCycle?.aiRewardsToday ?? 0} / 20</strong><small>每日最多 20 场 AI 奖励，防止刷资源</small></div>
-          <div><span>天梯段位</span><strong>{player.ladder?.tier ?? "青铜"} · {player.ladder?.rating ?? 1000}</strong><small>仅联机对战影响段位</small></div>
+          <div><span>天梯段位</span><strong>{player.ladder?.tier ?? "青铜"} · {player.ladder?.rating ?? LADDER_START_RATING} · {player.ladder?.stars ?? 0}★</strong><small>{player.ladder?.winStreak && player.ladder.winStreak >= 2 ? `连胜 ${player.ladder.winStreak} 场，当前段位有额外星级进度` : "仅 Ranked 联机对战影响段位"}</small></div>
           <div><span>赛季</span><strong>{player.ladder?.seasonKey ?? new Date().toISOString().slice(0, 7)}</strong><small>每月 UTC 00:00 重置天梯</small></div>
-          <div><span>玩家 UID</span><strong className="ops-player-id">{player.id}</strong><small>用于好友邀请与客服核验</small></div>
+          <div><span>玩家 UID</span><strong className="ops-player-id">{player.id}</strong><small>用于好友邀请与客服核验；资产绑定稳定身份而非邮箱</small></div>
         </div>
         <div className="ops-weekly-gift">
-          <div><span className="panel__eyebrow">WEEKLY SHOP GIFT</span><strong>每周免费卡包</strong><small>每周可领取 1 次，领取后加入档案库。</small></div>
+              <div><span className="panel__eyebrow">WEEKLY SHOP GIFT</span><strong>每周免费卡包</strong><small>每周可领取 1 次，距离 UTC 周一刷新还有 {formatUtcResetCountdown("week", clockNow)}。</small></div>
           <button className="button button--accent" type="button" disabled={weeklyPackBusy || player.taskCycle?.weeklyFreePackClaimed === true} onClick={onClaimWeeklyPack}>
             {weeklyPackBusy ? "领取中…" : player.taskCycle?.weeklyFreePackClaimed ? "本周已领取" : "领取卡包"}
           </button>
@@ -6547,9 +6831,10 @@ function OperationsSection({
           <div><Icon name="check" size={16} /><span>日常任务仅可在未开始前重随 1 次，任务奖励领取具备幂等保护</span></div>
           <div><Icon name="check" size={16} /><span>胜利 +60 金币、失败 +20 金币；AI 每日最多 20 场发放对战金币与 XP，卡包 +50 XP</span></div>
           <div><Icon name="check" size={16} /><span>联机战报必须匹配服务器对局快照、参赛身份和唯一对局凭证</span></div>
-          <div><Icon name="check" size={16} /><span>联机分为 Ranked 天梯与 Casual 休闲：仅 Ranked 影响赛季段位，Casual 不扣分</span></div>
+          <div><Icon name="check" size={16} /><span>联机分为 Ranked 天梯与 Casual 休闲：仅 Ranked 影响赛季段位；白银至白金段位连续胜利会获得额外星级进度，失败会重置连胜。</span></div>
           <div><Icon name="check" size={16} /><span>每周商店提供 1 个免费卡包，按周一 UTC 00:00 刷新并由服务端幂等结算</span></div>
           <div><Icon name="check" size={16} /><span>卡包首槽保底稀有；连续 39 包未出传说时，第 40 包首槽强制传说，服务端维护计数。</span></div>
+          <div><Icon name="check" size={16} /><span>好友请求每日最多 20 次，聊天每分钟最多 20 条；屏蔽、举报和好友关系由服务端保存，幂等重试不会重复发放或重复发送。</span></div>
         </div>
       </section>
 

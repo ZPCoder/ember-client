@@ -8,8 +8,29 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../data/catalog.dart';
 import '../models/card_definition.dart';
 
+const int maxBattleActionWindows = 89;
+
+class _QueuedDeath {
+  const _QueuedDeath({
+    required this.unit,
+    required this.side,
+    required this.enemy,
+  });
+
+  final BattleUnit unit;
+  final BattleSide side;
+  final BattleSide enemy;
+}
+
 class GameController extends ChangeNotifier {
-  GameController();
+  GameController({String? startingPlayer, Random? startingPlayerRandom})
+    : assert(
+        startingPlayer == null ||
+            startingPlayer == 'player' ||
+            startingPlayer == 'ai',
+      ),
+      _forcedStartingPlayer = startingPlayer,
+      _startingPlayerRandom = startingPlayerRandom ?? Random();
 
   List<CardDefinition> catalog = const [];
   final Map<String, int> collection = <String, int>{};
@@ -27,6 +48,10 @@ class GameController extends ChangeNotifier {
   bool isResolvingTurn = false;
 
   final Random _random = Random(20260809);
+  final String? _forcedStartingPlayer;
+  final Random _startingPlayerRandom;
+  bool _resolvingDeaths = false;
+  int _effectResolutionDepth = 0;
   SharedPreferences? _prefs;
   Timer? _turnTimer;
 
@@ -95,12 +120,10 @@ class GameController extends ChangeNotifier {
   int owned(String id) => collection[id] ?? 0;
 
   bool addToDeck(CardDefinition card) {
+    final copies = deckIds.where((id) => id == card.id).length;
     if (deckIds.length >= 30 ||
-        owned(card.id) <= deckIds.where((id) => id == card.id).length) {
-      return false;
-    }
-    if (card.rarity == '传说' &&
-        deckIds.where((id) => id == card.id).isNotEmpty) {
+        copies >= _copyLimit(card) ||
+        owned(card.id) <= copies) {
       return false;
     }
     final faction = _deckFaction;
@@ -134,13 +157,30 @@ class GameController extends ChangeNotifier {
       .where((faction) => faction != '中立')
       .toSet();
 
-  bool get deckValid => deckIds.length == 30 && _deckFactions.length <= 1;
-
-  String get deckStatus {
-    if (deckIds.length != 30) return '还差 ${30 - deckIds.length} 张卡牌';
+  String? get _deckValidationError {
+    if (deckIds.length < 30) return '还差 ${30 - deckIds.length} 张卡牌';
+    if (deckIds.length > 30) return '卡组最多 30 张卡牌';
+    if (deckIds.any((id) => card(id) == null)) return '卡组包含未知卡牌';
     if (_deckFactions.length > 1) return '不能混合两个非中立阵营';
-    return '卡组协议有效';
+
+    final copies = <String, int>{};
+    for (final id in deckIds) {
+      copies[id] = (copies[id] ?? 0) + 1;
+    }
+    for (final entry in copies.entries) {
+      final definition = card(entry.key)!;
+      if (entry.value > _copyLimit(definition)) {
+        return definition.rarity == '传说'
+            ? '传说卡「${definition.name}」最多 1 张'
+            : '「${definition.name}」最多 2 张';
+      }
+    }
+    return null;
   }
+
+  bool get deckValid => _deckValidationError == null;
+
+  String get deckStatus => _deckValidationError ?? '卡组协议有效';
 
   Future<void> saveDeck() async {
     await _prefs?.setStringList('deck_ids', deckIds);
@@ -262,6 +302,53 @@ class GameController extends ChangeNotifier {
       .map((item) => item.faction)
       .firstWhere((faction) => faction != '中立', orElse: () => '中立');
 
+  List<String> _fallbackDeckIds() {
+    final knownDeckCards = deckIds.map(card).whereType<CardDefinition>();
+    final preferredFaction = knownDeckCards
+        .map((definition) => definition.faction)
+        .firstWhere(
+          (faction) => faction != '中立',
+          orElse: () => catalog
+              .map((definition) => definition.faction)
+              .firstWhere((faction) => faction != '中立', orElse: () => '中立'),
+        );
+    var pool = catalog
+        .where(
+          (definition) =>
+              definition.faction == preferredFaction ||
+              definition.faction == '中立',
+        )
+        .toList();
+    if (pool.isEmpty) pool = [...catalog];
+    if (pool.isEmpty) return const [];
+
+    final fallback = <String>[];
+    for (final definition in pool) {
+      for (
+        var copy = 0;
+        copy < _copyLimit(definition) && fallback.length < 30;
+        copy++
+      ) {
+        fallback.add(definition.id);
+      }
+      if (fallback.length == 30) return fallback;
+    }
+
+    // Tiny fixture catalogs cannot form a legal constructed deck. Cycling a
+    // known card still gives callers a safe, non-crashing practice battle;
+    // production's complete catalog always fills the copy-limited path above.
+    final practicePool = pool
+        .where((definition) => definition.rarity != '传说')
+        .toList();
+    final cycle = practicePool.isEmpty ? pool : practicePool;
+    var index = 0;
+    while (fallback.length < 30) {
+      fallback.add(cycle[index % cycle.length].id);
+      index++;
+    }
+    return fallback;
+  }
+
   void _persistCollection() {
     _prefs?.setString('collection', jsonEncode(collection));
   }
@@ -269,13 +356,8 @@ class GameController extends ChangeNotifier {
   void startBattle() {
     if (catalog.isEmpty || isResolvingTurn) return;
     _turnTimer?.cancel();
-    final deck = deckIds.length == 30
-        ? deckIds
-        : catalog
-              .where((card) => card.faction == '曜光' || card.faction == '中立')
-              .take(15)
-              .expand((card) => [card.id, card.id])
-              .toList();
+    final deck = deckValid ? [...deckIds] : _fallbackDeckIds();
+    if (deck.isEmpty) return;
     final playerDeck = deck.map((id) => card(id)!).toList()..shuffle(_random);
     final playerFaction = _factionForCards(playerDeck);
     final availableAiFactions = catalog
@@ -294,6 +376,11 @@ class GameController extends ChangeNotifier {
     final aiSingles = aiCandidates.take(15).toList();
     final aiDeck = aiSingles.expand((card) => [card, card]).toList()
       ..shuffle(_random);
+    final startingPlayer =
+        _forcedStartingPlayer ??
+        (_startingPlayerRandom.nextBool() ? 'player' : 'ai');
+    final playerIsSecond = startingPlayer == 'ai';
+    final aiIsSecond = startingPlayer == 'player';
     final player = BattleSide(
       heroHealth: 30,
       maxHeroHealth: 30,
@@ -302,6 +389,7 @@ class GameController extends ChangeNotifier {
       deck: playerDeck,
       hand: [],
       board: [],
+      coinAvailable: playerIsSecond,
     );
     final ai = BattleSide(
       heroHealth: 30,
@@ -311,7 +399,7 @@ class GameController extends ChangeNotifier {
       deck: aiDeck,
       hand: [],
       board: [],
-      coinAvailable: true,
+      coinAvailable: aiIsSecond,
     );
     battle = BattleState(
       player: player,
@@ -319,18 +407,21 @@ class GameController extends ChangeNotifier {
       playerHeroPower: _heroPowerForFaction(playerFaction),
       aiHeroPower: _heroPowerForFaction(aiFaction),
       turn: 1,
-      activePlayer: 'player',
+      activePlayer: startingPlayer,
       phase: 'mulligan',
       aiFaction: aiFaction,
-      logs: ['对局开始：请选择要替换的起手牌。'],
+      logs: [
+        startingPlayer == 'player'
+            ? '对局开始：你获得先手，请选择要替换的起手牌。'
+            : '对局开始：敌方获得先手，你获得幸运币。',
+      ],
     );
     for (var i = 0; i < 3; i++) {
       _draw(player);
       _draw(ai);
     }
-    // The second player sees one extra card and receives the Coin. The local
-    // client keeps the human on the first-player seat, so the AI owns it.
-    _draw(ai);
+    // The actual second player receives both the fourth mulligan card and Coin.
+    _draw(playerIsSecond ? player : ai);
     _autoMulligan(ai);
     _emitFx(
       'start',
@@ -354,7 +445,7 @@ class GameController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void confirmMulligan() {
+  Future<void> confirmMulligan() async {
     final state = battle;
     if (state == null || state.phase != 'mulligan' || state.mulliganDone) {
       return;
@@ -375,14 +466,39 @@ class GameController extends ChangeNotifier {
     }
     state.mulliganSelected.clear();
     state.mulliganDone = true;
-    state.phase = 'main';
-    state.player.maxMana = 1;
-    state.player.mana = 1;
-    state.heroPowerUsed = false;
     state.logs.insert(
       0,
       returned.isEmpty ? '起手牌已确认。' : '起手换牌完成，替换 ${returned.length} 张牌。',
     );
+
+    if (state.activePlayer == 'ai') {
+      isResolvingTurn = true;
+      state.phase = 'end';
+      state.logs.insert(0, '敌方演算体获得先手，开始第一回合。');
+      _emitFx('turn', '敌方先手', '演算体正在执行第一回合', Icons.hourglass_top, 0xFFA692D1);
+      notifyListeners();
+      _beginSideTurn(state, owner: 'ai');
+      await _aiTurn(state);
+      if (!state.finished) {
+        if (_advanceActionWindow(state, 'player')) {
+          _beginSideTurn(state, owner: 'player');
+          state.logs.insert(0, '你的第 1 回合开始，法力恢复至 ${state.player.mana}。');
+          _emitFx(
+            'turn',
+            '第 1 回合',
+            '你的法力已恢复，轮到你行动',
+            Icons.hourglass_top,
+            0xFF69CFC3,
+          );
+          _startTurnTimer();
+        }
+      }
+      isResolvingTurn = false;
+      notifyListeners();
+      return;
+    }
+
+    _beginSideTurn(state, owner: 'player');
     _emitFx(
       'turn',
       '第一回合开始',
@@ -390,7 +506,6 @@ class GameController extends ChangeNotifier {
       Icons.hourglass_top,
       0xFF69CFC3,
     );
-    _draw(state.player);
     _startTurnTimer();
     notifyListeners();
   }
@@ -426,6 +541,37 @@ class GameController extends ChangeNotifier {
     side.deck.shuffle(_random);
   }
 
+  void _beginSideTurn(BattleState state, {required String owner}) {
+    final isPlayer = owner == 'player';
+    final side = isPlayer ? state.player : state.ai;
+    final turnsStarted = isPlayer
+        ? state.playerTurnsStarted
+        : state.aiTurnsStarted;
+    state.activePlayer = owner;
+    state.phase = 'main';
+    if (turnsStarted == 0) {
+      side.mana = side.maxMana;
+    } else {
+      _refillMana(side);
+    }
+    if (isPlayer) {
+      state.playerTurnsStarted++;
+      state.turn = state.playerTurnsStarted;
+      state.heroPowerUsed = false;
+    } else {
+      state.aiTurnsStarted++;
+      state.aiHeroPowerUsed = false;
+    }
+    _refreshSideForTurn(side);
+    _resolveTurnTriggers(side, start: true);
+    _processDeaths();
+    _checkFinished();
+    if (!state.finished) {
+      _draw(side);
+      _checkFinished();
+    }
+  }
+
   void _startTurnTimer() {
     _turnTimer?.cancel();
     final state = battle;
@@ -453,7 +599,7 @@ class GameController extends ChangeNotifier {
   void _draw(BattleSide side) {
     if (side.deck.isNotEmpty) {
       final drawn = side.deck.removeLast();
-      if (side.hand.length < 10) {
+      if (_occupiedHandSlots(side) < 10) {
         side.hand.add(drawn);
         return;
       }
@@ -504,6 +650,8 @@ class GameController extends ChangeNotifier {
     }
     if (!_validHandCard(state.player, card) ||
         (card.isUnit && state.player.board.length >= 7) ||
+        (state.player.board.length >= 7 &&
+            _isPureSummonSpell(card, state.player)) ||
         !_validTarget(card, state.player, state.ai, target)) {
       return false;
     }
@@ -587,9 +735,19 @@ class GameController extends ChangeNotifier {
         return false;
       }
     }
+    // Combat damage is simultaneous. Snapshot the defender's attack and
+    // Lifesteal before the weapon hit can mark that unit as dead.
+    final defenderAttack = target?.attack ?? 0;
+    final defenderHasLifesteal = target?.hasLifesteal ?? false;
     final dealt = target == null
         ? _damageHero(state.ai, weapon.attack)
         : _damageUnit(target, weapon.attack, combat: true);
+    if (target != null) {
+      final reflected = _damageHero(state.player, defenderAttack);
+      if (defenderHasLifesteal && reflected > 0) {
+        _healHero(state.ai, reflected);
+      }
+    }
     state.player.heroHasAttacked = true;
     weapon.durability--;
     state.logs.insert(
@@ -619,6 +777,7 @@ class GameController extends ChangeNotifier {
         0xFF9D7567,
       );
     }
+    _processDeaths();
     _checkFinished();
     notifyListeners();
     return true;
@@ -662,6 +821,9 @@ class GameController extends ChangeNotifier {
     required bool targetHero,
   }) {
     if (source.mana < power.cost) return false;
+    if (power.effect['kind'] == 'summon' && source.board.length >= 7) {
+      return false;
+    }
     final targetType = power.target ?? 'none';
     if (targetType == 'enemy-unit') {
       return target != null &&
@@ -737,16 +899,22 @@ class GameController extends ChangeNotifier {
         );
         break;
       case 'heal-friendly-character':
+        var effectiveHealing = amount;
         if (targetHero) {
-          final before = source.heroHealth;
-          source.heroHealth = min(
-            source.maxHeroHealth,
-            source.heroHealth + amount,
-          );
-          stateLog(power.name, '核心恢复 ${source.heroHealth - before} 点生命。');
+          effectiveHealing = _healHero(source, amount);
+          if (effectiveHealing > 0) {
+            stateLog(power.name, '核心恢复 $effectiveHealing 点生命。');
+          }
         } else if (target != null && source.board.contains(target)) {
+          final before = target.health;
           target.health = min(target.maxHealth, target.health + amount);
-          stateLog(power.name, '${target.card.name} 恢复 $amount 点生命。');
+          effectiveHealing = target.health - before;
+          if (effectiveHealing > 0) {
+            stateLog(
+              power.name,
+              '${target.card.name} 恢复 $effectiveHealing 点生命。',
+            );
+          }
         } else {
           return false;
         }
@@ -758,7 +926,7 @@ class GameController extends ChangeNotifier {
           0xFF79B980,
           sourceId: sourceId,
           targetId: targetHero ? '$owner-hero' : target?.instanceId,
-          amount: amount,
+          amount: effectiveHealing,
         );
         break;
       case 'heal-friendly-unit':
@@ -820,25 +988,54 @@ class GameController extends ChangeNotifier {
         !state.player.coinAvailable) {
       return false;
     }
-    state.player.coinAvailable = false;
-    final absorbsOverloadDebt =
-        state.player.overloadLocked > state.player.maxMana;
+    _playCoinForSide(source: state.player, enemy: state.ai, owner: 'player');
+    notifyListeners();
+    return true;
+  }
+
+  bool _playCoinForSide({
+    required BattleSide source,
+    required BattleSide enemy,
+    required String owner,
+  }) {
+    if (!source.coinAvailable) return false;
+    source.coinAvailable = false;
+    // The Coin is a real 0-cost spell: it counts as the previous card for
+    // Combo even when Counterspell prevents its mana effect.
+    source.cardsPlayedThisTurn++;
+    final countered = _triggerSecrets(
+      enemy,
+      'opponent-plays-spell',
+      triggeringSide: source,
+    );
+    if (countered) {
+      stateLog(owner == 'player' ? '幸运币被反制。' : '敌方的幸运币被反制。');
+      _processDeaths();
+      _checkFinished();
+      return true;
+    }
+
+    final absorbsOverloadDebt = source.overloadLocked > source.maxMana;
     if (absorbsOverloadDebt) {
-      state.player.overloadLocked -= 1;
-      state.logs.insert(0, '你使用幸运币，抵消 1 点过载锁定。');
+      source.overloadLocked -= 1;
+      stateLog(owner == 'player' ? '你使用幸运币' : '敌方演算体使用幸运币', '抵消 1 点过载锁定。');
     } else {
-      state.player.mana += 1;
-      state.logs.insert(0, '你使用幸运币，获得 1 点临时法力。');
+      source.mana += 1;
+      stateLog(owner == 'player' ? '你使用幸运币' : '敌方演算体使用幸运币', '获得 1 点临时法力。');
     }
     _emitFx(
       'coin',
-      '幸运币',
+      owner == 'player' ? '幸运币' : '敌方使用幸运币',
       absorbsOverloadDebt ? '抵消 1 点过载锁定' : '获得 1 点临时法力',
       Icons.monetization_on,
       0xFFE7BD7A,
       amount: 1,
     );
-    notifyListeners();
+    if (battle?.phase == 'main') {
+      _resolveSpellTriggers(source: source, enemy: enemy);
+    }
+    _processDeaths();
+    _checkFinished();
     return true;
   }
 
@@ -857,7 +1054,7 @@ class GameController extends ChangeNotifier {
       owner: owner,
       attack: card.attack ?? 0,
       health: healthOverride ?? card.health ?? 1,
-      maxHealth: healthOverride ?? card.health ?? 1,
+      maxHealth: card.health ?? 1,
       hasAttacked: !charge && !rush,
       divineShield: card.keywords.contains('shield') && !reborn,
       summoningSick: !charge && !rush,
@@ -995,6 +1192,19 @@ class GameController extends ChangeNotifier {
   bool _validHandCard(BattleSide side, CardDefinition card) =>
       side.hand.any((item) => item.id == card.id);
 
+  int _occupiedHandSlots(BattleSide side) =>
+      side.hand.length + (side.coinAvailable ? 1 : 0);
+
+  bool _isPureSummonSpell(CardDefinition card, BattleSide source) {
+    if (card.type != 'spell') return false;
+    final resolvedEffects = <Map<String, dynamic>>[
+      ...card.effect,
+      if (source.cardsPlayedThisTurn > 0) ...card.combo,
+    ];
+    return resolvedEffects.isNotEmpty &&
+        resolvedEffects.every((effect) => effect['kind'] == 'summon');
+  }
+
   bool _validTarget(
     CardDefinition card,
     BattleSide source,
@@ -1046,264 +1256,278 @@ class GameController extends ChangeNotifier {
     required String sourceName,
     CardDefinition? sourceCard,
   }) {
-    for (final effect in effects) {
-      final kind = effect['kind']?.toString();
-      final amount = (effect['amount'] as num?)?.toInt() ?? 0;
-      final spellBonus = sourceCard?.type == 'spell'
-          ? _spellDamageBonus(source)
-          : 0;
-      final damageAmount = amount + spellBonus;
-      switch (kind) {
-        case 'secret':
-          final secretId = effect['secretId']?.toString();
-          final trigger = effect['trigger']?.toString();
-          final secretEffect = effect['effect'];
-          if (secretId != null &&
-              trigger != null &&
-              secretEffect is Map &&
-              source.secrets.length < 5 &&
-              !source.secrets.any((secret) => secret.secretId == secretId)) {
-            source.secrets.add(
-              BattleSecret(
-                card:
-                    sourceCard ??
-                    catalog.firstWhere(
-                      (item) => sourceName.startsWith(item.name),
-                      orElse: () => catalog.first,
-                    ),
-                secretId: secretId,
-                trigger: trigger,
-                effect: Map<String, dynamic>.from(secretEffect),
-              ),
+    _effectResolutionDepth++;
+    try {
+      for (final effect in effects) {
+        final kind = effect['kind']?.toString();
+        final amount = (effect['amount'] as num?)?.toInt() ?? 0;
+        final spellBonus = sourceCard?.type == 'spell'
+            ? _spellDamageBonus(source)
+            : 0;
+        final damageAmount = amount + spellBonus;
+        switch (kind) {
+          case 'secret':
+            final secretId = effect['secretId']?.toString();
+            final trigger = effect['trigger']?.toString();
+            final secretEffect = effect['effect'];
+            if (secretId != null &&
+                trigger != null &&
+                secretEffect is Map &&
+                source.secrets.length < 5 &&
+                !source.secrets.any((secret) => secret.secretId == secretId)) {
+              source.secrets.add(
+                BattleSecret(
+                  card:
+                      sourceCard ??
+                      catalog.firstWhere(
+                        (item) => sourceName.startsWith(item.name),
+                        orElse: () => catalog.first,
+                      ),
+                  secretId: secretId,
+                  trigger: trigger,
+                  effect: Map<String, dynamic>.from(secretEffect),
+                ),
+              );
+              stateLog(sourceName, '已暗置奥秘。');
+            }
+            break;
+          case 'discover':
+            final choices = effect['choices'];
+            final state = battle;
+            if (state != null && choices is List) {
+              final validChoices = choices
+                  .map((item) => item.toString())
+                  .where((id) => card(id) != null)
+                  .toList();
+              if (validChoices.isNotEmpty) {
+                state.phase = 'discover';
+                state.discoverChoices = validChoices;
+                state.discoverSource = sourceCard?.id ?? sourceName;
+                state.discoverOwner = _ownerOf(source);
+                stateLog(sourceName, '从候选档案中发现一张卡牌。');
+                _emitFx(
+                  'discover',
+                  '发现选择',
+                  '从 ${validChoices.length} 张候选卡牌中选择一张',
+                  Icons.travel_explore,
+                  0xFFA692D1,
+                );
+                return;
+              }
+            }
+            break;
+          case 'damage':
+            if (target != null && enemy.board.contains(target)) {
+              _damageUnit(target, damageAmount);
+            } else {
+              final dealt = _damageHero(enemy, damageAmount);
+              stateLog('$sourceName：', '对敌方核心造成 $dealt 点伤害');
+            }
+            break;
+          case 'damage-all-enemies':
+            final dealt = _damageHero(enemy, damageAmount);
+            for (final unit in [...enemy.board]) {
+              _damageUnit(unit, damageAmount);
+            }
+            stateLog(
+              sourceName,
+              '对敌方核心和战场造成 $damageAmount 点范围伤害（核心实际 $dealt）。',
             );
-            stateLog(sourceName, '已暗置奥秘。');
-          }
-          break;
-        case 'discover':
-          final choices = effect['choices'];
-          final state = battle;
-          if (state != null && choices is List) {
-            final validChoices = choices
-                .map((item) => item.toString())
-                .where((id) => card(id) != null)
+            break;
+          case 'freeze':
+            if (target != null && enemy.board.contains(target)) {
+              target.frozenTurns = max(target.frozenTurns, max(1, amount));
+              stateLog(sourceName, '${target.card.name} 被冻结。');
+            }
+            break;
+          case 'random-enemy-freeze':
+            final candidates = enemy.board
+                // Hearthstone random effects may hit Stealth units. Stealth
+                // only prevents explicit targeting and attacks.
+                .where((unit) => unit.health > 0)
                 .toList();
-            if (validChoices.isNotEmpty) {
-              state.phase = 'discover';
-              state.discoverChoices = validChoices;
-              state.discoverSource = sourceCard?.id ?? sourceName;
-              state.discoverOwner = _ownerOf(source);
-              stateLog(sourceName, '从候选档案中发现一张卡牌。');
+            if (candidates.isNotEmpty) {
+              final frozen = candidates[_random.nextInt(candidates.length)];
+              frozen.frozenTurns = max(frozen.frozenTurns, max(1, amount));
+              stateLog(sourceName, '${frozen.card.name} 被冻结。');
+            }
+            break;
+          case 'random-enemy-damage':
+            final candidates = [...enemy.board];
+            if (candidates.isEmpty) {
+              _damageHero(enemy, damageAmount);
+            } else {
+              final targets = <Object>[enemy, ...candidates];
+              final picked = targets[_random.nextInt(targets.length)];
+              if (picked is BattleSide) {
+                _damageHero(picked, damageAmount);
+              } else {
+                _damageUnit(picked as BattleUnit, damageAmount);
+              }
+            }
+            break;
+          case 'heal':
+            if (target != null && source.board.contains(target)) {
+              target.health = min(target.maxHealth, target.health + amount);
+            } else {
+              final healed = _healHero(source, amount);
+              if (healed > 0) {
+                stateLog('$sourceName：', '恢复 $healed 点核心生命');
+              }
+            }
+            break;
+          case 'draw':
+            final count = (effect['count'] as num?)?.toInt() ?? 1;
+            for (var i = 0; i < count; i++) {
+              _draw(source);
+            }
+            break;
+          case 'buff':
+            final unit = target != null && source.board.contains(target)
+                ? target
+                : source.board.isEmpty
+                ? null
+                : source.board.last;
+            if (unit != null) {
+              final attack = (effect['attack'] as num?)?.toInt() ?? 0;
+              final health = (effect['health'] as num?)?.toInt() ?? 0;
+              unit.attack += attack;
+              unit.maxHealth += health;
+              unit.health += health;
+              unit.permanentAttackBonus += attack;
+              unit.permanentHealthBonus += health;
+              stateLog(
+                '$sourceName：',
+                '${unit.card.name} 获得 +$attack/+$health',
+              );
+            }
+            break;
+          case 'buff-all-friendly':
+            final attack = (effect['attack'] as num?)?.toInt() ?? 0;
+            final health = (effect['health'] as num?)?.toInt() ?? 0;
+            for (final unit in [...source.board]) {
+              unit.attack += attack;
+              unit.maxHealth += health;
+              unit.health += health;
+              unit.permanentAttackBonus += attack;
+              unit.permanentHealthBonus += health;
+            }
+            stateLog(sourceName, '友方全体获得 +$attack/+$health。');
+            break;
+          case 'temporary-buff':
+            final unit = target != null && source.board.contains(target)
+                ? target
+                : source.board.isEmpty
+                ? null
+                : source.board.last;
+            if (unit != null) {
+              final attack = (effect['attack'] as num?)?.toInt() ?? 0;
+              final health = (effect['health'] as num?)?.toInt() ?? 0;
+              unit.attack += attack;
+              unit.maxHealth += health;
+              unit.health += health;
+              unit.temporaryAttackBonus += attack;
+              unit.temporaryHealthBonus += health;
+              stateLog(sourceName, '${unit.card.name} 获得临时 +$attack/+$health。');
+            }
+            break;
+          case 'silence':
+            if (target == null) break;
+            final targetSide = source.board.contains(target)
+                ? source
+                : enemy.board.contains(target)
+                ? enemy
+                : null;
+            if (targetSide == null) break;
+            target.attack = target.card.attack ?? 0;
+            target.maxHealth = target.card.health ?? 1;
+            target.health = min(target.health, target.maxHealth);
+            target.permanentAttackBonus = 0;
+            target.permanentHealthBonus = 0;
+            target.temporaryAttackBonus = 0;
+            target.temporaryHealthBonus = 0;
+            target.silenced = true;
+            target.divineShield = false;
+            target.stealthActive = false;
+            target.frozenTurns = 0;
+            target.freezeBlocked = false;
+            target.rushOnly = false;
+            target.rebornUsed = true;
+            stateLog(sourceName, '${target.card.name} 被沉默。');
+            break;
+          case 'transform':
+            if (target == null) break;
+            final cardId = effect['cardId']?.toString();
+            final transformed = cardId == null ? null : card(cardId);
+            if (transformed == null || !transformed.isUnit) break;
+            final targetSide = source.board.contains(target)
+                ? source
+                : enemy.board.contains(target)
+                ? enemy
+                : null;
+            if (targetSide == null) break;
+            final index = targetSide.board.indexOf(target);
+            if (index < 0) break;
+            final replacement = _summonUnit(transformed, owner: target.owner);
+            targetSide.board[index] = replacement;
+            stateLog(
+              sourceName,
+              '${target.card.name} 变形为 ${transformed.name}。',
+            );
+            break;
+          case 'choose-one':
+            final options = effect['options'];
+            final state = battle;
+            if (state != null && options is List && options.length >= 2) {
+              state.phase = 'choose-one';
+              state.chooseOneOptions = options
+                  .whereType<Map>()
+                  .map((item) => Map<String, dynamic>.from(item))
+                  .toList();
+              state.chooseOneSource = sourceName;
+              state.chooseOneOwner = _ownerOf(source);
+              state.chooseOneTarget = target;
+              stateLog(sourceName, '请选择一个战术分支。');
               _emitFx(
-                'discover',
-                '发现选择',
-                '从 ${validChoices.length} 张候选卡牌中选择一张',
-                Icons.travel_explore,
+                'choose-one',
+                '抉择分支',
+                '从多个效果中选择一个',
+                Icons.alt_route,
                 0xFFA692D1,
               );
               return;
             }
-          }
-          break;
-        case 'damage':
-          if (target != null && enemy.board.contains(target)) {
-            _damageUnit(target, damageAmount);
-          } else {
-            final dealt = _damageHero(enemy, damageAmount);
-            stateLog('$sourceName：', '对敌方核心造成 $dealt 点伤害');
-          }
-          break;
-        case 'damage-all-enemies':
-          final dealt = _damageHero(enemy, damageAmount);
-          for (final unit in [...enemy.board]) {
-            _damageUnit(unit, damageAmount);
-          }
-          stateLog(sourceName, '对敌方核心和战场造成 $damageAmount 点范围伤害（核心实际 $dealt）。');
-          break;
-        case 'freeze':
-          if (target != null && enemy.board.contains(target)) {
-            target.frozenTurns = max(target.frozenTurns, max(1, amount));
-            stateLog(sourceName, '${target.card.name} 被冻结。');
-          }
-          break;
-        case 'random-enemy-freeze':
-          final candidates = enemy.board
-              // Hearthstone random effects may hit Stealth units. Stealth
-              // only prevents explicit targeting and attacks.
-              .where((unit) => unit.health > 0)
-              .toList();
-          if (candidates.isNotEmpty) {
-            final frozen = candidates[_random.nextInt(candidates.length)];
-            frozen.frozenTurns = max(frozen.frozenTurns, max(1, amount));
-            stateLog(sourceName, '${frozen.card.name} 被冻结。');
-          }
-          break;
-        case 'random-enemy-damage':
-          final candidates = [...enemy.board];
-          if (candidates.isEmpty) {
-            _damageHero(enemy, damageAmount);
-          } else {
-            final targets = <Object>[enemy, ...candidates];
-            final picked = targets[_random.nextInt(targets.length)];
-            if (picked is BattleSide) {
-              _damageHero(picked, damageAmount);
-            } else {
-              _damageUnit(picked as BattleUnit, damageAmount);
+            break;
+          case 'armor':
+            source.armor += amount;
+            break;
+          case 'summon':
+            final cardId = effect['cardId']?.toString();
+            final summonCard = cardId == null ? null : card(cardId);
+            final count = (effect['count'] as num?)?.toInt() ?? 1;
+            if (summonCard != null && summonCard.isUnit) {
+              for (var i = 0; i < count && source.board.length < 7; i++) {
+                final unit = _summonUnit(summonCard, owner: _ownerOf(source));
+                source.board.add(unit);
+                _emitFx(
+                  'summon',
+                  '${summonCard.name} 被召唤',
+                  '效果生成一个新的战场单位',
+                  Icons.auto_awesome,
+                  factionColors[summonCard.faction] ?? 0xFF69CFC3,
+                  sourceId: unit.instanceId,
+                );
+              }
             }
-          }
-          break;
-        case 'heal':
-          if (target != null && source.board.contains(target)) {
-            target.health = min(target.maxHealth, target.health + amount);
-          } else {
-            final before = source.heroHealth;
-            source.heroHealth = min(
-              source.maxHeroHealth,
-              source.heroHealth + amount,
-            );
-            final healed = source.heroHealth - before;
-            stateLog('$sourceName：', '恢复 $healed 点核心生命');
-          }
-          break;
-        case 'draw':
-          final count = (effect['count'] as num?)?.toInt() ?? 1;
-          for (var i = 0; i < count; i++) {
-            _draw(source);
-          }
-          break;
-        case 'buff':
-          final unit = target != null && source.board.contains(target)
-              ? target
-              : source.board.isEmpty
-              ? null
-              : source.board.last;
-          if (unit != null) {
-            final attack = (effect['attack'] as num?)?.toInt() ?? 0;
-            final health = (effect['health'] as num?)?.toInt() ?? 0;
-            unit.attack += attack;
-            unit.maxHealth += health;
-            unit.health += health;
-            unit.permanentAttackBonus += attack;
-            unit.permanentHealthBonus += health;
-            stateLog('$sourceName：', '${unit.card.name} 获得 +$attack/+$health');
-          }
-          break;
-        case 'buff-all-friendly':
-          final attack = (effect['attack'] as num?)?.toInt() ?? 0;
-          final health = (effect['health'] as num?)?.toInt() ?? 0;
-          for (final unit in [...source.board]) {
-            unit.attack += attack;
-            unit.maxHealth += health;
-            unit.health += health;
-            unit.permanentAttackBonus += attack;
-            unit.permanentHealthBonus += health;
-          }
-          stateLog(sourceName, '友方全体获得 +$attack/+$health。');
-          break;
-        case 'temporary-buff':
-          final unit = target != null && source.board.contains(target)
-              ? target
-              : source.board.isEmpty
-              ? null
-              : source.board.last;
-          if (unit != null) {
-            final attack = (effect['attack'] as num?)?.toInt() ?? 0;
-            final health = (effect['health'] as num?)?.toInt() ?? 0;
-            unit.attack += attack;
-            unit.maxHealth += health;
-            unit.health += health;
-            unit.temporaryAttackBonus += attack;
-            unit.temporaryHealthBonus += health;
-            stateLog(sourceName, '${unit.card.name} 获得临时 +$attack/+$health。');
-          }
-          break;
-        case 'silence':
-          if (target == null) break;
-          final targetSide = source.board.contains(target)
-              ? source
-              : enemy.board.contains(target)
-              ? enemy
-              : null;
-          if (targetSide == null) break;
-          target.attack = target.card.attack ?? 0;
-          target.maxHealth = target.card.health ?? 1;
-          target.health = min(target.health, target.maxHealth);
-          target.permanentAttackBonus = 0;
-          target.permanentHealthBonus = 0;
-          target.temporaryAttackBonus = 0;
-          target.temporaryHealthBonus = 0;
-          target.silenced = true;
-          target.divineShield = false;
-          target.stealthActive = false;
-          target.frozenTurns = 0;
-          target.freezeBlocked = false;
-          target.rushOnly = false;
-          target.rebornUsed = true;
-          stateLog(sourceName, '${target.card.name} 被沉默。');
-          break;
-        case 'transform':
-          if (target == null) break;
-          final cardId = effect['cardId']?.toString();
-          final transformed = cardId == null ? null : card(cardId);
-          if (transformed == null || !transformed.isUnit) break;
-          final targetSide = source.board.contains(target)
-              ? source
-              : enemy.board.contains(target)
-              ? enemy
-              : null;
-          if (targetSide == null) break;
-          final index = targetSide.board.indexOf(target);
-          if (index < 0) break;
-          final replacement = _summonUnit(transformed, owner: target.owner);
-          targetSide.board[index] = replacement;
-          stateLog(sourceName, '${target.card.name} 变形为 ${transformed.name}。');
-          break;
-        case 'choose-one':
-          final options = effect['options'];
-          final state = battle;
-          if (state != null && options is List && options.length >= 2) {
-            state.phase = 'choose-one';
-            state.chooseOneOptions = options
-                .whereType<Map>()
-                .map((item) => Map<String, dynamic>.from(item))
-                .toList();
-            state.chooseOneSource = sourceName;
-            state.chooseOneOwner = _ownerOf(source);
-            state.chooseOneTarget = target;
-            stateLog(sourceName, '请选择一个战术分支。');
-            _emitFx(
-              'choose-one',
-              '抉择分支',
-              '从多个效果中选择一个',
-              Icons.alt_route,
-              0xFFA692D1,
-            );
-            return;
-          }
-          break;
-        case 'armor':
-          source.armor += amount;
-          break;
-        case 'summon':
-          final cardId = effect['cardId']?.toString();
-          final summonCard = cardId == null ? null : card(cardId);
-          final count = (effect['count'] as num?)?.toInt() ?? 1;
-          if (summonCard != null && summonCard.isUnit) {
-            for (var i = 0; i < count && source.board.length < 7; i++) {
-              final unit = _summonUnit(summonCard, owner: _ownerOf(source));
-              source.board.add(unit);
-              _emitFx(
-                'summon',
-                '${summonCard.name} 被召唤',
-                '效果生成一个新的战场单位',
-                Icons.auto_awesome,
-                factionColors[summonCard.faction] ?? 0xFF69CFC3,
-                sourceId: unit.instanceId,
-              );
-            }
-          }
-          break;
+            break;
+        }
+        _processDeaths();
       }
-      _processDeaths();
+    } finally {
+      _effectResolutionDepth--;
+      if (_effectResolutionDepth == 0 && !_resolvingDeaths) {
+        _processDeaths();
+      }
     }
   }
 
@@ -1374,7 +1598,7 @@ class GameController extends ChangeNotifier {
     if (discovered == null) return false;
     final owner = state.discoverOwner == 'ai' ? state.ai : state.player;
     final enemy = identical(owner, state.player) ? state.ai : state.player;
-    if (owner.hand.length < 10) {
+    if (_occupiedHandSlots(owner) < 10) {
       owner.hand.add(discovered);
     } else {
       stateLog('发现失败', '${discovered.name} 因手牌已满被燃毁。');
@@ -1484,15 +1708,21 @@ class GameController extends ChangeNotifier {
     attacker.attacksMade++;
     attacker.hasAttacked = true;
     final defenderName = target?.card.name ?? '敌方核心';
+    // Both combatants deal their snapshotted attack at the same time. In
+    // particular, a defender still retaliates when the incoming hit is lethal.
+    final defenderAttack = target?.attack ?? 0;
+    final defenderHasLifesteal = target?.hasLifesteal ?? false;
     final outgoing = target == null
         ? _damageHero(defender, attacker.attack)
         : _damageUnit(target, attacker.attack, source: attacker, combat: true);
+    final reflected = target == null
+        ? 0
+        : _damageUnit(attacker, defenderAttack, source: target, combat: true);
     if (attacker.hasLifesteal && outgoing > 0) {
-      final before = _sideFor(attacker).heroHealth;
       final side = _sideFor(attacker);
-      side.heroHealth = min(side.maxHeroHealth, side.heroHealth + outgoing);
-      stateLog('${attacker.card.name}：', '汲取 $outgoing 点生命');
-      if (side.heroHealth > before) {
+      final healed = _healHero(side, outgoing);
+      if (healed > 0) {
+        stateLog('${attacker.card.name}：', '汲取 $healed 点生命');
         _emitFx(
           'heal',
           '生命汲取',
@@ -1502,17 +1732,9 @@ class GameController extends ChangeNotifier {
         );
       }
     }
-    if (target != null && target.health > 0) {
-      final reflected = _damageUnit(
-        attacker,
-        target.attack,
-        source: target,
-        combat: true,
-      );
-      if (target.hasLifesteal && reflected > 0) {
-        final side = _sideFor(target);
-        side.heroHealth = min(side.maxHeroHealth, side.heroHealth + reflected);
-      }
+    if (target != null && defenderHasLifesteal && reflected > 0) {
+      final side = _sideFor(target);
+      _healHero(side, reflected);
     }
     _emitFx(
       'attack',
@@ -1538,6 +1760,21 @@ class GameController extends ChangeNotifier {
     final healthDamage = amount - absorbed;
     side.heroHealth = max(0, side.heroHealth - healthDamage);
     return healthDamage;
+  }
+
+  bool _heroIsMarkedForDeath(BattleSide side) {
+    final state = battle;
+    if (state == null) return false;
+    return identical(side, state.player)
+        ? state.playerHeroMarkedForDeath
+        : state.aiHeroMarkedForDeath;
+  }
+
+  int _healHero(BattleSide side, int amount) {
+    if (amount <= 0 || _heroIsMarkedForDeath(side)) return 0;
+    final before = side.heroHealth;
+    side.heroHealth = min(side.maxHeroHealth, side.heroHealth + amount);
+    return side.heroHealth - before;
   }
 
   int _damageUnit(
@@ -1602,51 +1839,111 @@ class GameController extends ChangeNotifier {
     return identical(side, state.player) ? 'player' : 'ai';
   }
 
+  void _markHeroesForDeath(BattleState state) {
+    if (state.player.heroHealth <= 0) {
+      state.playerHeroMarkedForDeath = true;
+    }
+    if (state.ai.heroHealth <= 0) {
+      state.aiHeroMarkedForDeath = true;
+    }
+  }
+
   void _processDeaths() {
     final state = battle;
-    if (state == null) return;
-    for (final side in [state.player, state.ai]) {
-      final dead = side.board.where((unit) => unit.health <= 0).toList();
-      final enemy = identical(side, state.player) ? state.ai : state.player;
-      for (final unit in dead) {
-        side.board.remove(unit);
-        stateLog('亡语回响', '${unit.card.name} 离开战场。');
-        _emitFx(
-          'death',
-          '${unit.card.name} 被摧毁',
-          '战场位置已释放',
-          Icons.blur_on,
-          0xFF9D7567,
-          sourceId: unit.instanceId,
-          targetId: unit.instanceId,
+    if (state == null || _resolvingDeaths || _effectResolutionDepth > 0) {
+      return;
+    }
+    final deathQueue = <_QueuedDeath>[];
+    final rebornQueue = <_QueuedDeath>[];
+
+    void enqueueDeadUnits() {
+      for (final side in [state.player, state.ai]) {
+        final enemy = identical(side, state.player) ? state.ai : state.player;
+        final dead = side.board.where((unit) => unit.health <= 0).toList();
+        if (dead.isEmpty) continue;
+        // Lock the complete simultaneous death wave before any Deathrattle can
+        // inspect or refill those battlefield slots.
+        side.board.removeWhere((unit) => unit.health <= 0);
+        deathQueue.addAll(
+          dead.map(
+            (unit) => _QueuedDeath(unit: unit, side: side, enemy: enemy),
+          ),
         );
-        if (unit.card.hasDeathrattle && !unit.silenced) {
-          _resolveEffects(
-            unit.card.onDeath,
-            source: side,
-            enemy: enemy,
-            sourceName: '${unit.card.name} 的亡语',
-            sourceCard: unit.card,
-          );
-        }
-        if (unit.hasReborn && !unit.rebornUsed && side.board.length < 7) {
-          final reborn = _summonUnit(
-            unit.card,
-            owner: unit.owner,
-            healthOverride: 1,
-            reborn: true,
-          );
-          side.board.add(reborn);
-          _emitFx(
-            'reborn',
-            '${unit.card.name} 复生',
-            '以 1 点生命重新回到战场',
-            Icons.autorenew,
-            0xFFA692D1,
-            sourceId: reborn.instanceId,
-          );
-        }
       }
+    }
+
+    _resolvingDeaths = true;
+    try {
+      // Death creation is irreversible for heroes. Healing later in this
+      // death window may change the displayed health, but cannot clear a loss.
+      _markHeroesForDeath(state);
+      enqueueDeadUnits();
+      var deathIndex = 0;
+      var rebornIndex = 0;
+      while (deathIndex < deathQueue.length ||
+          rebornIndex < rebornQueue.length) {
+        // All Deathrattles, including later waves created by earlier
+        // Deathrattles, resolve before the first queued Reborn.
+        while (deathIndex < deathQueue.length) {
+          final entry = deathQueue[deathIndex++];
+          final unit = entry.unit;
+          stateLog('亡语回响', '${unit.card.name} 离开战场。');
+          _emitFx(
+            'death',
+            '${unit.card.name} 被摧毁',
+            '战场位置已释放',
+            Icons.blur_on,
+            0xFF9D7567,
+            sourceId: unit.instanceId,
+            targetId: unit.instanceId,
+          );
+          if (unit.card.hasDeathrattle && !unit.silenced) {
+            _resolveEffects(
+              unit.card.onDeath,
+              source: entry.side,
+              enemy: entry.enemy,
+              sourceName: '${unit.card.name} 的亡语',
+              sourceCard: unit.card,
+            );
+          }
+          _markHeroesForDeath(state);
+          if (unit.hasReborn && !unit.rebornUsed) {
+            rebornQueue.add(entry);
+          }
+          enqueueDeadUnits();
+        }
+
+        if (rebornIndex >= rebornQueue.length) break;
+        final entry = rebornQueue[rebornIndex++];
+        if (entry.side.board.length >= 7) continue;
+        final unit = entry.unit;
+        final reborn = _summonUnit(
+          unit.card,
+          owner: unit.owner,
+          healthOverride: 1,
+          reborn: true,
+        );
+        entry.side.board.add(reborn);
+        stateLog('复生回响', '${unit.card.name} 以 1 点生命回到战场。');
+        _emitFx(
+          'reborn',
+          '${unit.card.name} 复生',
+          '以 1 点生命重新回到战场',
+          Icons.autorenew,
+          0xFFA692D1,
+          sourceId: reborn.instanceId,
+        );
+        // Reborn is a summon for secret/trigger purposes.
+        _triggerSecrets(
+          entry.enemy,
+          'opponent-summons-unit',
+          triggeringSide: entry.side,
+        );
+        _markHeroesForDeath(state);
+        enqueueDeadUnits();
+      }
+    } finally {
+      _resolvingDeaths = false;
     }
   }
 
@@ -1672,65 +1969,49 @@ class GameController extends ChangeNotifier {
       return;
     }
     state.phase = 'end';
-    state.activePlayer = 'ai';
+    if (!_advanceActionWindow(state, 'ai')) {
+      isResolvingTurn = false;
+      notifyListeners();
+      return;
+    }
     state.logs.insert(0, '你结束回合，敌方演算体获得行动权。');
     _emitFx('turn', '回合交接', '敌方演算体开始行动', Icons.swap_vert, 0xFFA692D1);
     notifyListeners();
     await Future<void>.delayed(const Duration(milliseconds: 700));
-    await _aiTurn(state);
+    _beginSideTurn(state, owner: 'ai');
+    if (!state.finished) await _aiTurn(state);
     if (!state.finished) {
-      await Future<void>.delayed(const Duration(milliseconds: 650));
-      state.turn++;
-      state.activePlayer = 'player';
-      state.phase = 'main';
-      state.heroPowerUsed = false;
-      _refillMana(state.player);
-      _refreshSideForTurn(state.player);
-      _resolveTurnTriggers(state.player, start: true);
-      _draw(state.player);
-      state.logs.insert(0, '第 ${state.turn} 回合开始，法力恢复至 ${state.player.mana}。');
-      _emitFx(
-        'turn',
-        '第 ${state.turn} 回合',
-        '你的法力已恢复，轮到你行动',
-        Icons.hourglass_top,
-        0xFF69CFC3,
-      );
-      _startTurnTimer();
+      if (_advanceActionWindow(state, 'player')) {
+        await Future<void>.delayed(const Duration(milliseconds: 650));
+        _beginSideTurn(state, owner: 'player');
+        state.logs.insert(
+          0,
+          '第 ${state.turn} 回合开始，法力恢复至 ${state.player.mana}。',
+        );
+        _emitFx(
+          'turn',
+          '第 ${state.turn} 回合',
+          '你的法力已恢复，轮到你行动',
+          Icons.hourglass_top,
+          0xFF69CFC3,
+        );
+        _startTurnTimer();
+      }
     }
     isResolvingTurn = false;
     notifyListeners();
   }
 
   Future<void> _aiTurn(BattleState state) async {
-    state.phase = 'main';
-    _refreshSideForTurn(state.ai);
-    if (state.turn > 1) {
-      _refillMana(state.ai);
-    } else {
-      state.ai.mana = state.ai.maxMana;
-    }
-    _resolveTurnTriggers(state.ai, start: true);
-    _processDeaths();
-    _checkFinished();
     if (state.finished) return;
     if (state.ai.coinAvailable &&
         state.ai.hand.any(
           (card) => card.cost > state.ai.mana && card.cost <= state.ai.mana + 1,
         )) {
-      state.ai.coinAvailable = false;
-      state.ai.mana += 1;
-      state.logs.insert(0, '敌方演算体使用幸运币，获得 1 点临时法力。');
-      _emitFx(
-        'coin',
-        '敌方使用幸运币',
-        '演算体获得 1 点临时法力',
-        Icons.monetization_on,
-        0xFFE7BD7A,
-        amount: 1,
-      );
+      _playCoinForSide(source: state.ai, enemy: state.player, owner: 'ai');
       notifyListeners();
       await Future<void>.delayed(const Duration(milliseconds: 900));
+      if (state.finished) return;
     }
     state.aiHeroPowerUsed = false;
     final aiPowerTarget = _aiHeroPowerTarget(state);
@@ -1763,6 +2044,9 @@ class GameController extends ChangeNotifier {
     for (final card in playable) {
       if (state.finished || card.cost > state.ai.mana) continue;
       if (card.isUnit && state.ai.board.length >= 7) continue;
+      if (state.ai.board.length >= 7 && _isPureSummonSpell(card, state.ai)) {
+        continue;
+      }
       final target = _aiTarget(card, state);
       if (!_validTarget(card, state.ai, state.player, target)) continue;
       _playCardForSide(
@@ -1835,7 +2119,6 @@ class GameController extends ChangeNotifier {
     _clearTemporaryBuffs(state.ai);
     _settleFreezeAtEndOfTurn(state.ai);
     _processDeaths();
-    _draw(state.ai);
     _checkFinished();
   }
 
@@ -1854,9 +2137,17 @@ class GameController extends ChangeNotifier {
         return;
       }
     }
+    final defenderAttack = target?.attack ?? 0;
+    final defenderHasLifesteal = target?.hasLifesteal ?? false;
     final dealt = target == null
         ? _damageHero(state.player, weapon.attack)
         : _damageUnit(target, weapon.attack, combat: true);
+    if (target != null) {
+      final reflected = _damageHero(state.ai, defenderAttack);
+      if (defenderHasLifesteal && reflected > 0) {
+        _healHero(state.player, reflected);
+      }
+    }
     state.ai.heroHasAttacked = true;
     weapon.durability--;
     state.logs.insert(
@@ -1876,6 +2167,7 @@ class GameController extends ChangeNotifier {
       amount: dealt,
     );
     if (weapon.durability <= 0) state.ai.weapon = null;
+    _processDeaths();
   }
 
   void _refreshSideForTurn(BattleSide side) {
@@ -2014,33 +2306,74 @@ class GameController extends ChangeNotifier {
     }
   }
 
+  bool _advanceActionWindow(BattleState state, String nextPlayer) {
+    state.activePlayer = nextPlayer;
+    state.actionWindow++;
+    if (state.actionWindow > maxBattleActionWindows) {
+      _finishBattle(winner: null, reason: 'draw');
+      return false;
+    }
+    return true;
+  }
+
+  void _finishBattle({required String? winner, required String reason}) {
+    final state = battle;
+    if (state == null || state.finished) return;
+    state.finished = true;
+    state.phase = 'game-over';
+    state.winner = winner;
+    state.endReason = reason;
+    _turnTimer?.cancel();
+
+    var reward = 0;
+    if (winner == 'player') {
+      wins++;
+      reward = 60;
+    } else if (winner == 'ai') {
+      losses++;
+      reward = 20;
+    }
+    gold += reward;
+    matchesPlayed++;
+    _prefs?.setInt('wins', wins);
+    _prefs?.setInt('losses', losses);
+    _prefs?.setInt('matches', matchesPlayed);
+    _prefs?.setInt('gold', gold);
+
+    if (winner == null) {
+      final reachedTurnLimit = state.actionWindow > maxBattleActionWindows;
+      state.logs.insert(
+        0,
+        reachedTurnLimit ? '已结算 89 个行动窗口，第 90 个窗口不会开启，对局平局。' : '双方核心同时失效，对局平局。',
+      );
+      _emitFx('draw', '演算平局', '本局不计入胜负', Icons.balance, 0xFFE7BD7A);
+      return;
+    }
+
+    final victory = winner == 'player';
+    state.logs.insert(0, victory ? '演算胜利，获得 60 金币。' : '演算结束，获得 20 金币。');
+    _emitFx(
+      victory ? 'victory' : 'defeat',
+      victory ? '演算胜利' : '演算结束',
+      victory ? '战报已归档，获得 60 金币' : '保留战术日志，获得 20 金币',
+      victory ? Icons.emoji_events : Icons.close,
+      victory ? 0xFFE7BD7A : 0xFFE46D3F,
+    );
+  }
+
   void _checkFinished() {
     final state = battle;
     if (state == null || state.finished) return;
-    if (state.player.heroHealth <= 0 || state.ai.heroHealth <= 0) {
-      state.finished = true;
-      _turnTimer?.cancel();
-      state.winner = state.ai.heroHealth <= 0 ? 'player' : 'ai';
-      if (state.winner == 'player') {
-        wins++;
-        gold += 60;
-      } else {
-        losses++;
-        gold += 20;
-      }
-      matchesPlayed++;
-      _prefs?.setInt('wins', wins);
-      _prefs?.setInt('losses', losses);
-      _prefs?.setInt('matches', matchesPlayed);
-      _prefs?.setInt('gold', gold);
-      final victory = state.winner == 'player';
-      state.logs.insert(0, victory ? '演算胜利，获得 60 金币。' : '演算结束，获得 20 金币。');
-      _emitFx(
-        victory ? 'victory' : 'defeat',
-        victory ? '演算胜利' : '演算结束',
-        victory ? '战报已归档，获得 60 金币' : '保留战术日志，获得 20 金币',
-        victory ? Icons.emoji_events : Icons.close,
-        victory ? 0xFFE7BD7A : 0xFFE46D3F,
+    final playerDead =
+        state.playerHeroMarkedForDeath || state.player.heroHealth <= 0;
+    final aiDead = state.aiHeroMarkedForDeath || state.ai.heroHealth <= 0;
+    if (!playerDead && !aiDead) return;
+    if (playerDead && aiDead) {
+      _finishBattle(winner: null, reason: 'draw');
+    } else {
+      _finishBattle(
+        winner: playerDead ? 'ai' : 'player',
+        reason: 'hero-defeated',
       );
     }
   }

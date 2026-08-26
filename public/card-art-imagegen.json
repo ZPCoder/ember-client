@@ -1,7 +1,5707 @@
 {
   "workflow": "built-in-imagegen-one-card-per-call",
-  "generatedCount": 159,
+  "generatedCount": 1000,
   "cards": [
+    {
+      "id": "sun-dawn-scout",
+      "name": "晨辉斥候",
+      "source": "imagegen",
+      "art": "/cards/sun-dawn-scout.webp"
+    },
+    {
+      "id": "sun-mirror-warden",
+      "name": "镜盾守望者",
+      "source": "imagegen",
+      "art": "/cards/sun-mirror-warden.webp"
+    },
+    {
+      "id": "sun-banner-bearer",
+      "name": "曙色旗手",
+      "source": "imagegen",
+      "art": "/cards/sun-banner-bearer.webp"
+    },
+    {
+      "id": "sun-lion-guard",
+      "name": "曜原狮卫",
+      "source": "imagegen",
+      "art": "/cards/sun-lion-guard.webp"
+    },
+    {
+      "id": "sun-skyfire-roc",
+      "name": "焰羽巡天者",
+      "source": "imagegen",
+      "art": "/cards/sun-skyfire-roc.webp"
+    },
+    {
+      "id": "sun-focused-ray",
+      "name": "聚光灼流",
+      "source": "imagegen",
+      "art": "/cards/sun-focused-ray.webp"
+    },
+    {
+      "id": "sun-dew-blessing",
+      "name": "晨露祝福",
+      "source": "imagegen",
+      "art": "/cards/sun-dew-blessing.webp"
+    },
+    {
+      "id": "sun-daybreak-order",
+      "name": "破晓号令",
+      "source": "imagegen",
+      "art": "/cards/sun-daybreak-order.webp"
+    },
+    {
+      "id": "void-mist-lurker",
+      "name": "雾汐潜行者",
+      "source": "imagegen",
+      "art": "/cards/void-mist-lurker.webp"
+    },
+    {
+      "id": "void-undertow-guard",
+      "name": "逆流卫士",
+      "source": "imagegen",
+      "art": "/cards/void-undertow-guard.webp"
+    },
+    {
+      "id": "void-echo-mimic",
+      "name": "回声拟形",
+      "source": "imagegen",
+      "art": "/cards/void-echo-mimic.webp"
+    },
+    {
+      "id": "void-nightfin-raider",
+      "name": "夜鳍突袭者",
+      "source": "imagegen",
+      "art": "/cards/void-nightfin-raider.webp"
+    },
+    {
+      "id": "void-abyss-whale",
+      "name": "渊歌巨鲸",
+      "source": "imagegen",
+      "art": "/cards/void-abyss-whale.webp"
+    },
+    {
+      "id": "void-chill-needle",
+      "name": "寒潮刺针",
+      "source": "imagegen",
+      "art": "/cards/void-chill-needle.webp"
+    },
+    {
+      "id": "void-moonless-surge",
+      "name": "无月涌流",
+      "source": "imagegen",
+      "art": "/cards/void-moonless-surge.webp"
+    },
+    {
+      "id": "void-ink-storm",
+      "name": "墨云震荡",
+      "source": "imagegen",
+      "art": "/cards/void-ink-storm.webp"
+    },
+    {
+      "id": "neutral-moss-runner",
+      "name": "苔径奔行兽",
+      "source": "imagegen",
+      "art": "/cards/neutral-moss-runner.webp"
+    },
+    {
+      "id": "neutral-clockwork-beetle",
+      "name": "发条甲虫",
+      "source": "imagegen",
+      "art": "/cards/neutral-clockwork-beetle.webp"
+    },
+    {
+      "id": "neutral-caravan-guard",
+      "name": "远途商队卫",
+      "source": "imagegen",
+      "art": "/cards/neutral-caravan-guard.webp"
+    },
+    {
+      "id": "neutral-stonehorn",
+      "name": "石角驮兽",
+      "source": "imagegen",
+      "art": "/cards/neutral-stonehorn.webp"
+    },
+    {
+      "id": "neutral-wandering-alchemist",
+      "name": "云游调剂师",
+      "source": "imagegen",
+      "art": "/cards/neutral-wandering-alchemist.webp"
+    },
+    {
+      "id": "neutral-tactical-map",
+      "name": "折痕战术图",
+      "source": "imagegen",
+      "art": "/cards/neutral-tactical-map.webp"
+    },
+    {
+      "id": "neutral-repair-sprite",
+      "name": "修补精灵",
+      "source": "imagegen",
+      "art": "/cards/neutral-repair-sprite.webp"
+    },
+    {
+      "id": "neutral-thunder-egg",
+      "name": "蕴雷晶卵",
+      "source": "imagegen",
+      "art": "/cards/neutral-thunder-egg.webp"
+    },
+    {
+      "id": "sun-lumen-page",
+      "name": "微光侍读",
+      "source": "imagegen",
+      "art": "/cards/sun-lumen-page.webp"
+    },
+    {
+      "id": "sun-glasswing-courier",
+      "name": "琉翼信使",
+      "source": "imagegen",
+      "art": "/cards/sun-glasswing-courier.webp"
+    },
+    {
+      "id": "sun-prism-squire",
+      "name": "棱镜扈从",
+      "source": "imagegen",
+      "art": "/cards/sun-prism-squire.webp"
+    },
+    {
+      "id": "sun-horizon-hunter",
+      "name": "天际猎手",
+      "source": "imagegen",
+      "art": "/cards/sun-horizon-hunter.webp"
+    },
+    {
+      "id": "sun-choir-acolyte",
+      "name": "晨咏侍祭",
+      "source": "imagegen",
+      "art": "/cards/sun-choir-acolyte.webp"
+    },
+    {
+      "id": "sun-gilded-lancer",
+      "name": "鎏金枪骑",
+      "source": "imagegen",
+      "art": "/cards/sun-gilded-lancer.webp"
+    },
+    {
+      "id": "sun-sunwell-artificer",
+      "name": "日井匠师",
+      "source": "imagegen",
+      "art": "/cards/sun-sunwell-artificer.webp"
+    },
+    {
+      "id": "sun-aurora-duelist",
+      "name": "极昼决斗家",
+      "source": "imagegen",
+      "art": "/cards/sun-aurora-duelist.webp"
+    },
+    {
+      "id": "sun-halo-captain",
+      "name": "光环卫队长",
+      "source": "imagegen",
+      "art": "/cards/sun-halo-captain.webp"
+    },
+    {
+      "id": "sun-whitefire-priest",
+      "name": "白焰司祭",
+      "source": "imagegen",
+      "art": "/cards/sun-whitefire-priest.webp"
+    },
+    {
+      "id": "sun-prism-huntress",
+      "name": "虹棱女猎手",
+      "source": "imagegen",
+      "art": "/cards/sun-prism-huntress.webp"
+    },
+    {
+      "id": "sun-zenith-golem",
+      "name": "正午晶铠像",
+      "source": "imagegen",
+      "art": "/cards/sun-zenith-golem.webp"
+    },
+    {
+      "id": "sun-radiant-griffin",
+      "name": "辉穹狮鹫",
+      "source": "imagegen",
+      "art": "/cards/sun-radiant-griffin.webp"
+    },
+    {
+      "id": "sun-corona-archon",
+      "name": "日冕执政官",
+      "source": "imagegen",
+      "art": "/cards/sun-corona-archon.webp"
+    },
+    {
+      "id": "sun-daystar-titan",
+      "name": "曜日泰坦",
+      "source": "imagegen",
+      "art": "/cards/sun-daystar-titan.webp"
+    },
+    {
+      "id": "sun-flare-spark",
+      "name": "耀斑火种",
+      "source": "imagegen",
+      "art": "/cards/sun-flare-spark.webp"
+    },
+    {
+      "id": "sun-refraction-aid",
+      "name": "折光援护",
+      "source": "imagegen",
+      "art": "/cards/sun-refraction-aid.webp"
+    },
+    {
+      "id": "sun-mirror-tempering",
+      "name": "镜甲淬炼",
+      "source": "imagegen",
+      "art": "/cards/sun-mirror-tempering.webp"
+    },
+    {
+      "id": "sun-orbit-insight",
+      "name": "环日启示",
+      "source": "imagegen",
+      "art": "/cards/sun-orbit-insight.webp"
+    },
+    {
+      "id": "sun-spear-descent",
+      "name": "天枪坠击",
+      "source": "imagegen",
+      "art": "/cards/sun-spear-descent.webp"
+    },
+    {
+      "id": "sun-dawn-muster",
+      "name": "晨阵集结",
+      "source": "imagegen",
+      "art": "/cards/sun-dawn-muster.webp"
+    },
+    {
+      "id": "sun-supernova-judgment",
+      "name": "新星裁决刃",
+      "source": "imagegen",
+      "art": "/cards/sun-supernova-judgment.webp"
+    },
+    {
+      "id": "void-brine-skulker",
+      "name": "盐雾伏游者",
+      "source": "imagegen",
+      "art": "/cards/void-brine-skulker.webp"
+    },
+    {
+      "id": "void-duskfin-darter",
+      "name": "暮鳍疾刺",
+      "source": "imagegen",
+      "art": "/cards/void-duskfin-darter.webp"
+    },
+    {
+      "id": "void-shellback-sentinel",
+      "name": "覆壳哨卫",
+      "source": "imagegen",
+      "art": "/cards/void-shellback-sentinel.webp"
+    },
+    {
+      "id": "void-inkveil-oracle",
+      "name": "墨帷先知",
+      "source": "imagegen",
+      "art": "/cards/void-inkveil-oracle.webp"
+    },
+    {
+      "id": "void-siphon-lamprey",
+      "name": "噬流七鳃鳗",
+      "source": "imagegen",
+      "art": "/cards/void-siphon-lamprey.webp"
+    },
+    {
+      "id": "void-coral-mimic",
+      "name": "蚀珊瑚拟态",
+      "source": "imagegen",
+      "art": "/cards/void-coral-mimic.webp"
+    },
+    {
+      "id": "void-riptide-duelist",
+      "name": "裂潮斗士",
+      "source": "imagegen",
+      "art": "/cards/void-riptide-duelist.webp"
+    },
+    {
+      "id": "void-trench-mender",
+      "name": "海沟缝合师",
+      "source": "imagegen",
+      "art": "/cards/void-trench-mender.webp"
+    },
+    {
+      "id": "void-razorfin-corsair",
+      "name": "刃鳍掠夺者",
+      "source": "imagegen",
+      "art": "/cards/void-razorfin-corsair.webp"
+    },
+    {
+      "id": "void-murkplate-hermit",
+      "name": "玄甲寄居者",
+      "source": "imagegen",
+      "art": "/cards/void-murkplate-hermit.webp"
+    },
+    {
+      "id": "void-abyssal-chanter",
+      "name": "深渊吟潮者",
+      "source": "imagegen",
+      "art": "/cards/void-abyssal-chanter.webp"
+    },
+    {
+      "id": "void-moonjaw-shark",
+      "name": "月颚猎鲨",
+      "source": "imagegen",
+      "art": "/cards/void-moonjaw-shark.webp"
+    },
+    {
+      "id": "void-drowned-leviathan",
+      "name": "溺忆海兽",
+      "source": "imagegen",
+      "art": "/cards/void-drowned-leviathan.webp"
+    },
+    {
+      "id": "void-tempest-manta",
+      "name": "暴潮魔鬼鱼",
+      "source": "imagegen",
+      "art": "/cards/void-tempest-manta.webp"
+    },
+    {
+      "id": "void-thalassic-sovereign",
+      "name": "幽海无冠王",
+      "source": "imagegen",
+      "art": "/cards/void-thalassic-sovereign.webp"
+    },
+    {
+      "id": "void-saltbite",
+      "name": "盐蚀咬痕",
+      "source": "imagegen",
+      "art": "/cards/void-saltbite.webp"
+    },
+    {
+      "id": "void-deepwater-draught",
+      "name": "深水汲饮",
+      "source": "imagegen",
+      "art": "/cards/void-deepwater-draught.webp"
+    },
+    {
+      "id": "void-pressure-spike",
+      "name": "压潮尖刺",
+      "source": "imagegen",
+      "art": "/cards/void-pressure-spike.webp"
+    },
+    {
+      "id": "void-echoing-current",
+      "name": "回响暗流",
+      "source": "imagegen",
+      "art": "/cards/void-echoing-current.webp"
+    },
+    {
+      "id": "void-moonpool-mutation",
+      "name": "月池异变",
+      "source": "imagegen",
+      "art": "/cards/void-moonpool-mutation.webp"
+    },
+    {
+      "id": "void-blackwake-torpedo",
+      "name": "黑浪鱼雷",
+      "source": "imagegen",
+      "art": "/cards/void-blackwake-torpedo.webp"
+    },
+    {
+      "id": "void-maelstrom-memory",
+      "name": "漩涡钩镰",
+      "source": "imagegen",
+      "art": "/cards/void-maelstrom-memory.webp"
+    },
+    {
+      "id": "neutral-lantern-mouse",
+      "name": "绒鼠引路",
+      "source": "imagegen",
+      "art": "/cards/neutral-lantern-mouse.webp"
+    },
+    {
+      "id": "neutral-windstep-messenger",
+      "name": "踏风报信人",
+      "source": "imagegen",
+      "art": "/cards/neutral-windstep-messenger.webp"
+    },
+    {
+      "id": "neutral-ironpot-cook",
+      "name": "铁锅行厨",
+      "source": "imagegen",
+      "art": "/cards/neutral-ironpot-cook.webp"
+    },
+    {
+      "id": "neutral-brassback-badger",
+      "name": "铜背獾",
+      "source": "imagegen",
+      "art": "/cards/neutral-brassback-badger.webp"
+    },
+    {
+      "id": "neutral-relic-appraiser",
+      "name": "遗物估价师",
+      "source": "imagegen",
+      "art": "/cards/neutral-relic-appraiser.webp"
+    },
+    {
+      "id": "neutral-riveted-ram",
+      "name": "铆钉撞角羊",
+      "source": "imagegen",
+      "art": "/cards/neutral-riveted-ram.webp"
+    },
+    {
+      "id": "neutral-crossroad-duelist",
+      "name": "岔路决斗客",
+      "source": "imagegen",
+      "art": "/cards/neutral-crossroad-duelist.webp"
+    },
+    {
+      "id": "neutral-dune-tracker",
+      "name": "沙迹追猎者",
+      "source": "imagegen",
+      "art": "/cards/neutral-dune-tracker.webp"
+    },
+    {
+      "id": "neutral-aether-peddler",
+      "name": "以太货郎",
+      "source": "imagegen",
+      "art": "/cards/neutral-aether-peddler.webp"
+    },
+    {
+      "id": "neutral-bastion-tortoise",
+      "name": "驮垒巨龟",
+      "source": "imagegen",
+      "art": "/cards/neutral-bastion-tortoise.webp"
+    },
+    {
+      "id": "neutral-gearhawk-handler",
+      "name": "齿隼驯养师",
+      "source": "imagegen",
+      "art": "/cards/neutral-gearhawk-handler.webp"
+    },
+    {
+      "id": "neutral-ruin-stag",
+      "name": "遗迹冠鹿",
+      "source": "imagegen",
+      "art": "/cards/neutral-ruin-stag.webp"
+    },
+    {
+      "id": "neutral-mobile-forge",
+      "name": "自走熔铸炉",
+      "source": "imagegen",
+      "art": "/cards/neutral-mobile-forge.webp"
+    },
+    {
+      "id": "neutral-cloudrail-behemoth",
+      "name": "云轨冲撞令",
+      "source": "imagegen",
+      "art": "/cards/neutral-cloudrail-behemoth.webp"
+    },
+    {
+      "id": "neutral-worldroad-colossus",
+      "name": "万途驮城者",
+      "source": "imagegen",
+      "art": "/cards/neutral-worldroad-colossus.webp"
+    },
+    {
+      "id": "neutral-pocket-remedy",
+      "name": "行囊急救剂",
+      "source": "imagegen",
+      "art": "/cards/neutral-pocket-remedy.webp"
+    },
+    {
+      "id": "neutral-springtrap",
+      "name": "便携弹簧阱",
+      "source": "imagegen",
+      "art": "/cards/neutral-springtrap.webp"
+    },
+    {
+      "id": "neutral-field-reinforcement",
+      "name": "野战加固",
+      "source": "imagegen",
+      "art": "/cards/neutral-field-reinforcement.webp"
+    },
+    {
+      "id": "neutral-route-ledger",
+      "name": "通途账册",
+      "source": "imagegen",
+      "art": "/cards/neutral-route-ledger.webp"
+    },
+    {
+      "id": "neutral-calibrated-bolt",
+      "name": "校准弩炮",
+      "source": "imagegen",
+      "art": "/cards/neutral-calibrated-bolt.webp"
+    },
+    {
+      "id": "neutral-masterwork-plating",
+      "name": "大师级覆甲",
+      "source": "imagegen",
+      "art": "/cards/neutral-masterwork-plating.webp"
+    },
+    {
+      "id": "neutral-grand-expedition",
+      "name": "远征合金刃",
+      "source": "imagegen",
+      "art": "/cards/neutral-grand-expedition.webp"
+    },
+    {
+      "id": "ember-cinder-scout",
+      "name": "火星斥候",
+      "source": "imagegen",
+      "art": "/cards/ember-cinder-scout.webp"
+    },
+    {
+      "id": "ember-coalfang-pup",
+      "name": "炭牙幼兽",
+      "source": "imagegen",
+      "art": "/cards/ember-coalfang-pup.webp"
+    },
+    {
+      "id": "ember-ash-forager",
+      "name": "灰烬搜寻者",
+      "source": "imagegen",
+      "art": "/cards/ember-ash-forager.webp"
+    },
+    {
+      "id": "ember-blade-acolyte",
+      "name": "炽刃侍从",
+      "source": "imagegen",
+      "art": "/cards/ember-blade-acolyte.webp"
+    },
+    {
+      "id": "ember-charrock-guard",
+      "name": "焦岩卫士",
+      "source": "imagegen",
+      "art": "/cards/ember-charrock-guard.webp"
+    },
+    {
+      "id": "ember-flamespine-vanguard",
+      "name": "焰脊先锋",
+      "source": "imagegen",
+      "art": "/cards/ember-flamespine-vanguard.webp"
+    },
+    {
+      "id": "ember-forge-smith",
+      "name": "熔炉铸师",
+      "source": "imagegen",
+      "art": "/cards/ember-forge-smith.webp"
+    },
+    {
+      "id": "ember-heart-drinker",
+      "name": "焰心汲能者",
+      "source": "imagegen",
+      "art": "/cards/ember-heart-drinker.webp"
+    },
+    {
+      "id": "ember-slag-sentinel",
+      "name": "炉渣哨兵",
+      "source": "imagegen",
+      "art": "/cards/ember-slag-sentinel.webp"
+    },
+    {
+      "id": "ember-crimson-duelist",
+      "name": "赤焰决斗家",
+      "source": "imagegen",
+      "art": "/cards/ember-crimson-duelist.webp"
+    },
+    {
+      "id": "ember-magma-hornbeast",
+      "name": "熔角战兽",
+      "source": "imagegen",
+      "art": "/cards/ember-magma-hornbeast.webp"
+    },
+    {
+      "id": "ember-oath-pyromancer",
+      "name": "焚誓祭司",
+      "source": "imagegen",
+      "art": "/cards/ember-oath-pyromancer.webp"
+    },
+    {
+      "id": "ember-volcanic-ram",
+      "name": "火山冲角兽",
+      "source": "imagegen",
+      "art": "/cards/ember-volcanic-ram.webp"
+    },
+    {
+      "id": "ember-heatbound-colossus",
+      "name": "炽铠巨像",
+      "source": "imagegen",
+      "art": "/cards/ember-heatbound-colossus.webp"
+    },
+    {
+      "id": "ember-ashwing-phoenix",
+      "name": "灰翼不死鸟",
+      "source": "imagegen",
+      "art": "/cards/ember-ashwing-phoenix.webp"
+    },
+    {
+      "id": "ember-war-drummer",
+      "name": "燎原战鼓手",
+      "source": "imagegen",
+      "art": "/cards/ember-war-drummer.webp"
+    },
+    {
+      "id": "ember-scorchland-hydra",
+      "name": "灼地多首兽",
+      "source": "imagegen",
+      "art": "/cards/ember-scorchland-hydra.webp"
+    },
+    {
+      "id": "ember-forgecrown-general",
+      "name": "炉冠统领",
+      "source": "imagegen",
+      "art": "/cards/ember-forgecrown-general.webp"
+    },
+    {
+      "id": "ember-caldera-core",
+      "name": "地心焰核",
+      "source": "imagegen",
+      "art": "/cards/ember-caldera-core.webp"
+    },
+    {
+      "id": "ember-spark-artificer",
+      "name": "余烬工程师",
+      "source": "imagegen",
+      "art": "/cards/ember-spark-artificer.webp"
+    },
+    {
+      "id": "ember-leaping-spark",
+      "name": "跳火",
+      "source": "imagegen",
+      "art": "/cards/ember-leaping-spark.webp"
+    },
+    {
+      "id": "ember-flame-pierce",
+      "name": "烈焰穿刺",
+      "source": "imagegen",
+      "art": "/cards/ember-flame-pierce.webp"
+    },
+    {
+      "id": "ember-ignite-morale",
+      "name": "战意点燃",
+      "source": "imagegen",
+      "art": "/cards/ember-ignite-morale.webp"
+    },
+    {
+      "id": "ember-cinder-dispatch",
+      "name": "余烬急报",
+      "source": "imagegen",
+      "art": "/cards/ember-cinder-dispatch.webp"
+    },
+    {
+      "id": "ember-fireline-lockdown",
+      "name": "火线封锁",
+      "source": "imagegen",
+      "art": "/cards/ember-fireline-lockdown.webp"
+    },
+    {
+      "id": "ember-ash-rekindling",
+      "name": "灰烬再燃",
+      "source": "imagegen",
+      "art": "/cards/ember-ash-rekindling.webp"
+    },
+    {
+      "id": "ember-molten-core-overload",
+      "name": "熔芯过载",
+      "source": "imagegen",
+      "art": "/cards/ember-molten-core-overload.webp"
+    },
+    {
+      "id": "ember-cinder-rain",
+      "name": "烬雨齐射",
+      "source": "imagegen",
+      "art": "/cards/ember-cinder-rain.webp"
+    },
+    {
+      "id": "ember-calamity-verdict",
+      "name": "灾火审判",
+      "source": "imagegen",
+      "art": "/cards/ember-calamity-verdict.webp"
+    },
+    {
+      "id": "ember-red-lotus-finale",
+      "name": "红莲焚刃",
+      "source": "imagegen",
+      "art": "/cards/ember-red-lotus-finale.webp"
+    },
+    {
+      "id": "astral-stardust-familiar",
+      "name": "星尘伴灵",
+      "source": "imagegen",
+      "art": "/cards/astral-stardust-familiar.webp"
+    },
+    {
+      "id": "astral-skychart-apprentice",
+      "name": "天图学徒",
+      "source": "imagegen",
+      "art": "/cards/astral-skychart-apprentice.webp"
+    },
+    {
+      "id": "astral-prism-guard",
+      "name": "棱镜守卫",
+      "source": "imagegen",
+      "art": "/cards/astral-prism-guard.webp"
+    },
+    {
+      "id": "astral-comet-scribe",
+      "name": "彗迹抄录员",
+      "source": "imagegen",
+      "art": "/cards/astral-comet-scribe.webp"
+    },
+    {
+      "id": "astral-orbit-moonhare",
+      "name": "环轨月兔",
+      "source": "imagegen",
+      "art": "/cards/astral-orbit-moonhare.webp"
+    },
+    {
+      "id": "astral-veil-seer",
+      "name": "星幕先知",
+      "source": "imagegen",
+      "art": "/cards/astral-veil-seer.webp"
+    },
+    {
+      "id": "astral-mirror-adept",
+      "name": "镜宙修习者",
+      "source": "imagegen",
+      "art": "/cards/astral-mirror-adept.webp"
+    },
+    {
+      "id": "astral-constellation-gardener",
+      "name": "星座园丁",
+      "source": "imagegen",
+      "art": "/cards/astral-constellation-gardener.webp"
+    },
+    {
+      "id": "astral-nebula-knight",
+      "name": "星云骑士",
+      "source": "imagegen",
+      "art": "/cards/astral-nebula-knight.webp"
+    },
+    {
+      "id": "astral-archive-stargazer",
+      "name": "秘库观星官",
+      "source": "imagegen",
+      "art": "/cards/astral-archive-stargazer.webp"
+    },
+    {
+      "id": "astral-eclipse-stalker",
+      "name": "食影巡猎者",
+      "source": "imagegen",
+      "art": "/cards/astral-eclipse-stalker.webp"
+    },
+    {
+      "id": "astral-prismatic-stag",
+      "name": "棱光星鹿",
+      "source": "imagegen",
+      "art": "/cards/astral-prismatic-stag.webp"
+    },
+    {
+      "id": "astral-comet-rider",
+      "name": "彗星骑手",
+      "source": "imagegen",
+      "art": "/cards/astral-comet-rider.webp"
+    },
+    {
+      "id": "astral-galaxy-weaver",
+      "name": "银河编织者",
+      "source": "imagegen",
+      "art": "/cards/astral-galaxy-weaver.webp"
+    },
+    {
+      "id": "astral-lunar-vessel",
+      "name": "月相载体",
+      "source": "imagegen",
+      "art": "/cards/astral-lunar-vessel.webp"
+    },
+    {
+      "id": "astral-deepspace-oracle",
+      "name": "深空神谕者",
+      "source": "imagegen",
+      "art": "/cards/astral-deepspace-oracle.webp"
+    },
+    {
+      "id": "astral-zenith-dragon",
+      "name": "天顶星龙",
+      "source": "imagegen",
+      "art": "/cards/astral-zenith-dragon.webp"
+    },
+    {
+      "id": "astral-horizon-guardian",
+      "name": "视界守护者",
+      "source": "imagegen",
+      "art": "/cards/astral-horizon-guardian.webp"
+    },
+    {
+      "id": "astral-cosmos-sovereign",
+      "name": "万象星主",
+      "source": "imagegen",
+      "art": "/cards/astral-cosmos-sovereign.webp"
+    },
+    {
+      "id": "astral-infinite-observer",
+      "name": "无垠观测者",
+      "source": "imagegen",
+      "art": "/cards/astral-infinite-observer.webp"
+    },
+    {
+      "id": "astral-glimmer-echo",
+      "name": "微光回响",
+      "source": "imagegen",
+      "art": "/cards/astral-glimmer-echo.webp"
+    },
+    {
+      "id": "astral-chart-revelation",
+      "name": "星图启示",
+      "source": "imagegen",
+      "art": "/cards/astral-chart-revelation.webp"
+    },
+    {
+      "id": "astral-phase-shift",
+      "name": "相位变形",
+      "source": "imagegen",
+      "art": "/cards/astral-phase-shift.webp"
+    },
+    {
+      "id": "astral-gentle-orbit",
+      "name": "温柔轨道",
+      "source": "imagegen",
+      "art": "/cards/astral-gentle-orbit.webp"
+    },
+    {
+      "id": "astral-lucid-script",
+      "name": "清醒星文",
+      "source": "imagegen",
+      "art": "/cards/astral-lucid-script.webp"
+    },
+    {
+      "id": "astral-mirror-lesson",
+      "name": "镜像课程",
+      "source": "imagegen",
+      "art": "/cards/astral-mirror-lesson.webp"
+    },
+    {
+      "id": "astral-constellation-call",
+      "name": "星群呼唤",
+      "source": "imagegen",
+      "art": "/cards/astral-constellation-call.webp"
+    },
+    {
+      "id": "astral-meteor-pin",
+      "name": "流星钉刺",
+      "source": "imagegen",
+      "art": "/cards/astral-meteor-pin.webp"
+    },
+    {
+      "id": "astral-deep-divination",
+      "name": "深空占卜",
+      "source": "imagegen",
+      "art": "/cards/astral-deep-divination.webp"
+    },
+    {
+      "id": "astral-supernova-ripple",
+      "name": "超新星权杖",
+      "source": "imagegen",
+      "art": "/cards/astral-supernova-ripple.webp"
+    },
+    {
+      "id": "verdant-spore-scout",
+      "name": "孢芽斥候",
+      "source": "imagegen",
+      "art": "/cards/verdant-spore-scout.webp"
+    },
+    {
+      "id": "verdant-dewleaf-apprentice",
+      "name": "露叶学徒",
+      "source": "imagegen",
+      "art": "/cards/verdant-dewleaf-apprentice.webp"
+    },
+    {
+      "id": "verdant-mossback-keeper",
+      "name": "苔背守苗人",
+      "source": "imagegen",
+      "art": "/cards/verdant-mossback-keeper.webp"
+    },
+    {
+      "id": "verdant-thornstep-runner",
+      "name": "棘步疾行者",
+      "source": "imagegen",
+      "art": "/cards/verdant-thornstep-runner.webp"
+    },
+    {
+      "id": "verdant-seedsong-sprite",
+      "name": "种歌精灵",
+      "source": "imagegen",
+      "art": "/cards/verdant-seedsong-sprite.webp"
+    },
+    {
+      "id": "verdant-antler-pathfinder",
+      "name": "青角寻径者",
+      "source": "imagegen",
+      "art": "/cards/verdant-antler-pathfinder.webp"
+    },
+    {
+      "id": "verdant-barkshield-sentinel",
+      "name": "树甲哨卫",
+      "source": "imagegen",
+      "art": "/cards/verdant-barkshield-sentinel.webp"
+    },
+    {
+      "id": "verdant-nectar-mender",
+      "name": "蜜露愈师",
+      "source": "imagegen",
+      "art": "/cards/verdant-nectar-mender.webp"
+    },
+    {
+      "id": "verdant-vinewhip-duelist",
+      "name": "藤鞭斗士",
+      "source": "imagegen",
+      "art": "/cards/verdant-vinewhip-duelist.webp"
+    },
+    {
+      "id": "verdant-canopy-archer",
+      "name": "冠层猎弓手",
+      "source": "imagegen",
+      "art": "/cards/verdant-canopy-archer.webp"
+    },
+    {
+      "id": "verdant-rootweave-artisan",
+      "name": "盘根编甲师",
+      "source": "imagegen",
+      "art": "/cards/verdant-rootweave-artisan.webp"
+    },
+    {
+      "id": "verdant-bloom-banner",
+      "name": "繁花执旗者",
+      "source": "imagegen",
+      "art": "/cards/verdant-bloom-banner.webp"
+    },
+    {
+      "id": "verdant-moonfern-stalker",
+      "name": "月蕨追猎者",
+      "source": "imagegen",
+      "art": "/cards/verdant-moonfern-stalker.webp"
+    },
+    {
+      "id": "verdant-grovebond-shaman",
+      "name": "林契萨满",
+      "source": "imagegen",
+      "art": "/cards/verdant-grovebond-shaman.webp"
+    },
+    {
+      "id": "verdant-briarhide-boar",
+      "name": "荆皮战野猪",
+      "source": "imagegen",
+      "art": "/cards/verdant-briarhide-boar.webp"
+    },
+    {
+      "id": "verdant-ancient-bough-guardian",
+      "name": "古枝壁垒",
+      "source": "imagegen",
+      "art": "/cards/verdant-ancient-bough-guardian.webp"
+    },
+    {
+      "id": "verdant-dawnpetal-stag",
+      "name": "曦瓣灵鹿",
+      "source": "imagegen",
+      "art": "/cards/verdant-dawnpetal-stag.webp"
+    },
+    {
+      "id": "verdant-seedvault-engineer",
+      "name": "种库构筑师",
+      "source": "imagegen",
+      "art": "/cards/verdant-seedvault-engineer.webp"
+    },
+    {
+      "id": "verdant-thousandleaf-titan",
+      "name": "千叶巨灵",
+      "source": "imagegen",
+      "art": "/cards/verdant-thousandleaf-titan.webp"
+    },
+    {
+      "id": "verdant-worldroot-matriarch",
+      "name": "世界根母",
+      "source": "imagegen",
+      "art": "/cards/verdant-worldroot-matriarch.webp"
+    },
+    {
+      "id": "verdant-sprout-pact",
+      "name": "萌芽之约",
+      "source": "imagegen",
+      "art": "/cards/verdant-sprout-pact.webp"
+    },
+    {
+      "id": "verdant-morning-dew",
+      "name": "林间晨露",
+      "source": "imagegen",
+      "art": "/cards/verdant-morning-dew.webp"
+    },
+    {
+      "id": "verdant-thorn-lash",
+      "name": "荆藤抽击",
+      "source": "imagegen",
+      "art": "/cards/verdant-thorn-lash.webp"
+    },
+    {
+      "id": "verdant-rooting-rite",
+      "name": "扎根仪式",
+      "source": "imagegen",
+      "art": "/cards/verdant-rooting-rite.webp"
+    },
+    {
+      "id": "verdant-pathfinder-call",
+      "name": "寻径者号角",
+      "source": "imagegen",
+      "art": "/cards/verdant-pathfinder-call.webp"
+    },
+    {
+      "id": "verdant-canopy-ambush",
+      "name": "冠林伏击",
+      "source": "imagegen",
+      "art": "/cards/verdant-canopy-ambush.webp"
+    },
+    {
+      "id": "verdant-seedburst",
+      "name": "种荚迸裂",
+      "source": "imagegen",
+      "art": "/cards/verdant-seedburst.webp"
+    },
+    {
+      "id": "verdant-wild-regrowth",
+      "name": "野性复苏",
+      "source": "imagegen",
+      "art": "/cards/verdant-wild-regrowth.webp"
+    },
+    {
+      "id": "verdant-flourishing-chorus",
+      "name": "繁盛合唱",
+      "source": "imagegen",
+      "art": "/cards/verdant-flourishing-chorus.webp"
+    },
+    {
+      "id": "verdant-all-roots-as-one",
+      "name": "万根藤鞭",
+      "source": "imagegen",
+      "art": "/cards/verdant-all-roots-as-one.webp"
+    },
+    {
+      "id": "storm-spark-mite",
+      "name": "火花螨",
+      "source": "imagegen",
+      "art": "/cards/storm-spark-mite.webp"
+    },
+    {
+      "id": "storm-coppercoil-cadet",
+      "name": "铜线圈新兵",
+      "source": "imagegen",
+      "art": "/cards/storm-coppercoil-cadet.webp"
+    },
+    {
+      "id": "storm-lightning-courier",
+      "name": "闪电信使",
+      "source": "imagegen",
+      "art": "/cards/storm-lightning-courier.webp"
+    },
+    {
+      "id": "storm-capacitor-sentry",
+      "name": "蓄能哨机",
+      "source": "imagegen",
+      "art": "/cards/storm-capacitor-sentry.webp"
+    },
+    {
+      "id": "storm-ironcloud-scavenger",
+      "name": "铁云拾荒客",
+      "source": "imagegen",
+      "art": "/cards/storm-ironcloud-scavenger.webp"
+    },
+    {
+      "id": "storm-voltedge-duelist",
+      "name": "伏刃决斗家",
+      "source": "imagegen",
+      "art": "/cards/storm-voltedge-duelist.webp"
+    },
+    {
+      "id": "storm-relay-shieldguard",
+      "name": "继电盾卫",
+      "source": "imagegen",
+      "art": "/cards/storm-relay-shieldguard.webp"
+    },
+    {
+      "id": "storm-coil-sage",
+      "name": "线圈贤者",
+      "source": "imagegen",
+      "art": "/cards/storm-coil-sage.webp"
+    },
+    {
+      "id": "storm-thundertrack-hound",
+      "name": "逐雷猎犬",
+      "source": "imagegen",
+      "art": "/cards/storm-thundertrack-hound.webp"
+    },
+    {
+      "id": "storm-magnetic-salvager",
+      "name": "磁流回收者",
+      "source": "imagegen",
+      "art": "/cards/storm-magnetic-salvager.webp"
+    },
+    {
+      "id": "storm-forge-armorer",
+      "name": "雷炉铸甲师",
+      "source": "imagegen",
+      "art": "/cards/storm-forge-armorer.webp"
+    },
+    {
+      "id": "storm-arcspark-marksman",
+      "name": "弧光神射手",
+      "source": "imagegen",
+      "art": "/cards/storm-arcspark-marksman.webp"
+    },
+    {
+      "id": "storm-turbine-lancer",
+      "name": "涡轮枪骑",
+      "source": "imagegen",
+      "art": "/cards/storm-turbine-lancer.webp"
+    },
+    {
+      "id": "storm-overcharge-golem",
+      "name": "过载魔像",
+      "source": "imagegen",
+      "art": "/cards/storm-overcharge-golem.webp"
+    },
+    {
+      "id": "storm-cloudbreaker-captain",
+      "name": "破云舰长",
+      "source": "imagegen",
+      "art": "/cards/storm-cloudbreaker-captain.webp"
+    },
+    {
+      "id": "storm-tempest-bulwark",
+      "name": "风暴壁垒机",
+      "source": "imagegen",
+      "art": "/cards/storm-tempest-bulwark.webp"
+    },
+    {
+      "id": "storm-chainbolt-colossus",
+      "name": "链雷巨像",
+      "source": "imagegen",
+      "art": "/cards/storm-chainbolt-colossus.webp"
+    },
+    {
+      "id": "storm-skyrail-ace",
+      "name": "天轨王牌",
+      "source": "imagegen",
+      "art": "/cards/storm-skyrail-ace.webp"
+    },
+    {
+      "id": "storm-living-dynamo",
+      "name": "活体雷轮",
+      "source": "imagegen",
+      "art": "/cards/storm-living-dynamo.webp"
+    },
+    {
+      "id": "storm-skyforge-thunderking",
+      "name": "天铸雷王",
+      "source": "imagegen",
+      "art": "/cards/storm-skyforge-thunderking.webp"
+    },
+    {
+      "id": "storm-static-spark",
+      "name": "游离电火",
+      "source": "imagegen",
+      "art": "/cards/storm-static-spark.webp"
+    },
+    {
+      "id": "storm-bolt-calibration",
+      "name": "雷栓校准",
+      "source": "imagegen",
+      "art": "/cards/storm-bolt-calibration.webp"
+    },
+    {
+      "id": "storm-emergency-plating",
+      "name": "应急镀层",
+      "source": "imagegen",
+      "art": "/cards/storm-emergency-plating.webp"
+    },
+    {
+      "id": "storm-capacitor-draw",
+      "name": "电容抽载",
+      "source": "imagegen",
+      "art": "/cards/storm-capacitor-draw.webp"
+    },
+    {
+      "id": "storm-chain-discharge",
+      "name": "链式放电",
+      "source": "imagegen",
+      "art": "/cards/storm-chain-discharge.webp"
+    },
+    {
+      "id": "storm-forge-temper",
+      "name": "雷炉淬炼",
+      "source": "imagegen",
+      "art": "/cards/storm-forge-temper.webp"
+    },
+    {
+      "id": "storm-drone-deployment",
+      "name": "火花机群",
+      "source": "imagegen",
+      "art": "/cards/storm-drone-deployment.webp"
+    },
+    {
+      "id": "storm-thunder-salvo",
+      "name": "雷云齐射",
+      "source": "imagegen",
+      "art": "/cards/storm-thunder-salvo.webp"
+    },
+    {
+      "id": "storm-overload-reactor",
+      "name": "过载反应炉",
+      "source": "imagegen",
+      "art": "/cards/storm-overload-reactor.webp"
+    },
+    {
+      "id": "storm-ninefold-tempest",
+      "name": "九霄雷锤",
+      "source": "imagegen",
+      "art": "/cards/storm-ninefold-tempest.webp"
+    },
+    {
+      "id": "sun-season-01",
+      "name": "晨辉斥候·01",
+      "source": "imagegen",
+      "art": "/cards/sun-season-01.webp"
+    },
+    {
+      "id": "sun-season-02",
+      "name": "棱镜守望者·02",
+      "source": "imagegen",
+      "art": "/cards/sun-season-02.webp"
+    },
+    {
+      "id": "sun-season-03",
+      "name": "白昼旗手·03",
+      "source": "imagegen",
+      "art": "/cards/sun-season-03.webp"
+    },
+    {
+      "id": "sun-season-04",
+      "name": "曙冠铸师·04",
+      "source": "imagegen",
+      "art": "/cards/sun-season-04.webp"
+    },
+    {
+      "id": "sun-season-05",
+      "name": "晨辉斥候·05",
+      "source": "imagegen",
+      "art": "/cards/sun-season-05.webp"
+    },
+    {
+      "id": "sun-season-06",
+      "name": "棱镜守望者·06",
+      "source": "imagegen",
+      "art": "/cards/sun-season-06.webp"
+    },
+    {
+      "id": "sun-season-07",
+      "name": "白昼旗手·07",
+      "source": "imagegen",
+      "art": "/cards/sun-season-07.webp"
+    },
+    {
+      "id": "sun-season-08",
+      "name": "曙冠铸师·08",
+      "source": "imagegen",
+      "art": "/cards/sun-season-08.webp"
+    },
+    {
+      "id": "sun-season-09",
+      "name": "晨辉斥候·09",
+      "source": "imagegen",
+      "art": "/cards/sun-season-09.webp"
+    },
+    {
+      "id": "sun-season-10",
+      "name": "棱镜守望者·10",
+      "source": "imagegen",
+      "art": "/cards/sun-season-10.webp"
+    },
+    {
+      "id": "sun-season-11",
+      "name": "白昼旗手·11",
+      "source": "imagegen",
+      "art": "/cards/sun-season-11.webp"
+    },
+    {
+      "id": "sun-season-12",
+      "name": "曙冠铸师·12",
+      "source": "imagegen",
+      "art": "/cards/sun-season-12.webp"
+    },
+    {
+      "id": "sun-season-13",
+      "name": "晨辉斥候·13",
+      "source": "imagegen",
+      "art": "/cards/sun-season-13.webp"
+    },
+    {
+      "id": "sun-season-14",
+      "name": "棱镜守望者·14",
+      "source": "imagegen",
+      "art": "/cards/sun-season-14.webp"
+    },
+    {
+      "id": "sun-season-15",
+      "name": "白昼旗手·15",
+      "source": "imagegen",
+      "art": "/cards/sun-season-15.webp"
+    },
+    {
+      "id": "sun-season-spell-01",
+      "name": "棱镜灼流·01",
+      "source": "imagegen",
+      "art": "/cards/sun-season-spell-01.webp"
+    },
+    {
+      "id": "sun-season-spell-02",
+      "name": "白昼回响·02",
+      "source": "imagegen",
+      "art": "/cards/sun-season-spell-02.webp"
+    },
+    {
+      "id": "sun-season-spell-03",
+      "name": "曙冠复苏·03",
+      "source": "imagegen",
+      "art": "/cards/sun-season-spell-03.webp"
+    },
+    {
+      "id": "sun-season-spell-04",
+      "name": "晨辉战令·04",
+      "source": "imagegen",
+      "art": "/cards/sun-season-spell-04.webp"
+    },
+    {
+      "id": "sun-season-spell-05",
+      "name": "棱镜风暴·05",
+      "source": "imagegen",
+      "art": "/cards/sun-season-spell-05.webp"
+    },
+    {
+      "id": "void-season-01",
+      "name": "深潮潜行者·01",
+      "source": "imagegen",
+      "art": "/cards/void-season-01.webp"
+    },
+    {
+      "id": "void-season-02",
+      "name": "雾汐引潮者·02",
+      "source": "imagegen",
+      "art": "/cards/void-season-02.webp"
+    },
+    {
+      "id": "void-season-03",
+      "name": "夜鳍掠夺者·03",
+      "source": "imagegen",
+      "art": "/cards/void-season-03.webp"
+    },
+    {
+      "id": "void-season-04",
+      "name": "沉湾祭司·04",
+      "source": "imagegen",
+      "art": "/cards/void-season-04.webp"
+    },
+    {
+      "id": "void-season-05",
+      "name": "深潮潜行者·05",
+      "source": "imagegen",
+      "art": "/cards/void-season-05.webp"
+    },
+    {
+      "id": "void-season-06",
+      "name": "雾汐引潮者·06",
+      "source": "imagegen",
+      "art": "/cards/void-season-06.webp"
+    },
+    {
+      "id": "void-season-07",
+      "name": "夜鳍掠夺者·07",
+      "source": "imagegen",
+      "art": "/cards/void-season-07.webp"
+    },
+    {
+      "id": "void-season-08",
+      "name": "沉湾祭司·08",
+      "source": "imagegen",
+      "art": "/cards/void-season-08.webp"
+    },
+    {
+      "id": "void-season-09",
+      "name": "深潮潜行者·09",
+      "source": "imagegen",
+      "art": "/cards/void-season-09.webp"
+    },
+    {
+      "id": "void-season-10",
+      "name": "雾汐引潮者·10",
+      "source": "imagegen",
+      "art": "/cards/void-season-10.webp"
+    },
+    {
+      "id": "void-season-11",
+      "name": "夜鳍掠夺者·11",
+      "source": "imagegen",
+      "art": "/cards/void-season-11.webp"
+    },
+    {
+      "id": "void-season-12",
+      "name": "沉湾祭司·12",
+      "source": "imagegen",
+      "art": "/cards/void-season-12.webp"
+    },
+    {
+      "id": "void-season-13",
+      "name": "深潮潜行者·13",
+      "source": "imagegen",
+      "art": "/cards/void-season-13.webp"
+    },
+    {
+      "id": "void-season-14",
+      "name": "雾汐引潮者·14",
+      "source": "imagegen",
+      "art": "/cards/void-season-14.webp"
+    },
+    {
+      "id": "void-season-15",
+      "name": "夜鳍掠夺者·15",
+      "source": "imagegen",
+      "art": "/cards/void-season-15.webp"
+    },
+    {
+      "id": "void-season-spell-01",
+      "name": "雾汐灼流·01",
+      "source": "imagegen",
+      "art": "/cards/void-season-spell-01.webp"
+    },
+    {
+      "id": "void-season-spell-02",
+      "name": "夜鳍回响·02",
+      "source": "imagegen",
+      "art": "/cards/void-season-spell-02.webp"
+    },
+    {
+      "id": "void-season-spell-03",
+      "name": "沉湾复苏·03",
+      "source": "imagegen",
+      "art": "/cards/void-season-spell-03.webp"
+    },
+    {
+      "id": "void-season-spell-04",
+      "name": "深潮战令·04",
+      "source": "imagegen",
+      "art": "/cards/void-season-spell-04.webp"
+    },
+    {
+      "id": "void-season-spell-05",
+      "name": "雾汐风暴·05",
+      "source": "imagegen",
+      "art": "/cards/void-season-spell-05.webp"
+    },
+    {
+      "id": "neutral-season-01",
+      "name": "远途旅者·01",
+      "source": "imagegen",
+      "art": "/cards/neutral-season-01.webp"
+    },
+    {
+      "id": "neutral-season-02",
+      "name": "齿轮工匠·02",
+      "source": "imagegen",
+      "art": "/cards/neutral-season-02.webp"
+    },
+    {
+      "id": "neutral-season-03",
+      "name": "商路护卫·03",
+      "source": "imagegen",
+      "art": "/cards/neutral-season-03.webp"
+    },
+    {
+      "id": "neutral-season-04",
+      "name": "荒原策士·04",
+      "source": "imagegen",
+      "art": "/cards/neutral-season-04.webp"
+    },
+    {
+      "id": "neutral-season-05",
+      "name": "远途旅者·05",
+      "source": "imagegen",
+      "art": "/cards/neutral-season-05.webp"
+    },
+    {
+      "id": "neutral-season-06",
+      "name": "齿轮工匠·06",
+      "source": "imagegen",
+      "art": "/cards/neutral-season-06.webp"
+    },
+    {
+      "id": "neutral-season-07",
+      "name": "商路护卫·07",
+      "source": "imagegen",
+      "art": "/cards/neutral-season-07.webp"
+    },
+    {
+      "id": "neutral-season-08",
+      "name": "荒原策士·08",
+      "source": "imagegen",
+      "art": "/cards/neutral-season-08.webp"
+    },
+    {
+      "id": "neutral-season-09",
+      "name": "远途旅者·09",
+      "source": "imagegen",
+      "art": "/cards/neutral-season-09.webp"
+    },
+    {
+      "id": "neutral-season-10",
+      "name": "齿轮工匠·10",
+      "source": "imagegen",
+      "art": "/cards/neutral-season-10.webp"
+    },
+    {
+      "id": "neutral-season-11",
+      "name": "商路护卫·11",
+      "source": "imagegen",
+      "art": "/cards/neutral-season-11.webp"
+    },
+    {
+      "id": "neutral-season-12",
+      "name": "荒原策士·12",
+      "source": "imagegen",
+      "art": "/cards/neutral-season-12.webp"
+    },
+    {
+      "id": "neutral-season-13",
+      "name": "远途旅者·13",
+      "source": "imagegen",
+      "art": "/cards/neutral-season-13.webp"
+    },
+    {
+      "id": "neutral-season-14",
+      "name": "齿轮工匠·14",
+      "source": "imagegen",
+      "art": "/cards/neutral-season-14.webp"
+    },
+    {
+      "id": "neutral-season-15",
+      "name": "商路护卫·15",
+      "source": "imagegen",
+      "art": "/cards/neutral-season-15.webp"
+    },
+    {
+      "id": "neutral-season-spell-01",
+      "name": "齿轮灼流·01",
+      "source": "imagegen",
+      "art": "/cards/neutral-season-spell-01.webp"
+    },
+    {
+      "id": "neutral-season-spell-02",
+      "name": "商路回响·02",
+      "source": "imagegen",
+      "art": "/cards/neutral-season-spell-02.webp"
+    },
+    {
+      "id": "neutral-season-spell-03",
+      "name": "荒原复苏·03",
+      "source": "imagegen",
+      "art": "/cards/neutral-season-spell-03.webp"
+    },
+    {
+      "id": "neutral-season-spell-04",
+      "name": "远途战令·04",
+      "source": "imagegen",
+      "art": "/cards/neutral-season-spell-04.webp"
+    },
+    {
+      "id": "neutral-season-spell-05",
+      "name": "齿轮风暴·05",
+      "source": "imagegen",
+      "art": "/cards/neutral-season-spell-05.webp"
+    },
+    {
+      "id": "ember-season-01",
+      "name": "熔火先锋·01",
+      "source": "imagegen",
+      "art": "/cards/ember-season-01.webp"
+    },
+    {
+      "id": "ember-season-02",
+      "name": "赤焰决斗家·02",
+      "source": "imagegen",
+      "art": "/cards/ember-season-02.webp"
+    },
+    {
+      "id": "ember-season-03",
+      "name": "焦岩祭司·03",
+      "source": "imagegen",
+      "art": "/cards/ember-season-03.webp"
+    },
+    {
+      "id": "ember-season-04",
+      "name": "灰烬战兽·04",
+      "source": "imagegen",
+      "art": "/cards/ember-season-04.webp"
+    },
+    {
+      "id": "ember-season-05",
+      "name": "熔火先锋·05",
+      "source": "imagegen",
+      "art": "/cards/ember-season-05.webp"
+    },
+    {
+      "id": "ember-season-06",
+      "name": "赤焰决斗家·06",
+      "source": "imagegen",
+      "art": "/cards/ember-season-06.webp"
+    },
+    {
+      "id": "ember-season-07",
+      "name": "焦岩祭司·07",
+      "source": "imagegen",
+      "art": "/cards/ember-season-07.webp"
+    },
+    {
+      "id": "ember-season-08",
+      "name": "灰烬战兽·08",
+      "source": "imagegen",
+      "art": "/cards/ember-season-08.webp"
+    },
+    {
+      "id": "ember-season-09",
+      "name": "熔火先锋·09",
+      "source": "imagegen",
+      "art": "/cards/ember-season-09.webp"
+    },
+    {
+      "id": "ember-season-10",
+      "name": "赤焰决斗家·10",
+      "source": "imagegen",
+      "art": "/cards/ember-season-10.webp"
+    },
+    {
+      "id": "ember-season-11",
+      "name": "焦岩祭司·11",
+      "source": "imagegen",
+      "art": "/cards/ember-season-11.webp"
+    },
+    {
+      "id": "ember-season-12",
+      "name": "灰烬战兽·12",
+      "source": "imagegen",
+      "art": "/cards/ember-season-12.webp"
+    },
+    {
+      "id": "ember-season-13",
+      "name": "熔火先锋·13",
+      "source": "imagegen",
+      "art": "/cards/ember-season-13.webp"
+    },
+    {
+      "id": "ember-season-14",
+      "name": "赤焰决斗家·14",
+      "source": "imagegen",
+      "art": "/cards/ember-season-14.webp"
+    },
+    {
+      "id": "ember-season-15",
+      "name": "焦岩祭司·15",
+      "source": "imagegen",
+      "art": "/cards/ember-season-15.webp"
+    },
+    {
+      "id": "ember-season-spell-01",
+      "name": "赤焰灼流·01",
+      "source": "imagegen",
+      "art": "/cards/ember-season-spell-01.webp"
+    },
+    {
+      "id": "ember-season-spell-02",
+      "name": "焦岩回响·02",
+      "source": "imagegen",
+      "art": "/cards/ember-season-spell-02.webp"
+    },
+    {
+      "id": "ember-season-spell-03",
+      "name": "灰烬复苏·03",
+      "source": "imagegen",
+      "art": "/cards/ember-season-spell-03.webp"
+    },
+    {
+      "id": "ember-season-spell-04",
+      "name": "熔火战令·04",
+      "source": "imagegen",
+      "art": "/cards/ember-season-spell-04.webp"
+    },
+    {
+      "id": "ember-season-spell-05",
+      "name": "赤焰风暴·05",
+      "source": "imagegen",
+      "art": "/cards/ember-season-spell-05.webp"
+    },
+    {
+      "id": "astral-season-01",
+      "name": "星穹观测者·01",
+      "source": "imagegen",
+      "art": "/cards/astral-season-01.webp"
+    },
+    {
+      "id": "astral-season-02",
+      "name": "彗尾织星师·02",
+      "source": "imagegen",
+      "art": "/cards/astral-season-02.webp"
+    },
+    {
+      "id": "astral-season-03",
+      "name": "星图守门人·03",
+      "source": "imagegen",
+      "art": "/cards/astral-season-03.webp"
+    },
+    {
+      "id": "astral-season-04",
+      "name": "天琴秘契者·04",
+      "source": "imagegen",
+      "art": "/cards/astral-season-04.webp"
+    },
+    {
+      "id": "astral-season-05",
+      "name": "星穹观测者·05",
+      "source": "imagegen",
+      "art": "/cards/astral-season-05.webp"
+    },
+    {
+      "id": "astral-season-06",
+      "name": "彗尾织星师·06",
+      "source": "imagegen",
+      "art": "/cards/astral-season-06.webp"
+    },
+    {
+      "id": "astral-season-07",
+      "name": "星图守门人·07",
+      "source": "imagegen",
+      "art": "/cards/astral-season-07.webp"
+    },
+    {
+      "id": "astral-season-08",
+      "name": "天琴秘契者·08",
+      "source": "imagegen",
+      "art": "/cards/astral-season-08.webp"
+    },
+    {
+      "id": "astral-season-09",
+      "name": "星穹观测者·09",
+      "source": "imagegen",
+      "art": "/cards/astral-season-09.webp"
+    },
+    {
+      "id": "astral-season-10",
+      "name": "彗尾织星师·10",
+      "source": "imagegen",
+      "art": "/cards/astral-season-10.webp"
+    },
+    {
+      "id": "astral-season-11",
+      "name": "星图守门人·11",
+      "source": "imagegen",
+      "art": "/cards/astral-season-11.webp"
+    },
+    {
+      "id": "astral-season-12",
+      "name": "天琴秘契者·12",
+      "source": "imagegen",
+      "art": "/cards/astral-season-12.webp"
+    },
+    {
+      "id": "astral-season-13",
+      "name": "星穹观测者·13",
+      "source": "imagegen",
+      "art": "/cards/astral-season-13.webp"
+    },
+    {
+      "id": "astral-season-14",
+      "name": "彗尾织星师·14",
+      "source": "imagegen",
+      "art": "/cards/astral-season-14.webp"
+    },
+    {
+      "id": "astral-season-15",
+      "name": "星图守门人·15",
+      "source": "imagegen",
+      "art": "/cards/astral-season-15.webp"
+    },
+    {
+      "id": "astral-season-spell-01",
+      "name": "彗尾灼流·01",
+      "source": "imagegen",
+      "art": "/cards/astral-season-spell-01.webp"
+    },
+    {
+      "id": "astral-season-spell-02",
+      "name": "星图回响·02",
+      "source": "imagegen",
+      "art": "/cards/astral-season-spell-02.webp"
+    },
+    {
+      "id": "astral-season-spell-03",
+      "name": "天琴复苏·03",
+      "source": "imagegen",
+      "art": "/cards/astral-season-spell-03.webp"
+    },
+    {
+      "id": "astral-season-spell-04",
+      "name": "星穹战令·04",
+      "source": "imagegen",
+      "art": "/cards/astral-season-spell-04.webp"
+    },
+    {
+      "id": "astral-season-spell-05",
+      "name": "彗尾风暴·05",
+      "source": "imagegen",
+      "art": "/cards/astral-season-spell-05.webp"
+    },
+    {
+      "id": "verdant-season-01",
+      "name": "根须守林人·01",
+      "source": "imagegen",
+      "art": "/cards/verdant-season-01.webp"
+    },
+    {
+      "id": "verdant-season-02",
+      "name": "苔径猎手·02",
+      "source": "imagegen",
+      "art": "/cards/verdant-season-02.webp"
+    },
+    {
+      "id": "verdant-season-03",
+      "name": "月蕨shaman·03",
+      "source": "imagegen",
+      "art": "/cards/verdant-season-03.webp"
+    },
+    {
+      "id": "verdant-season-04",
+      "name": "世界根护根者·04",
+      "source": "imagegen",
+      "art": "/cards/verdant-season-04.webp"
+    },
+    {
+      "id": "verdant-season-05",
+      "name": "根须守林人·05",
+      "source": "imagegen",
+      "art": "/cards/verdant-season-05.webp"
+    },
+    {
+      "id": "verdant-season-06",
+      "name": "苔径猎手·06",
+      "source": "imagegen",
+      "art": "/cards/verdant-season-06.webp"
+    },
+    {
+      "id": "verdant-season-07",
+      "name": "月蕨shaman·07",
+      "source": "imagegen",
+      "art": "/cards/verdant-season-07.webp"
+    },
+    {
+      "id": "verdant-season-08",
+      "name": "世界根护根者·08",
+      "source": "imagegen",
+      "art": "/cards/verdant-season-08.webp"
+    },
+    {
+      "id": "verdant-season-09",
+      "name": "根须守林人·09",
+      "source": "imagegen",
+      "art": "/cards/verdant-season-09.webp"
+    },
+    {
+      "id": "verdant-season-10",
+      "name": "苔径猎手·10",
+      "source": "imagegen",
+      "art": "/cards/verdant-season-10.webp"
+    },
+    {
+      "id": "verdant-season-11",
+      "name": "月蕨shaman·11",
+      "source": "imagegen",
+      "art": "/cards/verdant-season-11.webp"
+    },
+    {
+      "id": "verdant-season-12",
+      "name": "世界根护根者·12",
+      "source": "imagegen",
+      "art": "/cards/verdant-season-12.webp"
+    },
+    {
+      "id": "verdant-season-13",
+      "name": "根须守林人·13",
+      "source": "imagegen",
+      "art": "/cards/verdant-season-13.webp"
+    },
+    {
+      "id": "verdant-season-14",
+      "name": "苔径猎手·14",
+      "source": "imagegen",
+      "art": "/cards/verdant-season-14.webp"
+    },
+    {
+      "id": "verdant-season-15",
+      "name": "月蕨shaman·15",
+      "source": "imagegen",
+      "art": "/cards/verdant-season-15.webp"
+    },
+    {
+      "id": "verdant-season-spell-01",
+      "name": "苔径灼流·01",
+      "source": "imagegen",
+      "art": "/cards/verdant-season-spell-01.webp"
+    },
+    {
+      "id": "verdant-season-spell-02",
+      "name": "月蕨回响·02",
+      "source": "imagegen",
+      "art": "/cards/verdant-season-spell-02.webp"
+    },
+    {
+      "id": "verdant-season-spell-03",
+      "name": "世界根复苏·03",
+      "source": "imagegen",
+      "art": "/cards/verdant-season-spell-03.webp"
+    },
+    {
+      "id": "verdant-season-spell-04",
+      "name": "根须战令·04",
+      "source": "imagegen",
+      "art": "/cards/verdant-season-spell-04.webp"
+    },
+    {
+      "id": "verdant-season-spell-05",
+      "name": "苔径风暴·05",
+      "source": "imagegen",
+      "art": "/cards/verdant-season-spell-05.webp"
+    },
+    {
+      "id": "storm-season-01",
+      "name": "雷铸炮台·01",
+      "source": "imagegen",
+      "art": "/cards/storm-season-01.webp"
+    },
+    {
+      "id": "storm-season-02",
+      "name": "电弧信使·02",
+      "source": "imagegen",
+      "art": "/cards/storm-season-02.webp"
+    },
+    {
+      "id": "storm-season-03",
+      "name": "铜轨机师·03",
+      "source": "imagegen",
+      "art": "/cards/storm-season-03.webp"
+    },
+    {
+      "id": "storm-season-04",
+      "name": "风暴雷王·04",
+      "source": "imagegen",
+      "art": "/cards/storm-season-04.webp"
+    },
+    {
+      "id": "storm-season-05",
+      "name": "雷铸炮台·05",
+      "source": "imagegen",
+      "art": "/cards/storm-season-05.webp"
+    },
+    {
+      "id": "storm-season-06",
+      "name": "电弧信使·06",
+      "source": "imagegen",
+      "art": "/cards/storm-season-06.webp"
+    },
+    {
+      "id": "storm-season-07",
+      "name": "铜轨机师·07",
+      "source": "imagegen",
+      "art": "/cards/storm-season-07.webp"
+    },
+    {
+      "id": "storm-season-08",
+      "name": "风暴雷王·08",
+      "source": "imagegen",
+      "art": "/cards/storm-season-08.webp"
+    },
+    {
+      "id": "storm-season-09",
+      "name": "雷铸炮台·09",
+      "source": "imagegen",
+      "art": "/cards/storm-season-09.webp"
+    },
+    {
+      "id": "storm-season-10",
+      "name": "电弧信使·10",
+      "source": "imagegen",
+      "art": "/cards/storm-season-10.webp"
+    },
+    {
+      "id": "storm-season-11",
+      "name": "铜轨机师·11",
+      "source": "imagegen",
+      "art": "/cards/storm-season-11.webp"
+    },
+    {
+      "id": "storm-season-12",
+      "name": "风暴雷王·12",
+      "source": "imagegen",
+      "art": "/cards/storm-season-12.webp"
+    },
+    {
+      "id": "storm-season-13",
+      "name": "雷铸炮台·13",
+      "source": "imagegen",
+      "art": "/cards/storm-season-13.webp"
+    },
+    {
+      "id": "storm-season-14",
+      "name": "电弧信使·14",
+      "source": "imagegen",
+      "art": "/cards/storm-season-14.webp"
+    },
+    {
+      "id": "storm-season-15",
+      "name": "铜轨机师·15",
+      "source": "imagegen",
+      "art": "/cards/storm-season-15.webp"
+    },
+    {
+      "id": "storm-season-spell-01",
+      "name": "电弧灼流·01",
+      "source": "imagegen",
+      "art": "/cards/storm-season-spell-01.webp"
+    },
+    {
+      "id": "storm-season-spell-02",
+      "name": "铜轨回响·02",
+      "source": "imagegen",
+      "art": "/cards/storm-season-spell-02.webp"
+    },
+    {
+      "id": "storm-season-spell-03",
+      "name": "风暴复苏·03",
+      "source": "imagegen",
+      "art": "/cards/storm-season-spell-03.webp"
+    },
+    {
+      "id": "storm-season-spell-04",
+      "name": "雷铸战令·04",
+      "source": "imagegen",
+      "art": "/cards/storm-season-spell-04.webp"
+    },
+    {
+      "id": "storm-season-spell-05",
+      "name": "电弧风暴·05",
+      "source": "imagegen",
+      "art": "/cards/storm-season-spell-05.webp"
+    },
+    {
+      "id": "frost-season-01",
+      "name": "霜境冰卫·01",
+      "source": "imagegen",
+      "art": "/cards/frost-season-01.webp"
+    },
+    {
+      "id": "frost-season-02",
+      "name": "冰冠冻原猎手·02",
+      "source": "imagegen",
+      "art": "/cards/frost-season-02.webp"
+    },
+    {
+      "id": "frost-season-03",
+      "name": "雪脉晶龙·03",
+      "source": "imagegen",
+      "art": "/cards/frost-season-03.webp"
+    },
+    {
+      "id": "frost-season-04",
+      "name": "寒星观测者·04",
+      "source": "imagegen",
+      "art": "/cards/frost-season-04.webp"
+    },
+    {
+      "id": "frost-season-05",
+      "name": "霜境冰卫·05",
+      "source": "imagegen",
+      "art": "/cards/frost-season-05.webp"
+    },
+    {
+      "id": "frost-season-06",
+      "name": "冰冠冻原猎手·06",
+      "source": "imagegen",
+      "art": "/cards/frost-season-06.webp"
+    },
+    {
+      "id": "frost-season-07",
+      "name": "雪脉晶龙·07",
+      "source": "imagegen",
+      "art": "/cards/frost-season-07.webp"
+    },
+    {
+      "id": "frost-season-08",
+      "name": "寒星观测者·08",
+      "source": "imagegen",
+      "art": "/cards/frost-season-08.webp"
+    },
+    {
+      "id": "frost-season-09",
+      "name": "霜境冰卫·09",
+      "source": "imagegen",
+      "art": "/cards/frost-season-09.webp"
+    },
+    {
+      "id": "frost-season-10",
+      "name": "冰冠冻原猎手·10",
+      "source": "imagegen",
+      "art": "/cards/frost-season-10.webp"
+    },
+    {
+      "id": "frost-season-11",
+      "name": "雪脉晶龙·11",
+      "source": "imagegen",
+      "art": "/cards/frost-season-11.webp"
+    },
+    {
+      "id": "frost-season-12",
+      "name": "寒星观测者·12",
+      "source": "imagegen",
+      "art": "/cards/frost-season-12.webp"
+    },
+    {
+      "id": "frost-season-13",
+      "name": "霜境冰卫·13",
+      "source": "imagegen",
+      "art": "/cards/frost-season-13.webp"
+    },
+    {
+      "id": "frost-season-14",
+      "name": "冰冠冻原猎手·14",
+      "source": "imagegen",
+      "art": "/cards/frost-season-14.webp"
+    },
+    {
+      "id": "frost-season-15",
+      "name": "雪脉晶龙·15",
+      "source": "imagegen",
+      "art": "/cards/frost-season-15.webp"
+    },
+    {
+      "id": "frost-season-16",
+      "name": "寒星观测者·16",
+      "source": "imagegen",
+      "art": "/cards/frost-season-16.webp"
+    },
+    {
+      "id": "frost-season-17",
+      "name": "霜境冰卫·17",
+      "source": "imagegen",
+      "art": "/cards/frost-season-17.webp"
+    },
+    {
+      "id": "frost-season-18",
+      "name": "冰冠冻原猎手·18",
+      "source": "imagegen",
+      "art": "/cards/frost-season-18.webp"
+    },
+    {
+      "id": "frost-season-19",
+      "name": "雪脉晶龙·19",
+      "source": "imagegen",
+      "art": "/cards/frost-season-19.webp"
+    },
+    {
+      "id": "frost-season-20",
+      "name": "寒星观测者·20",
+      "source": "imagegen",
+      "art": "/cards/frost-season-20.webp"
+    },
+    {
+      "id": "frost-season-21",
+      "name": "霜境冰卫·21",
+      "source": "imagegen",
+      "art": "/cards/frost-season-21.webp"
+    },
+    {
+      "id": "frost-season-22",
+      "name": "冰冠冻原猎手·22",
+      "source": "imagegen",
+      "art": "/cards/frost-season-22.webp"
+    },
+    {
+      "id": "frost-season-23",
+      "name": "雪脉晶龙·23",
+      "source": "imagegen",
+      "art": "/cards/frost-season-23.webp"
+    },
+    {
+      "id": "frost-season-24",
+      "name": "寒星观测者·24",
+      "source": "imagegen",
+      "art": "/cards/frost-season-24.webp"
+    },
+    {
+      "id": "frost-season-25",
+      "name": "霜境冰卫·25",
+      "source": "imagegen",
+      "art": "/cards/frost-season-25.webp"
+    },
+    {
+      "id": "frost-season-26",
+      "name": "冰冠冻原猎手·26",
+      "source": "imagegen",
+      "art": "/cards/frost-season-26.webp"
+    },
+    {
+      "id": "frost-season-27",
+      "name": "雪脉晶龙·27",
+      "source": "imagegen",
+      "art": "/cards/frost-season-27.webp"
+    },
+    {
+      "id": "frost-season-28",
+      "name": "寒星观测者·28",
+      "source": "imagegen",
+      "art": "/cards/frost-season-28.webp"
+    },
+    {
+      "id": "frost-season-29",
+      "name": "霜境冰卫·29",
+      "source": "imagegen",
+      "art": "/cards/frost-season-29.webp"
+    },
+    {
+      "id": "frost-season-30",
+      "name": "冰冠冻原猎手·30",
+      "source": "imagegen",
+      "art": "/cards/frost-season-30.webp"
+    },
+    {
+      "id": "frost-season-31",
+      "name": "雪脉晶龙·31",
+      "source": "imagegen",
+      "art": "/cards/frost-season-31.webp"
+    },
+    {
+      "id": "frost-season-32",
+      "name": "寒星观测者·32",
+      "source": "imagegen",
+      "art": "/cards/frost-season-32.webp"
+    },
+    {
+      "id": "frost-season-33",
+      "name": "霜境冰卫·33",
+      "source": "imagegen",
+      "art": "/cards/frost-season-33.webp"
+    },
+    {
+      "id": "frost-season-34",
+      "name": "冰冠冻原猎手·34",
+      "source": "imagegen",
+      "art": "/cards/frost-season-34.webp"
+    },
+    {
+      "id": "frost-season-35",
+      "name": "雪脉晶龙·35",
+      "source": "imagegen",
+      "art": "/cards/frost-season-35.webp"
+    },
+    {
+      "id": "frost-season-spell-01",
+      "name": "冰冠灼流·01",
+      "source": "imagegen",
+      "art": "/cards/frost-season-spell-01.webp"
+    },
+    {
+      "id": "frost-season-spell-02",
+      "name": "雪脉回响·02",
+      "source": "imagegen",
+      "art": "/cards/frost-season-spell-02.webp"
+    },
+    {
+      "id": "frost-season-spell-03",
+      "name": "寒星复苏·03",
+      "source": "imagegen",
+      "art": "/cards/frost-season-spell-03.webp"
+    },
+    {
+      "id": "frost-season-spell-04",
+      "name": "霜境战令·04",
+      "source": "imagegen",
+      "art": "/cards/frost-season-spell-04.webp"
+    },
+    {
+      "id": "frost-season-spell-05",
+      "name": "冰冠风暴·05",
+      "source": "imagegen",
+      "art": "/cards/frost-season-spell-05.webp"
+    },
+    {
+      "id": "frost-season-spell-06",
+      "name": "雪脉发现·06",
+      "source": "imagegen",
+      "art": "/cards/frost-season-spell-06.webp"
+    },
+    {
+      "id": "frost-season-spell-07",
+      "name": "寒星灼流·07",
+      "source": "imagegen",
+      "art": "/cards/frost-season-spell-07.webp"
+    },
+    {
+      "id": "frost-season-spell-08",
+      "name": "霜境回响·08",
+      "source": "imagegen",
+      "art": "/cards/frost-season-spell-08.webp"
+    },
+    {
+      "id": "frost-season-spell-09",
+      "name": "冰冠复苏·09",
+      "source": "imagegen",
+      "art": "/cards/frost-season-spell-09.webp"
+    },
+    {
+      "id": "frost-season-spell-10",
+      "name": "雪脉战令·10",
+      "source": "imagegen",
+      "art": "/cards/frost-season-spell-10.webp"
+    },
+    {
+      "id": "frost-season-spell-11",
+      "name": "寒星风暴·11",
+      "source": "imagegen",
+      "art": "/cards/frost-season-spell-11.webp"
+    },
+    {
+      "id": "frost-season-spell-12",
+      "name": "霜境发现·12",
+      "source": "imagegen",
+      "art": "/cards/frost-season-spell-12.webp"
+    },
+    {
+      "id": "frost-season-spell-13",
+      "name": "冰冠灼流·13",
+      "source": "imagegen",
+      "art": "/cards/frost-season-spell-13.webp"
+    },
+    {
+      "id": "frost-season-spell-14",
+      "name": "雪脉回响·14",
+      "source": "imagegen",
+      "art": "/cards/frost-season-spell-14.webp"
+    },
+    {
+      "id": "frost-season-weapon",
+      "name": "霜境·核心武装",
+      "source": "imagegen",
+      "art": "/cards/frost-season-weapon.webp"
+    },
+    {
+      "id": "sand-season-01",
+      "name": "砂海游侠·01",
+      "source": "imagegen",
+      "art": "/cards/sand-season-01.webp"
+    },
+    {
+      "id": "sand-season-02",
+      "name": "风蚀商队长·02",
+      "source": "imagegen",
+      "art": "/cards/sand-season-02.webp"
+    },
+    {
+      "id": "sand-season-03",
+      "name": "黄昏掘金者·03",
+      "source": "imagegen",
+      "art": "/cards/sand-season-03.webp"
+    },
+    {
+      "id": "sand-season-04",
+      "name": "沙舟风暴使·04",
+      "source": "imagegen",
+      "art": "/cards/sand-season-04.webp"
+    },
+    {
+      "id": "sand-season-05",
+      "name": "砂海游侠·05",
+      "source": "imagegen",
+      "art": "/cards/sand-season-05.webp"
+    },
+    {
+      "id": "sand-season-06",
+      "name": "风蚀商队长·06",
+      "source": "imagegen",
+      "art": "/cards/sand-season-06.webp"
+    },
+    {
+      "id": "sand-season-07",
+      "name": "黄昏掘金者·07",
+      "source": "imagegen",
+      "art": "/cards/sand-season-07.webp"
+    },
+    {
+      "id": "sand-season-08",
+      "name": "沙舟风暴使·08",
+      "source": "imagegen",
+      "art": "/cards/sand-season-08.webp"
+    },
+    {
+      "id": "sand-season-09",
+      "name": "砂海游侠·09",
+      "source": "imagegen",
+      "art": "/cards/sand-season-09.webp"
+    },
+    {
+      "id": "sand-season-10",
+      "name": "风蚀商队长·10",
+      "source": "imagegen",
+      "art": "/cards/sand-season-10.webp"
+    },
+    {
+      "id": "sand-season-11",
+      "name": "黄昏掘金者·11",
+      "source": "imagegen",
+      "art": "/cards/sand-season-11.webp"
+    },
+    {
+      "id": "sand-season-12",
+      "name": "沙舟风暴使·12",
+      "source": "imagegen",
+      "art": "/cards/sand-season-12.webp"
+    },
+    {
+      "id": "sand-season-13",
+      "name": "砂海游侠·13",
+      "source": "imagegen",
+      "art": "/cards/sand-season-13.webp"
+    },
+    {
+      "id": "sand-season-14",
+      "name": "风蚀商队长·14",
+      "source": "imagegen",
+      "art": "/cards/sand-season-14.webp"
+    },
+    {
+      "id": "sand-season-15",
+      "name": "黄昏掘金者·15",
+      "source": "imagegen",
+      "art": "/cards/sand-season-15.webp"
+    },
+    {
+      "id": "sand-season-16",
+      "name": "沙舟风暴使·16",
+      "source": "imagegen",
+      "art": "/cards/sand-season-16.webp"
+    },
+    {
+      "id": "sand-season-17",
+      "name": "砂海游侠·17",
+      "source": "imagegen",
+      "art": "/cards/sand-season-17.webp"
+    },
+    {
+      "id": "sand-season-18",
+      "name": "风蚀商队长·18",
+      "source": "imagegen",
+      "art": "/cards/sand-season-18.webp"
+    },
+    {
+      "id": "sand-season-19",
+      "name": "黄昏掘金者·19",
+      "source": "imagegen",
+      "art": "/cards/sand-season-19.webp"
+    },
+    {
+      "id": "sand-season-20",
+      "name": "沙舟风暴使·20",
+      "source": "imagegen",
+      "art": "/cards/sand-season-20.webp"
+    },
+    {
+      "id": "sand-season-21",
+      "name": "砂海游侠·21",
+      "source": "imagegen",
+      "art": "/cards/sand-season-21.webp"
+    },
+    {
+      "id": "sand-season-22",
+      "name": "风蚀商队长·22",
+      "source": "imagegen",
+      "art": "/cards/sand-season-22.webp"
+    },
+    {
+      "id": "sand-season-23",
+      "name": "黄昏掘金者·23",
+      "source": "imagegen",
+      "art": "/cards/sand-season-23.webp"
+    },
+    {
+      "id": "sand-season-24",
+      "name": "沙舟风暴使·24",
+      "source": "imagegen",
+      "art": "/cards/sand-season-24.webp"
+    },
+    {
+      "id": "sand-season-25",
+      "name": "砂海游侠·25",
+      "source": "imagegen",
+      "art": "/cards/sand-season-25.webp"
+    },
+    {
+      "id": "sand-season-26",
+      "name": "风蚀商队长·26",
+      "source": "imagegen",
+      "art": "/cards/sand-season-26.webp"
+    },
+    {
+      "id": "sand-season-27",
+      "name": "黄昏掘金者·27",
+      "source": "imagegen",
+      "art": "/cards/sand-season-27.webp"
+    },
+    {
+      "id": "sand-season-28",
+      "name": "沙舟风暴使·28",
+      "source": "imagegen",
+      "art": "/cards/sand-season-28.webp"
+    },
+    {
+      "id": "sand-season-29",
+      "name": "砂海游侠·29",
+      "source": "imagegen",
+      "art": "/cards/sand-season-29.webp"
+    },
+    {
+      "id": "sand-season-30",
+      "name": "风蚀商队长·30",
+      "source": "imagegen",
+      "art": "/cards/sand-season-30.webp"
+    },
+    {
+      "id": "sand-season-31",
+      "name": "黄昏掘金者·31",
+      "source": "imagegen",
+      "art": "/cards/sand-season-31.webp"
+    },
+    {
+      "id": "sand-season-32",
+      "name": "沙舟风暴使·32",
+      "source": "imagegen",
+      "art": "/cards/sand-season-32.webp"
+    },
+    {
+      "id": "sand-season-33",
+      "name": "砂海游侠·33",
+      "source": "imagegen",
+      "art": "/cards/sand-season-33.webp"
+    },
+    {
+      "id": "sand-season-34",
+      "name": "风蚀商队长·34",
+      "source": "imagegen",
+      "art": "/cards/sand-season-34.webp"
+    },
+    {
+      "id": "sand-season-35",
+      "name": "黄昏掘金者·35",
+      "source": "imagegen",
+      "art": "/cards/sand-season-35.webp"
+    },
+    {
+      "id": "sand-season-spell-01",
+      "name": "风蚀灼流·01",
+      "source": "imagegen",
+      "art": "/cards/sand-season-spell-01.webp"
+    },
+    {
+      "id": "sand-season-spell-02",
+      "name": "黄昏回响·02",
+      "source": "imagegen",
+      "art": "/cards/sand-season-spell-02.webp"
+    },
+    {
+      "id": "sand-season-spell-03",
+      "name": "沙舟复苏·03",
+      "source": "imagegen",
+      "art": "/cards/sand-season-spell-03.webp"
+    },
+    {
+      "id": "sand-season-spell-04",
+      "name": "砂海战令·04",
+      "source": "imagegen",
+      "art": "/cards/sand-season-spell-04.webp"
+    },
+    {
+      "id": "sand-season-spell-05",
+      "name": "风蚀风暴·05",
+      "source": "imagegen",
+      "art": "/cards/sand-season-spell-05.webp"
+    },
+    {
+      "id": "sand-season-spell-06",
+      "name": "黄昏发现·06",
+      "source": "imagegen",
+      "art": "/cards/sand-season-spell-06.webp"
+    },
+    {
+      "id": "sand-season-spell-07",
+      "name": "沙舟灼流·07",
+      "source": "imagegen",
+      "art": "/cards/sand-season-spell-07.webp"
+    },
+    {
+      "id": "sand-season-spell-08",
+      "name": "砂海回响·08",
+      "source": "imagegen",
+      "art": "/cards/sand-season-spell-08.webp"
+    },
+    {
+      "id": "sand-season-spell-09",
+      "name": "风蚀复苏·09",
+      "source": "imagegen",
+      "art": "/cards/sand-season-spell-09.webp"
+    },
+    {
+      "id": "sand-season-spell-10",
+      "name": "黄昏战令·10",
+      "source": "imagegen",
+      "art": "/cards/sand-season-spell-10.webp"
+    },
+    {
+      "id": "sand-season-spell-11",
+      "name": "沙舟风暴·11",
+      "source": "imagegen",
+      "art": "/cards/sand-season-spell-11.webp"
+    },
+    {
+      "id": "sand-season-spell-12",
+      "name": "砂海发现·12",
+      "source": "imagegen",
+      "art": "/cards/sand-season-spell-12.webp"
+    },
+    {
+      "id": "sand-season-spell-13",
+      "name": "风蚀灼流·13",
+      "source": "imagegen",
+      "art": "/cards/sand-season-spell-13.webp"
+    },
+    {
+      "id": "sand-season-spell-14",
+      "name": "黄昏回响·14",
+      "source": "imagegen",
+      "art": "/cards/sand-season-spell-14.webp"
+    },
+    {
+      "id": "sand-season-weapon",
+      "name": "砂海·核心武装",
+      "source": "imagegen",
+      "art": "/cards/sand-season-weapon.webp"
+    },
+    {
+      "id": "bloodmoon-season-01",
+      "name": "赤月祭刃·01",
+      "source": "imagegen",
+      "art": "/cards/bloodmoon-season-01.webp"
+    },
+    {
+      "id": "bloodmoon-season-02",
+      "name": "猩红猎魔人·02",
+      "source": "imagegen",
+      "art": "/cards/bloodmoon-season-02.webp"
+    },
+    {
+      "id": "bloodmoon-season-03",
+      "name": "血契血骑·03",
+      "source": "imagegen",
+      "art": "/cards/bloodmoon-season-03.webp"
+    },
+    {
+      "id": "bloodmoon-season-04",
+      "name": "夜宴契约师·04",
+      "source": "imagegen",
+      "art": "/cards/bloodmoon-season-04.webp"
+    },
+    {
+      "id": "bloodmoon-season-05",
+      "name": "赤月祭刃·05",
+      "source": "imagegen",
+      "art": "/cards/bloodmoon-season-05.webp"
+    },
+    {
+      "id": "bloodmoon-season-06",
+      "name": "猩红猎魔人·06",
+      "source": "imagegen",
+      "art": "/cards/bloodmoon-season-06.webp"
+    },
+    {
+      "id": "bloodmoon-season-07",
+      "name": "血契血骑·07",
+      "source": "imagegen",
+      "art": "/cards/bloodmoon-season-07.webp"
+    },
+    {
+      "id": "bloodmoon-season-08",
+      "name": "夜宴契约师·08",
+      "source": "imagegen",
+      "art": "/cards/bloodmoon-season-08.webp"
+    },
+    {
+      "id": "bloodmoon-season-09",
+      "name": "赤月祭刃·09",
+      "source": "imagegen",
+      "art": "/cards/bloodmoon-season-09.webp"
+    },
+    {
+      "id": "bloodmoon-season-10",
+      "name": "猩红猎魔人·10",
+      "source": "imagegen",
+      "art": "/cards/bloodmoon-season-10.webp"
+    },
+    {
+      "id": "bloodmoon-season-11",
+      "name": "血契血骑·11",
+      "source": "imagegen",
+      "art": "/cards/bloodmoon-season-11.webp"
+    },
+    {
+      "id": "bloodmoon-season-12",
+      "name": "夜宴契约师·12",
+      "source": "imagegen",
+      "art": "/cards/bloodmoon-season-12.webp"
+    },
+    {
+      "id": "bloodmoon-season-13",
+      "name": "赤月祭刃·13",
+      "source": "imagegen",
+      "art": "/cards/bloodmoon-season-13.webp"
+    },
+    {
+      "id": "bloodmoon-season-14",
+      "name": "猩红猎魔人·14",
+      "source": "imagegen",
+      "art": "/cards/bloodmoon-season-14.webp"
+    },
+    {
+      "id": "bloodmoon-season-15",
+      "name": "血契血骑·15",
+      "source": "imagegen",
+      "art": "/cards/bloodmoon-season-15.webp"
+    },
+    {
+      "id": "bloodmoon-season-16",
+      "name": "夜宴契约师·16",
+      "source": "imagegen",
+      "art": "/cards/bloodmoon-season-16.webp"
+    },
+    {
+      "id": "bloodmoon-season-17",
+      "name": "赤月祭刃·17",
+      "source": "imagegen",
+      "art": "/cards/bloodmoon-season-17.webp"
+    },
+    {
+      "id": "bloodmoon-season-18",
+      "name": "猩红猎魔人·18",
+      "source": "imagegen",
+      "art": "/cards/bloodmoon-season-18.webp"
+    },
+    {
+      "id": "bloodmoon-season-19",
+      "name": "血契血骑·19",
+      "source": "imagegen",
+      "art": "/cards/bloodmoon-season-19.webp"
+    },
+    {
+      "id": "bloodmoon-season-20",
+      "name": "夜宴契约师·20",
+      "source": "imagegen",
+      "art": "/cards/bloodmoon-season-20.webp"
+    },
+    {
+      "id": "bloodmoon-season-21",
+      "name": "赤月祭刃·21",
+      "source": "imagegen",
+      "art": "/cards/bloodmoon-season-21.webp"
+    },
+    {
+      "id": "bloodmoon-season-22",
+      "name": "猩红猎魔人·22",
+      "source": "imagegen",
+      "art": "/cards/bloodmoon-season-22.webp"
+    },
+    {
+      "id": "bloodmoon-season-23",
+      "name": "血契血骑·23",
+      "source": "imagegen",
+      "art": "/cards/bloodmoon-season-23.webp"
+    },
+    {
+      "id": "bloodmoon-season-24",
+      "name": "夜宴契约师·24",
+      "source": "imagegen",
+      "art": "/cards/bloodmoon-season-24.webp"
+    },
+    {
+      "id": "bloodmoon-season-25",
+      "name": "赤月祭刃·25",
+      "source": "imagegen",
+      "art": "/cards/bloodmoon-season-25.webp"
+    },
+    {
+      "id": "bloodmoon-season-26",
+      "name": "猩红猎魔人·26",
+      "source": "imagegen",
+      "art": "/cards/bloodmoon-season-26.webp"
+    },
+    {
+      "id": "bloodmoon-season-27",
+      "name": "血契血骑·27",
+      "source": "imagegen",
+      "art": "/cards/bloodmoon-season-27.webp"
+    },
+    {
+      "id": "bloodmoon-season-28",
+      "name": "夜宴契约师·28",
+      "source": "imagegen",
+      "art": "/cards/bloodmoon-season-28.webp"
+    },
+    {
+      "id": "bloodmoon-season-29",
+      "name": "赤月祭刃·29",
+      "source": "imagegen",
+      "art": "/cards/bloodmoon-season-29.webp"
+    },
+    {
+      "id": "bloodmoon-season-30",
+      "name": "猩红猎魔人·30",
+      "source": "imagegen",
+      "art": "/cards/bloodmoon-season-30.webp"
+    },
+    {
+      "id": "bloodmoon-season-31",
+      "name": "血契血骑·31",
+      "source": "imagegen",
+      "art": "/cards/bloodmoon-season-31.webp"
+    },
+    {
+      "id": "bloodmoon-season-32",
+      "name": "夜宴契约师·32",
+      "source": "imagegen",
+      "art": "/cards/bloodmoon-season-32.webp"
+    },
+    {
+      "id": "bloodmoon-season-33",
+      "name": "赤月祭刃·33",
+      "source": "imagegen",
+      "art": "/cards/bloodmoon-season-33.webp"
+    },
+    {
+      "id": "bloodmoon-season-34",
+      "name": "猩红猎魔人·34",
+      "source": "imagegen",
+      "art": "/cards/bloodmoon-season-34.webp"
+    },
+    {
+      "id": "bloodmoon-season-35",
+      "name": "血契血骑·35",
+      "source": "imagegen",
+      "art": "/cards/bloodmoon-season-35.webp"
+    },
+    {
+      "id": "bloodmoon-season-spell-01",
+      "name": "猩红灼流·01",
+      "source": "imagegen",
+      "art": "/cards/bloodmoon-season-spell-01.webp"
+    },
+    {
+      "id": "bloodmoon-season-spell-02",
+      "name": "血契回响·02",
+      "source": "imagegen",
+      "art": "/cards/bloodmoon-season-spell-02.webp"
+    },
+    {
+      "id": "bloodmoon-season-spell-03",
+      "name": "夜宴复苏·03",
+      "source": "imagegen",
+      "art": "/cards/bloodmoon-season-spell-03.webp"
+    },
+    {
+      "id": "bloodmoon-season-spell-04",
+      "name": "赤月战令·04",
+      "source": "imagegen",
+      "art": "/cards/bloodmoon-season-spell-04.webp"
+    },
+    {
+      "id": "bloodmoon-season-spell-05",
+      "name": "猩红风暴·05",
+      "source": "imagegen",
+      "art": "/cards/bloodmoon-season-spell-05.webp"
+    },
+    {
+      "id": "bloodmoon-season-spell-06",
+      "name": "血契发现·06",
+      "source": "imagegen",
+      "art": "/cards/bloodmoon-season-spell-06.webp"
+    },
+    {
+      "id": "bloodmoon-season-spell-07",
+      "name": "夜宴灼流·07",
+      "source": "imagegen",
+      "art": "/cards/bloodmoon-season-spell-07.webp"
+    },
+    {
+      "id": "bloodmoon-season-spell-08",
+      "name": "赤月回响·08",
+      "source": "imagegen",
+      "art": "/cards/bloodmoon-season-spell-08.webp"
+    },
+    {
+      "id": "bloodmoon-season-spell-09",
+      "name": "猩红复苏·09",
+      "source": "imagegen",
+      "art": "/cards/bloodmoon-season-spell-09.webp"
+    },
+    {
+      "id": "bloodmoon-season-spell-10",
+      "name": "血契战令·10",
+      "source": "imagegen",
+      "art": "/cards/bloodmoon-season-spell-10.webp"
+    },
+    {
+      "id": "bloodmoon-season-spell-11",
+      "name": "夜宴风暴·11",
+      "source": "imagegen",
+      "art": "/cards/bloodmoon-season-spell-11.webp"
+    },
+    {
+      "id": "bloodmoon-season-spell-12",
+      "name": "赤月发现·12",
+      "source": "imagegen",
+      "art": "/cards/bloodmoon-season-spell-12.webp"
+    },
+    {
+      "id": "bloodmoon-season-spell-13",
+      "name": "猩红灼流·13",
+      "source": "imagegen",
+      "art": "/cards/bloodmoon-season-spell-13.webp"
+    },
+    {
+      "id": "bloodmoon-season-spell-14",
+      "name": "血契回响·14",
+      "source": "imagegen",
+      "art": "/cards/bloodmoon-season-spell-14.webp"
+    },
+    {
+      "id": "bloodmoon-season-weapon",
+      "name": "赤月·核心武装",
+      "source": "imagegen",
+      "art": "/cards/bloodmoon-season-weapon.webp"
+    },
+    {
+      "id": "leyline-season-01",
+      "name": "灵脉术士·01",
+      "source": "imagegen",
+      "art": "/cards/leyline-season-01.webp"
+    },
+    {
+      "id": "leyline-season-02",
+      "name": "共鸣符文师·02",
+      "source": "imagegen",
+      "art": "/cards/leyline-season-02.webp"
+    },
+    {
+      "id": "leyline-season-03",
+      "name": "符文回路守卫·03",
+      "source": "imagegen",
+      "art": "/cards/leyline-season-03.webp"
+    },
+    {
+      "id": "leyline-season-04",
+      "name": "源流灵能体·04",
+      "source": "imagegen",
+      "art": "/cards/leyline-season-04.webp"
+    },
+    {
+      "id": "leyline-season-05",
+      "name": "灵脉术士·05",
+      "source": "imagegen",
+      "art": "/cards/leyline-season-05.webp"
+    },
+    {
+      "id": "leyline-season-06",
+      "name": "共鸣符文师·06",
+      "source": "imagegen",
+      "art": "/cards/leyline-season-06.webp"
+    },
+    {
+      "id": "leyline-season-07",
+      "name": "符文回路守卫·07",
+      "source": "imagegen",
+      "art": "/cards/leyline-season-07.webp"
+    },
+    {
+      "id": "leyline-season-08",
+      "name": "源流灵能体·08",
+      "source": "imagegen",
+      "art": "/cards/leyline-season-08.webp"
+    },
+    {
+      "id": "leyline-season-09",
+      "name": "灵脉术士·09",
+      "source": "imagegen",
+      "art": "/cards/leyline-season-09.webp"
+    },
+    {
+      "id": "leyline-season-10",
+      "name": "共鸣符文师·10",
+      "source": "imagegen",
+      "art": "/cards/leyline-season-10.webp"
+    },
+    {
+      "id": "leyline-season-11",
+      "name": "符文回路守卫·11",
+      "source": "imagegen",
+      "art": "/cards/leyline-season-11.webp"
+    },
+    {
+      "id": "leyline-season-12",
+      "name": "源流灵能体·12",
+      "source": "imagegen",
+      "art": "/cards/leyline-season-12.webp"
+    },
+    {
+      "id": "leyline-season-13",
+      "name": "灵脉术士·13",
+      "source": "imagegen",
+      "art": "/cards/leyline-season-13.webp"
+    },
+    {
+      "id": "leyline-season-14",
+      "name": "共鸣符文师·14",
+      "source": "imagegen",
+      "art": "/cards/leyline-season-14.webp"
+    },
+    {
+      "id": "leyline-season-15",
+      "name": "符文回路守卫·15",
+      "source": "imagegen",
+      "art": "/cards/leyline-season-15.webp"
+    },
+    {
+      "id": "leyline-season-16",
+      "name": "源流灵能体·16",
+      "source": "imagegen",
+      "art": "/cards/leyline-season-16.webp"
+    },
+    {
+      "id": "leyline-season-17",
+      "name": "灵脉术士·17",
+      "source": "imagegen",
+      "art": "/cards/leyline-season-17.webp"
+    },
+    {
+      "id": "leyline-season-18",
+      "name": "共鸣符文师·18",
+      "source": "imagegen",
+      "art": "/cards/leyline-season-18.webp"
+    },
+    {
+      "id": "leyline-season-19",
+      "name": "符文回路守卫·19",
+      "source": "imagegen",
+      "art": "/cards/leyline-season-19.webp"
+    },
+    {
+      "id": "leyline-season-20",
+      "name": "源流灵能体·20",
+      "source": "imagegen",
+      "art": "/cards/leyline-season-20.webp"
+    },
+    {
+      "id": "leyline-season-21",
+      "name": "灵脉术士·21",
+      "source": "imagegen",
+      "art": "/cards/leyline-season-21.webp"
+    },
+    {
+      "id": "leyline-season-22",
+      "name": "共鸣符文师·22",
+      "source": "imagegen",
+      "art": "/cards/leyline-season-22.webp"
+    },
+    {
+      "id": "leyline-season-23",
+      "name": "符文回路守卫·23",
+      "source": "imagegen",
+      "art": "/cards/leyline-season-23.webp"
+    },
+    {
+      "id": "leyline-season-24",
+      "name": "源流灵能体·24",
+      "source": "imagegen",
+      "art": "/cards/leyline-season-24.webp"
+    },
+    {
+      "id": "leyline-season-25",
+      "name": "灵脉术士·25",
+      "source": "imagegen",
+      "art": "/cards/leyline-season-25.webp"
+    },
+    {
+      "id": "leyline-season-26",
+      "name": "共鸣符文师·26",
+      "source": "imagegen",
+      "art": "/cards/leyline-season-26.webp"
+    },
+    {
+      "id": "leyline-season-27",
+      "name": "符文回路守卫·27",
+      "source": "imagegen",
+      "art": "/cards/leyline-season-27.webp"
+    },
+    {
+      "id": "leyline-season-28",
+      "name": "源流灵能体·28",
+      "source": "imagegen",
+      "art": "/cards/leyline-season-28.webp"
+    },
+    {
+      "id": "leyline-season-29",
+      "name": "灵脉术士·29",
+      "source": "imagegen",
+      "art": "/cards/leyline-season-29.webp"
+    },
+    {
+      "id": "leyline-season-30",
+      "name": "共鸣符文师·30",
+      "source": "imagegen",
+      "art": "/cards/leyline-season-30.webp"
+    },
+    {
+      "id": "leyline-season-31",
+      "name": "符文回路守卫·31",
+      "source": "imagegen",
+      "art": "/cards/leyline-season-31.webp"
+    },
+    {
+      "id": "leyline-season-32",
+      "name": "源流灵能体·32",
+      "source": "imagegen",
+      "art": "/cards/leyline-season-32.webp"
+    },
+    {
+      "id": "leyline-season-33",
+      "name": "灵脉术士·33",
+      "source": "imagegen",
+      "art": "/cards/leyline-season-33.webp"
+    },
+    {
+      "id": "leyline-season-34",
+      "name": "共鸣符文师·34",
+      "source": "imagegen",
+      "art": "/cards/leyline-season-34.webp"
+    },
+    {
+      "id": "leyline-season-35",
+      "name": "符文回路守卫·35",
+      "source": "imagegen",
+      "art": "/cards/leyline-season-35.webp"
+    },
+    {
+      "id": "leyline-season-spell-01",
+      "name": "共鸣灼流·01",
+      "source": "imagegen",
+      "art": "/cards/leyline-season-spell-01.webp"
+    },
+    {
+      "id": "leyline-season-spell-02",
+      "name": "符文回响·02",
+      "source": "imagegen",
+      "art": "/cards/leyline-season-spell-02.webp"
+    },
+    {
+      "id": "leyline-season-spell-03",
+      "name": "源流复苏·03",
+      "source": "imagegen",
+      "art": "/cards/leyline-season-spell-03.webp"
+    },
+    {
+      "id": "leyline-season-spell-04",
+      "name": "灵脉战令·04",
+      "source": "imagegen",
+      "art": "/cards/leyline-season-spell-04.webp"
+    },
+    {
+      "id": "leyline-season-spell-05",
+      "name": "共鸣风暴·05",
+      "source": "imagegen",
+      "art": "/cards/leyline-season-spell-05.webp"
+    },
+    {
+      "id": "leyline-season-spell-06",
+      "name": "符文发现·06",
+      "source": "imagegen",
+      "art": "/cards/leyline-season-spell-06.webp"
+    },
+    {
+      "id": "leyline-season-spell-07",
+      "name": "源流灼流·07",
+      "source": "imagegen",
+      "art": "/cards/leyline-season-spell-07.webp"
+    },
+    {
+      "id": "leyline-season-spell-08",
+      "name": "灵脉回响·08",
+      "source": "imagegen",
+      "art": "/cards/leyline-season-spell-08.webp"
+    },
+    {
+      "id": "leyline-season-spell-09",
+      "name": "共鸣复苏·09",
+      "source": "imagegen",
+      "art": "/cards/leyline-season-spell-09.webp"
+    },
+    {
+      "id": "leyline-season-spell-10",
+      "name": "符文战令·10",
+      "source": "imagegen",
+      "art": "/cards/leyline-season-spell-10.webp"
+    },
+    {
+      "id": "leyline-season-spell-11",
+      "name": "源流风暴·11",
+      "source": "imagegen",
+      "art": "/cards/leyline-season-spell-11.webp"
+    },
+    {
+      "id": "leyline-season-spell-12",
+      "name": "灵脉发现·12",
+      "source": "imagegen",
+      "art": "/cards/leyline-season-spell-12.webp"
+    },
+    {
+      "id": "leyline-season-spell-13",
+      "name": "共鸣灼流·13",
+      "source": "imagegen",
+      "art": "/cards/leyline-season-spell-13.webp"
+    },
+    {
+      "id": "leyline-season-spell-14",
+      "name": "符文回响·14",
+      "source": "imagegen",
+      "art": "/cards/leyline-season-spell-14.webp"
+    },
+    {
+      "id": "leyline-season-weapon",
+      "name": "灵脉·核心武装",
+      "source": "imagegen",
+      "art": "/cards/leyline-season-weapon.webp"
+    },
+    {
+      "id": "dusk-season-01",
+      "name": "暮影潜伏者·01",
+      "source": "imagegen",
+      "art": "/cards/dusk-season-01.webp"
+    },
+    {
+      "id": "dusk-season-02",
+      "name": "暗巷刺客·02",
+      "source": "imagegen",
+      "art": "/cards/dusk-season-02.webp"
+    },
+    {
+      "id": "dusk-season-03",
+      "name": "无光影卫·03",
+      "source": "imagegen",
+      "art": "/cards/dusk-season-03.webp"
+    },
+    {
+      "id": "dusk-season-04",
+      "name": "薄暮窃密师·04",
+      "source": "imagegen",
+      "art": "/cards/dusk-season-04.webp"
+    },
+    {
+      "id": "dusk-season-05",
+      "name": "暮影潜伏者·05",
+      "source": "imagegen",
+      "art": "/cards/dusk-season-05.webp"
+    },
+    {
+      "id": "dusk-season-06",
+      "name": "暗巷刺客·06",
+      "source": "imagegen",
+      "art": "/cards/dusk-season-06.webp"
+    },
+    {
+      "id": "dusk-season-07",
+      "name": "无光影卫·07",
+      "source": "imagegen",
+      "art": "/cards/dusk-season-07.webp"
+    },
+    {
+      "id": "dusk-season-08",
+      "name": "薄暮窃密师·08",
+      "source": "imagegen",
+      "art": "/cards/dusk-season-08.webp"
+    },
+    {
+      "id": "dusk-season-09",
+      "name": "暮影潜伏者·09",
+      "source": "imagegen",
+      "art": "/cards/dusk-season-09.webp"
+    },
+    {
+      "id": "dusk-season-10",
+      "name": "暗巷刺客·10",
+      "source": "imagegen",
+      "art": "/cards/dusk-season-10.webp"
+    },
+    {
+      "id": "dusk-season-11",
+      "name": "无光影卫·11",
+      "source": "imagegen",
+      "art": "/cards/dusk-season-11.webp"
+    },
+    {
+      "id": "dusk-season-12",
+      "name": "薄暮窃密师·12",
+      "source": "imagegen",
+      "art": "/cards/dusk-season-12.webp"
+    },
+    {
+      "id": "dusk-season-13",
+      "name": "暮影潜伏者·13",
+      "source": "imagegen",
+      "art": "/cards/dusk-season-13.webp"
+    },
+    {
+      "id": "dusk-season-14",
+      "name": "暗巷刺客·14",
+      "source": "imagegen",
+      "art": "/cards/dusk-season-14.webp"
+    },
+    {
+      "id": "dusk-season-15",
+      "name": "无光影卫·15",
+      "source": "imagegen",
+      "art": "/cards/dusk-season-15.webp"
+    },
+    {
+      "id": "dusk-season-16",
+      "name": "薄暮窃密师·16",
+      "source": "imagegen",
+      "art": "/cards/dusk-season-16.webp"
+    },
+    {
+      "id": "dusk-season-17",
+      "name": "暮影潜伏者·17",
+      "source": "imagegen",
+      "art": "/cards/dusk-season-17.webp"
+    },
+    {
+      "id": "dusk-season-18",
+      "name": "暗巷刺客·18",
+      "source": "imagegen",
+      "art": "/cards/dusk-season-18.webp"
+    },
+    {
+      "id": "dusk-season-19",
+      "name": "无光影卫·19",
+      "source": "imagegen",
+      "art": "/cards/dusk-season-19.webp"
+    },
+    {
+      "id": "dusk-season-20",
+      "name": "薄暮窃密师·20",
+      "source": "imagegen",
+      "art": "/cards/dusk-season-20.webp"
+    },
+    {
+      "id": "dusk-season-21",
+      "name": "暮影潜伏者·21",
+      "source": "imagegen",
+      "art": "/cards/dusk-season-21.webp"
+    },
+    {
+      "id": "dusk-season-22",
+      "name": "暗巷刺客·22",
+      "source": "imagegen",
+      "art": "/cards/dusk-season-22.webp"
+    },
+    {
+      "id": "dusk-season-23",
+      "name": "无光影卫·23",
+      "source": "imagegen",
+      "art": "/cards/dusk-season-23.webp"
+    },
+    {
+      "id": "dusk-season-24",
+      "name": "薄暮窃密师·24",
+      "source": "imagegen",
+      "art": "/cards/dusk-season-24.webp"
+    },
+    {
+      "id": "dusk-season-25",
+      "name": "暮影潜伏者·25",
+      "source": "imagegen",
+      "art": "/cards/dusk-season-25.webp"
+    },
+    {
+      "id": "dusk-season-26",
+      "name": "暗巷刺客·26",
+      "source": "imagegen",
+      "art": "/cards/dusk-season-26.webp"
+    },
+    {
+      "id": "dusk-season-27",
+      "name": "无光影卫·27",
+      "source": "imagegen",
+      "art": "/cards/dusk-season-27.webp"
+    },
+    {
+      "id": "dusk-season-28",
+      "name": "薄暮窃密师·28",
+      "source": "imagegen",
+      "art": "/cards/dusk-season-28.webp"
+    },
+    {
+      "id": "dusk-season-29",
+      "name": "暮影潜伏者·29",
+      "source": "imagegen",
+      "art": "/cards/dusk-season-29.webp"
+    },
+    {
+      "id": "dusk-season-30",
+      "name": "暗巷刺客·30",
+      "source": "imagegen",
+      "art": "/cards/dusk-season-30.webp"
+    },
+    {
+      "id": "dusk-season-31",
+      "name": "无光影卫·31",
+      "source": "imagegen",
+      "art": "/cards/dusk-season-31.webp"
+    },
+    {
+      "id": "dusk-season-32",
+      "name": "薄暮窃密师·32",
+      "source": "imagegen",
+      "art": "/cards/dusk-season-32.webp"
+    },
+    {
+      "id": "dusk-season-33",
+      "name": "暮影潜伏者·33",
+      "source": "imagegen",
+      "art": "/cards/dusk-season-33.webp"
+    },
+    {
+      "id": "dusk-season-34",
+      "name": "暗巷刺客·34",
+      "source": "imagegen",
+      "art": "/cards/dusk-season-34.webp"
+    },
+    {
+      "id": "dusk-season-35",
+      "name": "无光影卫·35",
+      "source": "imagegen",
+      "art": "/cards/dusk-season-35.webp"
+    },
+    {
+      "id": "dusk-season-spell-01",
+      "name": "暗巷秘契·01",
+      "source": "imagegen",
+      "art": "/cards/dusk-season-spell-01.webp"
+    },
+    {
+      "id": "dusk-season-spell-02",
+      "name": "无光回响·02",
+      "source": "imagegen",
+      "art": "/cards/dusk-season-spell-02.webp"
+    },
+    {
+      "id": "dusk-season-spell-03",
+      "name": "薄暮复苏·03",
+      "source": "imagegen",
+      "art": "/cards/dusk-season-spell-03.webp"
+    },
+    {
+      "id": "dusk-season-spell-04",
+      "name": "暮影秘契·04",
+      "source": "imagegen",
+      "art": "/cards/dusk-season-spell-04.webp"
+    },
+    {
+      "id": "dusk-season-spell-05",
+      "name": "暗巷风暴·05",
+      "source": "imagegen",
+      "art": "/cards/dusk-season-spell-05.webp"
+    },
+    {
+      "id": "dusk-season-spell-06",
+      "name": "无光发现·06",
+      "source": "imagegen",
+      "art": "/cards/dusk-season-spell-06.webp"
+    },
+    {
+      "id": "dusk-season-spell-07",
+      "name": "薄暮秘契·07",
+      "source": "imagegen",
+      "art": "/cards/dusk-season-spell-07.webp"
+    },
+    {
+      "id": "dusk-season-spell-08",
+      "name": "暮影回响·08",
+      "source": "imagegen",
+      "art": "/cards/dusk-season-spell-08.webp"
+    },
+    {
+      "id": "dusk-season-spell-09",
+      "name": "暗巷复苏·09",
+      "source": "imagegen",
+      "art": "/cards/dusk-season-spell-09.webp"
+    },
+    {
+      "id": "dusk-season-spell-10",
+      "name": "无光秘契·10",
+      "source": "imagegen",
+      "art": "/cards/dusk-season-spell-10.webp"
+    },
+    {
+      "id": "dusk-season-spell-11",
+      "name": "薄暮风暴·11",
+      "source": "imagegen",
+      "art": "/cards/dusk-season-spell-11.webp"
+    },
+    {
+      "id": "dusk-season-spell-12",
+      "name": "暮影发现·12",
+      "source": "imagegen",
+      "art": "/cards/dusk-season-spell-12.webp"
+    },
+    {
+      "id": "dusk-season-spell-13",
+      "name": "暗巷秘契·13",
+      "source": "imagegen",
+      "art": "/cards/dusk-season-spell-13.webp"
+    },
+    {
+      "id": "dusk-season-spell-14",
+      "name": "无光回响·14",
+      "source": "imagegen",
+      "art": "/cards/dusk-season-spell-14.webp"
+    },
+    {
+      "id": "dusk-season-weapon",
+      "name": "暮影·核心武装",
+      "source": "imagegen",
+      "art": "/cards/dusk-season-weapon.webp"
+    },
+    {
+      "id": "cloudfall-season-01",
+      "name": "云瀑飞骑·01",
+      "source": "imagegen",
+      "art": "/cards/cloudfall-season-01.webp"
+    },
+    {
+      "id": "cloudfall-season-02",
+      "name": "风脊航海士·02",
+      "source": "imagegen",
+      "art": "/cards/cloudfall-season-02.webp"
+    },
+    {
+      "id": "cloudfall-season-03",
+      "name": "天港风语者·03",
+      "source": "imagegen",
+      "art": "/cards/cloudfall-season-03.webp"
+    },
+    {
+      "id": "cloudfall-season-04",
+      "name": "流云云兽·04",
+      "source": "imagegen",
+      "art": "/cards/cloudfall-season-04.webp"
+    },
+    {
+      "id": "cloudfall-season-05",
+      "name": "云瀑飞骑·05",
+      "source": "imagegen",
+      "art": "/cards/cloudfall-season-05.webp"
+    },
+    {
+      "id": "cloudfall-season-06",
+      "name": "风脊航海士·06",
+      "source": "imagegen",
+      "art": "/cards/cloudfall-season-06.webp"
+    },
+    {
+      "id": "cloudfall-season-07",
+      "name": "天港风语者·07",
+      "source": "imagegen",
+      "art": "/cards/cloudfall-season-07.webp"
+    },
+    {
+      "id": "cloudfall-season-08",
+      "name": "流云云兽·08",
+      "source": "imagegen",
+      "art": "/cards/cloudfall-season-08.webp"
+    },
+    {
+      "id": "cloudfall-season-09",
+      "name": "云瀑飞骑·09",
+      "source": "imagegen",
+      "art": "/cards/cloudfall-season-09.webp"
+    },
+    {
+      "id": "cloudfall-season-10",
+      "name": "风脊航海士·10",
+      "source": "imagegen",
+      "art": "/cards/cloudfall-season-10.webp"
+    },
+    {
+      "id": "cloudfall-season-11",
+      "name": "天港风语者·11",
+      "source": "imagegen",
+      "art": "/cards/cloudfall-season-11.webp"
+    },
+    {
+      "id": "cloudfall-season-12",
+      "name": "流云云兽·12",
+      "source": "imagegen",
+      "art": "/cards/cloudfall-season-12.webp"
+    },
+    {
+      "id": "cloudfall-season-13",
+      "name": "云瀑飞骑·13",
+      "source": "imagegen",
+      "art": "/cards/cloudfall-season-13.webp"
+    },
+    {
+      "id": "cloudfall-season-14",
+      "name": "风脊航海士·14",
+      "source": "imagegen",
+      "art": "/cards/cloudfall-season-14.webp"
+    },
+    {
+      "id": "cloudfall-season-15",
+      "name": "天港风语者·15",
+      "source": "imagegen",
+      "art": "/cards/cloudfall-season-15.webp"
+    },
+    {
+      "id": "cloudfall-season-16",
+      "name": "流云云兽·16",
+      "source": "imagegen",
+      "art": "/cards/cloudfall-season-16.webp"
+    },
+    {
+      "id": "cloudfall-season-17",
+      "name": "云瀑飞骑·17",
+      "source": "imagegen",
+      "art": "/cards/cloudfall-season-17.webp"
+    },
+    {
+      "id": "cloudfall-season-18",
+      "name": "风脊航海士·18",
+      "source": "imagegen",
+      "art": "/cards/cloudfall-season-18.webp"
+    },
+    {
+      "id": "cloudfall-season-19",
+      "name": "天港风语者·19",
+      "source": "imagegen",
+      "art": "/cards/cloudfall-season-19.webp"
+    },
+    {
+      "id": "cloudfall-season-20",
+      "name": "流云云兽·20",
+      "source": "imagegen",
+      "art": "/cards/cloudfall-season-20.webp"
+    },
+    {
+      "id": "cloudfall-season-21",
+      "name": "云瀑飞骑·21",
+      "source": "imagegen",
+      "art": "/cards/cloudfall-season-21.webp"
+    },
+    {
+      "id": "cloudfall-season-22",
+      "name": "风脊航海士·22",
+      "source": "imagegen",
+      "art": "/cards/cloudfall-season-22.webp"
+    },
+    {
+      "id": "cloudfall-season-23",
+      "name": "天港风语者·23",
+      "source": "imagegen",
+      "art": "/cards/cloudfall-season-23.webp"
+    },
+    {
+      "id": "cloudfall-season-24",
+      "name": "流云云兽·24",
+      "source": "imagegen",
+      "art": "/cards/cloudfall-season-24.webp"
+    },
+    {
+      "id": "cloudfall-season-25",
+      "name": "云瀑飞骑·25",
+      "source": "imagegen",
+      "art": "/cards/cloudfall-season-25.webp"
+    },
+    {
+      "id": "cloudfall-season-26",
+      "name": "风脊航海士·26",
+      "source": "imagegen",
+      "art": "/cards/cloudfall-season-26.webp"
+    },
+    {
+      "id": "cloudfall-season-27",
+      "name": "天港风语者·27",
+      "source": "imagegen",
+      "art": "/cards/cloudfall-season-27.webp"
+    },
+    {
+      "id": "cloudfall-season-28",
+      "name": "流云云兽·28",
+      "source": "imagegen",
+      "art": "/cards/cloudfall-season-28.webp"
+    },
+    {
+      "id": "cloudfall-season-29",
+      "name": "云瀑飞骑·29",
+      "source": "imagegen",
+      "art": "/cards/cloudfall-season-29.webp"
+    },
+    {
+      "id": "cloudfall-season-30",
+      "name": "风脊航海士·30",
+      "source": "imagegen",
+      "art": "/cards/cloudfall-season-30.webp"
+    },
+    {
+      "id": "cloudfall-season-31",
+      "name": "天港风语者·31",
+      "source": "imagegen",
+      "art": "/cards/cloudfall-season-31.webp"
+    },
+    {
+      "id": "cloudfall-season-32",
+      "name": "流云云兽·32",
+      "source": "imagegen",
+      "art": "/cards/cloudfall-season-32.webp"
+    },
+    {
+      "id": "cloudfall-season-33",
+      "name": "云瀑飞骑·33",
+      "source": "imagegen",
+      "art": "/cards/cloudfall-season-33.webp"
+    },
+    {
+      "id": "cloudfall-season-34",
+      "name": "风脊航海士·34",
+      "source": "imagegen",
+      "art": "/cards/cloudfall-season-34.webp"
+    },
+    {
+      "id": "cloudfall-season-35",
+      "name": "天港风语者·35",
+      "source": "imagegen",
+      "art": "/cards/cloudfall-season-35.webp"
+    },
+    {
+      "id": "cloudfall-season-spell-01",
+      "name": "风脊灼流·01",
+      "source": "imagegen",
+      "art": "/cards/cloudfall-season-spell-01.webp"
+    },
+    {
+      "id": "cloudfall-season-spell-02",
+      "name": "天港回响·02",
+      "source": "imagegen",
+      "art": "/cards/cloudfall-season-spell-02.webp"
+    },
+    {
+      "id": "cloudfall-season-spell-03",
+      "name": "流云复苏·03",
+      "source": "imagegen",
+      "art": "/cards/cloudfall-season-spell-03.webp"
+    },
+    {
+      "id": "cloudfall-season-spell-04",
+      "name": "云瀑战令·04",
+      "source": "imagegen",
+      "art": "/cards/cloudfall-season-spell-04.webp"
+    },
+    {
+      "id": "cloudfall-season-spell-05",
+      "name": "风脊风暴·05",
+      "source": "imagegen",
+      "art": "/cards/cloudfall-season-spell-05.webp"
+    },
+    {
+      "id": "cloudfall-season-spell-06",
+      "name": "天港发现·06",
+      "source": "imagegen",
+      "art": "/cards/cloudfall-season-spell-06.webp"
+    },
+    {
+      "id": "cloudfall-season-spell-07",
+      "name": "流云灼流·07",
+      "source": "imagegen",
+      "art": "/cards/cloudfall-season-spell-07.webp"
+    },
+    {
+      "id": "cloudfall-season-spell-08",
+      "name": "云瀑回响·08",
+      "source": "imagegen",
+      "art": "/cards/cloudfall-season-spell-08.webp"
+    },
+    {
+      "id": "cloudfall-season-spell-09",
+      "name": "风脊复苏·09",
+      "source": "imagegen",
+      "art": "/cards/cloudfall-season-spell-09.webp"
+    },
+    {
+      "id": "cloudfall-season-spell-10",
+      "name": "天港战令·10",
+      "source": "imagegen",
+      "art": "/cards/cloudfall-season-spell-10.webp"
+    },
+    {
+      "id": "cloudfall-season-spell-11",
+      "name": "流云风暴·11",
+      "source": "imagegen",
+      "art": "/cards/cloudfall-season-spell-11.webp"
+    },
+    {
+      "id": "cloudfall-season-spell-12",
+      "name": "云瀑发现·12",
+      "source": "imagegen",
+      "art": "/cards/cloudfall-season-spell-12.webp"
+    },
+    {
+      "id": "cloudfall-season-spell-13",
+      "name": "风脊灼流·13",
+      "source": "imagegen",
+      "art": "/cards/cloudfall-season-spell-13.webp"
+    },
+    {
+      "id": "cloudfall-season-spell-14",
+      "name": "天港回响·14",
+      "source": "imagegen",
+      "art": "/cards/cloudfall-season-spell-14.webp"
+    },
+    {
+      "id": "cloudfall-season-weapon",
+      "name": "云瀑·核心武装",
+      "source": "imagegen",
+      "art": "/cards/cloudfall-season-weapon.webp"
+    },
+    {
+      "id": "magnet-season-01",
+      "name": "磁风机甲·01",
+      "source": "imagegen",
+      "art": "/cards/magnet-season-01.webp"
+    },
+    {
+      "id": "magnet-season-02",
+      "name": "极轨磁轨师·02",
+      "source": "imagegen",
+      "art": "/cards/magnet-season-02.webp"
+    },
+    {
+      "id": "magnet-season-03",
+      "name": "铁潮装配师·03",
+      "source": "imagegen",
+      "art": "/cards/magnet-season-03.webp"
+    },
+    {
+      "id": "magnet-season-04",
+      "name": "反转极性兽·04",
+      "source": "imagegen",
+      "art": "/cards/magnet-season-04.webp"
+    },
+    {
+      "id": "magnet-season-05",
+      "name": "磁风机甲·05",
+      "source": "imagegen",
+      "art": "/cards/magnet-season-05.webp"
+    },
+    {
+      "id": "magnet-season-06",
+      "name": "极轨磁轨师·06",
+      "source": "imagegen",
+      "art": "/cards/magnet-season-06.webp"
+    },
+    {
+      "id": "magnet-season-07",
+      "name": "铁潮装配师·07",
+      "source": "imagegen",
+      "art": "/cards/magnet-season-07.webp"
+    },
+    {
+      "id": "magnet-season-08",
+      "name": "反转极性兽·08",
+      "source": "imagegen",
+      "art": "/cards/magnet-season-08.webp"
+    },
+    {
+      "id": "magnet-season-09",
+      "name": "磁风机甲·09",
+      "source": "imagegen",
+      "art": "/cards/magnet-season-09.webp"
+    },
+    {
+      "id": "magnet-season-10",
+      "name": "极轨磁轨师·10",
+      "source": "imagegen",
+      "art": "/cards/magnet-season-10.webp"
+    },
+    {
+      "id": "magnet-season-11",
+      "name": "铁潮装配师·11",
+      "source": "imagegen",
+      "art": "/cards/magnet-season-11.webp"
+    },
+    {
+      "id": "magnet-season-12",
+      "name": "反转极性兽·12",
+      "source": "imagegen",
+      "art": "/cards/magnet-season-12.webp"
+    },
+    {
+      "id": "magnet-season-13",
+      "name": "磁风机甲·13",
+      "source": "imagegen",
+      "art": "/cards/magnet-season-13.webp"
+    },
+    {
+      "id": "magnet-season-14",
+      "name": "极轨磁轨师·14",
+      "source": "imagegen",
+      "art": "/cards/magnet-season-14.webp"
+    },
+    {
+      "id": "magnet-season-15",
+      "name": "铁潮装配师·15",
+      "source": "imagegen",
+      "art": "/cards/magnet-season-15.webp"
+    },
+    {
+      "id": "magnet-season-16",
+      "name": "反转极性兽·16",
+      "source": "imagegen",
+      "art": "/cards/magnet-season-16.webp"
+    },
+    {
+      "id": "magnet-season-17",
+      "name": "磁风机甲·17",
+      "source": "imagegen",
+      "art": "/cards/magnet-season-17.webp"
+    },
+    {
+      "id": "magnet-season-18",
+      "name": "极轨磁轨师·18",
+      "source": "imagegen",
+      "art": "/cards/magnet-season-18.webp"
+    },
+    {
+      "id": "magnet-season-19",
+      "name": "铁潮装配师·19",
+      "source": "imagegen",
+      "art": "/cards/magnet-season-19.webp"
+    },
+    {
+      "id": "magnet-season-20",
+      "name": "反转极性兽·20",
+      "source": "imagegen",
+      "art": "/cards/magnet-season-20.webp"
+    },
+    {
+      "id": "magnet-season-21",
+      "name": "磁风机甲·21",
+      "source": "imagegen",
+      "art": "/cards/magnet-season-21.webp"
+    },
+    {
+      "id": "magnet-season-22",
+      "name": "极轨磁轨师·22",
+      "source": "imagegen",
+      "art": "/cards/magnet-season-22.webp"
+    },
+    {
+      "id": "magnet-season-23",
+      "name": "铁潮装配师·23",
+      "source": "imagegen",
+      "art": "/cards/magnet-season-23.webp"
+    },
+    {
+      "id": "magnet-season-24",
+      "name": "反转极性兽·24",
+      "source": "imagegen",
+      "art": "/cards/magnet-season-24.webp"
+    },
+    {
+      "id": "magnet-season-25",
+      "name": "磁风机甲·25",
+      "source": "imagegen",
+      "art": "/cards/magnet-season-25.webp"
+    },
+    {
+      "id": "magnet-season-26",
+      "name": "极轨磁轨师·26",
+      "source": "imagegen",
+      "art": "/cards/magnet-season-26.webp"
+    },
+    {
+      "id": "magnet-season-27",
+      "name": "铁潮装配师·27",
+      "source": "imagegen",
+      "art": "/cards/magnet-season-27.webp"
+    },
+    {
+      "id": "magnet-season-28",
+      "name": "反转极性兽·28",
+      "source": "imagegen",
+      "art": "/cards/magnet-season-28.webp"
+    },
+    {
+      "id": "magnet-season-29",
+      "name": "磁风机甲·29",
+      "source": "imagegen",
+      "art": "/cards/magnet-season-29.webp"
+    },
+    {
+      "id": "magnet-season-30",
+      "name": "极轨磁轨师·30",
+      "source": "imagegen",
+      "art": "/cards/magnet-season-30.webp"
+    },
+    {
+      "id": "magnet-season-31",
+      "name": "铁潮装配师·31",
+      "source": "imagegen",
+      "art": "/cards/magnet-season-31.webp"
+    },
+    {
+      "id": "magnet-season-32",
+      "name": "反转极性兽·32",
+      "source": "imagegen",
+      "art": "/cards/magnet-season-32.webp"
+    },
+    {
+      "id": "magnet-season-33",
+      "name": "磁风机甲·33",
+      "source": "imagegen",
+      "art": "/cards/magnet-season-33.webp"
+    },
+    {
+      "id": "magnet-season-34",
+      "name": "极轨磁轨师·34",
+      "source": "imagegen",
+      "art": "/cards/magnet-season-34.webp"
+    },
+    {
+      "id": "magnet-season-35",
+      "name": "铁潮装配师·35",
+      "source": "imagegen",
+      "art": "/cards/magnet-season-35.webp"
+    },
+    {
+      "id": "magnet-season-spell-01",
+      "name": "极轨灼流·01",
+      "source": "imagegen",
+      "art": "/cards/magnet-season-spell-01.webp"
+    },
+    {
+      "id": "magnet-season-spell-02",
+      "name": "铁潮回响·02",
+      "source": "imagegen",
+      "art": "/cards/magnet-season-spell-02.webp"
+    },
+    {
+      "id": "magnet-season-spell-03",
+      "name": "反转复苏·03",
+      "source": "imagegen",
+      "art": "/cards/magnet-season-spell-03.webp"
+    },
+    {
+      "id": "magnet-season-spell-04",
+      "name": "磁风战令·04",
+      "source": "imagegen",
+      "art": "/cards/magnet-season-spell-04.webp"
+    },
+    {
+      "id": "magnet-season-spell-05",
+      "name": "极轨风暴·05",
+      "source": "imagegen",
+      "art": "/cards/magnet-season-spell-05.webp"
+    },
+    {
+      "id": "magnet-season-spell-06",
+      "name": "铁潮发现·06",
+      "source": "imagegen",
+      "art": "/cards/magnet-season-spell-06.webp"
+    },
+    {
+      "id": "magnet-season-spell-07",
+      "name": "反转灼流·07",
+      "source": "imagegen",
+      "art": "/cards/magnet-season-spell-07.webp"
+    },
+    {
+      "id": "magnet-season-spell-08",
+      "name": "磁风回响·08",
+      "source": "imagegen",
+      "art": "/cards/magnet-season-spell-08.webp"
+    },
+    {
+      "id": "magnet-season-spell-09",
+      "name": "极轨复苏·09",
+      "source": "imagegen",
+      "art": "/cards/magnet-season-spell-09.webp"
+    },
+    {
+      "id": "magnet-season-spell-10",
+      "name": "铁潮战令·10",
+      "source": "imagegen",
+      "art": "/cards/magnet-season-spell-10.webp"
+    },
+    {
+      "id": "magnet-season-spell-11",
+      "name": "反转风暴·11",
+      "source": "imagegen",
+      "art": "/cards/magnet-season-spell-11.webp"
+    },
+    {
+      "id": "magnet-season-spell-12",
+      "name": "磁风发现·12",
+      "source": "imagegen",
+      "art": "/cards/magnet-season-spell-12.webp"
+    },
+    {
+      "id": "magnet-season-spell-13",
+      "name": "极轨灼流·13",
+      "source": "imagegen",
+      "art": "/cards/magnet-season-spell-13.webp"
+    },
+    {
+      "id": "magnet-season-spell-14",
+      "name": "铁潮回响·14",
+      "source": "imagegen",
+      "art": "/cards/magnet-season-spell-14.webp"
+    },
+    {
+      "id": "magnet-season-weapon",
+      "name": "磁风·核心武装",
+      "source": "imagegen",
+      "art": "/cards/magnet-season-weapon.webp"
+    },
+    {
+      "id": "crystal-season-01",
+      "name": "晶核晶卫·01",
+      "source": "imagegen",
+      "art": "/cards/crystal-season-01.webp"
+    },
+    {
+      "id": "crystal-season-02",
+      "name": "棱面切面师·02",
+      "source": "imagegen",
+      "art": "/cards/crystal-season-02.webp"
+    },
+    {
+      "id": "crystal-season-03",
+      "name": "折光棱镜兽·03",
+      "source": "imagegen",
+      "art": "/cards/crystal-season-03.webp"
+    },
+    {
+      "id": "crystal-season-04",
+      "name": "矿心矿脉王·04",
+      "source": "imagegen",
+      "art": "/cards/crystal-season-04.webp"
+    },
+    {
+      "id": "crystal-season-05",
+      "name": "晶核晶卫·05",
+      "source": "imagegen",
+      "art": "/cards/crystal-season-05.webp"
+    },
+    {
+      "id": "crystal-season-06",
+      "name": "棱面切面师·06",
+      "source": "imagegen",
+      "art": "/cards/crystal-season-06.webp"
+    },
+    {
+      "id": "crystal-season-07",
+      "name": "折光棱镜兽·07",
+      "source": "imagegen",
+      "art": "/cards/crystal-season-07.webp"
+    },
+    {
+      "id": "crystal-season-08",
+      "name": "矿心矿脉王·08",
+      "source": "imagegen",
+      "art": "/cards/crystal-season-08.webp"
+    },
+    {
+      "id": "crystal-season-09",
+      "name": "晶核晶卫·09",
+      "source": "imagegen",
+      "art": "/cards/crystal-season-09.webp"
+    },
+    {
+      "id": "crystal-season-10",
+      "name": "棱面切面师·10",
+      "source": "imagegen",
+      "art": "/cards/crystal-season-10.webp"
+    },
+    {
+      "id": "crystal-season-11",
+      "name": "折光棱镜兽·11",
+      "source": "imagegen",
+      "art": "/cards/crystal-season-11.webp"
+    },
+    {
+      "id": "crystal-season-12",
+      "name": "矿心矿脉王·12",
+      "source": "imagegen",
+      "art": "/cards/crystal-season-12.webp"
+    },
+    {
+      "id": "crystal-season-13",
+      "name": "晶核晶卫·13",
+      "source": "imagegen",
+      "art": "/cards/crystal-season-13.webp"
+    },
+    {
+      "id": "crystal-season-14",
+      "name": "棱面切面师·14",
+      "source": "imagegen",
+      "art": "/cards/crystal-season-14.webp"
+    },
+    {
+      "id": "crystal-season-15",
+      "name": "折光棱镜兽·15",
+      "source": "imagegen",
+      "art": "/cards/crystal-season-15.webp"
+    },
+    {
+      "id": "crystal-season-16",
+      "name": "矿心矿脉王·16",
+      "source": "imagegen",
+      "art": "/cards/crystal-season-16.webp"
+    },
+    {
+      "id": "crystal-season-17",
+      "name": "晶核晶卫·17",
+      "source": "imagegen",
+      "art": "/cards/crystal-season-17.webp"
+    },
+    {
+      "id": "crystal-season-18",
+      "name": "棱面切面师·18",
+      "source": "imagegen",
+      "art": "/cards/crystal-season-18.webp"
+    },
+    {
+      "id": "crystal-season-19",
+      "name": "折光棱镜兽·19",
+      "source": "imagegen",
+      "art": "/cards/crystal-season-19.webp"
+    },
+    {
+      "id": "crystal-season-20",
+      "name": "矿心矿脉王·20",
+      "source": "imagegen",
+      "art": "/cards/crystal-season-20.webp"
+    },
+    {
+      "id": "crystal-season-21",
+      "name": "晶核晶卫·21",
+      "source": "imagegen",
+      "art": "/cards/crystal-season-21.webp"
+    },
+    {
+      "id": "crystal-season-22",
+      "name": "棱面切面师·22",
+      "source": "imagegen",
+      "art": "/cards/crystal-season-22.webp"
+    },
+    {
+      "id": "crystal-season-23",
+      "name": "折光棱镜兽·23",
+      "source": "imagegen",
+      "art": "/cards/crystal-season-23.webp"
+    },
+    {
+      "id": "crystal-season-24",
+      "name": "矿心矿脉王·24",
+      "source": "imagegen",
+      "art": "/cards/crystal-season-24.webp"
+    },
+    {
+      "id": "crystal-season-25",
+      "name": "晶核晶卫·25",
+      "source": "imagegen",
+      "art": "/cards/crystal-season-25.webp"
+    },
+    {
+      "id": "crystal-season-26",
+      "name": "棱面切面师·26",
+      "source": "imagegen",
+      "art": "/cards/crystal-season-26.webp"
+    },
+    {
+      "id": "crystal-season-27",
+      "name": "折光棱镜兽·27",
+      "source": "imagegen",
+      "art": "/cards/crystal-season-27.webp"
+    },
+    {
+      "id": "crystal-season-28",
+      "name": "矿心矿脉王·28",
+      "source": "imagegen",
+      "art": "/cards/crystal-season-28.webp"
+    },
+    {
+      "id": "crystal-season-29",
+      "name": "晶核晶卫·29",
+      "source": "imagegen",
+      "art": "/cards/crystal-season-29.webp"
+    },
+    {
+      "id": "crystal-season-30",
+      "name": "棱面切面师·30",
+      "source": "imagegen",
+      "art": "/cards/crystal-season-30.webp"
+    },
+    {
+      "id": "crystal-season-31",
+      "name": "折光棱镜兽·31",
+      "source": "imagegen",
+      "art": "/cards/crystal-season-31.webp"
+    },
+    {
+      "id": "crystal-season-32",
+      "name": "矿心矿脉王·32",
+      "source": "imagegen",
+      "art": "/cards/crystal-season-32.webp"
+    },
+    {
+      "id": "crystal-season-33",
+      "name": "晶核晶卫·33",
+      "source": "imagegen",
+      "art": "/cards/crystal-season-33.webp"
+    },
+    {
+      "id": "crystal-season-34",
+      "name": "棱面切面师·34",
+      "source": "imagegen",
+      "art": "/cards/crystal-season-34.webp"
+    },
+    {
+      "id": "crystal-season-35",
+      "name": "折光棱镜兽·35",
+      "source": "imagegen",
+      "art": "/cards/crystal-season-35.webp"
+    },
+    {
+      "id": "crystal-season-spell-01",
+      "name": "棱面灼流·01",
+      "source": "imagegen",
+      "art": "/cards/crystal-season-spell-01.webp"
+    },
+    {
+      "id": "crystal-season-spell-02",
+      "name": "折光回响·02",
+      "source": "imagegen",
+      "art": "/cards/crystal-season-spell-02.webp"
+    },
+    {
+      "id": "crystal-season-spell-03",
+      "name": "矿心复苏·03",
+      "source": "imagegen",
+      "art": "/cards/crystal-season-spell-03.webp"
+    },
+    {
+      "id": "crystal-season-spell-04",
+      "name": "晶核战令·04",
+      "source": "imagegen",
+      "art": "/cards/crystal-season-spell-04.webp"
+    },
+    {
+      "id": "crystal-season-spell-05",
+      "name": "棱面风暴·05",
+      "source": "imagegen",
+      "art": "/cards/crystal-season-spell-05.webp"
+    },
+    {
+      "id": "crystal-season-spell-06",
+      "name": "折光发现·06",
+      "source": "imagegen",
+      "art": "/cards/crystal-season-spell-06.webp"
+    },
+    {
+      "id": "crystal-season-spell-07",
+      "name": "矿心灼流·07",
+      "source": "imagegen",
+      "art": "/cards/crystal-season-spell-07.webp"
+    },
+    {
+      "id": "crystal-season-spell-08",
+      "name": "晶核回响·08",
+      "source": "imagegen",
+      "art": "/cards/crystal-season-spell-08.webp"
+    },
+    {
+      "id": "crystal-season-spell-09",
+      "name": "棱面复苏·09",
+      "source": "imagegen",
+      "art": "/cards/crystal-season-spell-09.webp"
+    },
+    {
+      "id": "crystal-season-spell-10",
+      "name": "折光战令·10",
+      "source": "imagegen",
+      "art": "/cards/crystal-season-spell-10.webp"
+    },
+    {
+      "id": "crystal-season-spell-11",
+      "name": "矿心风暴·11",
+      "source": "imagegen",
+      "art": "/cards/crystal-season-spell-11.webp"
+    },
+    {
+      "id": "crystal-season-spell-12",
+      "name": "晶核发现·12",
+      "source": "imagegen",
+      "art": "/cards/crystal-season-spell-12.webp"
+    },
+    {
+      "id": "crystal-season-spell-13",
+      "name": "棱面灼流·13",
+      "source": "imagegen",
+      "art": "/cards/crystal-season-spell-13.webp"
+    },
+    {
+      "id": "crystal-season-spell-14",
+      "name": "折光回响·14",
+      "source": "imagegen",
+      "art": "/cards/crystal-season-spell-14.webp"
+    },
+    {
+      "id": "crystal-season-weapon",
+      "name": "晶核·核心武装",
+      "source": "imagegen",
+      "art": "/cards/crystal-season-weapon.webp"
+    },
+    {
+      "id": "dream-season-01",
+      "name": "梦境织梦者·01",
+      "source": "imagegen",
+      "art": "/cards/dream-season-01.webp"
+    },
+    {
+      "id": "dream-season-02",
+      "name": "幻潮梦魇·02",
+      "source": "imagegen",
+      "art": "/cards/dream-season-02.webp"
+    },
+    {
+      "id": "dream-season-03",
+      "name": "睡莲入梦师·03",
+      "source": "imagegen",
+      "art": "/cards/dream-season-03.webp"
+    },
+    {
+      "id": "dream-season-04",
+      "name": "星梦幻兽·04",
+      "source": "imagegen",
+      "art": "/cards/dream-season-04.webp"
+    },
+    {
+      "id": "dream-season-05",
+      "name": "梦境织梦者·05",
+      "source": "imagegen",
+      "art": "/cards/dream-season-05.webp"
+    },
+    {
+      "id": "dream-season-06",
+      "name": "幻潮梦魇·06",
+      "source": "imagegen",
+      "art": "/cards/dream-season-06.webp"
+    },
+    {
+      "id": "dream-season-07",
+      "name": "睡莲入梦师·07",
+      "source": "imagegen",
+      "art": "/cards/dream-season-07.webp"
+    },
+    {
+      "id": "dream-season-08",
+      "name": "星梦幻兽·08",
+      "source": "imagegen",
+      "art": "/cards/dream-season-08.webp"
+    },
+    {
+      "id": "dream-season-09",
+      "name": "梦境织梦者·09",
+      "source": "imagegen",
+      "art": "/cards/dream-season-09.webp"
+    },
+    {
+      "id": "dream-season-10",
+      "name": "幻潮梦魇·10",
+      "source": "imagegen",
+      "art": "/cards/dream-season-10.webp"
+    },
+    {
+      "id": "dream-season-11",
+      "name": "睡莲入梦师·11",
+      "source": "imagegen",
+      "art": "/cards/dream-season-11.webp"
+    },
+    {
+      "id": "dream-season-12",
+      "name": "星梦幻兽·12",
+      "source": "imagegen",
+      "art": "/cards/dream-season-12.webp"
+    },
+    {
+      "id": "dream-season-13",
+      "name": "梦境织梦者·13",
+      "source": "imagegen",
+      "art": "/cards/dream-season-13.webp"
+    },
+    {
+      "id": "dream-season-14",
+      "name": "幻潮梦魇·14",
+      "source": "imagegen",
+      "art": "/cards/dream-season-14.webp"
+    },
+    {
+      "id": "dream-season-15",
+      "name": "睡莲入梦师·15",
+      "source": "imagegen",
+      "art": "/cards/dream-season-15.webp"
+    },
+    {
+      "id": "dream-season-16",
+      "name": "星梦幻兽·16",
+      "source": "imagegen",
+      "art": "/cards/dream-season-16.webp"
+    },
+    {
+      "id": "dream-season-17",
+      "name": "梦境织梦者·17",
+      "source": "imagegen",
+      "art": "/cards/dream-season-17.webp"
+    },
+    {
+      "id": "dream-season-18",
+      "name": "幻潮梦魇·18",
+      "source": "imagegen",
+      "art": "/cards/dream-season-18.webp"
+    },
+    {
+      "id": "dream-season-19",
+      "name": "睡莲入梦师·19",
+      "source": "imagegen",
+      "art": "/cards/dream-season-19.webp"
+    },
+    {
+      "id": "dream-season-20",
+      "name": "星梦幻兽·20",
+      "source": "imagegen",
+      "art": "/cards/dream-season-20.webp"
+    },
+    {
+      "id": "dream-season-21",
+      "name": "梦境织梦者·21",
+      "source": "imagegen",
+      "art": "/cards/dream-season-21.webp"
+    },
+    {
+      "id": "dream-season-22",
+      "name": "幻潮梦魇·22",
+      "source": "imagegen",
+      "art": "/cards/dream-season-22.webp"
+    },
+    {
+      "id": "dream-season-23",
+      "name": "睡莲入梦师·23",
+      "source": "imagegen",
+      "art": "/cards/dream-season-23.webp"
+    },
+    {
+      "id": "dream-season-24",
+      "name": "星梦幻兽·24",
+      "source": "imagegen",
+      "art": "/cards/dream-season-24.webp"
+    },
+    {
+      "id": "dream-season-25",
+      "name": "梦境织梦者·25",
+      "source": "imagegen",
+      "art": "/cards/dream-season-25.webp"
+    },
+    {
+      "id": "dream-season-26",
+      "name": "幻潮梦魇·26",
+      "source": "imagegen",
+      "art": "/cards/dream-season-26.webp"
+    },
+    {
+      "id": "dream-season-27",
+      "name": "睡莲入梦师·27",
+      "source": "imagegen",
+      "art": "/cards/dream-season-27.webp"
+    },
+    {
+      "id": "dream-season-28",
+      "name": "星梦幻兽·28",
+      "source": "imagegen",
+      "art": "/cards/dream-season-28.webp"
+    },
+    {
+      "id": "dream-season-29",
+      "name": "梦境织梦者·29",
+      "source": "imagegen",
+      "art": "/cards/dream-season-29.webp"
+    },
+    {
+      "id": "dream-season-30",
+      "name": "幻潮梦魇·30",
+      "source": "imagegen",
+      "art": "/cards/dream-season-30.webp"
+    },
+    {
+      "id": "dream-season-31",
+      "name": "睡莲入梦师·31",
+      "source": "imagegen",
+      "art": "/cards/dream-season-31.webp"
+    },
+    {
+      "id": "dream-season-32",
+      "name": "星梦幻兽·32",
+      "source": "imagegen",
+      "art": "/cards/dream-season-32.webp"
+    },
+    {
+      "id": "dream-season-33",
+      "name": "梦境织梦者·33",
+      "source": "imagegen",
+      "art": "/cards/dream-season-33.webp"
+    },
+    {
+      "id": "dream-season-34",
+      "name": "幻潮梦魇·34",
+      "source": "imagegen",
+      "art": "/cards/dream-season-34.webp"
+    },
+    {
+      "id": "dream-season-35",
+      "name": "dream-season-35",
+      "source": "imagegen",
+      "art": "/cards/dream-season-35.webp"
+    },
+    {
+      "id": "dream-season-spell-01",
+      "name": "dream-season-spell-01",
+      "source": "imagegen",
+      "art": "/cards/dream-season-spell-01.webp"
+    },
+    {
+      "id": "dream-season-spell-02",
+      "name": "dream-season-spell-02",
+      "source": "imagegen",
+      "art": "/cards/dream-season-spell-02.webp"
+    },
+    {
+      "id": "dream-season-spell-03",
+      "name": "dream-season-spell-03",
+      "source": "imagegen",
+      "art": "/cards/dream-season-spell-03.webp"
+    },
+    {
+      "id": "dream-season-spell-04",
+      "name": "dream-season-spell-04",
+      "source": "imagegen",
+      "art": "/cards/dream-season-spell-04.webp"
+    },
+    {
+      "id": "dream-season-spell-05",
+      "name": "dream-season-spell-05",
+      "source": "imagegen",
+      "art": "/cards/dream-season-spell-05.webp"
+    },
+    {
+      "id": "dream-season-spell-06",
+      "name": "dream-season-spell-06",
+      "source": "imagegen",
+      "art": "/cards/dream-season-spell-06.webp"
+    },
+    {
+      "id": "dream-season-spell-07",
+      "name": "dream-season-spell-07",
+      "source": "imagegen",
+      "art": "/cards/dream-season-spell-07.webp"
+    },
+    {
+      "id": "dream-season-spell-08",
+      "name": "dream-season-spell-08",
+      "source": "imagegen",
+      "art": "/cards/dream-season-spell-08.webp"
+    },
+    {
+      "id": "dream-season-spell-09",
+      "name": "dream-season-spell-09",
+      "source": "imagegen",
+      "art": "/cards/dream-season-spell-09.webp"
+    },
+    {
+      "id": "dream-season-spell-10",
+      "name": "dream-season-spell-10",
+      "source": "imagegen",
+      "art": "/cards/dream-season-spell-10.webp"
+    },
+    {
+      "id": "dream-season-spell-11",
+      "name": "dream-season-spell-11",
+      "source": "imagegen",
+      "art": "/cards/dream-season-spell-11.webp"
+    },
+    {
+      "id": "dream-season-spell-12",
+      "name": "dream-season-spell-12",
+      "source": "imagegen",
+      "art": "/cards/dream-season-spell-12.webp"
+    },
+    {
+      "id": "dream-season-spell-13",
+      "name": "dream-season-spell-13",
+      "source": "imagegen",
+      "art": "/cards/dream-season-spell-13.webp"
+    },
+    {
+      "id": "dream-season-spell-14",
+      "name": "dream-season-spell-14",
+      "source": "imagegen",
+      "art": "/cards/dream-season-spell-14.webp"
+    },
+    {
+      "id": "dream-season-weapon",
+      "name": "dream-season-weapon",
+      "source": "imagegen",
+      "art": "/cards/dream-season-weapon.webp"
+    },
+    {
+      "id": "rift-season-01",
+      "name": "rift-season-01",
+      "source": "imagegen",
+      "art": "/cards/rift-season-01.webp"
+    },
+    {
+      "id": "rift-season-02",
+      "name": "rift-season-02",
+      "source": "imagegen",
+      "art": "/cards/rift-season-02.webp"
+    },
+    {
+      "id": "rift-season-03",
+      "name": "rift-season-03",
+      "source": "imagegen",
+      "art": "/cards/rift-season-03.webp"
+    },
+    {
+      "id": "rift-season-04",
+      "name": "rift-season-04",
+      "source": "imagegen",
+      "art": "/cards/rift-season-04.webp"
+    },
+    {
+      "id": "rift-season-05",
+      "name": "rift-season-05",
+      "source": "imagegen",
+      "art": "/cards/rift-season-05.webp"
+    },
+    {
+      "id": "rift-season-06",
+      "name": "rift-season-06",
+      "source": "imagegen",
+      "art": "/cards/rift-season-06.webp"
+    },
+    {
+      "id": "rift-season-07",
+      "name": "rift-season-07",
+      "source": "imagegen",
+      "art": "/cards/rift-season-07.webp"
+    },
+    {
+      "id": "rift-season-08",
+      "name": "rift-season-08",
+      "source": "imagegen",
+      "art": "/cards/rift-season-08.webp"
+    },
+    {
+      "id": "rift-season-09",
+      "name": "rift-season-09",
+      "source": "imagegen",
+      "art": "/cards/rift-season-09.webp"
+    },
+    {
+      "id": "rift-season-10",
+      "name": "rift-season-10",
+      "source": "imagegen",
+      "art": "/cards/rift-season-10.webp"
+    },
+    {
+      "id": "rift-season-11",
+      "name": "rift-season-11",
+      "source": "imagegen",
+      "art": "/cards/rift-season-11.webp"
+    },
+    {
+      "id": "rift-season-12",
+      "name": "rift-season-12",
+      "source": "imagegen",
+      "art": "/cards/rift-season-12.webp"
+    },
+    {
+      "id": "rift-season-13",
+      "name": "rift-season-13",
+      "source": "imagegen",
+      "art": "/cards/rift-season-13.webp"
+    },
+    {
+      "id": "rift-season-14",
+      "name": "rift-season-14",
+      "source": "imagegen",
+      "art": "/cards/rift-season-14.webp"
+    },
+    {
+      "id": "rift-season-15",
+      "name": "rift-season-15",
+      "source": "imagegen",
+      "art": "/cards/rift-season-15.webp"
+    },
+    {
+      "id": "rift-season-16",
+      "name": "rift-season-16",
+      "source": "imagegen",
+      "art": "/cards/rift-season-16.webp"
+    },
+    {
+      "id": "rift-season-17",
+      "name": "rift-season-17",
+      "source": "imagegen",
+      "art": "/cards/rift-season-17.webp"
+    },
+    {
+      "id": "rift-season-18",
+      "name": "rift-season-18",
+      "source": "imagegen",
+      "art": "/cards/rift-season-18.webp"
+    },
+    {
+      "id": "rift-season-19",
+      "name": "rift-season-19",
+      "source": "imagegen",
+      "art": "/cards/rift-season-19.webp"
+    },
+    {
+      "id": "rift-season-20",
+      "name": "rift-season-20",
+      "source": "imagegen",
+      "art": "/cards/rift-season-20.webp"
+    },
+    {
+      "id": "rift-season-21",
+      "name": "rift-season-21",
+      "source": "imagegen",
+      "art": "/cards/rift-season-21.webp"
+    },
+    {
+      "id": "rift-season-22",
+      "name": "rift-season-22",
+      "source": "imagegen",
+      "art": "/cards/rift-season-22.webp"
+    },
+    {
+      "id": "rift-season-23",
+      "name": "rift-season-23",
+      "source": "imagegen",
+      "art": "/cards/rift-season-23.webp"
+    },
+    {
+      "id": "rift-season-24",
+      "name": "rift-season-24",
+      "source": "imagegen",
+      "art": "/cards/rift-season-24.webp"
+    },
+    {
+      "id": "rift-season-25",
+      "name": "rift-season-25",
+      "source": "imagegen",
+      "art": "/cards/rift-season-25.webp"
+    },
+    {
+      "id": "rift-season-26",
+      "name": "rift-season-26",
+      "source": "imagegen",
+      "art": "/cards/rift-season-26.webp"
+    },
+    {
+      "id": "rift-season-27",
+      "name": "rift-season-27",
+      "source": "imagegen",
+      "art": "/cards/rift-season-27.webp"
+    },
+    {
+      "id": "rift-season-28",
+      "name": "rift-season-28",
+      "source": "imagegen",
+      "art": "/cards/rift-season-28.webp"
+    },
+    {
+      "id": "rift-season-29",
+      "name": "rift-season-29",
+      "source": "imagegen",
+      "art": "/cards/rift-season-29.webp"
+    },
+    {
+      "id": "rift-season-30",
+      "name": "rift-season-30",
+      "source": "imagegen",
+      "art": "/cards/rift-season-30.webp"
+    },
+    {
+      "id": "rift-season-31",
+      "name": "rift-season-31",
+      "source": "imagegen",
+      "art": "/cards/rift-season-31.webp"
+    },
+    {
+      "id": "rift-season-32",
+      "name": "rift-season-32",
+      "source": "imagegen",
+      "art": "/cards/rift-season-32.webp"
+    },
+    {
+      "id": "rift-season-33",
+      "name": "rift-season-33",
+      "source": "imagegen",
+      "art": "/cards/rift-season-33.webp"
+    },
+    {
+      "id": "rift-season-34",
+      "name": "rift-season-34",
+      "source": "imagegen",
+      "art": "/cards/rift-season-34.webp"
+    },
+    {
+      "id": "rift-season-35",
+      "name": "rift-season-35",
+      "source": "imagegen",
+      "art": "/cards/rift-season-35.webp"
+    },
+    {
+      "id": "rift-season-spell-01",
+      "name": "rift-season-spell-01",
+      "source": "imagegen",
+      "art": "/cards/rift-season-spell-01.webp"
+    },
+    {
+      "id": "rift-season-spell-02",
+      "name": "rift-season-spell-02",
+      "source": "imagegen",
+      "art": "/cards/rift-season-spell-02.webp"
+    },
+    {
+      "id": "rift-season-spell-03",
+      "name": "rift-season-spell-03",
+      "source": "imagegen",
+      "art": "/cards/rift-season-spell-03.webp"
+    },
+    {
+      "id": "rift-season-spell-04",
+      "name": "rift-season-spell-04",
+      "source": "imagegen",
+      "art": "/cards/rift-season-spell-04.webp"
+    },
+    {
+      "id": "rift-season-spell-05",
+      "name": "rift-season-spell-05",
+      "source": "imagegen",
+      "art": "/cards/rift-season-spell-05.webp"
+    },
+    {
+      "id": "rift-season-spell-06",
+      "name": "rift-season-spell-06",
+      "source": "imagegen",
+      "art": "/cards/rift-season-spell-06.webp"
+    },
+    {
+      "id": "rift-season-spell-07",
+      "name": "rift-season-spell-07",
+      "source": "imagegen",
+      "art": "/cards/rift-season-spell-07.webp"
+    },
+    {
+      "id": "rift-season-spell-08",
+      "name": "rift-season-spell-08",
+      "source": "imagegen",
+      "art": "/cards/rift-season-spell-08.webp"
+    },
+    {
+      "id": "rift-season-spell-09",
+      "name": "rift-season-spell-09",
+      "source": "imagegen",
+      "art": "/cards/rift-season-spell-09.webp"
+    },
+    {
+      "id": "rift-season-spell-10",
+      "name": "rift-season-spell-10",
+      "source": "imagegen",
+      "art": "/cards/rift-season-spell-10.webp"
+    },
+    {
+      "id": "rift-season-spell-11",
+      "name": "rift-season-spell-11",
+      "source": "imagegen",
+      "art": "/cards/rift-season-spell-11.webp"
+    },
+    {
+      "id": "rift-season-spell-12",
+      "name": "rift-season-spell-12",
+      "source": "imagegen",
+      "art": "/cards/rift-season-spell-12.webp"
+    },
+    {
+      "id": "rift-season-spell-13",
+      "name": "rift-season-spell-13",
+      "source": "imagegen",
+      "art": "/cards/rift-season-spell-13.webp"
+    },
+    {
+      "id": "rift-season-spell-14",
+      "name": "rift-season-spell-14",
+      "source": "imagegen",
+      "art": "/cards/rift-season-spell-14.webp"
+    },
+    {
+      "id": "rift-season-weapon",
+      "name": "rift-season-weapon",
+      "source": "imagegen",
+      "art": "/cards/rift-season-weapon.webp"
+    },
+    {
+      "id": "timesand-season-01",
+      "name": "timesand-season-01",
+      "source": "imagegen",
+      "art": "/cards/timesand-season-01.webp"
+    },
+    {
+      "id": "timesand-season-02",
+      "name": "timesand-season-02",
+      "source": "imagegen",
+      "art": "/cards/timesand-season-02.webp"
+    },
+    {
+      "id": "timesand-season-03",
+      "name": "timesand-season-03",
+      "source": "imagegen",
+      "art": "/cards/timesand-season-03.webp"
+    },
+    {
+      "id": "timesand-season-04",
+      "name": "timesand-season-04",
+      "source": "imagegen",
+      "art": "/cards/timesand-season-04.webp"
+    },
+    {
+      "id": "timesand-season-05",
+      "name": "timesand-season-05",
+      "source": "imagegen",
+      "art": "/cards/timesand-season-05.webp"
+    },
+    {
+      "id": "timesand-season-06",
+      "name": "timesand-season-06",
+      "source": "imagegen",
+      "art": "/cards/timesand-season-06.webp"
+    },
+    {
+      "id": "timesand-season-07",
+      "name": "timesand-season-07",
+      "source": "imagegen",
+      "art": "/cards/timesand-season-07.webp"
+    },
+    {
+      "id": "timesand-season-08",
+      "name": "timesand-season-08",
+      "source": "imagegen",
+      "art": "/cards/timesand-season-08.webp"
+    },
+    {
+      "id": "timesand-season-09",
+      "name": "timesand-season-09",
+      "source": "imagegen",
+      "art": "/cards/timesand-season-09.webp"
+    },
+    {
+      "id": "timesand-season-10",
+      "name": "timesand-season-10",
+      "source": "imagegen",
+      "art": "/cards/timesand-season-10.webp"
+    },
+    {
+      "id": "timesand-season-11",
+      "name": "timesand-season-11",
+      "source": "imagegen",
+      "art": "/cards/timesand-season-11.webp"
+    },
+    {
+      "id": "timesand-season-12",
+      "name": "timesand-season-12",
+      "source": "imagegen",
+      "art": "/cards/timesand-season-12.webp"
+    },
+    {
+      "id": "timesand-season-13",
+      "name": "timesand-season-13",
+      "source": "imagegen",
+      "art": "/cards/timesand-season-13.webp"
+    },
+    {
+      "id": "timesand-season-14",
+      "name": "timesand-season-14",
+      "source": "imagegen",
+      "art": "/cards/timesand-season-14.webp"
+    },
+    {
+      "id": "timesand-season-15",
+      "name": "timesand-season-15",
+      "source": "imagegen",
+      "art": "/cards/timesand-season-15.webp"
+    },
+    {
+      "id": "timesand-season-16",
+      "name": "timesand-season-16",
+      "source": "imagegen",
+      "art": "/cards/timesand-season-16.webp"
+    },
+    {
+      "id": "timesand-season-17",
+      "name": "timesand-season-17",
+      "source": "imagegen",
+      "art": "/cards/timesand-season-17.webp"
+    },
+    {
+      "id": "timesand-season-18",
+      "name": "timesand-season-18",
+      "source": "imagegen",
+      "art": "/cards/timesand-season-18.webp"
+    },
+    {
+      "id": "timesand-season-19",
+      "name": "timesand-season-19",
+      "source": "imagegen",
+      "art": "/cards/timesand-season-19.webp"
+    },
+    {
+      "id": "timesand-season-20",
+      "name": "timesand-season-20",
+      "source": "imagegen",
+      "art": "/cards/timesand-season-20.webp"
+    },
+    {
+      "id": "timesand-season-21",
+      "name": "timesand-season-21",
+      "source": "imagegen",
+      "art": "/cards/timesand-season-21.webp"
+    },
+    {
+      "id": "timesand-season-22",
+      "name": "timesand-season-22",
+      "source": "imagegen",
+      "art": "/cards/timesand-season-22.webp"
+    },
+    {
+      "id": "timesand-season-23",
+      "name": "timesand-season-23",
+      "source": "imagegen",
+      "art": "/cards/timesand-season-23.webp"
+    },
+    {
+      "id": "timesand-season-24",
+      "name": "timesand-season-24",
+      "source": "imagegen",
+      "art": "/cards/timesand-season-24.webp"
+    },
+    {
+      "id": "timesand-season-25",
+      "name": "timesand-season-25",
+      "source": "imagegen",
+      "art": "/cards/timesand-season-25.webp"
+    },
+    {
+      "id": "timesand-season-26",
+      "name": "timesand-season-26",
+      "source": "imagegen",
+      "art": "/cards/timesand-season-26.webp"
+    },
+    {
+      "id": "timesand-season-27",
+      "name": "timesand-season-27",
+      "source": "imagegen",
+      "art": "/cards/timesand-season-27.webp"
+    },
+    {
+      "id": "timesand-season-28",
+      "name": "timesand-season-28",
+      "source": "imagegen",
+      "art": "/cards/timesand-season-28.webp"
+    },
+    {
+      "id": "timesand-season-29",
+      "name": "timesand-season-29",
+      "source": "imagegen",
+      "art": "/cards/timesand-season-29.webp"
+    },
+    {
+      "id": "timesand-season-30",
+      "name": "timesand-season-30",
+      "source": "imagegen",
+      "art": "/cards/timesand-season-30.webp"
+    },
+    {
+      "id": "timesand-season-31",
+      "name": "timesand-season-31",
+      "source": "imagegen",
+      "art": "/cards/timesand-season-31.webp"
+    },
+    {
+      "id": "timesand-season-32",
+      "name": "timesand-season-32",
+      "source": "imagegen",
+      "art": "/cards/timesand-season-32.webp"
+    },
+    {
+      "id": "timesand-season-33",
+      "name": "timesand-season-33",
+      "source": "imagegen",
+      "art": "/cards/timesand-season-33.webp"
+    },
+    {
+      "id": "timesand-season-34",
+      "name": "timesand-season-34",
+      "source": "imagegen",
+      "art": "/cards/timesand-season-34.webp"
+    },
+    {
+      "id": "timesand-season-35",
+      "name": "timesand-season-35",
+      "source": "imagegen",
+      "art": "/cards/timesand-season-35.webp"
+    },
+    {
+      "id": "timesand-season-spell-01",
+      "name": "timesand-season-spell-01",
+      "source": "imagegen",
+      "art": "/cards/timesand-season-spell-01.webp"
+    },
+    {
+      "id": "timesand-season-spell-02",
+      "name": "timesand-season-spell-02",
+      "source": "imagegen",
+      "art": "/cards/timesand-season-spell-02.webp"
+    },
+    {
+      "id": "timesand-season-spell-03",
+      "name": "timesand-season-spell-03",
+      "source": "imagegen",
+      "art": "/cards/timesand-season-spell-03.webp"
+    },
+    {
+      "id": "timesand-season-spell-04",
+      "name": "timesand-season-spell-04",
+      "source": "imagegen",
+      "art": "/cards/timesand-season-spell-04.webp"
+    },
+    {
+      "id": "timesand-season-spell-05",
+      "name": "timesand-season-spell-05",
+      "source": "imagegen",
+      "art": "/cards/timesand-season-spell-05.webp"
+    },
+    {
+      "id": "timesand-season-spell-06",
+      "name": "timesand-season-spell-06",
+      "source": "imagegen",
+      "art": "/cards/timesand-season-spell-06.webp"
+    },
+    {
+      "id": "timesand-season-spell-07",
+      "name": "timesand-season-spell-07",
+      "source": "imagegen",
+      "art": "/cards/timesand-season-spell-07.webp"
+    },
+    {
+      "id": "timesand-season-spell-08",
+      "name": "timesand-season-spell-08",
+      "source": "imagegen",
+      "art": "/cards/timesand-season-spell-08.webp"
+    },
+    {
+      "id": "timesand-season-spell-09",
+      "name": "timesand-season-spell-09",
+      "source": "imagegen",
+      "art": "/cards/timesand-season-spell-09.webp"
+    },
+    {
+      "id": "timesand-season-spell-10",
+      "name": "timesand-season-spell-10",
+      "source": "imagegen",
+      "art": "/cards/timesand-season-spell-10.webp"
+    },
+    {
+      "id": "timesand-season-spell-11",
+      "name": "timesand-season-spell-11",
+      "source": "imagegen",
+      "art": "/cards/timesand-season-spell-11.webp"
+    },
+    {
+      "id": "timesand-season-spell-12",
+      "name": "timesand-season-spell-12",
+      "source": "imagegen",
+      "art": "/cards/timesand-season-spell-12.webp"
+    },
+    {
+      "id": "timesand-season-spell-13",
+      "name": "timesand-season-spell-13",
+      "source": "imagegen",
+      "art": "/cards/timesand-season-spell-13.webp"
+    },
+    {
+      "id": "timesand-season-spell-14",
+      "name": "timesand-season-spell-14",
+      "source": "imagegen",
+      "art": "/cards/timesand-season-spell-14.webp"
+    },
+    {
+      "id": "timesand-season-weapon",
+      "name": "timesand-season-weapon",
+      "source": "imagegen",
+      "art": "/cards/timesand-season-weapon.webp"
+    },
+    {
+      "id": "gloomwood-season-01",
+      "name": "gloomwood-season-01",
+      "source": "imagegen",
+      "art": "/cards/gloomwood-season-01.webp"
+    },
+    {
+      "id": "gloomwood-season-02",
+      "name": "gloomwood-season-02",
+      "source": "imagegen",
+      "art": "/cards/gloomwood-season-02.webp"
+    },
+    {
+      "id": "gloomwood-season-03",
+      "name": "gloomwood-season-03",
+      "source": "imagegen",
+      "art": "/cards/gloomwood-season-03.webp"
+    },
+    {
+      "id": "gloomwood-season-04",
+      "name": "gloomwood-season-04",
+      "source": "imagegen",
+      "art": "/cards/gloomwood-season-04.webp"
+    },
+    {
+      "id": "gloomwood-season-05",
+      "name": "gloomwood-season-05",
+      "source": "imagegen",
+      "art": "/cards/gloomwood-season-05.webp"
+    },
+    {
+      "id": "gloomwood-season-06",
+      "name": "gloomwood-season-06",
+      "source": "imagegen",
+      "art": "/cards/gloomwood-season-06.webp"
+    },
+    {
+      "id": "gloomwood-season-07",
+      "name": "gloomwood-season-07",
+      "source": "imagegen",
+      "art": "/cards/gloomwood-season-07.webp"
+    },
+    {
+      "id": "gloomwood-season-08",
+      "name": "gloomwood-season-08",
+      "source": "imagegen",
+      "art": "/cards/gloomwood-season-08.webp"
+    },
+    {
+      "id": "gloomwood-season-09",
+      "name": "gloomwood-season-09",
+      "source": "imagegen",
+      "art": "/cards/gloomwood-season-09.webp"
+    },
+    {
+      "id": "gloomwood-season-10",
+      "name": "gloomwood-season-10",
+      "source": "imagegen",
+      "art": "/cards/gloomwood-season-10.webp"
+    },
+    {
+      "id": "gloomwood-season-11",
+      "name": "gloomwood-season-11",
+      "source": "imagegen",
+      "art": "/cards/gloomwood-season-11.webp"
+    },
+    {
+      "id": "gloomwood-season-12",
+      "name": "gloomwood-season-12",
+      "source": "imagegen",
+      "art": "/cards/gloomwood-season-12.webp"
+    },
+    {
+      "id": "gloomwood-season-13",
+      "name": "gloomwood-season-13",
+      "source": "imagegen",
+      "art": "/cards/gloomwood-season-13.webp"
+    },
+    {
+      "id": "gloomwood-season-14",
+      "name": "gloomwood-season-14",
+      "source": "imagegen",
+      "art": "/cards/gloomwood-season-14.webp"
+    },
+    {
+      "id": "gloomwood-season-15",
+      "name": "gloomwood-season-15",
+      "source": "imagegen",
+      "art": "/cards/gloomwood-season-15.webp"
+    },
+    {
+      "id": "gloomwood-season-16",
+      "name": "gloomwood-season-16",
+      "source": "imagegen",
+      "art": "/cards/gloomwood-season-16.webp"
+    },
+    {
+      "id": "gloomwood-season-17",
+      "name": "gloomwood-season-17",
+      "source": "imagegen",
+      "art": "/cards/gloomwood-season-17.webp"
+    },
+    {
+      "id": "gloomwood-season-18",
+      "name": "gloomwood-season-18",
+      "source": "imagegen",
+      "art": "/cards/gloomwood-season-18.webp"
+    },
+    {
+      "id": "gloomwood-season-19",
+      "name": "gloomwood-season-19",
+      "source": "imagegen",
+      "art": "/cards/gloomwood-season-19.webp"
+    },
+    {
+      "id": "gloomwood-season-20",
+      "name": "gloomwood-season-20",
+      "source": "imagegen",
+      "art": "/cards/gloomwood-season-20.webp"
+    },
+    {
+      "id": "gloomwood-season-21",
+      "name": "gloomwood-season-21",
+      "source": "imagegen",
+      "art": "/cards/gloomwood-season-21.webp"
+    },
+    {
+      "id": "gloomwood-season-22",
+      "name": "gloomwood-season-22",
+      "source": "imagegen",
+      "art": "/cards/gloomwood-season-22.webp"
+    },
+    {
+      "id": "gloomwood-season-23",
+      "name": "gloomwood-season-23",
+      "source": "imagegen",
+      "art": "/cards/gloomwood-season-23.webp"
+    },
+    {
+      "id": "gloomwood-season-24",
+      "name": "gloomwood-season-24",
+      "source": "imagegen",
+      "art": "/cards/gloomwood-season-24.webp"
+    },
+    {
+      "id": "gloomwood-season-25",
+      "name": "gloomwood-season-25",
+      "source": "imagegen",
+      "art": "/cards/gloomwood-season-25.webp"
+    },
+    {
+      "id": "gloomwood-season-26",
+      "name": "gloomwood-season-26",
+      "source": "imagegen",
+      "art": "/cards/gloomwood-season-26.webp"
+    },
+    {
+      "id": "gloomwood-season-27",
+      "name": "gloomwood-season-27",
+      "source": "imagegen",
+      "art": "/cards/gloomwood-season-27.webp"
+    },
+    {
+      "id": "gloomwood-season-28",
+      "name": "gloomwood-season-28",
+      "source": "imagegen",
+      "art": "/cards/gloomwood-season-28.webp"
+    },
+    {
+      "id": "gloomwood-season-29",
+      "name": "gloomwood-season-29",
+      "source": "imagegen",
+      "art": "/cards/gloomwood-season-29.webp"
+    },
+    {
+      "id": "gloomwood-season-30",
+      "name": "gloomwood-season-30",
+      "source": "imagegen",
+      "art": "/cards/gloomwood-season-30.webp"
+    },
+    {
+      "id": "gloomwood-season-31",
+      "name": "gloomwood-season-31",
+      "source": "imagegen",
+      "art": "/cards/gloomwood-season-31.webp"
+    },
+    {
+      "id": "gloomwood-season-32",
+      "name": "gloomwood-season-32",
+      "source": "imagegen",
+      "art": "/cards/gloomwood-season-32.webp"
+    },
+    {
+      "id": "gloomwood-season-33",
+      "name": "gloomwood-season-33",
+      "source": "imagegen",
+      "art": "/cards/gloomwood-season-33.webp"
+    },
+    {
+      "id": "gloomwood-season-34",
+      "name": "gloomwood-season-34",
+      "source": "imagegen",
+      "art": "/cards/gloomwood-season-34.webp"
+    },
+    {
+      "id": "gloomwood-season-35",
+      "name": "gloomwood-season-35",
+      "source": "imagegen",
+      "art": "/cards/gloomwood-season-35.webp"
+    },
+    {
+      "id": "gloomwood-season-spell-01",
+      "name": "gloomwood-season-spell-01",
+      "source": "imagegen",
+      "art": "/cards/gloomwood-season-spell-01.webp"
+    },
+    {
+      "id": "gloomwood-season-spell-02",
+      "name": "gloomwood-season-spell-02",
+      "source": "imagegen",
+      "art": "/cards/gloomwood-season-spell-02.webp"
+    },
+    {
+      "id": "gloomwood-season-spell-03",
+      "name": "gloomwood-season-spell-03",
+      "source": "imagegen",
+      "art": "/cards/gloomwood-season-spell-03.webp"
+    },
+    {
+      "id": "gloomwood-season-spell-04",
+      "name": "gloomwood-season-spell-04",
+      "source": "imagegen",
+      "art": "/cards/gloomwood-season-spell-04.webp"
+    },
+    {
+      "id": "gloomwood-season-spell-05",
+      "name": "gloomwood-season-spell-05",
+      "source": "imagegen",
+      "art": "/cards/gloomwood-season-spell-05.webp"
+    },
+    {
+      "id": "gloomwood-season-spell-06",
+      "name": "gloomwood-season-spell-06",
+      "source": "imagegen",
+      "art": "/cards/gloomwood-season-spell-06.webp"
+    },
+    {
+      "id": "gloomwood-season-spell-07",
+      "name": "gloomwood-season-spell-07",
+      "source": "imagegen",
+      "art": "/cards/gloomwood-season-spell-07.webp"
+    },
+    {
+      "id": "gloomwood-season-spell-08",
+      "name": "gloomwood-season-spell-08",
+      "source": "imagegen",
+      "art": "/cards/gloomwood-season-spell-08.webp"
+    },
+    {
+      "id": "gloomwood-season-spell-09",
+      "name": "gloomwood-season-spell-09",
+      "source": "imagegen",
+      "art": "/cards/gloomwood-season-spell-09.webp"
+    },
+    {
+      "id": "gloomwood-season-spell-10",
+      "name": "gloomwood-season-spell-10",
+      "source": "imagegen",
+      "art": "/cards/gloomwood-season-spell-10.webp"
+    },
+    {
+      "id": "gloomwood-season-spell-11",
+      "name": "gloomwood-season-spell-11",
+      "source": "imagegen",
+      "art": "/cards/gloomwood-season-spell-11.webp"
+    },
+    {
+      "id": "gloomwood-season-spell-12",
+      "name": "gloomwood-season-spell-12",
+      "source": "imagegen",
+      "art": "/cards/gloomwood-season-spell-12.webp"
+    },
+    {
+      "id": "gloomwood-season-spell-13",
+      "name": "gloomwood-season-spell-13",
+      "source": "imagegen",
+      "art": "/cards/gloomwood-season-spell-13.webp"
+    },
+    {
+      "id": "gloomwood-season-spell-14",
+      "name": "gloomwood-season-spell-14",
+      "source": "imagegen",
+      "art": "/cards/gloomwood-season-spell-14.webp"
+    },
+    {
+      "id": "gloomwood-season-weapon",
+      "name": "gloomwood-season-weapon",
+      "source": "imagegen",
+      "art": "/cards/gloomwood-season-weapon.webp"
+    },
     {
       "id": "firmament-season-01",
       "name": "天穹巨像·01",
@@ -301,660 +6001,6 @@
       "name": "天穹·核心武装",
       "source": "imagegen",
       "art": "/cards/firmament-season-weapon.webp"
-    },
-    {
-      "id": "sun-season-01",
-      "name": "晨辉斥候·01",
-      "source": "imagegen",
-      "art": "/cards/sun-season-01.webp"
-    },
-    {
-      "id": "sun-season-02",
-      "name": "棱镜守望者·02",
-      "source": "imagegen",
-      "art": "/cards/sun-season-02.webp"
-    },
-    {
-      "id": "sun-season-03",
-      "name": "白昼旗手·03",
-      "source": "imagegen",
-      "art": "/cards/sun-season-03.webp"
-    },
-    {
-      "id": "sun-season-04",
-      "name": "曙冠铸师·04",
-      "source": "imagegen",
-      "art": "/cards/sun-season-04.webp"
-    },
-    {
-      "id": "sun-season-05",
-      "name": "晨辉斥候·05",
-      "source": "imagegen",
-      "art": "/cards/sun-season-05.webp"
-    },
-    {
-      "id": "sun-season-06",
-      "name": "棱镜守望者·06",
-      "source": "imagegen",
-      "art": "/cards/sun-season-06.webp"
-    },
-    {
-      "id": "sun-season-07",
-      "name": "白昼旗手·07",
-      "source": "imagegen",
-      "art": "/cards/sun-season-07.webp"
-    },
-    {
-      "id": "sun-season-08",
-      "name": "曙冠铸师·08",
-      "source": "imagegen",
-      "art": "/cards/sun-season-08.webp"
-    },
-    {
-      "id": "sun-season-09",
-      "name": "晨辉斥候·09",
-      "source": "imagegen",
-      "art": "/cards/sun-season-09.webp"
-    },
-    {
-      "id": "sun-season-10",
-      "name": "棱镜守望者·10",
-      "source": "imagegen",
-      "art": "/cards/sun-season-10.webp"
-    },
-    {
-      "id": "sun-season-11",
-      "name": "白昼旗手·11",
-      "source": "imagegen",
-      "art": "/cards/sun-season-11.webp"
-    },
-    {
-      "id": "sun-season-12",
-      "name": "曙冠铸师·12",
-      "source": "imagegen",
-      "art": "/cards/sun-season-12.webp"
-    },
-    {
-      "id": "sun-season-13",
-      "name": "晨辉斥候·13",
-      "source": "imagegen",
-      "art": "/cards/sun-season-13.webp"
-    },
-    {
-      "id": "sun-season-14",
-      "name": "棱镜守望者·14",
-      "source": "imagegen",
-      "art": "/cards/sun-season-14.webp"
-    },
-    {
-      "id": "sun-season-15",
-      "name": "白昼旗手·15",
-      "source": "imagegen",
-      "art": "/cards/sun-season-15.webp"
-    },
-    {
-      "id": "sun-season-spell-01",
-      "name": "棱镜灼流·01",
-      "source": "imagegen",
-      "art": "/cards/sun-season-spell-01.webp"
-    },
-    {
-      "id": "sun-season-spell-02",
-      "name": "白昼回响·02",
-      "source": "imagegen",
-      "art": "/cards/sun-season-spell-02.webp"
-    },
-    {
-      "id": "sun-season-spell-03",
-      "name": "曙冠复苏·03",
-      "source": "imagegen",
-      "art": "/cards/sun-season-spell-03.webp"
-    },
-    {
-      "id": "sun-season-spell-04",
-      "name": "晨辉战令·04",
-      "source": "imagegen",
-      "art": "/cards/sun-season-spell-04.webp"
-    },
-    {
-      "id": "sun-season-spell-05",
-      "name": "棱镜风暴·05",
-      "source": "imagegen",
-      "art": "/cards/sun-season-spell-05.webp"
-    },
-    {
-      "id": "void-season-01",
-      "name": "深潮潜行者·01",
-      "source": "imagegen",
-      "art": "/cards/void-season-01.webp"
-    },
-    {
-      "id": "void-season-02",
-      "name": "雾汐引潮者·02",
-      "source": "imagegen",
-      "art": "/cards/void-season-02.webp"
-    },
-    {
-      "id": "void-season-03",
-      "name": "夜鳍掠夺者·03",
-      "source": "imagegen",
-      "art": "/cards/void-season-03.webp"
-    },
-    {
-      "id": "void-season-04",
-      "name": "沉湾祭司·04",
-      "source": "imagegen",
-      "art": "/cards/void-season-04.webp"
-    },
-    {
-      "id": "void-season-05",
-      "name": "深潮潜行者·05",
-      "source": "imagegen",
-      "art": "/cards/void-season-05.webp"
-    },
-    {
-      "id": "void-chill-needle",
-      "name": "寒潮刺针",
-      "source": "imagegen",
-      "art": "/cards/void-chill-needle.webp"
-    },
-    {
-      "id": "void-moonless-surge",
-      "name": "无月涌流",
-      "source": "imagegen",
-      "art": "/cards/void-moonless-surge.webp"
-    },
-    {
-      "id": "void-ink-storm",
-      "name": "墨云震荡",
-      "source": "imagegen",
-      "art": "/cards/void-ink-storm.webp"
-    },
-    {
-      "id": "void-brine-skulker",
-      "name": "盐雾伏游者",
-      "source": "imagegen",
-      "art": "/cards/void-brine-skulker.webp"
-    },
-    {
-      "id": "void-duskfin-darter",
-      "name": "暮鳍疾刺",
-      "source": "imagegen",
-      "art": "/cards/void-duskfin-darter.webp"
-    },
-    {
-      "id": "void-shellback-sentinel",
-      "name": "覆壳哨卫",
-      "source": "imagegen",
-      "art": "/cards/void-shellback-sentinel.webp"
-    },
-    {
-      "id": "void-inkveil-oracle",
-      "name": "墨帷先知",
-      "source": "imagegen",
-      "art": "/cards/void-inkveil-oracle.webp"
-    },
-    {
-      "id": "void-siphon-lamprey",
-      "name": "噬流七鳃鳗",
-      "source": "imagegen",
-      "art": "/cards/void-siphon-lamprey.webp"
-    },
-    {
-      "id": "void-coral-mimic",
-      "name": "蚀珊瑚拟态",
-      "source": "imagegen",
-      "art": "/cards/void-coral-mimic.webp"
-    },
-    {
-      "id": "void-riptide-duelist",
-      "name": "裂潮斗士",
-      "source": "imagegen",
-      "art": "/cards/void-riptide-duelist.webp"
-    },
-    {
-      "id": "void-trench-mender",
-      "name": "海沟缝合师",
-      "source": "imagegen",
-      "art": "/cards/void-trench-mender.webp"
-    },
-    {
-      "id": "void-razorfin-corsair",
-      "name": "刃鳍掠夺者",
-      "source": "imagegen",
-      "art": "/cards/void-razorfin-corsair.webp"
-    },
-    {
-      "id": "void-murkplate-hermit",
-      "name": "玄甲寄居者",
-      "source": "imagegen",
-      "art": "/cards/void-murkplate-hermit.webp"
-    },
-    {
-      "id": "void-abyssal-chanter",
-      "name": "深渊吟潮者",
-      "source": "imagegen",
-      "art": "/cards/void-abyssal-chanter.webp"
-    },
-    {
-      "id": "void-moonjaw-shark",
-      "name": "月颚猎鲨",
-      "source": "imagegen",
-      "art": "/cards/void-moonjaw-shark.webp"
-    },
-    {
-      "id": "neutral-moss-runner",
-      "name": "苔径奔行兽",
-      "source": "imagegen",
-      "art": "/cards/neutral-moss-runner.webp"
-    },
-    {
-      "id": "neutral-clockwork-beetle",
-      "name": "发条甲虫",
-      "source": "imagegen",
-      "art": "/cards/neutral-clockwork-beetle.webp"
-    },
-    {
-      "id": "neutral-caravan-guard",
-      "name": "远途商队卫",
-      "source": "imagegen",
-      "art": "/cards/neutral-caravan-guard.webp"
-    },
-    {
-      "id": "neutral-stonehorn",
-      "name": "石角驮兽",
-      "source": "imagegen",
-      "art": "/cards/neutral-stonehorn.webp"
-    },
-    {
-      "id": "neutral-wandering-alchemist",
-      "name": "云游调剂师",
-      "source": "imagegen",
-      "art": "/cards/neutral-wandering-alchemist.webp"
-    },
-    {
-      "id": "neutral-tactical-map",
-      "name": "折痕战术图",
-      "source": "imagegen",
-      "art": "/cards/neutral-tactical-map.webp"
-    },
-    {
-      "id": "neutral-repair-sprite",
-      "name": "修补精灵",
-      "source": "imagegen",
-      "art": "/cards/neutral-repair-sprite.webp"
-    },
-    {
-      "id": "neutral-thunder-egg",
-      "name": "蕴雷晶卵",
-      "source": "imagegen",
-      "art": "/cards/neutral-thunder-egg.webp"
-    },
-    {
-      "id": "neutral-lantern-mouse",
-      "name": "绒鼠引路",
-      "source": "imagegen",
-      "art": "/cards/neutral-lantern-mouse.webp"
-    },
-    {
-      "id": "neutral-windstep-messenger",
-      "name": "踏风报信人",
-      "source": "imagegen",
-      "art": "/cards/neutral-windstep-messenger.webp"
-    },
-    {
-      "id": "neutral-ironpot-cook",
-      "name": "铁锅行厨",
-      "source": "imagegen",
-      "art": "/cards/neutral-ironpot-cook.webp"
-    },
-    {
-      "id": "neutral-brassback-badger",
-      "name": "铜背獾",
-      "source": "imagegen",
-      "art": "/cards/neutral-brassback-badger.webp"
-    },
-    {
-      "id": "neutral-relic-appraiser",
-      "name": "遗物估价师",
-      "source": "imagegen",
-      "art": "/cards/neutral-relic-appraiser.webp"
-    },
-    {
-      "id": "neutral-riveted-ram",
-      "name": "铆钉撞角羊",
-      "source": "imagegen",
-      "art": "/cards/neutral-riveted-ram.webp"
-    },
-    {
-      "id": "neutral-crossroad-duelist",
-      "name": "岔路决斗客",
-      "source": "imagegen",
-      "art": "/cards/neutral-crossroad-duelist.webp"
-    },
-    {
-      "id": "neutral-dune-tracker",
-      "name": "沙迹追猎者",
-      "source": "imagegen",
-      "art": "/cards/neutral-dune-tracker.webp"
-    },
-    {
-      "id": "neutral-aether-peddler",
-      "name": "以太货郎",
-      "source": "imagegen",
-      "art": "/cards/neutral-aether-peddler.webp"
-    },
-    {
-      "id": "neutral-bastion-tortoise",
-      "name": "驮垒巨龟",
-      "source": "imagegen",
-      "art": "/cards/neutral-bastion-tortoise.webp"
-    },
-    {
-      "id": "neutral-gearhawk-handler",
-      "name": "齿隼驯养师",
-      "source": "imagegen",
-      "art": "/cards/neutral-gearhawk-handler.webp"
-    },
-    {
-      "id": "neutral-ruin-stag",
-      "name": "遗迹冠鹿",
-      "source": "imagegen",
-      "art": "/cards/neutral-ruin-stag.webp"
-    },
-    {
-      "id": "neutral-mobile-forge",
-      "name": "自走熔铸炉",
-      "source": "imagegen",
-      "art": "/cards/neutral-mobile-forge.webp"
-    },
-    {
-      "id": "neutral-cloudrail-behemoth",
-      "name": "云轨冲撞令",
-      "source": "imagegen",
-      "art": "/cards/neutral-cloudrail-behemoth.webp"
-    },
-    {
-      "id": "neutral-worldroad-colossus",
-      "name": "万途驮城者",
-      "source": "imagegen",
-      "art": "/cards/neutral-worldroad-colossus.webp"
-    },
-    {
-      "id": "neutral-pocket-remedy",
-      "name": "行囊急救剂",
-      "source": "imagegen",
-      "art": "/cards/neutral-pocket-remedy.webp"
-    },
-    {
-      "id": "neutral-springtrap",
-      "name": "便携弹簧阱",
-      "source": "imagegen",
-      "art": "/cards/neutral-springtrap.webp"
-    },
-    {
-      "id": "neutral-field-reinforcement",
-      "name": "野战加固",
-      "source": "imagegen",
-      "art": "/cards/neutral-field-reinforcement.webp"
-    },
-    {
-      "id": "neutral-route-ledger",
-      "name": "通途账册",
-      "source": "imagegen",
-      "art": "/cards/neutral-route-ledger.webp"
-    },
-    {
-      "id": "neutral-calibrated-bolt",
-      "name": "校准弩炮",
-      "source": "imagegen",
-      "art": "/cards/neutral-calibrated-bolt.webp"
-    },
-    {
-      "id": "neutral-masterwork-plating",
-      "name": "大师级覆甲",
-      "source": "imagegen",
-      "art": "/cards/neutral-masterwork-plating.webp"
-    },
-    {
-      "id": "neutral-grand-expedition",
-      "name": "远征合金刃",
-      "source": "imagegen",
-      "art": "/cards/neutral-grand-expedition.webp"
-    },
-    {
-      "id": "neutral-season-01",
-      "name": "远途旅者·01",
-      "source": "imagegen",
-      "art": "/cards/neutral-season-01.webp"
-    },
-    {
-      "id": "neutral-season-02",
-      "name": "齿轮工匠·02",
-      "source": "imagegen",
-      "art": "/cards/neutral-season-02.webp"
-    },
-    {
-      "id": "neutral-season-03",
-      "name": "商路护卫·03",
-      "source": "imagegen",
-      "art": "/cards/neutral-season-03.webp"
-    },
-    {
-      "id": "neutral-season-04",
-      "name": "荒原策士·04",
-      "source": "imagegen",
-      "art": "/cards/neutral-season-04.webp"
-    },
-    {
-      "id": "neutral-season-05",
-      "name": "远途旅者·05",
-      "source": "imagegen",
-      "art": "/cards/neutral-season-05.webp"
-    },
-    {
-      "id": "neutral-season-06",
-      "name": "齿轮工匠·06",
-      "source": "imagegen",
-      "art": "/cards/neutral-season-06.webp"
-    },
-    {
-      "id": "neutral-season-07",
-      "name": "商路护卫·07",
-      "source": "imagegen",
-      "art": "/cards/neutral-season-07.webp"
-    },
-    {
-      "id": "neutral-season-08",
-      "name": "荒原策士·08",
-      "source": "imagegen",
-      "art": "/cards/neutral-season-08.webp"
-    },
-    {
-      "id": "neutral-season-09",
-      "name": "远途旅者·09",
-      "source": "imagegen",
-      "art": "/cards/neutral-season-09.webp"
-    },
-    {
-      "id": "neutral-season-10",
-      "name": "齿轮工匠·10",
-      "source": "imagegen",
-      "art": "/cards/neutral-season-10.webp"
-    },
-    {
-      "id": "neutral-season-11",
-      "name": "商路护卫·11",
-      "source": "imagegen",
-      "art": "/cards/neutral-season-11.webp"
-    },
-    {
-      "id": "neutral-season-12",
-      "name": "荒原策士·12",
-      "source": "imagegen",
-      "art": "/cards/neutral-season-12.webp"
-    },
-    {
-      "id": "neutral-season-13",
-      "name": "远途旅者·13",
-      "source": "imagegen",
-      "art": "/cards/neutral-season-13.webp"
-    },
-    {
-      "id": "neutral-season-14",
-      "name": "齿轮工匠·14",
-      "source": "imagegen",
-      "art": "/cards/neutral-season-14.webp"
-    },
-    {
-      "id": "neutral-season-15",
-      "name": "商路护卫·15",
-      "source": "imagegen",
-      "art": "/cards/neutral-season-15.webp"
-    },
-    {
-      "id": "neutral-season-spell-01",
-      "name": "齿轮灼流·01",
-      "source": "imagegen",
-      "art": "/cards/neutral-season-spell-01.webp"
-    },
-    {
-      "id": "neutral-season-spell-02",
-      "name": "商路回响·02",
-      "source": "imagegen",
-      "art": "/cards/neutral-season-spell-02.webp"
-    },
-    {
-      "id": "neutral-season-spell-03",
-      "name": "荒原复苏·03",
-      "source": "imagegen",
-      "art": "/cards/neutral-season-spell-03.webp"
-    },
-    {
-      "id": "neutral-season-spell-04",
-      "name": "远途战令·04",
-      "source": "imagegen",
-      "art": "/cards/neutral-season-spell-04.webp"
-    },
-    {
-      "id": "neutral-season-spell-05",
-      "name": "齿轮风暴·05",
-      "source": "imagegen",
-      "art": "/cards/neutral-season-spell-05.webp"
-    },
-    {
-      "id": "ember-cinder-scout",
-      "name": "火星斥候",
-      "source": "imagegen",
-      "art": "/cards/ember-cinder-scout.webp"
-    },
-    {
-      "id": "ember-coalfang-pup",
-      "name": "炭牙幼兽",
-      "source": "imagegen",
-      "art": "/cards/ember-coalfang-pup.webp"
-    },
-    {
-      "id": "ember-ash-forager",
-      "name": "灰烬搜寻者",
-      "source": "imagegen",
-      "art": "/cards/ember-ash-forager.webp"
-    },
-    {
-      "id": "ember-blade-acolyte",
-      "name": "炽刃侍从",
-      "source": "imagegen",
-      "art": "/cards/ember-blade-acolyte.webp"
-    },
-    {
-      "id": "ember-charrock-guard",
-      "name": "焦岩卫士",
-      "source": "imagegen",
-      "art": "/cards/ember-charrock-guard.webp"
-    },
-    {
-      "id": "sun-dawn-scout",
-      "name": "晨辉斥候",
-      "source": "imagegen",
-      "art": "/cards/sun-dawn-scout.webp"
-    },
-    {
-      "id": "void-mist-lurker",
-      "name": "雾汐潜行者",
-      "source": "imagegen",
-      "art": "/cards/void-mist-lurker.webp"
-    },
-    {
-      "id": "astral-stardust-familiar",
-      "name": "星尘伴灵",
-      "source": "imagegen",
-      "art": "/cards/astral-stardust-familiar.webp"
-    },
-    {
-      "id": "verdant-spore-scout",
-      "name": "孢芽斥候",
-      "source": "imagegen",
-      "art": "/cards/verdant-spore-scout.webp"
-    },
-    {
-      "id": "sun-mirror-warden",
-      "name": "镜盾守望者",
-      "source": "imagegen",
-      "art": "/cards/sun-mirror-warden.webp"
-    },
-    {
-      "id": "sun-banner-bearer",
-      "name": "曙色旗手",
-      "source": "imagegen",
-      "art": "/cards/sun-banner-bearer.webp"
-    },
-    {
-      "id": "sun-lion-guard",
-      "name": "曜原狮卫",
-      "source": "imagegen",
-      "art": "/cards/sun-lion-guard.webp"
-    },
-    {
-      "id": "sun-skyfire-roc",
-      "name": "焰羽巡天者",
-      "source": "imagegen",
-      "art": "/cards/sun-skyfire-roc.webp"
-    },
-    {
-      "id": "sun-focused-ray",
-      "name": "聚光灼流",
-      "source": "imagegen",
-      "art": "/cards/sun-focused-ray.webp"
-    },
-    {
-      "id": "sun-dew-blessing",
-      "name": "晨露祝福",
-      "source": "imagegen",
-      "art": "/cards/sun-dew-blessing.webp"
-    },
-    {
-      "id": "sun-daybreak-order",
-      "name": "破晓号令",
-      "source": "imagegen",
-      "art": "/cards/sun-daybreak-order.webp"
-    },
-    {
-      "id": "void-undertow-guard",
-      "name": "逆流卫士",
-      "source": "imagegen",
-      "art": "/cards/void-undertow-guard.webp"
-    },
-    {
-      "id": "void-echo-mimic",
-      "name": "回声拟形",
-      "source": "imagegen",
-      "art": "/cards/void-echo-mimic.webp"
-    },
-    {
-      "id": "void-nightfin-raider",
-      "name": "夜鳍突袭者",
-      "source": "imagegen",
-      "art": "/cards/void-nightfin-raider.webp"
     }
   ]
 }

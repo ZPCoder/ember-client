@@ -197,6 +197,7 @@ class BattleUnit {
   bool rushOnly;
   bool stealthActive;
   int frozenTurns;
+
   /// True when Freeze has consumed this unit's current-turn attack.
   bool freezeBlocked;
   bool rebornUsed;
@@ -297,6 +298,8 @@ class BattleState {
     this.turnSecondsLeft = 75,
     this.finished = false,
     this.winner,
+    this.endReason,
+    this.actionWindow = 1,
     this.aiFaction = '幽潮',
     Set<int>? mulliganSelected,
     List<String>? discoverChoices,
@@ -314,10 +317,16 @@ class BattleState {
   String phase;
   bool heroPowerUsed;
   bool aiHeroPowerUsed = false;
+  int playerTurnsStarted = 0;
+  int aiTurnsStarted = 0;
+  bool playerHeroMarkedForDeath = false;
+  bool aiHeroMarkedForDeath = false;
   int turnSecondsLeft;
   final List<String> logs;
   bool finished;
   String? winner;
+  String? endReason;
+  int actionWindow;
   String aiFaction;
   bool mulliganDone = false;
   final Set<int> mulliganSelected;

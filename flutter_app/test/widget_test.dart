@@ -13,11 +13,13 @@ void main() {
     'mobile catalog includes the complete Hearthstone-style rule fields',
     () async {
       final catalog = await loadCatalog();
-      expect(catalog, hasLength(210));
-      expect(catalog.where((card) => card.type == 'weapon'), hasLength(7));
+      expect(catalog, hasLength(1000));
+      expect(catalog.map((card) => card.faction).toSet(), hasLength(20));
+      expect(factionOrder, hasLength(20));
+      expect(catalog.where((card) => card.type == 'weapon'), hasLength(20));
       expect(
         catalog.where((card) => card.keywords.contains('secret')),
-        hasLength(7),
+        isNotEmpty,
       );
       expect(
         catalog.where((card) => card.keywords.contains('discover')),
@@ -97,7 +99,7 @@ void main() {
 
     final cheap = card('cheap', 1, '普通');
     final expensive = card('expensive', 8, '史诗');
-    final controller = GameController()
+    final controller = GameController(startingPlayer: 'player')
       ..catalog = [cheap, expensive]
       ..deckIds.addAll(List.filled(30, cheap.id));
 
@@ -125,6 +127,329 @@ void main() {
     controller.dispose();
   });
 
+  test('AI-first opening gives the human the fourth card and Coin', () async {
+    final cards = List.generate(
+      15,
+      (index) => CardDefinition(
+        id: 'ai-first-$index',
+        name: '后手测试 $index',
+        description: '验证先后手和首回合抽牌。',
+        faction: '曜光',
+        type: 'unit',
+        cost: 8,
+        rarity: '普通',
+        attack: 1,
+        health: 1,
+      ),
+    );
+    final controller = GameController(startingPlayer: 'ai')
+      ..catalog = cards
+      ..deckIds.addAll(cards.expand((card) => [card.id, card.id]));
+
+    controller.startBattle();
+    final state = controller.battle!;
+    expect(state.activePlayer, 'ai');
+    expect(state.phase, 'mulligan');
+    expect(state.ai.hand, hasLength(3));
+    expect(state.ai.coinAvailable, isFalse);
+    expect(state.player.hand, hasLength(4));
+    expect(state.player.coinAvailable, isTrue);
+
+    await controller.confirmMulligan();
+
+    // The AI drew at the start of its first turn, then passed. The human now
+    // starts their own first turn with one mana and a normal turn draw.
+    expect(state.ai.hand, hasLength(4));
+    expect(state.ai.maxMana, 1);
+    expect(state.aiTurnsStarted, 1);
+    expect(state.player.hand, hasLength(5));
+    expect(state.player.maxMana, 1);
+    expect(state.player.mana, 1);
+    expect(state.playerTurnsStarted, 1);
+    expect(state.player.coinAvailable, isTrue);
+    expect(state.activePlayer, 'player');
+    expect(state.phase, 'main');
+    expect(state.turn, 1);
+
+    await controller.endTurn();
+    expect(state.aiTurnsStarted, 2);
+    expect(state.ai.maxMana, 2);
+    expect(state.playerTurnsStarted, 2);
+    expect(state.player.maxMana, 2);
+    expect(state.turn, 2);
+    controller.dispose();
+  });
+
+  test('simultaneous core lethal is a draw and does not count as a loss', () {
+    final filler = CardDefinition(
+      id: 'simultaneous-core-filler',
+      name: '双方核心测试',
+      description: '验证平局。',
+      faction: '曜光',
+      type: 'unit',
+      cost: 1,
+      rarity: '普通',
+      attack: 1,
+      health: 1,
+    );
+    final controller = GameController(startingPlayer: 'player')
+      ..catalog = [filler]
+      ..deckIds.addAll(List.filled(30, filler.id));
+    controller.startBattle();
+    controller.confirmMulligan();
+    final state = controller.battle!;
+    final winsBefore = controller.wins;
+    final lossesBefore = controller.losses;
+    final matchesBefore = controller.matchesPlayed;
+    final goldBefore = controller.gold;
+    state.player.heroHealth = 0;
+    state.ai.heroHealth = 0;
+    state.player.coinAvailable = true;
+
+    expect(controller.useCoin(), isTrue);
+    expect(state.finished, isTrue);
+    expect(state.phase, 'game-over');
+    expect(state.winner, isNull);
+    expect(state.endReason, 'draw');
+    expect(state.fx?.kind, 'draw');
+    expect(controller.wins, winsBefore);
+    expect(controller.losses, lossesBefore);
+    expect(controller.matchesPlayed, matchesBefore + 1);
+    expect(controller.gold, goldBefore);
+    controller.dispose();
+  });
+
+  test(
+    'a later effect in the same primary phase can heal a hero above zero',
+    () {
+      final recovery = CardDefinition(
+        id: 'same-phase-recovery',
+        name: '绝境恢复',
+        description: '抽一张牌，然后恢复 2 点生命。',
+        faction: '曜光',
+        type: 'spell',
+        cost: 0,
+        rarity: '普通',
+        effect: [
+          {'kind': 'draw', 'count': 1},
+          {'kind': 'heal', 'amount': 2},
+        ],
+      );
+      final controller = GameController(startingPlayer: 'player')
+        ..catalog = [recovery]
+        ..deckIds.addAll(List.filled(30, recovery.id));
+      controller.startBattle();
+      controller.confirmMulligan();
+      final state = controller.battle!;
+      state.player.heroHealth = 1;
+      state.player.fatigue = 0;
+      state.player.mana = 1;
+      state.player.deck.clear();
+      state.player.hand
+        ..clear()
+        ..add(recovery);
+
+      expect(controller.playCard(recovery), isTrue);
+      expect(state.player.fatigue, 1);
+      expect(state.player.heroHealth, 2);
+      expect(state.playerHeroMarkedForDeath, isFalse);
+      expect(state.finished, isFalse);
+      controller.dispose();
+    },
+  );
+
+  test(
+    'Deathrattle healing cannot rescue a hero marked in the death window',
+    () {
+      final healer = CardDefinition(
+        id: 'death-window-healer',
+        name: '迟到的治疗者',
+        description: '亡语：恢复 5 点核心生命。',
+        faction: '曜光',
+        type: 'unit',
+        cost: 1,
+        rarity: '普通',
+        attack: 1,
+        health: 1,
+        keywords: ['deathrattle'],
+        onDeath: [
+          {'kind': 'heal', 'amount': 5},
+        ],
+      );
+      final sweep = CardDefinition(
+        id: 'death-window-lethal',
+        name: '终局扫击',
+        description: '对所有敌人造成 1 点伤害。',
+        faction: '曜光',
+        type: 'spell',
+        cost: 0,
+        rarity: '普通',
+        effect: [
+          {'kind': 'damage-all-enemies', 'amount': 1},
+        ],
+      );
+      final controller = GameController(startingPlayer: 'player')
+        ..catalog = [healer, sweep]
+        ..deckIds.addAll(List.filled(30, sweep.id));
+      controller.startBattle();
+      controller.confirmMulligan();
+      final state = controller.battle!;
+      state.player.mana = 1;
+      state.player.hand
+        ..clear()
+        ..add(sweep);
+      state.ai.heroHealth = 1;
+      state.ai.board
+        ..clear()
+        ..add(
+          BattleUnit(
+            instanceId: 'late-healer',
+            card: healer,
+            owner: 'ai',
+            attack: 1,
+            health: 1,
+            maxHealth: 1,
+          ),
+        );
+
+      expect(controller.playCard(sweep), isTrue);
+      expect(state.ai.heroHealth, 0);
+      expect(state.aiHeroMarkedForDeath, isTrue);
+      expect(
+        state.logs.any(
+          (log) => log.contains(healer.name) && log.contains('恢复'),
+        ),
+        isFalse,
+      );
+      expect(state.finished, isTrue);
+      expect(state.winner, 'player');
+      expect(state.endReason, 'hero-defeated');
+      controller.dispose();
+    },
+  );
+
+  test(
+    'later Deathrattles can mark the other hero and turn loss into draw',
+    () {
+      final healer = CardDefinition(
+        id: 'draw-window-healer',
+        name: '平局治疗者',
+        description: '亡语：恢复 5 点核心生命。',
+        faction: '曜光',
+        type: 'unit',
+        cost: 1,
+        rarity: '普通',
+        attack: 1,
+        health: 1,
+        keywords: ['deathrattle'],
+        onDeath: [
+          {'kind': 'heal', 'amount': 5},
+        ],
+      );
+      final retaliation = CardDefinition(
+        id: 'draw-window-retaliation',
+        name: '平局反噬者',
+        description: '亡语：对所有敌人造成 1 点伤害。',
+        faction: '曜光',
+        type: 'unit',
+        cost: 1,
+        rarity: '普通',
+        attack: 1,
+        health: 1,
+        keywords: ['deathrattle'],
+        onDeath: [
+          {'kind': 'damage-all-enemies', 'amount': 1},
+        ],
+      );
+      final sweep = CardDefinition(
+        id: 'draw-window-sweep',
+        name: '平局扫击',
+        description: '对所有敌人造成 1 点伤害。',
+        faction: '曜光',
+        type: 'spell',
+        cost: 0,
+        rarity: '普通',
+        effect: [
+          {'kind': 'damage-all-enemies', 'amount': 1},
+        ],
+      );
+      final controller = GameController(startingPlayer: 'player')
+        ..catalog = [healer, retaliation, sweep]
+        ..deckIds.addAll(List.filled(30, sweep.id));
+      controller.startBattle();
+      controller.confirmMulligan();
+      final state = controller.battle!;
+      state.player.mana = 1;
+      state.player.heroHealth = 1;
+      state.player.hand
+        ..clear()
+        ..add(sweep);
+      state.ai.heroHealth = 1;
+      state.ai.board
+        ..clear()
+        ..addAll([
+          BattleUnit(
+            instanceId: 'draw-healer',
+            card: healer,
+            owner: 'ai',
+            attack: 1,
+            health: 1,
+            maxHealth: 1,
+          ),
+          BattleUnit(
+            instanceId: 'draw-retaliation',
+            card: retaliation,
+            owner: 'ai',
+            attack: 1,
+            health: 1,
+            maxHealth: 1,
+          ),
+        ]);
+
+      expect(controller.playCard(sweep), isTrue);
+      expect(state.ai.heroHealth, 0);
+      expect(state.playerHeroMarkedForDeath, isTrue);
+      expect(state.aiHeroMarkedForDeath, isTrue);
+      expect(state.finished, isTrue);
+      expect(state.winner, isNull);
+      expect(state.endReason, 'draw');
+      controller.dispose();
+    },
+  );
+
+  test('the 90th action window never opens and ends in a draw', () async {
+    final filler = CardDefinition(
+      id: 'turn-limit-filler',
+      name: '回合上限测试',
+      description: '验证第 90 个行动窗口。',
+      faction: '曜光',
+      type: 'unit',
+      cost: 8,
+      rarity: '普通',
+      attack: 1,
+      health: 1,
+    );
+    final controller = GameController(startingPlayer: 'player')
+      ..catalog = [filler]
+      ..deckIds.addAll(List.filled(30, filler.id));
+    controller.startBattle();
+    controller.confirmMulligan();
+    final state = controller.battle!;
+    state.actionWindow = maxBattleActionWindows;
+    final aiTurnsBefore = state.aiTurnsStarted;
+
+    await controller.endTurn();
+
+    expect(state.actionWindow, maxBattleActionWindows + 1);
+    expect(state.finished, isTrue);
+    expect(state.phase, 'game-over');
+    expect(state.winner, isNull);
+    expect(state.endReason, 'draw');
+    expect(state.aiTurnsStarted, aiTurnsBefore);
+    expect(state.logs.first, contains('第 90 个窗口不会开启'));
+    controller.dispose();
+  });
+
   test('pack opening protects the first slot with a rare-or-better card', () {
     CardDefinition card(String id, String rarity) => CardDefinition(
       id: id,
@@ -139,7 +464,7 @@ void main() {
     );
     final common = card('common', '普通');
     final rare = card('rare', '稀有');
-    final controller = GameController()
+    final controller = GameController(startingPlayer: 'player')
       ..catalog = [common, rare]
       ..packs = 1
       ..collection[common.id] = 2
@@ -163,7 +488,7 @@ void main() {
       attack: 3,
       durability: 2,
     );
-    final controller = GameController()
+    final controller = GameController(startingPlayer: 'player')
       ..catalog = [weapon]
       ..deckIds.addAll(List.filled(30, weapon.id));
     controller.startBattle();
@@ -180,6 +505,415 @@ void main() {
     expect(state.ai.heroHealth, 27);
     expect(state.player.weapon?.durability, 1);
     expect(controller.heroAttack(targetHero: true), isFalse);
+    controller.dispose();
+  });
+
+  test('lethal unit combat still deals simultaneous retaliation damage', () {
+    CardDefinition unit(String id, int attack, int health) => CardDefinition(
+      id: id,
+      name: id,
+      description: '同时战斗伤害测试。',
+      faction: '曜光',
+      type: 'unit',
+      cost: 1,
+      rarity: '普通',
+      attack: attack,
+      health: health,
+    );
+
+    final attackerCard = unit('simultaneous-attacker', 4, 2);
+    final defenderCard = unit('simultaneous-defender', 2, 1);
+    final controller = GameController(startingPlayer: 'player')
+      ..catalog = [attackerCard, defenderCard]
+      ..deckIds.addAll(List.filled(30, attackerCard.id));
+    controller.startBattle();
+    controller.confirmMulligan();
+    final state = controller.battle!;
+    state.player.board.clear();
+    state.ai.board.clear();
+    final attacker = BattleUnit(
+      instanceId: 'simultaneous-attacker-unit',
+      card: attackerCard,
+      owner: 'player',
+      attack: 4,
+      health: 2,
+      maxHealth: 2,
+      summoningSick: false,
+    );
+    final defender = BattleUnit(
+      instanceId: 'simultaneous-defender-unit',
+      card: defenderCard,
+      owner: 'ai',
+      attack: 2,
+      health: 1,
+      maxHealth: 1,
+    );
+    state.player.board.add(attacker);
+    state.ai.board.add(defender);
+
+    expect(controller.attack(attacker, target: defender), isTrue);
+    expect(state.player.board.contains(attacker), isFalse);
+    expect(state.ai.board.contains(defender), isFalse);
+    controller.dispose();
+  });
+
+  test('a weapon attack against a unit receives retaliation', () {
+    final weapon = CardDefinition(
+      id: 'retaliation-weapon',
+      name: '反击测试刃',
+      description: '测试英雄战斗。',
+      faction: '曜光',
+      type: 'weapon',
+      cost: 1,
+      rarity: '普通',
+      attack: 3,
+      durability: 2,
+    );
+    final defenderCard = CardDefinition(
+      id: 'hero-retaliation-defender',
+      name: '反击防守者',
+      description: '反击英雄。',
+      faction: '幽潮',
+      type: 'unit',
+      cost: 1,
+      rarity: '普通',
+      attack: 4,
+      health: 1,
+    );
+    final controller = GameController(startingPlayer: 'player')
+      ..catalog = [weapon, defenderCard]
+      ..deckIds.addAll(List.filled(30, weapon.id));
+    controller.startBattle();
+    controller.confirmMulligan();
+    final state = controller.battle!;
+    state.player.mana = 10;
+    state.player.hand
+      ..clear()
+      ..add(weapon);
+    expect(controller.playCard(weapon), isTrue);
+    final defender = BattleUnit(
+      instanceId: 'hero-retaliation-target',
+      card: defenderCard,
+      owner: 'ai',
+      attack: 4,
+      health: 1,
+      maxHealth: 1,
+    );
+    state.ai.board
+      ..clear()
+      ..add(defender);
+    state.player.heroHealth = 30;
+
+    expect(controller.heroAttack(target: defender), isTrue);
+    expect(state.player.heroHealth, 26);
+    expect(state.ai.board.contains(defender), isFalse);
+    expect(state.player.weapon?.durability, 1);
+    controller.dispose();
+  });
+
+  test('a full board rejects pure summons before spending resources', () {
+    final moss = CardDefinition(
+      id: 'neutral-moss-runner',
+      name: '苔径奔行兽',
+      description: '召唤物。',
+      faction: '中立',
+      type: 'unit',
+      cost: 1,
+      rarity: '普通',
+      attack: 1,
+      health: 2,
+    );
+    final verdant = CardDefinition(
+      id: 'verdant-deck-unit',
+      name: '苍林卡组单位',
+      description: '决定英雄技能。',
+      faction: '苍林',
+      type: 'unit',
+      cost: 1,
+      rarity: '普通',
+      attack: 1,
+      health: 2,
+    );
+    final pureSummon = CardDefinition(
+      id: 'pure-summon-spell',
+      name: '纯召唤战术',
+      description: '召唤一个单位。',
+      faction: '苍林',
+      type: 'spell',
+      cost: 2,
+      rarity: '普通',
+      effect: [
+        {'kind': 'summon', 'cardId': moss.id, 'count': 1},
+      ],
+    );
+    final mixedSummon = CardDefinition(
+      id: 'mixed-summon-spell',
+      name: '混合召唤战术',
+      description: '召唤一个单位并获得护甲。',
+      faction: '苍林',
+      type: 'spell',
+      cost: 2,
+      rarity: '普通',
+      effect: [
+        {'kind': 'summon', 'cardId': moss.id, 'count': 1},
+        {'kind': 'armor', 'amount': 2},
+      ],
+    );
+    final controller = GameController(startingPlayer: 'player')
+      ..catalog = [moss, verdant, pureSummon, mixedSummon]
+      ..deckIds.addAll(List.filled(30, verdant.id));
+    controller.startBattle();
+    controller.confirmMulligan();
+    final state = controller.battle!;
+    state.player.board.clear();
+    for (var index = 0; index < 7; index++) {
+      state.player.board.add(
+        BattleUnit(
+          instanceId: 'full-board-$index',
+          card: moss,
+          owner: 'player',
+          attack: 1,
+          health: 2,
+          maxHealth: 2,
+        ),
+      );
+    }
+    state.player.mana = 10;
+    state.player.hand
+      ..clear()
+      ..addAll([pureSummon, mixedSummon]);
+
+    expect(controller.playCard(pureSummon), isFalse);
+    expect(state.player.mana, 10);
+    expect(state.player.hand, contains(pureSummon));
+    expect(state.player.cardsPlayedThisTurn, 0);
+
+    expect(controller.useHeroPower(), isFalse);
+    expect(state.player.mana, 10);
+    expect(state.heroPowerUsed, isFalse);
+
+    expect(controller.playCard(mixedSummon), isTrue);
+    expect(state.player.mana, 8);
+    expect(state.player.board, hasLength(7));
+    expect(state.player.armor, 2);
+    controller.dispose();
+  });
+
+  test('all simultaneous Deathrattles resolve before queued Reborn', () {
+    CardDefinition unit(
+      String id,
+      String name, {
+      int health = 2,
+      List<String> keywords = const [],
+      List<Map<String, dynamic>> onDeath = const [],
+    }) => CardDefinition(
+      id: id,
+      name: name,
+      description: '死亡窗口测试。',
+      faction: '曜光',
+      type: 'unit',
+      cost: 1,
+      rarity: '普通',
+      attack: 1,
+      health: health,
+      keywords: keywords,
+      onDeath: onDeath,
+    );
+
+    final token = unit('death-window-token', '亡语衍生物', health: 1);
+    final survivor = unit('death-window-survivor', '存活单位', health: 3);
+    final rebornCard = unit(
+      'death-window-reborn',
+      '排队复生者',
+      health: 1,
+      keywords: ['reborn'],
+    );
+    final summoner = unit(
+      'death-window-summoner',
+      '双生亡语者',
+      health: 1,
+      keywords: ['deathrattle'],
+      onDeath: [
+        {'kind': 'summon', 'cardId': token.id, 'count': 2},
+      ],
+    );
+    final sweep = CardDefinition(
+      id: 'death-window-sweep',
+      name: '死亡窗口扫击',
+      description: '对所有敌人造成 1 点伤害。',
+      faction: '曜光',
+      type: 'spell',
+      cost: 1,
+      rarity: '普通',
+      effect: [
+        {'kind': 'damage-all-enemies', 'amount': 1},
+      ],
+    );
+    final controller = GameController(startingPlayer: 'player')
+      ..catalog = [token, survivor, rebornCard, summoner, sweep]
+      ..deckIds.addAll(List.filled(30, survivor.id));
+    controller.startBattle();
+    controller.confirmMulligan();
+    final state = controller.battle!;
+    state.player.mana = 10;
+    state.player.hand
+      ..clear()
+      ..add(sweep);
+    state.ai.board
+      ..clear()
+      ..addAll([
+        BattleUnit(
+          instanceId: 'queued-reborn',
+          card: rebornCard,
+          owner: 'ai',
+          attack: 1,
+          health: 1,
+          maxHealth: 1,
+        ),
+        BattleUnit(
+          instanceId: 'queued-summoner',
+          card: summoner,
+          owner: 'ai',
+          attack: 1,
+          health: 1,
+          maxHealth: 1,
+        ),
+        for (var index = 0; index < 5; index++)
+          BattleUnit(
+            instanceId: 'death-window-survivor-$index',
+            card: survivor,
+            owner: 'ai',
+            attack: 1,
+            health: 3,
+            maxHealth: 3,
+          ),
+      ]);
+
+    expect(controller.playCard(sweep), isTrue);
+    expect(state.ai.board, hasLength(7));
+    expect(
+      state.ai.board.where((unit) => unit.card.id == token.id),
+      hasLength(2),
+    );
+    expect(
+      state.ai.board.any((unit) => unit.card.id == rebornCard.id),
+      isFalse,
+    );
+    controller.dispose();
+  });
+
+  test('Deathrattle-created death waves resolve before Reborn', () {
+    CardDefinition unit(
+      String id,
+      String name, {
+      int health = 1,
+      List<String> keywords = const [],
+      List<Map<String, dynamic>> onDeath = const [],
+    }) => CardDefinition(
+      id: id,
+      name: name,
+      description: '后续死亡波测试。',
+      faction: '曜光',
+      type: 'unit',
+      cost: 1,
+      rarity: '普通',
+      attack: 1,
+      health: health,
+      keywords: keywords,
+      onDeath: onDeath,
+    );
+
+    final rebornCard = unit(
+      'wave-reborn',
+      '波次复生者',
+      health: 4,
+      keywords: ['reborn'],
+    );
+    final waveMaker = unit(
+      'wave-maker',
+      '死亡波引擎',
+      keywords: ['deathrattle'],
+      onDeath: [
+        {'kind': 'damage-all-enemies', 'amount': 1},
+      ],
+    );
+    final laterDeath = unit(
+      'later-wave-death',
+      '后续亡语单位',
+      keywords: ['deathrattle'],
+      onDeath: [
+        {'kind': 'armor', 'amount': 1},
+      ],
+    );
+    final sweep = CardDefinition(
+      id: 'wave-sweep',
+      name: '波次扫击',
+      description: '对所有敌人造成 1 点伤害。',
+      faction: '曜光',
+      type: 'spell',
+      cost: 1,
+      rarity: '普通',
+      effect: [
+        {'kind': 'damage-all-enemies', 'amount': 1},
+      ],
+    );
+    final controller = GameController(startingPlayer: 'player')
+      ..catalog = [rebornCard, waveMaker, laterDeath, sweep]
+      ..deckIds.addAll(List.filled(30, sweep.id));
+    controller.startBattle();
+    controller.confirmMulligan();
+    final state = controller.battle!;
+    state.player.mana = 10;
+    state.player.hand
+      ..clear()
+      ..add(sweep);
+    state.player.board
+      ..clear()
+      ..add(
+        BattleUnit(
+          instanceId: 'later-wave-unit',
+          card: laterDeath,
+          owner: 'player',
+          attack: 1,
+          health: 1,
+          maxHealth: 1,
+        ),
+      );
+    state.ai.board
+      ..clear()
+      ..addAll([
+        BattleUnit(
+          instanceId: 'wave-reborn-unit',
+          card: rebornCard,
+          owner: 'ai',
+          attack: 1,
+          health: 1,
+          maxHealth: 4,
+        ),
+        BattleUnit(
+          instanceId: 'wave-maker-unit',
+          card: waveMaker,
+          owner: 'ai',
+          attack: 1,
+          health: 1,
+          maxHealth: 1,
+        ),
+      ]);
+
+    expect(controller.playCard(sweep), isTrue);
+    expect(state.player.armor, 1);
+    final returned = state.ai.board.singleWhere(
+      (unit) => unit.card.id == rebornCard.id,
+    );
+    expect(returned.health, 1);
+    expect(returned.maxHealth, 4);
+    expect(returned.rebornUsed, isTrue);
+    final rebornLog = state.logs.indexWhere((log) => log.contains('复生回响'));
+    final laterDeathLog = state.logs.indexWhere(
+      (log) => log.contains(laterDeath.name) && log.contains('离开战场'),
+    );
+    expect(rebornLog, greaterThanOrEqualTo(0));
+    expect(laterDeathLog, greaterThan(rebornLog));
     controller.dispose();
   });
 
@@ -220,7 +954,7 @@ void main() {
         rarity: '普通',
         tradeable: true,
       );
-      final controller = GameController()
+      final controller = GameController(startingPlayer: 'player')
         ..catalog = [filler, overload, tradeCard]
         ..deckIds.addAll(List.filled(30, filler.id));
       controller.startBattle();
@@ -273,7 +1007,7 @@ void main() {
       attack: 1,
       health: 1,
     );
-    final controller = GameController()
+    final controller = GameController(startingPlayer: 'player')
       ..catalog = [card]
       ..deckIds.addAll(List.filled(30, card.id));
     controller.startBattle();
@@ -286,6 +1020,194 @@ void main() {
     expect(controller.useCoin(), isTrue);
     expect(state.player.overloadLocked, 3);
     expect(state.player.mana, 3);
+    controller.dispose();
+  });
+
+  test('Coin is a spell for Counterspell, spell listeners, and Combo', () {
+    final filler = CardDefinition(
+      id: 'coin-rules-filler',
+      name: '幸运币规则单位',
+      description: '用于验证幸运币。',
+      faction: '曜光',
+      type: 'unit',
+      cost: 1,
+      rarity: '普通',
+      attack: 1,
+      health: 3,
+      onSpellPlayed: [
+        {'kind': 'armor', 'amount': 1},
+      ],
+    );
+    final combo = CardDefinition(
+      id: 'coin-combo-followup',
+      name: '连击后续',
+      description: '连击：获得 2 点护甲。',
+      faction: '曜光',
+      type: 'spell',
+      cost: 0,
+      rarity: '普通',
+      combo: [
+        {'kind': 'armor', 'amount': 2},
+      ],
+    );
+    final counterSecret = CardDefinition(
+      id: 'coin-counter-secret',
+      name: '幸运币反制',
+      description: '反制一张法术。',
+      faction: '幽潮',
+      type: 'spell',
+      cost: 1,
+      rarity: '史诗',
+    );
+    final controller = GameController(startingPlayer: 'player')
+      ..catalog = [filler, combo, counterSecret]
+      ..deckIds.addAll(List.filled(30, filler.id));
+    controller.startBattle();
+    controller.confirmMulligan();
+    final state = controller.battle!;
+    state.player.mana = 1;
+    state.player.cardsPlayedThisTurn = 0;
+    state.player.coinAvailable = true;
+    state.player.board
+      ..clear()
+      ..add(
+        BattleUnit(
+          instanceId: 'coin-listener',
+          card: filler,
+          owner: 'player',
+          attack: 1,
+          health: 3,
+          maxHealth: 3,
+        ),
+      );
+    state.ai.secrets.add(
+      BattleSecret(
+        card: counterSecret,
+        secretId: counterSecret.id,
+        trigger: 'opponent-plays-spell',
+        effect: const {'kind': 'counterspell'},
+      ),
+    );
+
+    expect(controller.useCoin(), isTrue);
+    expect(state.player.coinAvailable, isFalse);
+    expect(state.player.cardsPlayedThisTurn, 1);
+    expect(state.player.mana, 1);
+    expect(state.player.armor, 0);
+    expect(state.ai.secrets, isEmpty);
+
+    state.player.coinAvailable = true;
+    expect(controller.useCoin(), isTrue);
+    expect(state.player.cardsPlayedThisTurn, 2);
+    expect(state.player.mana, 2);
+    expect(state.player.armor, 1);
+
+    state.player.hand
+      ..clear()
+      ..add(combo);
+    expect(controller.playCard(combo), isTrue);
+    // Combo grants 2 armor and the spell listener grants another 1.
+    expect(state.player.armor, 4);
+    controller.dispose();
+  });
+
+  test('the Coin occupies one of the ten hand slots', () {
+    final drawCard = CardDefinition(
+      id: 'coin-hand-slot-card',
+      name: '幸运币手牌测试',
+      description: '测试手牌上限。',
+      faction: '星穹',
+      type: 'unit',
+      cost: 1,
+      rarity: '普通',
+      attack: 1,
+      health: 1,
+    );
+    final controller = GameController(startingPlayer: 'player')
+      ..catalog = [drawCard]
+      ..deckIds.addAll(List.filled(30, drawCard.id));
+    controller.startBattle();
+    controller.confirmMulligan();
+    final state = controller.battle!;
+    state.player.mana = 10;
+    state.player.coinAvailable = true;
+    state.player.hand
+      ..clear()
+      ..addAll(List.filled(9, drawCard));
+    state.player.deck
+      ..clear()
+      ..add(drawCard);
+
+    expect(controller.useHeroPower(), isTrue);
+    expect(state.player.hand, hasLength(9));
+    expect(state.player.deck, isEmpty);
+    expect(state.logs.any((log) => log.contains('燃毁')), isTrue);
+    controller.dispose();
+  });
+
+  test('deck validation enforces copy, legendary, and faction limits', () {
+    CardDefinition unit(String id, String faction, {String rarity = '普通'}) =>
+        CardDefinition(
+          id: id,
+          name: id,
+          description: '卡组校验。',
+          faction: faction,
+          type: 'unit',
+          cost: 1,
+          rarity: rarity,
+          attack: 1,
+          health: 1,
+        );
+
+    final sunCards = List.generate(16, (index) => unit('sun-$index', '曜光'));
+    final legendary = unit('sun-legendary', '曜光', rarity: '传说');
+    final offFaction = unit('void-card', '幽潮');
+    final controller = GameController(startingPlayer: 'player')
+      ..catalog = [...sunCards, legendary, offFaction];
+
+    controller.deckIds.addAll(
+      sunCards.take(15).expand((card) => [card.id, card.id]),
+    );
+    expect(controller.deckValid, isTrue);
+
+    controller.deckIds[29] = sunCards.first.id;
+    expect(controller.deckValid, isFalse);
+    expect(controller.deckStatus, contains('最多 2 张'));
+
+    controller.deckIds
+      ..clear()
+      ..addAll(sunCards.take(14).expand((card) => [card.id, card.id]))
+      ..addAll([legendary.id, legendary.id]);
+    expect(controller.deckValid, isFalse);
+    expect(controller.deckStatus, contains('最多 1 张'));
+
+    controller.deckIds
+      ..clear()
+      ..addAll(sunCards.take(15).expand((card) => [card.id, card.id]));
+    controller.deckIds[29] = offFaction.id;
+    expect(controller.deckValid, isFalse);
+    expect(controller.deckStatus, contains('不能混合'));
+
+    controller.collection[sunCards.first.id] = 99;
+    controller.deckIds.clear();
+    expect(controller.addToDeck(sunCards.first), isTrue);
+    expect(controller.addToDeck(sunCards.first), isTrue);
+    expect(controller.addToDeck(sunCards.first), isFalse);
+
+    controller.deckIds
+      ..clear()
+      ..addAll(List.filled(30, 'missing-card'));
+    expect(controller.deckValid, isFalse);
+    expect(controller.deckStatus, contains('未知'));
+    controller.startBattle();
+    expect(controller.battle, isNotNull);
+    expect(
+      [
+        ...controller.battle!.player.hand,
+        ...controller.battle!.player.deck,
+      ].every((card) => controller.cardsById.containsKey(card.id)),
+      isTrue,
+    );
     controller.dispose();
   });
 
@@ -314,7 +1236,7 @@ void main() {
         attack: 1,
         health: 1,
       );
-      final controller = GameController()
+      final controller = GameController(startingPlayer: 'player')
         ..catalog = [drawCard, filler]
         ..deckIds.addAll(List.filled(30, drawCard.id));
       controller.startBattle();
@@ -664,7 +1586,7 @@ void main() {
       'taunt',
       'shield',
     ]);
-    final controller = GameController()
+    final controller = GameController(startingPlayer: 'player')
       ..catalog = [charge, taunt]
       ..deckIds.addAll(List.filled(30, charge.id));
     controller.startBattle();
@@ -721,7 +1643,7 @@ void main() {
 
     GameController launch(String faction) {
       final card = factionCard('hero-$faction', faction);
-      final controller = GameController()
+      final controller = GameController(startingPlayer: 'player')
         ..catalog = [card, moss]
         ..deckIds.addAll(List.filled(30, card.id));
       controller.startBattle();
@@ -839,7 +1761,7 @@ void main() {
         ],
       );
 
-      final controller = GameController()
+      final controller = GameController(startingPlayer: 'player')
         ..catalog = [
           rush,
           windfury,
@@ -1032,7 +1954,7 @@ void main() {
         ],
       );
 
-      final controller = GameController()
+      final controller = GameController(startingPlayer: 'player')
         ..catalog = [fury, attacker, stealth, spell, randomFreeze]
         ..deckIds.addAll(List.filled(30, fury.id));
       controller.startBattle();
@@ -1103,7 +2025,7 @@ void main() {
       attack: 2,
       health: 4,
     );
-    final controller = GameController()
+    final controller = GameController(startingPlayer: 'player')
       ..catalog = [card]
       ..deckIds.addAll(List.filled(30, card.id));
     controller.startBattle();
@@ -1155,7 +2077,7 @@ void main() {
         health: 4,
         keywords: ['windfury'],
       );
-      final controller = GameController()
+      final controller = GameController(startingPlayer: 'player')
         ..catalog = [card]
         ..deckIds.addAll(List.filled(30, card.id));
       controller.startBattle();
@@ -1249,7 +2171,7 @@ void main() {
           {'kind': 'damage', 'amount': 4},
         ],
       );
-      final controller = GameController()
+      final controller = GameController(startingPlayer: 'player')
         ..catalog = [choice, discover, secret, enemySpell]
         ..deckIds.addAll(List.filled(30, discover.id));
       controller.startBattle();
@@ -1327,7 +2249,7 @@ void main() {
         {'kind': 'armor', 'amount': 1},
       ],
     );
-    final controller = GameController()
+    final controller = GameController(startingPlayer: 'player')
       ..catalog = [branchCard, triggerUnit]
       ..deckIds.addAll(List.filled(30, branchCard.id));
     controller.startBattle();
@@ -1364,7 +2286,9 @@ void main() {
   testWidgets('app shows the loading shell before catalog initialization', (
     tester,
   ) async {
-    await tester.pumpWidget(AstraProtocolApp(controller: GameController()));
+    await tester.pumpWidget(
+      AstraProtocolApp(controller: GameController(startingPlayer: 'player')),
+    );
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
   });
 }
