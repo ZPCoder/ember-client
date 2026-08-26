@@ -36,6 +36,7 @@ import {
   createMatch,
   createRankedRewardState,
   factionForDeck,
+  findMissingDeckCards,
   getHeroPower,
   getLadderReadyDeck,
   getTraitStatuses,
@@ -64,6 +65,7 @@ import {
   ladderReadyTrialIsActive,
   planAiTurnReplay,
   shouldScheduleLocalAiTurn,
+  suggestDeckReplacements,
   EXPANDED_FACTION_THEMES,
   validateDeck,
   validateDeckForFormat,
@@ -76,6 +78,7 @@ import {
   type Keyword,
   type LadderReadyDeckId,
   type MatchQuality,
+  type MissingDeckCard,
   type MatchState,
   type RankedSnapshot,
   type RankedFormat,
@@ -3146,6 +3149,14 @@ export function GameApp({
     }
   }, [deckFormat, deckIds]);
 
+  const deckMissingCards = useMemo(
+    () => findMissingDeckCards(deckIds, player.collection),
+    [deckIds, player.collection],
+  );
+  const deckPlayable = deckValidation.valid && (
+    Boolean(selectedLadderReadyDeckId) || deckMissingCards.length === 0
+  );
+
   const factions = useMemo(
     () => ["全部", ...Array.from(new Set(CATALOG.map((card) => card.faction)))],
     [],
@@ -3269,6 +3280,11 @@ export function GameApp({
       setNotice({ tone: "warning", text: deckValidation.errors[0] ?? "请先修正卡组规则错误。" });
       return;
     }
+    if (deckMissingCards.length > 0) {
+      const missingTotal = deckMissingCards.reduce((sum, item) => sum + item.missing, 0);
+      setNotice({ tone: "warning", text: `还缺少 ${missingTotal} 张卡牌；请制作卡牌或使用替换建议后再保存。` });
+      return;
+    }
     const payload = await postAction("save_deck", {
       idempotencyKey: makeId("deck"),
       deck: {
@@ -3347,23 +3363,42 @@ export function GameApp({
       setNotice({ tone: "warning", text: validation.errors[0]?.message ?? "卡组代码不符合 30 张组牌规则。" });
       return false;
     }
-    const counts = new Map<string, number>();
-    decoded.cardIds.forEach((id) => counts.set(id, (counts.get(id) ?? 0) + 1));
-    const missing = [...counts.entries()].find(([id, count]) => (player.collection[id] ?? 0) < count);
-    if (missing) {
-      setNotice({ tone: "warning", text: `收藏中没有足够的「${CARD_BY_ID.get(missing[0])?.name ?? missing[0]}」。` });
-      return false;
-    }
+    const missing = findMissingDeckCards(decoded.cardIds, player.collection);
     setEditingDeckId(null);
     setSelectedLadderReadyDeckId(null);
     setDeckIds([...decoded.cardIds]);
     setDeckName(decoded.name ?? "导入牌组");
     setDeckFormat(format);
     setNotice({
-      tone: "success",
-      text: `已导入新的${rankedFormatLabel(format)}卡组草稿，保存后会加入卡组列表。`,
+      tone: missing.length > 0 ? "info" : "success",
+      text: missing.length > 0
+        ? `已导入新的${rankedFormatLabel(format)}草稿；缺少 ${missing.reduce((sum, item) => sum + item.missing, 0)} 张卡牌，可按建议替换。`
+        : `已导入新的${rankedFormatLabel(format)}卡组草稿，保存后会加入卡组列表。`,
     });
     return true;
+  };
+
+  const replaceMissingCard = (missingCardId: string, replacementCardId: string) => {
+    const suggestions = suggestDeckReplacements({
+      cardIds: deckIds,
+      missingCardId,
+      collection: player.collection,
+      format: deckFormat,
+    });
+    if (!suggestions.includes(replacementCardId)) {
+      setNotice({ tone: "warning", text: "这张卡当前不能作为合法替换。" });
+      return;
+    }
+    const index = deckIds.lastIndexOf(missingCardId);
+    if (index < 0) return;
+    const next = [...deckIds];
+    next[index] = replacementCardId;
+    setDeckIds(next);
+    setSelectedLadderReadyDeckId(null);
+    setNotice({
+      tone: "success",
+      text: `已用「${CARD_BY_ID.get(replacementCardId)?.name ?? replacementCardId}」替换一张缺失卡牌。`,
+    });
   };
 
   const selectDeck = (deckId: string) => {
@@ -3750,10 +3785,20 @@ export function GameApp({
   const startBattle = async () => {
     if (aiMatchStartingRef.current) return;
     const requestedOpponent = selectedAiArchetype ?? AI_ARCHETYPES[0];
-    const savedDeckId = editingDeckId ?? player.activeDeckId;
+    const savedDeckId = editingDeckId;
     if (!selectedLadderReadyDeckId && !savedDeckId) {
       switchSection("deck");
       setNotice({ tone: "warning", text: "请先保存当前卡组，再开始 AI 演算。" });
+      return;
+    }
+    if (!selectedLadderReadyDeckId && !deckPlayable) {
+      switchSection("deck");
+      setNotice({
+        tone: "warning",
+        text: deckMissingCards.length > 0
+          ? "当前卡组仍有缺失卡牌，请先制作或替换后再投入对战。"
+          : deckValidation.errors[0] ?? "当前卡组尚未完成。",
+      });
       return;
     }
     aiMatchStartingRef.current = true;
@@ -4802,6 +4847,9 @@ export function GameApp({
                   name={deckName}
                   format={deckFormat}
                   validation={deckValidation}
+                  missingCards={selectedLadderReadyDeckId ? [] : deckMissingCards}
+                  playable={deckPlayable}
+                  battleReady={deckPlayable && Boolean(editingDeckId || selectedLadderReadyDeckId)}
                   saving={apiBusy === "save_deck"}
                   deleting={apiBusy === "delete_deck"}
                   ladderReady={player.ladderReady}
@@ -4825,6 +4873,7 @@ export function GameApp({
                   onSave={() => void saveDeck()}
                   onDelete={() => void deleteCurrentDeck()}
                   onImport={importDeck}
+                  onReplaceMissing={replaceMissingCard}
                   onBattle={startStandardBattle}
                   onActivateLadderReady={() => void activateLadderReady()}
                   onTrialLadderReady={trialLadderReadyDeck}
@@ -4905,6 +4954,11 @@ export function GameApp({
                     const validation = validateDeckForFormat(deckIds, pvp.state.rankedFormat);
                     if (!validation.valid) {
                       setNotice({ tone: "warning", text: `当前卡组不能进入${rankedFormatLabel(pvp.state.rankedFormat)}：${validation.errors[0]?.message ?? "卡组无效"}` });
+                      return;
+                    }
+                    const missing = findMissingDeckCards(deckIds, player.collection);
+                    if (!selectedLadderReadyDeckId && missing.length > 0) {
+                      setNotice({ tone: "warning", text: "当前卡组包含未拥有的卡牌，请先制作或替换。" });
                       return;
                     }
                     pvp.ready(deckIds);
@@ -5665,6 +5719,9 @@ function DeckSection({
   name,
   format,
   validation,
+  missingCards,
+  playable,
+  battleReady,
   saving,
   deleting,
   ladderReady,
@@ -5679,6 +5736,7 @@ function DeckSection({
   onSave,
   onDelete,
   onImport,
+  onReplaceMissing,
   onBattle,
   onActivateLadderReady,
   onTrialLadderReady,
@@ -5693,6 +5751,9 @@ function DeckSection({
   name: string;
   format: RankedFormat;
   validation: ValidationView;
+  missingCards: MissingDeckCard[];
+  playable: boolean;
+  battleReady: boolean;
   saving: boolean;
   deleting: boolean;
   ladderReady?: PlayerSnapshot["ladderReady"];
@@ -5707,6 +5768,7 @@ function DeckSection({
   onSave: () => void;
   onDelete: () => void;
   onImport: (code: string) => boolean;
+  onReplaceMissing: (missingCardId: string, replacementCardId: string) => void;
   onBattle: () => void;
   onActivateLadderReady: () => void;
   onTrialLadderReady: (deckId: LadderReadyDeckId) => void;
@@ -5761,6 +5823,8 @@ function DeckSection({
   const deckFaction = factionForDeck(deckIds);
   const deckHeroPower = getHeroPower(deckFaction);
   const deckSlotsFull = decks.length >= MAX_SAVED_DECKS;
+  const missingByCardId = new Map(missingCards.map((item) => [item.cardId, item]));
+  const missingTotal = missingCards.reduce((sum, item) => sum + item.missing, 0);
 
   const copyDeckCode = () => {
     const encoded = encodeDeckCode({ format, name, cardIds: deckIds });
@@ -5788,7 +5852,7 @@ function DeckSection({
               <Icon name="trash" />
               {deleting ? "删除中…" : "删除卡组"}
             </button>
-            <button className="button button--primary" type="button" disabled={!validation.valid} onClick={onBattle}>
+            <button className="button button--primary" type="button" disabled={!battleReady} onClick={onBattle} title={playable && !battleReady ? "先保存这份新卡组草稿" : undefined}>
               <Icon name="swords" />
               投入演算
             </button>
@@ -5920,14 +5984,53 @@ function DeckSection({
           <div className="deck-code-tools" aria-label="卡组代码">
             <label><span>卡组代码</span><input value={deckCode} onChange={(event) => setDeckCode(event.target.value)} placeholder="粘贴 ASTRA2 或旧版 ASTRA1 卡组代码" /></label>
             <div><button className="button button--small button--outline" type="button" onClick={importDeckCode} disabled={!deckCode.trim() || deckSlotsFull}>导入为新卡组</button><button className="button button--small button--outline" type="button" onClick={copyDeckCode} disabled={!validation.valid}>复制导出</button></div>
-            <small>ASTRA2 会随 30 张卡牌携带名称及标准／狂野模式；导入会新建草稿，并校验收藏与组牌规则。</small>
+            <small>ASTRA2 会携带名称及标准／狂野模式；缺少的卡牌会保留在草稿中，并提供合法替换建议。</small>
           </div>
 
-          <div className={`deck-validation ${validation.valid ? "deck-validation--valid" : "deck-validation--invalid"}`} role="status">
-            <Icon name={validation.valid ? "check" : "shield"} />
+          {missingCards.length > 0 && (
+            <section className="deck-missing" aria-labelledby="deck-missing-title">
+              <div className="deck-missing__heading">
+                <div>
+                  <span className="panel__eyebrow">MISSING / REPLACEMENTS</span>
+                  <strong id="deck-missing-title">缺少 {missingTotal} 张卡牌</strong>
+                </div>
+                <span>选择建议即可替换一张</span>
+              </div>
+              {missingCards.map((issue) => {
+                const card = CARD_BY_ID.get(issue.cardId);
+                const suggestions = suggestDeckReplacements({
+                  cardIds: deckIds,
+                  missingCardId: issue.cardId,
+                  collection,
+                  format,
+                });
+                return (
+                  <article className="deck-missing__item" key={issue.cardId}>
+                    <div>
+                      <strong>{card?.name ?? issue.cardId}</strong>
+                      <small>需要 {issue.required} · 已拥有 {issue.owned}</small>
+                    </div>
+                    <div className="deck-missing__suggestions">
+                      {suggestions.length > 0 ? suggestions.map((cardId) => {
+                        const suggestion = CARD_BY_ID.get(cardId);
+                        return suggestion ? (
+                          <button type="button" key={cardId} onClick={() => onReplaceMissing(issue.cardId, cardId)}>
+                            <span>{suggestion.cost}</span>{suggestion.name}
+                          </button>
+                        ) : null;
+                      }) : <small>收藏中暂无合法替换；可先制作这张卡。</small>}
+                    </div>
+                  </article>
+                );
+              })}
+            </section>
+          )}
+
+          <div className={`deck-validation ${playable ? "deck-validation--valid" : "deck-validation--invalid"}`} role="status">
+            <Icon name={playable ? "check" : "shield"} />
             <div>
-              <strong>{validation.valid ? "卡组协议有效" : "卡组尚未完成"}</strong>
-              <span>{validation.valid ? "可投入 AI 战术演算" : validation.errors[0]}</span>
+              <strong>{playable ? "卡组协议有效" : missingCards.length > 0 ? `仍缺少 ${missingTotal} 张卡牌` : "卡组尚未完成"}</strong>
+              <span>{playable ? battleReady ? "可投入 AI 与在线对战" : "规则与收藏校验通过；保存草稿后即可对战。" : missingCards.length > 0 ? "使用建议替换，或前往收藏制作缺少的卡牌。" : validation.errors[0]}</span>
             </div>
           </div>
 
@@ -6018,20 +6121,22 @@ function DeckSection({
               <span>部署清单</span>
               <small>{uniqueDeckCards.length} 种卡牌</small>
             </div>
-            {uniqueDeckCards.length > 0 ? uniqueDeckCards.map(({ card, count }) => (
-              <div className="deck-entry" key={card.id}>
+            {uniqueDeckCards.length > 0 ? uniqueDeckCards.map(({ card, count }) => {
+              const missing = missingByCardId.get(card.id);
+              return (
+              <div className={`deck-entry ${missing ? "deck-entry--missing" : ""}`} key={card.id}>
                 <span className="deck-entry__artwork">
                   <CardArtwork card={card} />
                 </span>
                 <span className="deck-entry__cost">{card.cost}</span>
                 <span className={`deck-entry__rarity deck-entry__rarity--${card.rarity}`} />
-                <span className="deck-entry__name"><strong>{card.name}</strong><small>{card.faction} · {TYPE_LABEL[card.type]}</small></span>
-                <span className="deck-entry__count">×{count}</span>
+                <span className="deck-entry__name"><strong>{card.name}</strong><small>{missing ? `缺少 ${missing.missing} 张` : `${card.faction} · ${TYPE_LABEL[card.type]}`}</small></span>
+                <span className="deck-entry__count">{missing ? `缺${missing.missing}` : `×${count}`}</span>
                 <button type="button" onClick={() => onRemove(card.id)} aria-label={`从卡组移除一张${card.name}`}>
                   <Icon name="minus" size={16} />
                 </button>
               </div>
-            )) : (
+            );}) : (
               <EmptyState icon="layers" title="部署清单为空">从右侧档案库选择卡牌。</EmptyState>
             )}
           </div>

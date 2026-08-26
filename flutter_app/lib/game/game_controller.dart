@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../data/catalog.dart';
 import '../data/deck_code.dart';
+import '../data/deck_replacements.dart';
 import '../data/formats.dart';
 import '../models/card_definition.dart';
 import '../models/local_saved_deck.dart';
@@ -290,8 +291,26 @@ class GameController extends ChangeNotifier {
 
   bool get deckValid => _deckValidationError == null;
 
-  String get deckStatus =>
-      _deckValidationError ?? '${deckFormat.fullLabel}卡组协议有效';
+  List<MissingDeckCard> get missingDeckCards => collection.isEmpty
+      ? const []
+      : findMissingDeckCards(
+          List<String>.from(deckIds),
+          Map<String, int>.from(collection),
+        );
+
+  int get missingDeckCount =>
+      missingDeckCards.fold(0, (total, card) => total + card.missingCount);
+
+  bool get deckPlayable => deckValid && missingDeckCards.isEmpty;
+
+  String get deckStatus {
+    final validation = _deckValidationError;
+    if (validation != null) return validation;
+    final missing = missingDeckCount;
+    return missing > 0
+        ? '缺少 $missing 张卡牌，可使用替换建议'
+        : '${deckFormat.fullLabel}卡组协议有效';
+  }
 
   Future<bool> saveDeck() async {
     deckName = _normalizeDeckName(deckName);
@@ -378,35 +397,43 @@ class GameController extends ChangeNotifier {
     if (validationError != null) {
       return DeckCodeImportResult(success: false, message: validationError);
     }
-    final counts = <String, int>{};
-    for (final id in decoded.cardIds) {
-      counts[id] = (counts[id] ?? 0) + 1;
-    }
-    for (final entry in counts.entries) {
-      if (owned(entry.key) < entry.value) {
-        final definition = card(entry.key);
-        return DeckCodeImportResult(
-          success: false,
-          message: '收藏中没有足够的「${definition?.name ?? entry.key}」',
-        );
-      }
-    }
-
     _stageActiveDeck();
+    activeDeckId = null;
     deckFormat = format;
     deckName = _normalizeDeckName(decoded.name ?? '导入牌组');
     deckIds
       ..clear()
       ..addAll(decoded.cardIds);
-    final imported = _currentDeckSnapshot(id: _newDeckId());
-    savedDecks.add(imported);
-    activeDeckId = imported.id;
-    await _queueDeckPersistence();
     notifyListeners();
+    final missing = missingDeckCount;
     return DeckCodeImportResult(
       success: true,
-      message: '已导入「${imported.name}」为新的${format.label}牌组',
+      message: missing > 0
+          ? '已导入「$deckName」草稿；缺少 $missing 张卡牌，可按建议替换'
+          : '已导入「$deckName」为新的${format.label}牌组草稿',
     );
+  }
+
+  List<CardDefinition> replacementSuggestions(String missingCardId) =>
+      suggestDeckReplacements(
+        cardIds: List<String>.from(deckIds),
+        missingCardId: missingCardId,
+        collection: Map<String, int>.from(collection),
+        format: deckFormat,
+        catalog: catalog,
+      );
+
+  bool replaceMissingDeckCard(String missingCardId, String replacementCardId) {
+    final allowed = replacementSuggestions(
+      missingCardId,
+    ).any((candidate) => candidate.id == replacementCardId);
+    final index = deckIds.lastIndexOf(missingCardId);
+    if (!allowed || index < 0) return false;
+    deckIds[index] = replacementCardId;
+    _stageActiveDeck();
+    unawaited(_queueDeckPersistence());
+    notifyListeners();
+    return true;
   }
 
   Future<bool> deleteDeck(String deckId) async {
@@ -652,6 +679,7 @@ class GameController extends ChangeNotifier {
 
   void startBattle() {
     if (catalog.isEmpty || isResolvingTurn) return;
+    if (deckValid && missingDeckCards.isNotEmpty) return;
     _turnTimer?.cancel();
     final deck = deckValid ? [...deckIds] : _fallbackDeckIds();
     if (deck.isEmpty) return;

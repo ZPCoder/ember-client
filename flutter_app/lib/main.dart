@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'
     show Clipboard, ClipboardData, HapticFeedback, SystemSound, SystemSoundType;
 import 'data/catalog.dart';
+import 'data/deck_replacements.dart';
 import 'data/formats.dart';
 import 'game/game_controller.dart';
 import 'models/card_definition.dart';
@@ -1289,6 +1290,10 @@ class DeckPage extends StatelessWidget {
     for (final id in controller.deckIds) {
       counts[id] = (counts[id] ?? 0) + 1;
     }
+    final missingCards = controller.missingDeckCards;
+    final missingByCardId = {
+      for (final card in missingCards) card.cardId: card,
+    };
     final availableCards = controller.cardsAvailableForDeck;
     return PageFrame(
       child: Column(
@@ -1304,6 +1309,12 @@ class DeckPage extends StatelessWidget {
               children: [
                 OutlinedButton.icon(
                   onPressed: () async {
+                    if (!controller.deckValid || missingCards.isNotEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(controller.deckStatus)),
+                      );
+                      return;
+                    }
                     final saved = await controller.saveDeck();
                     if (!context.mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -1316,7 +1327,7 @@ class DeckPage extends StatelessWidget {
                   label: const Text('保存'),
                 ),
                 FilledButton.icon(
-                  onPressed: controller.deckValid
+                  onPressed: controller.deckPlayable
                       ? () {
                           controller.startBattle();
                         }
@@ -1621,7 +1632,7 @@ class DeckPage extends StatelessWidget {
                     Text(
                       '${controller.deckIds.length} / 30 张 · ${controller.deckStatus}',
                       style: TextStyle(
-                        color: controller.deckValid
+                        color: controller.deckPlayable
                             ? const Color(0xFF79B980)
                             : const Color(0xFFE7BD7A),
                         fontSize: 11,
@@ -1633,7 +1644,7 @@ class DeckPage extends StatelessWidget {
                       minHeight: 6,
                       borderRadius: BorderRadius.circular(6),
                       backgroundColor: const Color(0xFF1C322B),
-                      color: controller.deckValid
+                      color: controller.deckPlayable
                           ? const Color(0xFF69CFC3)
                           : const Color(0xFFE7BD7A),
                     ),
@@ -1641,10 +1652,56 @@ class DeckPage extends StatelessWidget {
                     Expanded(
                       child: ListView(
                         children: [
+                          if (missingCards.isNotEmpty) ...[
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              margin: const EdgeInsets.only(bottom: 12),
+                              decoration: BoxDecoration(
+                                color: const Color(
+                                  0xFFE7BD7A,
+                                ).withValues(alpha: .06),
+                                border: Border.all(
+                                  color: const Color(
+                                    0xFFE7BD7A,
+                                  ).withValues(alpha: .24),
+                                ),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '缺少 ${controller.missingDeckCount} 张卡牌',
+                                    style: const TextStyle(
+                                      color: Color(0xFFE7BD7A),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 3),
+                                  const Text(
+                                    '点击建议，逐张换成收藏中的合法卡牌。',
+                                    style: TextStyle(
+                                      color: Color(0xFF84938A),
+                                      fontSize: 9,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 9),
+                                  for (final issue in missingCards)
+                                    _MissingDeckReplacement(
+                                      controller: controller,
+                                      issue: issue,
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ],
                           for (final entry in counts.entries)
                             _DeckEntry(
                               card: controller.card(entry.key)!,
                               count: entry.value,
+                              missingCount:
+                                  missingByCardId[entry.key]?.missingCount ?? 0,
                               onRemove: () =>
                                   controller.removeFromDeck(entry.key),
                             ),
@@ -1735,11 +1792,13 @@ class _DeckEntry extends StatelessWidget {
   const _DeckEntry({
     required this.card,
     required this.count,
+    required this.missingCount,
     required this.onRemove,
   });
 
   final CardDefinition card;
   final int count;
+  final int missingCount;
   final VoidCallback onRemove;
 
   @override
@@ -1748,14 +1807,17 @@ class _DeckEntry extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         children: [
-          Container(
-            width: 34,
-            height: 38,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(7),
-              image: DecorationImage(
-                image: AssetImage('assets/cards/${card.id}.webp'),
-                fit: BoxFit.cover,
+          Opacity(
+            opacity: missingCount > 0 ? .42 : 1,
+            child: Container(
+              width: 34,
+              height: 38,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(7),
+                image: DecorationImage(
+                  image: AssetImage('assets/cards/${card.id}.webp'),
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
           ),
@@ -1769,8 +1831,14 @@ class _DeckEntry extends StatelessWidget {
             ),
           ),
           Text(
-            '×$count',
-            style: const TextStyle(color: Color(0xFFE7BD7A), fontSize: 11),
+            missingCount > 0 ? '缺$missingCount' : '×$count',
+            style: TextStyle(
+              color: missingCount > 0
+                  ? const Color(0xFFE46D3F)
+                  : const Color(0xFFE7BD7A),
+              fontSize: 11,
+              fontWeight: missingCount > 0 ? FontWeight.w700 : null,
+            ),
           ),
           IconButton(
             onPressed: onRemove,
@@ -1778,6 +1846,67 @@ class _DeckEntry extends StatelessWidget {
             color: const Color(0xFFE46D3F),
             tooltip: '移除',
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MissingDeckReplacement extends StatelessWidget {
+  const _MissingDeckReplacement({
+    required this.controller,
+    required this.issue,
+  });
+
+  final GameController controller;
+  final MissingDeckCard issue;
+
+  @override
+  Widget build(BuildContext context) {
+    final missingCard = controller.card(issue.cardId);
+    final suggestions = controller.replacementSuggestions(issue.cardId);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 9),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '${missingCard?.name ?? issue.cardId} · 需要 ${issue.requiredCount}，已有 ${issue.ownedCount}',
+            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 5),
+          if (suggestions.isEmpty)
+            const Text(
+              '暂无合法替换，可先在收藏中制作。',
+              style: TextStyle(color: Color(0xFF84938A), fontSize: 9),
+            )
+          else
+            Wrap(
+              spacing: 5,
+              runSpacing: 5,
+              children: [
+                for (final suggestion in suggestions)
+                  OutlinedButton(
+                    onPressed: () {
+                      final replaced = controller.replaceMissingDeckCard(
+                        issue.cardId,
+                        suggestion.id,
+                      );
+                      if (replaced) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('已替换为「${suggestion.name}」')),
+                        );
+                      }
+                    },
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(0, 28),
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      textStyle: const TextStyle(fontSize: 9),
+                    ),
+                    child: Text('${suggestion.cost} · ${suggestion.name}'),
+                  ),
+              ],
+            ),
         ],
       ),
     );
@@ -1821,7 +1950,7 @@ class BattlePage extends StatelessWidget {
                     '${controller.deckFormat.fullLabel} · ${controller.deckStatus}',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: controller.deckValid
+                      color: controller.deckPlayable
                           ? const Color(0xFF79B980)
                           : const Color(0xFFE7BD7A),
                       fontSize: 11,
@@ -1829,7 +1958,7 @@ class BattlePage extends StatelessWidget {
                   ),
                   const SizedBox(height: 24),
                   FilledButton.icon(
-                    onPressed: controller.deckValid
+                    onPressed: controller.deckPlayable
                         ? controller.startBattle
                         : null,
                     icon: const Icon(Icons.play_arrow),

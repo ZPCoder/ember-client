@@ -1379,16 +1379,36 @@ void main() {
     controller.setDeckFormat(RankedFormat.standard);
     final result = await controller.importDeckCode(code);
     expect(result.success, isTrue);
-    expect(controller.savedDecks, hasLength(2));
-    expect(controller.activeDeckId, isNot(originalId));
+    expect(controller.savedDecks, hasLength(1));
+    expect(controller.activeDeckId, isNull);
     expect(controller.deckFormat, RankedFormat.wild);
     expect(controller.deckName, '移动狂野');
     expect(controller.deckIds, ids);
-    expect(controller.deckValid, isTrue);
+    expect(controller.deckPlayable, isTrue);
+    expect(await controller.saveDeck(), isTrue);
+    expect(controller.savedDecks, hasLength(2));
+    expect(controller.activeDeckId, isNot(originalId));
+
+    final extra = cards.firstWhere((card) => !ids.contains(card.id));
+    controller.collection[extra.id] = 2;
     controller.collection[ids.first] = 0;
     final missingResult = await controller.importDeckCode(code);
-    expect(missingResult.success, isFalse);
-    expect(missingResult.message, contains('收藏中没有足够'));
+    expect(missingResult.success, isTrue);
+    expect(missingResult.message, contains('缺少 2 张'));
+    expect(controller.deckValid, isTrue);
+    expect(controller.deckPlayable, isFalse);
+    expect(controller.missingDeckCount, 2);
+    controller.startBattle();
+    expect(controller.battle, isNull);
+    expect(
+      controller.replacementSuggestions(ids.first).map((card) => card.id),
+      contains(extra.id),
+    );
+    expect(controller.replaceMissingDeckCard(ids.first, extra.id), isTrue);
+    expect(controller.missingDeckCount, 1);
+    expect(controller.replaceMissingDeckCard(ids.first, extra.id), isTrue);
+    expect(controller.missingDeckCount, 0);
+    expect(controller.deckPlayable, isTrue);
     expect(controller.savedDecks, hasLength(2));
     controller.dispose();
   });
@@ -2575,6 +2595,12 @@ void main() {
       controller.collection[id] = 2;
     }
     await controller.saveDeck();
+    final extra = catalog.firstWhere(
+      (card) =>
+          card.faction == '曜光' && card.rarity != '传说' && !ids.contains(card.id),
+    );
+    controller.collection[extra.id] = 2;
+    controller.collection[ids.first] = 0;
 
     await tester.pumpWidget(AstraProtocolApp(controller: controller));
     await tester.tap(find.text('卡组'));
@@ -2588,6 +2614,12 @@ void main() {
     expect(find.text('导入代码'), findsOneWidget);
     expect(find.text('删除'), findsOneWidget);
     expect(find.byKey(const ValueKey('deck-format-selector')), findsOneWidget);
+    expect(find.text('缺少 2 张卡牌'), findsOneWidget);
+    expect(find.textContaining('点击建议'), findsOneWidget);
+    final battleButton = tester.widget<FilledButton>(
+      find.widgetWithText(FilledButton, '投入演算'),
+    );
+    expect(battleButton.onPressed, isNull);
 
     await tester.pumpWidget(const SizedBox.shrink());
     controller.dispose();
