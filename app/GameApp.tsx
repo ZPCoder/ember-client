@@ -4140,8 +4140,8 @@ export function GameApp({
       setNotice({
         tone: payload.localFallback ? "info" : "success",
         text: payload.localFallback
-          ? "档案包已在本地演示档案中解密。"
-          : "档案包解密完成，新卡牌已归入收藏。",
+          ? "标准档案包已在本地演示档案中解密。"
+          : "标准档案包解密完成，新卡牌已归入收藏。",
       });
     }
   };
@@ -4153,7 +4153,7 @@ export function GameApp({
     if (payload) {
       setNotice({
         tone: payload.localFallback ? "info" : "success",
-        text: `本周免费卡包已加入档案库${payload.localFallback ? "（本地演示）" : ""}。`,
+        text: `本周免费标准包已加入档案库${payload.localFallback ? "（本地演示）" : ""}。`,
       });
     }
   };
@@ -4165,7 +4165,7 @@ export function GameApp({
     if (payload) {
       setNotice({
         tone: payload.localFallback ? "info" : "success",
-        text: `已购买 1 个档案包，消耗 ${payload.costGold ?? 100} 金币${payload.localFallback ? "（本地演示）" : ""}。`,
+        text: `已购买 1 个标准档案包，消耗 ${payload.costGold ?? 100} 金币${payload.localFallback ? "（本地演示）" : ""}。`,
       });
     }
   };
@@ -5586,11 +5586,11 @@ export function GameApp({
               className="resource-chip resource-chip--pack"
               type="button"
               onClick={() => switchSection("overview")}
-              aria-label={`${player.packsAvailable} 个可开启卡包`}
+              aria-label={`${player.packsAvailable} 个可开启标准档案包`}
             >
               <Icon name="pack" size={18} />
               <span>
-                <small>档案包</small>
+                <small>标准档案包</small>
                 <strong>{player.packsAvailable}</strong>
               </span>
             </button>
@@ -6254,7 +6254,7 @@ function OverviewSection({
           <div className="panel__header">
             <div>
               <span className="panel__eyebrow">ARCHIVE DROP</span>
-              <h2 id="pack-title">免费档案包</h2>
+              <h2 id="pack-title">标准档案包</h2>
             </div>
             <span className="pack-panel__timer"><Icon name="clock" size={15} /> {formatUtcResetCountdown("day", clockNow)} 刷新</span>
           </div>
@@ -6281,7 +6281,7 @@ function OverviewSection({
               </button>
               <button className="button button--outline button--wide" type="button" onClick={onBuyPack} disabled={apiBusy === "buy_pack" || player.currencies.gold < 100}>
                 <Icon name="coin" />
-                {apiBusy === "buy_pack" ? "购买中…" : "100 金币购买卡包"}
+                {apiBusy === "buy_pack" ? "购买中…" : "100 金币购买标准包"}
               </button>
             </div>
           ) : (
@@ -6291,7 +6291,7 @@ function OverviewSection({
                 type="button"
                 onClick={onOpenPack}
                 disabled={apiBusy === "open_pack" || player.packsAvailable <= 0}
-                aria-label="开启免费档案包"
+                aria-label="开启标准档案包"
               >
                 <span className="pack-object__halo" />
                 <span className="pack-object__shell">
@@ -6300,7 +6300,7 @@ function OverviewSection({
                 <span className="pack-object__count">× {player.packsAvailable}</span>
               </button>
               <h3>{player.packsAvailable > 0 ? "有一份加密档案等待解锁" : "今日档案已解密"}</h3>
-              <p>每份包含 5 张随机卡牌，至少 1 张稀有或更高品质。</p>
+              <p>每份包含 5 张当前标准环境卡牌，至少 1 张稀有或更高品质。</p>
               <button
                 className="button button--primary button--wide"
                 type="button"
@@ -6317,7 +6317,7 @@ function OverviewSection({
                 disabled={apiBusy === "buy_pack" || player.currencies.gold < 100}
               >
                 <Icon name="coin" />
-                {apiBusy === "buy_pack" ? "购买中…" : "100 金币购买卡包"}
+                {apiBusy === "buy_pack" ? "购买中…" : "100 金币购买标准包"}
               </button>
             </div>
           )}
@@ -9526,7 +9526,7 @@ function OperationsSection({
           <div className="ops-account-profile"><span>公开昵称</span><label className="ops-profile-editor"><input value={profileName} maxLength={24} onChange={(event) => setProfileName(event.target.value)} aria-label="公开昵称" /><button className="button button--tiny button--accent" type="button" disabled={profileBusy || !profileName.trim()} onClick={() => onUpdateProfile(profileName)}>{profileBusy ? "保存中…" : "保存"}</button></label><small>{isDemo ? "本地演示账号" : "服务器持久化账号"}</small></div>
           <div><span>奖励经验</span><strong>{(player.progression?.xp ?? 0).toLocaleString("zh-CN")} XP</strong><small>每 1,000 XP 提升 1 级</small></div>
           <div><span>日常重随</span><strong>{player.taskCycle?.dailyRerollsRemaining ?? 0} 次</strong><small>每日 UTC 00:00 刷新</small></div>
-          <div><span>卡包商店</span><strong>{player.taskCycle?.packsBoughtToday ?? 0} / 10</strong><small>100 金币 / 个，日限购 10 个</small></div>
+          <div><span>标准包商店</span><strong>{player.taskCycle?.packsBoughtToday ?? 0} / 10</strong><small>100 金币 / 个，日限购 10 个</small></div>
           <div><span>传奇保底</span><strong>{Math.min(player.packPity?.packsSinceLegendary ?? 0, 39)} / 40</strong><small>第 40 包首槽必出传说，出货后重置</small></div>
           <div><span>演算奖励</span><strong>{player.taskCycle?.aiRewardsToday ?? 0} / 20</strong><small>每日最多 20 场 AI 奖励，防止刷资源</small></div>
           {(["standard", "wild"] as const).map((format) => {
@@ -9540,9 +9540,9 @@ function OperationsSection({
           <div><span>玩家 UID</span><strong className="ops-player-id">{player.id}</strong><small>用于好友邀请与客服核验；资产绑定稳定身份而非邮箱</small></div>
         </div>
         <div className="ops-weekly-gift">
-              <div><span className="panel__eyebrow">WEEKLY SHOP GIFT</span><strong>每周免费卡包</strong><small>每周可领取 1 次，距离 UTC 周一刷新还有 {formatUtcResetCountdown("week", clockNow)}。</small></div>
+              <div><span className="panel__eyebrow">WEEKLY SHOP GIFT</span><strong>每周免费标准包</strong><small>每周可领取 1 次，距离 UTC 周一刷新还有 {formatUtcResetCountdown("week", clockNow)}。</small></div>
           <button className="button button--accent" type="button" disabled={weeklyPackBusy || player.taskCycle?.weeklyFreePackClaimed === true} onClick={onClaimWeeklyPack}>
-            {weeklyPackBusy ? "领取中…" : player.taskCycle?.weeklyFreePackClaimed ? "本周已领取" : "领取卡包"}
+            {weeklyPackBusy ? "领取中…" : player.taskCycle?.weeklyFreePackClaimed ? "本周已领取" : "领取标准包"}
           </button>
         </div>
       </section>
@@ -9593,7 +9593,7 @@ function OperationsSection({
             return (
               <article className={`reward-track-item ${claimed ? "is-claimed" : unlocked ? "is-ready" : "is-locked"}`} key={reward.level}>
                 <span className="reward-track-item__level">{reward.level}</span>
-                <div><strong>{reward.title}</strong><small>{reward.kind === "gold" ? "金币" : reward.kind === "pack" ? "档案包" : "星尘"} × {reward.amount}</small></div>
+                <div><strong>{reward.title}</strong><small>{reward.kind === "gold" ? "金币" : reward.kind === "pack" ? "标准档案包" : "星尘"} × {reward.amount}</small></div>
                 <button
                   className="button button--small button--accent"
                   type="button"
@@ -9622,8 +9622,8 @@ function OperationsSection({
           <div><Icon name="check" size={16} /><span>胜利 +60 金币、失败 +20 金币；AI 每日最多 20 场发放对战金币与 XP，卡包 +50 XP</span></div>
           <div><Icon name="check" size={16} /><span>联机战报必须匹配服务器对局快照、参赛身份和唯一对局凭证</span></div>
           <div><Icon name="check" size={16} /><span>联机分为 Ranked 天梯与 Casual 休闲：仅 Ranked 影响赛季段位；白银至白金段位连续胜利会获得额外星级进度，失败会重置连胜。</span></div>
-          <div><Icon name="check" size={16} /><span>每周商店提供 1 个免费卡包，按周一 UTC 00:00 刷新并由服务端幂等结算</span></div>
-          <div><Icon name="check" size={16} /><span>卡包首槽保底稀有；连续 39 包未出传说时，第 40 包首槽强制传说，服务端维护计数。</span></div>
+          <div><Icon name="check" size={16} /><span>每周商店提供 1 个免费标准包，按周一 UTC 00:00 刷新并由服务端幂等结算</span></div>
+          <div><Icon name="check" size={16} /><span>标准包只产出当前标准环境卡牌；首槽保底稀有，连续 39 包未出传说时，第 40 包首槽强制传说。</span></div>
           <div><Icon name="check" size={16} /><span>好友请求每日最多 20 次，聊天每分钟最多 20 条；屏蔽、举报和好友关系由服务端保存，幂等重试不会重复发放或重复发送。</span></div>
         </div>
       </section>
