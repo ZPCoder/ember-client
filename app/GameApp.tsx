@@ -742,14 +742,19 @@ const CARD_RULE_BY_ID = new Map([...CARD_CATALOG, ...GENERATED_CARD_DEFINITIONS]
 function catalogCardSearchInput(
   card: CatalogCard,
   collection: Readonly<Record<string, number>>,
+  goldenCollection: Readonly<Record<string, number>> = {},
 ) {
+  const owned = Math.max(0, Math.floor(collection[card.id] ?? 0));
+  const goldenOwned = Math.max(0, Math.min(owned, Math.floor(goldenCollection[card.id] ?? 0)));
   return {
     name: card.name,
     description: card.description,
     cost: card.cost,
     attack: card.attack,
     health: card.health,
-    owned: Math.max(0, Math.floor(collection[card.id] ?? 0)),
+    owned,
+    normalOwned: owned - goldenOwned,
+    goldenOwned,
     copyLimit: card.rarity === "legendary" ? 1 : 2,
     type: card.type,
     rarity: card.rarity,
@@ -3959,7 +3964,7 @@ export function GameApp({
           ? standard
           : released && !standard;
       const matchesSearch = matchesParsedCardSearch(
-        catalogCardSearchInput(card, player.collection),
+        catalogCardSearchInput(card, player.collection, player.goldenCollection),
         searchClauses,
       );
       return (
@@ -3985,7 +3990,7 @@ export function GameApp({
     return Array.from({ length: longestBucket }, (_, index) =>
       factionBuckets.map((cards) => cards[index]).filter(Boolean),
     ).flat() as CatalogCard[];
-  }, [cardSetFilter, collectionEnvironment, factionFilter, keywordFilter, minionTypeFilter, player.collection, rarityFilter, search, spellSchoolFilter, traitFilter, typeFilter]);
+  }, [cardSetFilter, collectionEnvironment, factionFilter, keywordFilter, minionTypeFilter, player.collection, player.goldenCollection, rarityFilter, search, spellSchoolFilter, traitFilter, typeFilter]);
 
   const battleView = useMemo(() => battleFromRaw(battle), [battle]);
   const battleStatus = battleView?.status;
@@ -5912,6 +5917,7 @@ export function GameApp({
                   })}
                   collection={deckAccessCollection}
                   realCollection={player.collection}
+                  goldenCollection={player.goldenCollection ?? {}}
                   decks={player.decks}
                   editingDeckId={editingDeckId}
                   deckIds={deckIds}
@@ -6855,7 +6861,7 @@ function CollectionSection({
             type="search"
             value={search}
             onChange={(event) => onSearch(event.target.value)}
-            placeholder="名称，或 费用:3-5 攻击:4+ 缺少…"
+            placeholder="名称，或 费用:3-5 金色:1+ 品质:普通…"
             aria-describedby="collection-search-help"
           />
           {search && (
@@ -6946,7 +6952,7 @@ function CollectionSection({
       </div>
 
       <div className="collection-search-help" id="collection-search-help">
-        高级搜索：费用、攻击、生命、持有支持精确值、范围及 + / −；也可组合“缺少”“多余”“类型:单位”“稀有度:传说”。
+        高级搜索：费用、攻击、生命、持有、金色和普通版本数量支持精确值、范围及 + / −；也可组合“缺少”“多余”“品质:金色”“类型:单位”“稀有度:传说”。
       </div>
 
       <div className="collection-summary">
@@ -7047,6 +7053,7 @@ function DeckSection({
   cards,
   collection,
   realCollection,
+  goldenCollection,
   decks,
   editingDeckId,
   deckIds,
@@ -7088,6 +7095,7 @@ function DeckSection({
   cards: CatalogCard[];
   collection: Record<string, number>;
   realCollection: Record<string, number>;
+  goldenCollection: Record<string, number>;
   decks: SavedDeck[];
   editingDeckId: string | null;
   deckIds: string[];
@@ -7201,7 +7209,7 @@ function DeckSection({
         || (libraryOwnership === "addable" ? owned > inDeck : owned === 0);
       return matchesMana
         && matchesOwnership
-        && matchesParsedCardSearch(catalogCardSearchInput(card, collection), libraryClauses);
+        && matchesParsedCardSearch(catalogCardSearchInput(card, collection, goldenCollection), libraryClauses);
     })
     .sort((left, right) => {
       const leftAddable = (collection[left.id] ?? 0) > (deckCounts.get(left.id) ?? 0) ? 1 : 0;
@@ -7711,7 +7719,7 @@ function DeckSection({
             <label className="search-field">
               <span className="sr-only">搜索可用档案</span>
               <Icon name="search" size={16} />
-              <input type="search" value={librarySearch} onChange={(event) => setLibrarySearch(event.target.value)} placeholder="搜索，或 费用:3 攻击:4+…" />
+              <input type="search" value={librarySearch} onChange={(event) => setLibrarySearch(event.target.value)} placeholder="搜索，或 费用:3 金色:1+ 品质:普通…" />
               {librarySearch && <button type="button" onClick={() => setLibrarySearch("")} aria-label="清除可用档案搜索"><Icon name="close" size={14} /></button>}
             </label>
             <label className="filter-field">
