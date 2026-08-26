@@ -49,6 +49,7 @@ import {
   cardAvailableInRankedFormat,
   cardBackDefinition,
   cardBackIsUnlocked,
+  isCardBackId,
   matchesParsedCardSearch,
   parseCardSearch,
   packTypeAvailable,
@@ -93,6 +94,7 @@ import {
   normalizeRankedRewardState,
   normalizeRankedLadders,
   normalizeOwnedCardBackId,
+  resolveCardBackSelection,
   seasonCardBackId,
   removeSavedDeck,
   RANKED_FIRST_TIME_REWARD_LEVELS,
@@ -474,12 +476,13 @@ type PvpState = {
   localReady: boolean;
   remoteReady: boolean;
   remoteReadyDeck: string[] | null;
+  remoteCardBackId: string | null;
   message: string;
 };
 
 type PvpIncoming =
-  | { id: number; type: "match-start"; payload: { seed: number; startingPlayer?: 0 | 1; deck?: string[]; decks?: [string[], string[]]; matchToken?: string; format?: PvpFormat; rankedFormat?: RankedFormat } }
-  | { id: number; type: "match-sync"; payload: { state: MatchState; matchToken?: string; format?: PvpFormat; rankedFormat?: RankedFormat } }
+  | { id: number; type: "match-start"; payload: { seed: number; startingPlayer?: 0 | 1; deck?: string[]; decks?: [string[], string[]]; cardBackIds?: [string, string]; matchToken?: string; format?: PvpFormat; rankedFormat?: RankedFormat } }
+  | { id: number; type: "match-sync"; payload: { state: MatchState; cardBackIds?: [string, string]; matchToken?: string; format?: PvpFormat; rankedFormat?: RankedFormat } }
   | { id: number; type: "command"; command: BattleCommand; state?: MatchState; matchToken?: string }
   | { id: number; type: "room-reset" }
   | { id: number; type: "rejected"; message: string; resync?: boolean };
@@ -2945,6 +2948,7 @@ function useWebPvp(displayName: string) {
     localReady: false,
     remoteReady: false,
     remoteReadyDeck: null,
+    remoteCardBackId: null,
     message: "未连接联机大厅",
   });
   const [incoming, setIncoming] = useState<PvpIncoming | null>(null);
@@ -2989,7 +2993,7 @@ function useWebPvp(displayName: string) {
         : message.pool === "standard"
           ? "standard"
           : null;
-      setState((current) => ({ ...current, status: "queue", roomCode: null, role: null, format, rankedFormat, matchPool: matchPool ?? current.matchPool, matchQuality: null, peerName: null, localReady: false, remoteReady: false, remoteReadyDeck: null, message: asString(message.message, "正在按隐藏水平寻找对手…") }));
+      setState((current) => ({ ...current, status: "queue", roomCode: null, role: null, format, rankedFormat, matchPool: matchPool ?? current.matchPool, matchQuality: null, peerName: null, localReady: false, remoteReady: false, remoteReadyDeck: null, remoteCardBackId: null, message: asString(message.message, "正在按隐藏水平寻找对手…") }));
       return;
     }
     if (type === "queue_left") {
@@ -3023,6 +3027,7 @@ function useWebPvp(displayName: string) {
         localReady: false,
         remoteReady: false,
         remoteReadyDeck: null,
+        remoteCardBackId: null,
         message: asString(message.message, type === "room_created" ? "房间已创建，等待对手加入。" : "已加入房间，等待房主准备。"),
       }));
       return;
@@ -3032,7 +3037,7 @@ function useWebPvp(displayName: string) {
       return;
     }
     if (type === "peer_left") {
-      setState((current) => ({ ...current, peerName: null, remoteReady: false, remoteReadyDeck: null, status: "room", message: "对手已离开房间。" }));
+      setState((current) => ({ ...current, peerName: null, remoteReady: false, remoteReadyDeck: null, remoteCardBackId: null, status: "room", message: "对手已离开房间。" }));
       return;
     }
     if (type === "room_state") {
@@ -3072,8 +3077,14 @@ function useWebPvp(displayName: string) {
       const matchToken = payload && typeof payload === "object" ? asString((payload as Record<string, unknown>).matchToken) : "";
       const format: PvpFormat = payload && typeof payload === "object" && (payload as Record<string, unknown>).format === "casual" ? "casual" : "ranked";
       const rankedFormat: RankedFormat = payload && typeof payload === "object" && (payload as Record<string, unknown>).rankedFormat === "wild" ? "wild" : "standard";
+      const rawCardBackIds = payload && typeof payload === "object"
+        ? (payload as Record<string, unknown>).cardBackIds ?? (state as Record<string, unknown>).cardBackIds
+        : null;
+      const cardBackIds = Array.isArray(rawCardBackIds) && rawCardBackIds.length === 2 && rawCardBackIds.every(isCardBackId)
+        ? rawCardBackIds as [string, string]
+        : undefined;
       setState((current) => ({ ...current, format, rankedFormat, status: "playing", message: "已恢复联机对局状态。" }));
-      enqueueIncoming({ id: ++incomingIdRef.current, type: "match-sync", payload: { state: state as MatchState, format, rankedFormat, ...(matchToken ? { matchToken } : {}) } });
+      enqueueIncoming({ id: ++incomingIdRef.current, type: "match-sync", payload: { state: state as MatchState, format, rankedFormat, ...(cardBackIds ? { cardBackIds } : {}), ...(matchToken ? { matchToken } : {}) } });
       return;
     }
     if (type !== "action") return;
@@ -3086,7 +3097,8 @@ function useWebPvp(displayName: string) {
     const payload = message.payload && typeof message.payload === "object" ? message.payload as Record<string, unknown> : {};
     if (action === "ready") {
       const remoteDeck = Array.isArray(payload.deckIds) ? payload.deckIds.map(String) : [];
-      setState((current) => ({ ...current, remoteReady: true, remoteReadyDeck: remoteDeck, status: current.localReady ? "ready" : current.status, message: `${asString(message.peerName, "对手")} 已准备。` }));
+      const remoteCardBackId = isCardBackId(payload.cardBackId) ? payload.cardBackId : DEFAULT_CARD_BACK_ID;
+      setState((current) => ({ ...current, remoteReady: true, remoteReadyDeck: remoteDeck, remoteCardBackId, status: current.localReady ? "ready" : current.status, message: `${asString(message.peerName, "对手")} 已准备。` }));
       return;
     }
     if (action === "match_start") {
@@ -3101,6 +3113,9 @@ function useWebPvp(displayName: string) {
       const startingPlayer: 0 | 1 = payload.startingPlayer === 1 ? 1 : 0;
       const format: PvpFormat = payload.format === "casual" ? "casual" : "ranked";
       const rankedFormat: RankedFormat = payload.rankedFormat === "wild" ? "wild" : "standard";
+      const cardBackIds = Array.isArray(payload.cardBackIds) && payload.cardBackIds.length === 2 && payload.cardBackIds.every(isCardBackId)
+        ? payload.cardBackIds as [string, string]
+        : undefined;
       setState((current) => ({ ...current, format, rankedFormat, status: "playing", message: "双方已准备，联机演算开始。" }));
       const matchToken = asString(payload.matchToken);
       enqueueIncoming({
@@ -3111,6 +3126,7 @@ function useWebPvp(displayName: string) {
           startingPlayer,
           format,
           rankedFormat,
+          ...(cardBackIds ? { cardBackIds } : {}),
           ...(deck ? { deck } : { decks: decks as [string[], string[]] }),
           ...(matchToken ? { matchToken } : {}),
         },
@@ -3124,6 +3140,7 @@ function useWebPvp(displayName: string) {
         localReady: false,
         remoteReady: false,
         remoteReadyDeck: null,
+        remoteCardBackId: null,
         message: "本局已结束，可以重新准备下一局。",
       }));
       enqueueIncoming({ id: ++incomingIdRef.current, type: "room-reset" });
@@ -3192,6 +3209,7 @@ function useWebPvp(displayName: string) {
       localReady: false,
       remoteReady: false,
       remoteReadyDeck: null,
+      remoteCardBackId: null,
       message,
     }));
   }, [stopPolling]);
@@ -3354,7 +3372,7 @@ function useWebPvp(displayName: string) {
         return;
       }
       socketRef.current = null;
-      setState((current) => ({ ...current, status: "offline", roomCode: null, role: null, format: "ranked", rankedFormat: "standard", matchPool: null, matchQuality: null, peerName: null, localReady: false, remoteReady: false, remoteReadyDeck: null, message: "联机大厅连接已断开。" }));
+      setState((current) => ({ ...current, status: "offline", roomCode: null, role: null, format: "ranked", rankedFormat: "standard", matchPool: null, matchQuality: null, peerName: null, localReady: false, remoteReady: false, remoteReadyDeck: null, remoteCardBackId: null, message: "联机大厅连接已断开。" }));
     };
     if (canFallbackToPolling(parsed)) {
       fallbackTimerRef.current = window.setTimeout(() => {
@@ -3452,8 +3470,8 @@ function useWebPvp(displayName: string) {
     send({ type: "join_room", room });
   }, [send]);
 
-  const ready = useCallback((deckIds: string[]) => {
-    if (send({ type: "action", action: "ready", payload: { deckIds } })) {
+  const ready = useCallback((deckIds: string[], cardBackId: string) => {
+    if (send({ type: "action", action: "ready", payload: { deckIds, cardBackId } })) {
       setState((current) => ({ ...current, localReady: true, status: current.remoteReady ? "ready" : "ready", message: "你已准备，等待对手确认。" }));
     }
   }, [send]);
@@ -3554,6 +3572,7 @@ export function GameApp({
   const [deckName, setDeckName] = useState("星火远征队");
   const [deckFormat, setDeckFormat] = useState<RankedFormat>("standard");
   const [deckCardBackId, setDeckCardBackId] = useState(DEFAULT_CARD_BACK_ID);
+  const [battleCardBackIds, setBattleCardBackIds] = useState<[string, string]>([DEFAULT_CARD_BACK_ID, DEFAULT_CARD_BACK_ID]);
   const [deckIds, setDeckIds] = useState<string[]>(() => [...STARTER_IDS]);
   const [editingDeckId, setEditingDeckId] = useState<string | null>(null);
   const [selectedLadderReadyDeckId, setSelectedLadderReadyDeckId] = useState<LadderReadyDeckId | null>(null);
@@ -4645,7 +4664,7 @@ export function GameApp({
 
   // This transition is shared by AI and transport-driven PVP starts.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const beginBattle = (decks: [string[], string[]], startingPlayer: 0 | 1, online: boolean, rankedFormat: RankedFormat, opponentName?: string, seed?: number, opponentArchetypeId?: string, aiTicketToken?: string) => {
+  const beginBattle = (decks: [string[], string[]], startingPlayer: 0 | 1, online: boolean, rankedFormat: RankedFormat, opponentName?: string, seed?: number, opponentArchetypeId?: string, aiTicketToken?: string, cardBackIds?: [string, string]) => {
     const launchDeckValidation = validateDeck(decks[0]);
     if (!online && !launchDeckValidation.valid) {
       switchSection("deck");
@@ -4653,6 +4672,7 @@ export function GameApp({
       return;
     }
     try {
+      setBattleCardBackIds(cardBackIds ?? [DEFAULT_CARD_BACK_ID, DEFAULT_CARD_BACK_ID]);
       aiTurnGenerationRef.current += 1;
       if (aiTurnTimerRef.current !== null) {
         window.clearTimeout(aiTurnTimerRef.current);
@@ -4789,6 +4809,10 @@ export function GameApp({
         ticket.seed,
         ticket.opponentArchetypeId,
         ticket.token,
+        [
+          resolveCardBackSelection(deckCardBackId, normalizeRankedRewardState(player.rankedRewards), ticket.seed, 0),
+          DEFAULT_CARD_BACK_ID,
+        ],
       );
       if (training) {
         setBattleMessage("固定教学起手已经就绪：不要换牌，直接确认起手。");
@@ -5094,7 +5118,11 @@ export function GameApp({
       const localStartingPlayer = role === "host"
         ? canonicalStartingPlayer
         : canonicalStartingPlayer === 0 ? 1 : 0;
-      beginBattle(orderedDecks, localStartingPlayer, true, event.payload.rankedFormat ?? pvp.state.rankedFormat, pvp.state.peerName ?? "联机对手", event.payload.seed);
+      const canonicalCardBacks = event.payload.cardBackIds ?? [deckCardBackId, pvp.state.remoteCardBackId ?? DEFAULT_CARD_BACK_ID];
+      const orientedCardBacks: [string, string] = role === "host"
+        ? canonicalCardBacks
+        : [canonicalCardBacks[1], canonicalCardBacks[0]];
+      beginBattle(orderedDecks, localStartingPlayer, true, event.payload.rankedFormat ?? pvp.state.rankedFormat, pvp.state.peerName ?? "联机对手", event.payload.seed, undefined, undefined, orientedCardBacks);
       pvp.acknowledgeIncoming(event.id);
       return;
     }
@@ -5109,6 +5137,11 @@ export function GameApp({
         pvpMatchPlayerRef.current = role === "host" ? 0 : 1;
       }
       pvpMatchTokenRef.current = nextMatchToken;
+      if (event.payload.cardBackIds) {
+        setBattleCardBackIds(role === "host"
+          ? event.payload.cardBackIds
+          : [event.payload.cardBackIds[1], event.payload.cardBackIds[0]]);
+      }
       const stableRole = pvpMatchPlayerRef.current === 0 ? "host" : "guest";
       const oriented = orientPvpMatchForLocal(event.payload.state, stableRole);
       pendingPvpCommandRef.current = false;
@@ -5178,7 +5211,9 @@ export function GameApp({
       issueCommand({ ...remote, player: localPlayer, ...(mappedTarget ? { target: mappedTarget } : {}) } as BattleCommand, false);
       pvp.acknowledgeIncoming(event.id);
     }
-  }, [battle, beginBattle, deckIds, issueCommand, playSound, pvp, showBattleEffects, stopBattleEffects]);
+  // beginBattle intentionally captures the current editable loadout; PVP
+  // events must use the same render's deck and cosmetic selection.
+  }, [battle, beginBattle, deckCardBackId, deckIds, issueCommand, playSound, pvp, showBattleEffects, stopBattleEffects]);
 
   useEffect(() => {
     if (
@@ -6019,7 +6054,7 @@ export function GameApp({
                   turnClockSeconds={battleTurnClockSeconds}
                   soundEnabled={soundEnabled}
                   replaySlow={battleReplaySlow}
-                  cardBackId={deckCardBackId}
+                  cardBackIds={battleCardBackIds}
                   onStart={startStandardBattle}
                   onRematch={requestOnlineRematch}
                   onReturnLobby={returnToBattleLobby}
@@ -6099,7 +6134,7 @@ export function GameApp({
                       setNotice({ tone: "warning", text: "当前卡组包含未拥有的卡牌，请先制作或替换。" });
                       return;
                     }
-                    pvp.ready(deckIds);
+                    pvp.ready(deckIds, deckCardBackId);
                   }}
                   onPvpDisconnect={() => pvp.disconnect()}
                   online={onlineMatch}
@@ -8484,7 +8519,7 @@ function BattleSection({
   turnClockSeconds,
   soundEnabled,
   replaySlow,
-  cardBackId,
+  cardBackIds,
   onStart,
   onRematch,
   onReturnLobby,
@@ -8550,7 +8585,7 @@ function BattleSection({
   turnClockSeconds: number | null;
   soundEnabled: boolean;
   replaySlow: boolean;
-  cardBackId: string;
+  cardBackIds: [string, string];
   onStart: () => void;
   onRematch: () => void;
   onReturnLobby: () => void;
@@ -9214,7 +9249,7 @@ function BattleSection({
               </div>
             </div>
             <div className="enemy-hand" aria-label={`敌方有 ${battle.ai.hand.length} 张手牌`}>
-              {battle.ai.hand.map((card, index) => <span className="card-back card-back--default" key={`${card.instanceId}-${index}`} />)}
+              {battle.ai.hand.map((card, index) => <span className={`card-back card-back--${cardBackDefinition(cardBackIds[1]).kind}`} key={`${card.instanceId}-${index}`} />)}
               <small>{battle.ai.deckCount} 张牌库</small>
             </div>
             <SecretTray secrets={battle.ai.secrets} enemy />
@@ -9513,9 +9548,9 @@ function BattleSection({
             </div>
             <span className="deck-counter">
               <span
-                className={`battle-deck-back battle-deck-back--${cardBackDefinition(cardBackId).kind}`}
-                title={cardBackDefinition(cardBackId).name}
-                aria-label={`已装备${cardBackDefinition(cardBackId).name}卡背`}
+                className={`battle-deck-back battle-deck-back--${cardBackDefinition(cardBackIds[0]).kind}`}
+                title={cardBackDefinition(cardBackIds[0]).name}
+                aria-label={`已装备${cardBackDefinition(cardBackIds[0]).name}卡背`}
               />
               <Icon name="cards" size={16} /> 牌库 {battle.player.deckCount}
             </span>

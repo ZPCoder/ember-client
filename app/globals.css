@@ -3137,6 +3137,14 @@ button.game-card:not(:disabled):hover .game-card__artwork,
     repeating-conic-gradient(from 0deg, #bd8833 0 12deg, #173e34 13deg 25deg);
 }
 
+.card-back-preview--random {
+  border-color: rgba(207, 164, 255, 0.82);
+  background:
+    radial-gradient(circle at 35% 34%, #f2dcff 0 5%, transparent 6%),
+    radial-gradient(circle at 68% 66%, #8be7e0 0 6%, transparent 7%),
+    conic-gradient(from 30deg, #53316f, #245f6c, #9a6534, #53316f);
+}
+
 .deck-code-tools {
   display: grid;
   gap: 7px;
