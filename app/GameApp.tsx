@@ -320,6 +320,14 @@ type BattleSide = {
     deathOrder: number;
     minionTypes: MinionType[];
   }>;
+  discardHistory: Array<{
+    discardId: string;
+    cardId: string;
+    name: string;
+    discardedTurn: number;
+    discardOrder: number;
+    fragment?: "left" | "right";
+  }>;
   weapon: {
     cardId: string;
     name: string;
@@ -1559,6 +1567,23 @@ function battleFromRaw(value: unknown): BattleView | null {
             minionTypes: Array.isArray(record.minionTypes)
               ? (record.minionTypes.map(String) as MinionType[])
               : [...(CARD_BY_ID.get(cardId)?.minionTypes ?? [])],
+          };
+        })
+      : [],
+    discardHistory: Array.isArray(side.discardHistory)
+      ? side.discardHistory.map((entry, index) => {
+          const record = (entry ?? {}) as Record<string, unknown>;
+          const cardId = asString(record.cardId);
+          const fragment = record.fragment === "left" || record.fragment === "right"
+            ? record.fragment
+            : undefined;
+          return {
+            discardId: asString(record.discardId, `discard-${index}`),
+            cardId,
+            name: asString(record.name, CARD_BY_ID.get(cardId)?.name ?? "未知卡牌"),
+            discardedTurn: asNumber(record.discardedTurn, 1),
+            discardOrder: asNumber(record.discardOrder, index + 1),
+            ...(fragment ? { fragment } : {}),
           };
         })
       : [],
@@ -6708,6 +6733,40 @@ function DeathHistoryTray({
   );
 }
 
+function DiscardHistoryTray({
+  history,
+  enemy = false,
+}: {
+  history: BattleSide["discardHistory"];
+  enemy?: boolean;
+}) {
+  if (history.length === 0) return null;
+  const recent = [...history].reverse().slice(0, 2);
+  return (
+    <div className={`discard-history ${enemy ? "discard-history--enemy" : ""}`} aria-label={`${enemy ? "敌方" : "我方"}弃牌历史 ${history.length} 张牌`}>
+      <span className="discard-history__label">⌫ 弃牌 · {history.length}</span>
+      <div>
+        {recent.map((record) => (
+          <span title={`第 ${record.discardedTurn} 回合弃掉`} key={`${record.discardId}-${record.discardOrder}`}>
+            {record.name}{record.fragment ? `·${record.fragment === "left" ? "左片" : "右片"}` : ""}
+          </span>
+        ))}
+        {history.length > recent.length && <small>+{history.length - recent.length}</small>}
+      </div>
+    </div>
+  );
+}
+
+function ZoneHistoryTray({ side, enemy = false }: { side: BattleSide; enemy?: boolean }) {
+  if (side.deathHistory.length === 0 && side.discardHistory.length === 0) return null;
+  return (
+    <div className={`zone-history ${enemy ? "zone-history--enemy" : ""}`}>
+      <DeathHistoryTray history={side.deathHistory} enemy={enemy} />
+      <DiscardHistoryTray history={side.discardHistory} enemy={enemy} />
+    </div>
+  );
+}
+
 function HeroCore({
   side,
   active,
@@ -7683,7 +7742,7 @@ function BattleSection({
               <small>{battle.ai.deckCount} 张牌库</small>
             </div>
             <SecretTray secrets={battle.ai.secrets} enemy />
-            <DeathHistoryTray history={battle.ai.deathHistory} enemy />
+            <ZoneHistoryTray side={battle.ai} enemy />
             <div
               className="board-row board-row--enemy"
               aria-label={`敌方战场 ${battle.ai.board.length}/${BOARD_SLOT_COUNT}`}
@@ -7805,7 +7864,7 @@ function BattleSection({
               </button>
             </div>
             <SecretTray secrets={battle.player.secrets} />
-            <DeathHistoryTray history={battle.player.deathHistory} />
+            <ZoneHistoryTray side={battle.player} />
             <div className="player-hand">
               <span className={`player-hand__count ${battle.player.hand.length + (battle.player.coinAvailable ? 1 : 0) >= 10 ? "player-hand__count--full" : ""}`}>
                 手牌 {battle.player.hand.length + (battle.player.coinAvailable ? 1 : 0)} / 10

@@ -30,6 +30,7 @@ class CardDefinition {
     this.onTurnStart = const [],
     this.onTurnEnd = const [],
     this.onSpellPlayed = const [],
+    this.onDiscard = const [],
     this.onPlay = const [],
     this.onDeath = const [],
     this.effect = const [],
@@ -65,6 +66,7 @@ class CardDefinition {
   final List<Map<String, dynamic>> onTurnStart;
   final List<Map<String, dynamic>> onTurnEnd;
   final List<Map<String, dynamic>> onSpellPlayed;
+  final List<Map<String, dynamic>> onDiscard;
   final List<Map<String, dynamic>> onPlay;
   final List<Map<String, dynamic>> onDeath;
   final List<Map<String, dynamic>> effect;
@@ -88,6 +90,7 @@ class CardDefinition {
     List<Map<String, dynamic>>? onTurnStart,
     List<Map<String, dynamic>>? onTurnEnd,
     List<Map<String, dynamic>>? onSpellPlayed,
+    List<Map<String, dynamic>>? onDiscard,
     List<Map<String, dynamic>>? onPlay,
     List<Map<String, dynamic>>? onDeath,
     List<Map<String, dynamic>>? effect,
@@ -127,6 +130,7 @@ class CardDefinition {
       onTurnStart: onTurnStart ?? this.onTurnStart,
       onTurnEnd: onTurnEnd ?? this.onTurnEnd,
       onSpellPlayed: onSpellPlayed ?? this.onSpellPlayed,
+      onDiscard: onDiscard ?? this.onDiscard,
       onPlay: onPlay ?? this.onPlay,
       onDeath: onDeath ?? this.onDeath,
       effect: effect ?? this.effect,
@@ -188,6 +192,7 @@ class CardDefinition {
       onTurnStart: effects(json['onTurnStart']),
       onTurnEnd: effects(json['onTurnEnd']),
       onSpellPlayed: effects(json['onSpellPlayed']),
+      onDiscard: effects(json['onDiscard']),
       onPlay: effects(json['onPlay']),
       onDeath: effects(json['onDeath']),
       effect: effects(json['effect']),
@@ -310,6 +315,26 @@ class BattleDeathRecord {
   final List<String> minionTypes;
 }
 
+class BattleDiscardRecord {
+  const BattleDiscardRecord({
+    required this.discardId,
+    required this.cardId,
+    required this.name,
+    required this.player,
+    required this.discardedTurn,
+    required this.discardOrder,
+    this.fragment,
+  });
+
+  final String discardId;
+  final String cardId;
+  final String name;
+  final int player;
+  final int discardedTurn;
+  final int discardOrder;
+  final String? fragment;
+}
+
 class BattleSide {
   BattleSide({
     required this.heroHealth,
@@ -334,6 +359,7 @@ class BattleSide {
     List<String>? spellSchoolsPlayedThisTurn,
     List<String>? spellSchoolsPlayedLastTurn,
     List<BattleDeathRecord>? deathHistory,
+    List<BattleDiscardRecord>? discardHistory,
     List<BattleSecret>? secrets,
   }) : deckCostOverrides = List<int?>.from(deckCostOverrides ?? const <int?>[]),
        handCostReductions = handCostReductions ?? <int>[],
@@ -341,6 +367,7 @@ class BattleSide {
        spellSchoolsPlayedThisTurn = spellSchoolsPlayedThisTurn ?? <String>[],
        spellSchoolsPlayedLastTurn = spellSchoolsPlayedLastTurn ?? <String>[],
        deathHistory = deathHistory ?? <BattleDeathRecord>[],
+       discardHistory = discardHistory ?? <BattleDiscardRecord>[],
        secrets = secrets ?? <BattleSecret>[];
 
   int heroHealth;
@@ -366,6 +393,7 @@ class BattleSide {
   final List<String> spellSchoolsPlayedThisTurn;
   final List<String> spellSchoolsPlayedLastTurn;
   final List<BattleDeathRecord> deathHistory;
+  final List<BattleDiscardRecord> discardHistory;
   bool heroHasAttacked = false;
   final List<BattleSecret> secrets;
 }

@@ -95,6 +95,8 @@ class OnlineBattleController extends ChangeNotifier {
   List<String> remoteSpellSchoolsLastTurn = <String>[];
   List<BattleDeathRecord> localDeathHistory = <BattleDeathRecord>[];
   List<BattleDeathRecord> remoteDeathHistory = <BattleDeathRecord>[];
+  List<BattleDiscardRecord> localDiscardHistory = <BattleDiscardRecord>[];
+  List<BattleDiscardRecord> remoteDiscardHistory = <BattleDiscardRecord>[];
   String? localHeroName;
   String? remoteHeroName;
   int localHeroAttackBonus = 0;
@@ -608,6 +610,7 @@ class OnlineBattleController extends ChangeNotifier {
     final schoolsThisTurn = spellSchools(side['spellSchoolsPlayedThisTurn']);
     final schoolsLastTurn = spellSchools(side['spellSchoolsPlayedLastTurn']);
     final deathHistory = _parseDeathHistory(side['deathHistory']);
+    final discardHistory = _parseDiscardHistory(side['discardHistory']);
     if (localSide) {
       localMana = mana;
       localMaxMana = maxMana;
@@ -619,6 +622,7 @@ class OnlineBattleController extends ChangeNotifier {
       localSpellSchoolsThisTurn = schoolsThisTurn;
       localSpellSchoolsLastTurn = schoolsLastTurn;
       localDeathHistory = deathHistory;
+      localDiscardHistory = discardHistory;
       localCoinAvailable = side['coinAvailable'] == true;
       localHeroPowerUsed = side['heroPowerUsed'] == true;
       localHeroHasAttacked = side['heroHasAttacked'] == true;
@@ -660,6 +664,7 @@ class OnlineBattleController extends ChangeNotifier {
       remoteSpellSchoolsThisTurn = schoolsThisTurn;
       remoteSpellSchoolsLastTurn = schoolsLastTurn;
       remoteDeathHistory = deathHistory;
+      remoteDiscardHistory = discardHistory;
     }
   }
 
@@ -682,6 +687,28 @@ class OnlineBattleController extends ChangeNotifier {
             diedTurn: (record['diedTurn'] as num?)?.toInt() ?? 1,
             deathOrder: (record['deathOrder'] as num?)?.toInt() ?? 1,
             minionTypes: minionTypes,
+          );
+        })
+        .toList(growable: false);
+  }
+
+  List<BattleDiscardRecord> _parseDiscardHistory(Object? raw) {
+    if (raw is! List) return <BattleDiscardRecord>[];
+    return raw
+        .whereType<Map>()
+        .map((entry) {
+          final record = Map<String, dynamic>.from(entry);
+          final fragment = record['fragment']?.toString();
+          return BattleDiscardRecord(
+            discardId: record['discardId']?.toString() ?? '',
+            cardId: record['cardId']?.toString() ?? '',
+            name: record['name']?.toString() ?? '未知卡牌',
+            player: (record['player'] as num?)?.toInt() ?? 0,
+            discardedTurn: (record['discardedTurn'] as num?)?.toInt() ?? 1,
+            discardOrder: (record['discardOrder'] as num?)?.toInt() ?? 1,
+            fragment: fragment == 'left' || fragment == 'right'
+                ? fragment
+                : null,
           );
         })
         .toList(growable: false);

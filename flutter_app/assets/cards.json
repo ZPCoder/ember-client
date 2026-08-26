@@ -1535,7 +1535,7 @@
   {
     "id": "void-blackwake-torpedo",
     "name": "黑浪鱼雷",
-    "description": "对一个敌方角色造成 5 点伤害。",
+    "description": "对一个敌方角色造成 5 点伤害。随机弃一张牌。",
     "faction": "幽潮",
     "type": "spell",
     "cost": 4,
@@ -1546,6 +1546,10 @@
       {
         "kind": "damage",
         "amount": 5
+      },
+      {
+        "kind": "discard-random",
+        "count": 1
       }
     ],
     "keywords": [],
@@ -6028,7 +6032,7 @@
   {
     "id": "void-season-13",
     "name": "深潮潜行者·13",
-    "description": "lifesteal。 幽潮的战线单位。 登场时抽一张牌。",
+    "description": "汲取。战吼：随机将至多两张你本局弃掉的牌的复制加入手牌。",
     "faction": "幽潮",
     "type": "unit",
     "cost": 5,
@@ -6045,8 +6049,8 @@
     ],
     "onPlay": [
       {
-        "kind": "draw",
-        "count": 1
+        "kind": "recover-discarded",
+        "count": 2
       }
     ],
     "target": "none",
@@ -6147,7 +6151,7 @@
   {
     "id": "void-season-spell-02",
     "name": "夜鳍回响·02",
-    "description": "抽两张牌。",
+    "description": "使用或弃掉时，随机对一个敌方角色造成 2 点伤害。",
     "faction": "幽潮",
     "type": "spell",
     "cost": 2,
@@ -6156,13 +6160,19 @@
     "target": "none",
     "effect": [
       {
-        "kind": "draw",
-        "count": 2
+        "kind": "random-enemy-damage",
+        "amount": 2
       }
     ],
     "keywords": [],
     "onDeath": [],
-    "set": "pegasus-2024"
+    "set": "pegasus-2024",
+    "onDiscard": [
+      {
+        "kind": "random-enemy-damage",
+        "amount": 2
+      }
+    ]
   },
   {
     "id": "void-season-spell-03",

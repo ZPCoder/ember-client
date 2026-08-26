@@ -4369,14 +4369,14 @@ button.game-card:not(:disabled):hover .game-card__artwork,
   align-self: center;
 }
 
-.battlefield__player-zone > .death-history {
+.battlefield__player-zone > .zone-history {
   grid-column: 2 / -1;
   grid-row: 2;
   align-self: center;
   justify-self: end;
 }
 
-.battlefield__enemy-zone > .death-history {
+.battlefield__enemy-zone > .zone-history {
   position: absolute;
   top: 56px;
   right: 18px;
@@ -4896,7 +4896,18 @@ button.hero-core {
   white-space: nowrap;
 }
 
-.death-history {
+.zone-history {
+  z-index: 3;
+  display: flex;
+  min-width: 0;
+  max-width: min(68%, 600px);
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px;
+}
+
+.death-history,
+.discard-history {
   z-index: 3;
   display: inline-flex;
   min-width: 0;
@@ -4918,17 +4929,40 @@ button.hero-core {
   background: rgba(29, 20, 39, 0.78);
 }
 
+.discard-history {
+  color: #d4b77e;
+  border-color: rgba(221, 172, 88, 0.28);
+  background: rgba(36, 27, 12, 0.78);
+}
+
+.discard-history--enemy {
+  color: #cbb5da;
+  border-color: rgba(174, 137, 207, 0.27);
+  background: rgba(29, 20, 39, 0.78);
+}
+
 .death-history__label {
   flex: 0 0 auto;
   color: #e0c0b2;
   letter-spacing: 0.04em;
 }
 
+.discard-history__label {
+  flex: 0 0 auto;
+  color: #ead09a;
+  letter-spacing: 0.04em;
+}
+
+.discard-history--enemy .discard-history__label {
+  color: #d8c2ea;
+}
+
 .death-history--enemy .death-history__label {
   color: #d8c2ea;
 }
 
-.death-history > div {
+.death-history > div,
+.discard-history > div {
   display: flex;
   min-width: 0;
   align-items: center;
@@ -4936,7 +4970,8 @@ button.hero-core {
   overflow: hidden;
 }
 
-.death-history > div > span {
+.death-history > div > span,
+.discard-history > div > span {
   overflow: hidden;
   max-width: 90px;
   padding-left: 4px;
@@ -4946,7 +4981,8 @@ button.hero-core {
   opacity: 0.86;
 }
 
-.death-history small {
+.death-history small,
+.discard-history small {
   flex: 0 0 auto;
 }
 
@@ -8647,11 +8683,12 @@ button.hero-core {
     scroll-snap-align: start;
   }
 
-  .death-history {
-    max-width: 54%;
+  .zone-history {
+    max-width: 62%;
   }
 
-  .death-history > div > span:not(:first-child) {
+  .death-history > div > span:not(:first-child),
+  .discard-history > div > span:not(:first-child) {
     display: none;
   }
 

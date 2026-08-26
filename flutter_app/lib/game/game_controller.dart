@@ -67,6 +67,7 @@ class GameController extends ChangeNotifier {
   Timer? _turnTimer;
   int _deckIdSequence = 0;
   int _shatterGroupSequence = 0;
+  int _discardSequence = 0;
   String? _declinedClipboardDeckCode;
   Future<void> _deckPersistQueue = Future<void>.value();
 
@@ -1177,6 +1178,88 @@ class GameController extends ChangeNotifier {
     return true;
   }
 
+  void _discardRandomCards({
+    required BattleSide source,
+    required BattleSide enemy,
+    required int count,
+    required String sourceName,
+  }) {
+    for (
+      var discarded = 0;
+      discarded < count && source.hand.isNotEmpty;
+      discarded++
+    ) {
+      _syncHandCostReductions(source);
+      final index = _random.nextInt(source.hand.length);
+      final removed = source.hand.removeAt(index);
+      source.handCostReductions.removeAt(index);
+      final fragment = source.handFragments.removeAt(index);
+      final state = battle!;
+      final discardId = 'discard-${_discardSequence++}';
+      source.discardHistory.add(
+        BattleDiscardRecord(
+          discardId: discardId,
+          cardId: removed.id,
+          name: removed.name,
+          player: identical(source, state.player) ? 0 : 1,
+          discardedTurn: state.turn,
+          discardOrder:
+              state.player.discardHistory.length +
+              state.ai.discardHistory.length +
+              1,
+          fragment: fragment?.piece,
+        ),
+      );
+      stateLog(
+        sourceName,
+        '弃掉 ${removed.name}${fragment == null ? '' : '·${fragment.isLeft ? '左片' : '右片'}'}。',
+      );
+      _emitFx(
+        'burn',
+        '${removed.name} 被弃掉',
+        '已写入本局弃牌历史',
+        Icons.delete_sweep_outlined,
+        0xFFE7BD7A,
+        sourceId: removed.id,
+      );
+      if (removed.onDiscard.isNotEmpty) {
+        _resolveEffects(
+          removed.onDiscard,
+          source: source,
+          enemy: enemy,
+          sourceName: '${removed.name} · 弃牌触发',
+        );
+      }
+    }
+  }
+
+  void _recoverDiscardedCards({
+    required BattleSide source,
+    required int count,
+    required String sourceName,
+  }) {
+    final pool = List<BattleDiscardRecord>.from(source.discardHistory);
+    for (var recovered = 0; recovered < count && pool.isNotEmpty; recovered++) {
+      final index = _random.nextInt(pool.length);
+      final record = pool.removeAt(index);
+      final recoveredCard = card(record.cardId);
+      if (recoveredCard == null) continue;
+      if (_addCardToHand(source, recoveredCard)) {
+        stateLog(sourceName, '找回 ${recoveredCard.name} 的印刷复制。');
+        _emitFx(
+          'draw',
+          '${recoveredCard.name} 被找回',
+          '弃牌历史不会被消耗',
+          Icons.restore_from_trash_outlined,
+          factionColors[recoveredCard.faction] ?? 0xFFE7BD7A,
+          sourceId: recoveredCard.id,
+        );
+      } else {
+        stateLog(sourceName, '${recoveredCard.name} 因手牌已满而燃毁。');
+      }
+    }
+  }
+
   bool playCard(
     CardDefinition card, {
     int? handIndex,
@@ -1747,6 +1830,8 @@ class GameController extends ChangeNotifier {
             'draw-minion-type',
             'draw-spell-school',
             'resurrect-friendly-unit',
+            'discard-random',
+            'recover-discarded',
             'summon',
           }.contains(kind)) {
             effect['count'] =
@@ -2816,6 +2901,21 @@ class GameController extends ChangeNotifier {
                 sourceId: target.instanceId,
               );
             }
+            break;
+          case 'discard-random':
+            _discardRandomCards(
+              source: source,
+              enemy: enemy,
+              count: (effect['count'] as num?)?.toInt() ?? 1,
+              sourceName: sourceName,
+            );
+            break;
+          case 'recover-discarded':
+            _recoverDiscardedCards(
+              source: source,
+              count: (effect['count'] as num?)?.toInt() ?? 1,
+              sourceName: sourceName,
+            );
             break;
           case 'choose-one':
             final options = effect['options'];

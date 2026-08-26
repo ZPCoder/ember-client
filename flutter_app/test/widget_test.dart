@@ -146,6 +146,27 @@ void main() {
             .single['kind'],
         'return-unit-to-hand',
       );
+      expect(
+        catalog
+            .singleWhere((card) => card.id == 'void-blackwake-torpedo')
+            .effect
+            .any((effect) => effect['kind'] == 'discard-random'),
+        isTrue,
+      );
+      expect(
+        catalog
+            .singleWhere((card) => card.id == 'void-season-spell-02')
+            .onDiscard
+            .single['kind'],
+        'random-enemy-damage',
+      );
+      expect(
+        catalog
+            .singleWhere((card) => card.id == 'void-season-13')
+            .onPlay
+            .single['kind'],
+        'recover-discarded',
+      );
       expect(generatedBattleCards, hasLength(18));
       expect(
         generatedBattleCards
@@ -335,6 +356,108 @@ void main() {
       await controller.endTurn();
       expect(state.ai.handCostReductions, [2]);
       expect(state.logs.any((log) => log.contains('敌方完成预备')), isTrue);
+      controller.dispose();
+    },
+  );
+
+  test(
+    'mobile discard history triggers discarded cards and recovers printed copies',
+    () async {
+      final filler = CardDefinition(
+        id: 'discard-filler',
+        name: '弃牌占位单位',
+        description: '测试牌库。',
+        faction: '幽潮',
+        type: 'unit',
+        cost: 9,
+        rarity: '普通',
+        attack: 0,
+        health: 1,
+      );
+      final echo = CardDefinition(
+        id: 'discard-echo',
+        name: '弃牌回响',
+        description: '使用或弃掉时造成伤害。',
+        faction: '幽潮',
+        type: 'spell',
+        cost: 1,
+        rarity: '普通',
+        effect: const [
+          {'kind': 'random-enemy-damage', 'amount': 2},
+        ],
+        onDiscard: const [
+          {'kind': 'random-enemy-damage', 'amount': 2},
+        ],
+      );
+      final discard = CardDefinition(
+        id: 'discard-source',
+        name: '弃牌鱼雷',
+        description: '造成伤害，随机弃一张牌。',
+        faction: '幽潮',
+        type: 'spell',
+        cost: 1,
+        rarity: '稀有',
+        target: 'enemy-character',
+        effect: const [
+          {'kind': 'damage', 'amount': 3},
+          {'kind': 'discard-random', 'count': 1},
+        ],
+      );
+      final recover = CardDefinition(
+        id: 'discard-recover',
+        name: '弃牌拾荒者',
+        description: '战吼：找回弃牌。',
+        faction: '幽潮',
+        type: 'unit',
+        cost: 1,
+        rarity: '稀有',
+        attack: 2,
+        health: 2,
+        onPlay: const [
+          {'kind': 'recover-discarded', 'count': 2},
+        ],
+      );
+      final controller = GameController(startingPlayer: 'player')
+        ..catalog = [filler, echo, discard, recover]
+        ..deckIds.addAll(List.filled(30, filler.id));
+      controller.startBattle();
+      await controller.confirmMulligan();
+      final state = controller.battle!;
+      state.player.hand
+        ..clear()
+        ..addAll([discard, echo]);
+      state.player.handCostReductions
+        ..clear()
+        ..addAll([0, 0]);
+      state.player.handFragments
+        ..clear()
+        ..addAll([null, null]);
+      state.player.mana = 10;
+      state.ai.board.clear();
+      final beforeHealth = state.ai.heroHealth;
+
+      expect(
+        controller.playCard(discard, handIndex: 0, targetHero: true),
+        isTrue,
+      );
+      expect(state.ai.heroHealth, beforeHealth - 5);
+      expect(state.player.hand, isEmpty);
+      expect(state.player.discardHistory.single.cardId, echo.id);
+
+      state.player.hand
+        ..clear()
+        ..add(recover);
+      state.player.handCostReductions
+        ..clear()
+        ..add(0);
+      state.player.handFragments
+        ..clear()
+        ..add(null);
+      state.player.mana = 1;
+      expect(controller.playCard(recover, handIndex: 0), isTrue);
+      expect(state.player.hand.single, echo);
+      expect(state.player.handCostReductions, [0]);
+      expect(state.player.discardHistory, hasLength(1));
       controller.dispose();
     },
   );
@@ -2904,6 +3027,16 @@ void main() {
                   'minionTypes': ['beast'],
                 },
               ],
+              'discardHistory': [
+                {
+                  'discardId': 'discard-1',
+                  'cardId': 'void-season-spell-02',
+                  'name': '夜鳍回响·02',
+                  'player': 0,
+                  'discardedTurn': 1,
+                  'discardOrder': 6,
+                },
+              ],
               'board': [
                 {
                   'entityId': 'u1',
@@ -2929,6 +3062,17 @@ void main() {
                   'minionTypes': ['beast', 'construct'],
                 },
               ],
+              'discardHistory': [
+                {
+                  'discardId': 'discard-2',
+                  'cardId': 'void-blackwake-torpedo',
+                  'name': '黑浪鱼雷',
+                  'player': 1,
+                  'discardedTurn': 2,
+                  'discardOrder': 7,
+                  'fragment': 'left',
+                },
+              ],
               'board': [],
             },
           ],
@@ -2949,6 +3093,11 @@ void main() {
       'beast',
       'construct',
     ]);
+    expect(
+      controller.localDiscardHistory.single.cardId,
+      'void-season-spell-02',
+    );
+    expect(controller.remoteDiscardHistory.single.fragment, 'left');
     expect(controller.canAct, isTrue);
 
     client.lastEvent = MultiplayerEvent(
