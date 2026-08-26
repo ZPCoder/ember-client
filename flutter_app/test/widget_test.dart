@@ -1270,6 +1270,44 @@ void main() {
   );
 
   test(
+    'smart completion uses owned cards and creates a legal Standard deck',
+    () async {
+      final catalog = await loadCatalog();
+      final candidates = catalog
+          .where(
+            (card) =>
+                card.faction == '曜光' &&
+                card.rarity != '传说' &&
+                cardAvailableInRankedFormat(card, RankedFormat.standard),
+          )
+          .take(15)
+          .toList();
+      expect(candidates, hasLength(15));
+      final seed = [candidates[0].id, candidates[1].id];
+      final controller = GameController()
+        ..catalog = catalog
+        ..deckIds.addAll(seed);
+      for (final card in candidates) {
+        controller.collection[card.id] = 2;
+      }
+
+      expect(controller.autoCompleteDeck(), 28);
+      expect(controller.deckIds.take(seed.length), seed);
+      expect(controller.deckIds, hasLength(30));
+      expect(controller.deckValid, isTrue);
+      expect(controller.deckPlayable, isTrue);
+      for (final cardId in controller.deckIds.toSet()) {
+        expect(
+          controller.deckIds.where((candidate) => candidate == cardId).length,
+          lessThanOrEqualTo(controller.collection[cardId] ?? 0),
+        );
+      }
+      expect(controller.autoCompleteDeck(), 0);
+      controller.dispose();
+    },
+  );
+
+  test(
     'mobile deck library creates, copies, switches and deletes safely',
     () async {
       final catalog = await loadCatalog();
@@ -2717,6 +2755,7 @@ void main() {
     expect(find.text('新建'), findsOneWidget);
     expect(find.text('复制'), findsOneWidget);
     expect(find.text('复制牌表'), findsOneWidget);
+    expect(find.text('智能补全'), findsOneWidget);
     expect(find.text('导入代码'), findsOneWidget);
     expect(find.text('删除'), findsOneWidget);
     expect(find.byKey(const ValueKey('deck-format-selector')), findsOneWidget);

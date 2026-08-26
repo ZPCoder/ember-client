@@ -442,43 +442,49 @@ class PageHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 22),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Expanded(
-            child: Column(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final copy = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                eyebrow,
+                style: const TextStyle(
+                  fontSize: 10,
+                  color: Color(0xFFE46D3F),
+                  letterSpacing: 2,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 30,
+                  color: Color(0xFFF1E6C8),
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                description,
+                style: const TextStyle(color: Color(0xFF84938A), fontSize: 13),
+              ),
+            ],
+          );
+          if (action != null && constraints.maxWidth < 620) {
+            return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  eyebrow,
-                  style: const TextStyle(
-                    fontSize: 10,
-                    color: Color(0xFFE46D3F),
-                    letterSpacing: 2,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 30,
-                    color: Color(0xFFF1E6C8),
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  description,
-                  style: const TextStyle(
-                    color: Color(0xFF84938A),
-                    fontSize: 13,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          ?action,
-        ],
+              children: [copy, const SizedBox(height: 14), action!],
+            );
+          }
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(child: copy),
+              ?action,
+            ],
+          );
+        },
       ),
     );
   }
@@ -1358,6 +1364,28 @@ class DeckPage extends StatelessWidget {
               spacing: 8,
               runSpacing: 8,
               children: [
+                OutlinedButton.icon(
+                  onPressed:
+                      controller.deckIds.length < 30 && missingCards.isEmpty
+                      ? () {
+                          final added = controller.autoCompleteDeck();
+                          final remaining = 30 - controller.deckIds.length;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                added == 0
+                                    ? '当前已选卡牌或收藏无法继续合法补全'
+                                    : remaining == 0
+                                    ? '智能补全已加入 $added 张收藏卡牌'
+                                    : '已加入 $added 张，仍缺 $remaining 张可用卡牌',
+                              ),
+                            ),
+                          );
+                        }
+                      : null,
+                  icon: const Icon(Icons.auto_awesome_outlined),
+                  label: const Text('智能补全'),
+                ),
                 OutlinedButton.icon(
                   onPressed: () async {
                     if (!controller.deckValid || missingCards.isNotEmpty) {

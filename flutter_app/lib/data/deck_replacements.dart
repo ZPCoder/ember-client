@@ -15,6 +15,154 @@ class MissingDeckCard {
   int get missingCount => requiredCount - ownedCount;
 }
 
+class DeckCompletionResult {
+  const DeckCompletionResult({
+    required this.cardIds,
+    required this.addedCardIds,
+    required this.faction,
+  });
+
+  final List<String> cardIds;
+  final List<String> addedCardIds;
+  final String? faction;
+}
+
+const _smartCurveTargets = [2, 5, 6, 5, 4, 3, 3, 2];
+const _smartTypeTargets = {'unit': 18, 'spell': 10, 'weapon': 2};
+
+int _smartCurveBucket(int cost) => cost.clamp(0, 7);
+
+DeckCompletionResult completeDeckFromCollection({
+  required List<String> cardIds,
+  required Map<String, int> collection,
+  required RankedFormat format,
+  required List<CardDefinition> catalog,
+}) {
+  final original = List<String>.from(cardIds);
+  final byId = {for (final card in catalog) card.id: card};
+  final counts = <String, int>{};
+  final factions = <String>{};
+
+  DeckCompletionResult unchanged() => DeckCompletionResult(
+    cardIds: original,
+    addedCardIds: const [],
+    faction: factions.length == 1 ? factions.first : null,
+  );
+
+  if (original.length > 30) return unchanged();
+  for (final cardId in original) {
+    final card = byId[cardId];
+    if (card == null || !cardAvailableInRankedFormat(card, format)) {
+      return unchanged();
+    }
+    final nextCount = (counts[cardId] ?? 0) + 1;
+    final copyLimit = card.rarity == '传说' ? 1 : 2;
+    final owned = (collection[cardId] ?? 0).clamp(0, copyLimit);
+    if (nextCount > owned) return unchanged();
+    counts[cardId] = nextCount;
+    if (card.faction != '中立') factions.add(card.faction);
+  }
+  if (factions.length > 1) return unchanged();
+
+  String? faction = factions.length == 1 ? factions.first : null;
+  if (faction == null) {
+    final factionCapacity = <String, int>{};
+    for (final card in catalog) {
+      if (card.faction == '中立' || !cardAvailableInRankedFormat(card, format)) {
+        continue;
+      }
+      final copyLimit = card.rarity == '传说' ? 1 : 2;
+      final owned = (collection[card.id] ?? 0).clamp(0, copyLimit);
+      factionCapacity[card.faction] =
+          (factionCapacity[card.faction] ?? 0) + owned;
+    }
+    var bestCapacity = 0;
+    for (final entry in factionCapacity.entries) {
+      if (entry.value > bestCapacity) {
+        faction = entry.key;
+        bestCapacity = entry.value;
+      }
+    }
+  }
+
+  final completed = List<String>.from(original);
+  final addedCardIds = <String>[];
+  final curveCounts = List<int>.filled(8, 0);
+  final typeCounts = {'unit': 0, 'spell': 0, 'weapon': 0};
+  final keywordCounts = <String, int>{};
+  final traitCounts = <String, int>{};
+
+  void registerCard(CardDefinition card) {
+    curveCounts[_smartCurveBucket(card.cost)] += 1;
+    typeCounts[card.type] = (typeCounts[card.type] ?? 0) + 1;
+    for (final keyword in card.keywords) {
+      keywordCounts[keyword] = (keywordCounts[keyword] ?? 0) + 1;
+    }
+    for (final trait in card.traits) {
+      traitCounts[trait] = (traitCounts[trait] ?? 0) + 1;
+    }
+  }
+
+  for (final cardId in completed) {
+    registerCard(byId[cardId]!);
+  }
+
+  while (completed.length < 30) {
+    CardDefinition? bestCard;
+    int? bestScore;
+    for (final card in catalog) {
+      if (!cardAvailableInRankedFormat(card, format) ||
+          (card.faction != '中立' && card.faction != faction)) {
+        continue;
+      }
+      final currentCopies = counts[card.id] ?? 0;
+      final copyLimit = card.rarity == '传说' ? 1 : 2;
+      final owned = (collection[card.id] ?? 0).clamp(0, copyLimit);
+      if (currentCopies >= owned) continue;
+
+      final bucket = _smartCurveBucket(card.cost);
+      final curveNeed = _smartCurveTargets[bucket] - curveCounts[bucket];
+      final typeNeed =
+          (_smartTypeTargets[card.type] ?? 0) - (typeCounts[card.type] ?? 0);
+      final keywordSynergy = card.keywords.fold<int>(
+        0,
+        (score, keyword) => score + (keywordCounts[keyword] ?? 0).clamp(0, 4),
+      );
+      final traitSynergy = card.traits.fold<int>(
+        0,
+        (score, trait) => score + (traitCounts[trait] ?? 0).clamp(0, 4),
+      );
+      final score =
+          curveNeed * 22 +
+          typeNeed * 6 +
+          keywordSynergy * 8 +
+          traitSynergy * 10 +
+          (currentCopies > 0 ? 14 : 0) +
+          (card.faction == faction ? 4 : 0);
+      if (bestCard == null ||
+          score > bestScore! ||
+          (score == bestScore &&
+              (card.cost < bestCard.cost ||
+                  (card.cost == bestCard.cost &&
+                      card.id.compareTo(bestCard.id) < 0)))) {
+        bestCard = card;
+        bestScore = score;
+      }
+    }
+    if (bestCard == null) break;
+    completed.add(bestCard.id);
+    addedCardIds.add(bestCard.id);
+    counts[bestCard.id] = (counts[bestCard.id] ?? 0) + 1;
+    registerCard(bestCard);
+  }
+
+  return DeckCompletionResult(
+    cardIds: completed,
+    addedCardIds: addedCardIds,
+    faction: faction,
+  );
+}
+
 List<MissingDeckCard> findMissingDeckCards(
   List<String> cardIds,
   Map<String, int> collection,

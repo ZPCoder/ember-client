@@ -251,6 +251,24 @@ class GameController extends ChangeNotifier {
     }
   }
 
+  int autoCompleteDeck() {
+    if (deckIds.length >= 30 || missingDeckCards.isNotEmpty) return 0;
+    final completion = completeDeckFromCollection(
+      cardIds: List<String>.from(deckIds),
+      collection: Map<String, int>.from(collection),
+      format: deckFormat,
+      catalog: catalog,
+    );
+    if (completion.addedCardIds.isEmpty) return 0;
+    deckIds
+      ..clear()
+      ..addAll(completion.cardIds);
+    _stageActiveDeck();
+    unawaited(_queueDeckPersistence());
+    notifyListeners();
+    return completion.addedCardIds.length;
+  }
+
   String? get _deckFaction {
     for (final id in deckIds) {
       final faction = card(id)?.faction;

@@ -33,6 +33,7 @@ import {
   battleEventsToEffects,
   cardAvailableInRankedFormat,
   chooseAiMulliganIndexes,
+  completeDeckFromCollection,
   createMatch,
   createRankedRewardState,
   factionForDeck,
@@ -3274,6 +3275,31 @@ export function GameApp({
     });
   };
 
+  const autoCompleteDeck = () => {
+    setSelectedLadderReadyDeckId(null);
+    const completion = completeDeckFromCollection({
+      cardIds: deckIds,
+      collection: player.collection,
+      format: deckFormat,
+    });
+    const added = completion.addedCardIds.length;
+    if (added === 0) {
+      setNotice({
+        tone: "warning",
+        text: "当前已选卡牌或收藏无法继续合法补全，请先移除冲突卡牌。",
+      });
+      return;
+    }
+    setDeckIds(completion.cardIds);
+    const remaining = 30 - completion.cardIds.length;
+    setNotice({
+      tone: remaining === 0 ? "success" : "info",
+      text: remaining === 0
+        ? `智能补全已加入 ${added} 张收藏卡牌，并平衡费用曲线与协同。`
+        : `已从收藏加入 ${added} 张卡牌；仍缺 ${remaining} 张可用卡牌。`,
+    });
+  };
+
   const saveDeck = async () => {
     if (selectedLadderReadyDeckId) {
       setNotice({ tone: "warning", text: "试玩套牌不能改写；永久领取后会自动加入已保存卡组。" });
@@ -4902,6 +4928,7 @@ export function GameApp({
                   onNewDeck={createNewDeck}
                   onAdd={addCard}
                   onRemove={removeCard}
+                  onAutoComplete={autoCompleteDeck}
                   onSave={() => void saveDeck()}
                   onDelete={() => void deleteCurrentDeck()}
                   onImport={importDeck}
@@ -5765,6 +5792,7 @@ function DeckSection({
   onNewDeck,
   onAdd,
   onRemove,
+  onAutoComplete,
   onSave,
   onDelete,
   onImport,
@@ -5797,6 +5825,7 @@ function DeckSection({
   onNewDeck: () => void;
   onAdd: (card: CatalogCard) => void;
   onRemove: (cardId: string) => void;
+  onAutoComplete: () => void;
   onSave: () => void;
   onDelete: () => void;
   onImport: (code: string) => boolean;
@@ -5883,6 +5912,10 @@ function DeckSection({
         description="编排 30 张战术档案；不同单位启动特质，同名双份则用于对局内二星共鸣。"
         action={
           <div className="deck-heading-actions">
+            <button className="button button--outline" type="button" disabled={deckIds.length >= 30 || missingCards.length > 0 || Boolean(selectedLadderReadyDeckId)} onClick={onAutoComplete}>
+              <Icon name="spark" />
+              智能补全
+            </button>
             <button className="button button--outline" type="button" disabled={saving || Boolean(selectedLadderReadyDeckId)} onClick={onSave}>
               <Icon name="check" />
               {saving ? "保存中…" : selectedLadderReadyDeckId ? "试玩套牌只读" : "保存卡组"}
