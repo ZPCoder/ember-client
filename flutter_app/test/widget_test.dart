@@ -46,6 +46,7 @@ void main() {
       expect(catalog.any((card) => card.overload > 0), isTrue);
       expect(catalog.any((card) => card.tradeable), isTrue);
       expect(catalog.where((card) => card.preparable), hasLength(23));
+      expect(catalog.where((card) => card.bribe), hasLength(20));
       expect(
         catalog
             .where((card) => card.preparable)
@@ -89,6 +90,7 @@ void main() {
       'attack': 3,
       'health': 4,
       'preparable': true,
+      'bribe': true,
       'keywords': ['护盾'],
       'traits': ['晨辉'],
     });
@@ -99,6 +101,7 @@ void main() {
     expect(card.keywords, contains('护盾'));
     expect(card.setId, 'scarab-2026');
     expect(card.preparable, isTrue);
+    expect(card.bribe, isTrue);
   });
 
   test('multiplayer events parse relay payloads', () {
@@ -245,6 +248,63 @@ void main() {
       await controller.endTurn();
       expect(state.ai.handCostReductions, [2]);
       expect(state.logs.any((log) => log.contains('敌方完成预备')), isTrue);
+      controller.dispose();
+    },
+  );
+
+  test(
+    'mobile Bribe resolves its main effect and draws for the opponent',
+    () async {
+      final filler = CardDefinition(
+        id: 'bribe-draw-filler',
+        name: '贿赂收益牌',
+        description: '测试对手抽牌。',
+        faction: '幽潮',
+        type: 'unit',
+        cost: 1,
+        rarity: '普通',
+        attack: 1,
+        health: 1,
+      );
+      final bribe = CardDefinition(
+        id: 'mobile-bribe',
+        name: '移动端贿赂',
+        description: '贿赂：对手抽 1 张牌。造成 6 点伤害。',
+        faction: '烬火',
+        type: 'spell',
+        cost: 6,
+        rarity: '史诗',
+        bribe: true,
+        keywords: const ['bribe'],
+        target: 'enemy-character',
+        effect: const [
+          {'kind': 'damage', 'amount': 6},
+          {'kind': 'draw-opponent', 'count': 1},
+        ],
+      );
+      final controller = GameController(startingPlayer: 'player')
+        ..catalog = [filler, bribe]
+        ..deckIds.addAll(List.filled(30, filler.id));
+
+      controller.startBattle();
+      await controller.confirmMulligan();
+      final state = controller.battle!;
+      state.player.hand
+        ..clear()
+        ..add(bribe);
+      state.player.handCostReductions.clear();
+    state.player.mana = 6;
+    state.ai.heroHealth = 30;
+    state.ai.hand.clear();
+      state.ai.handCostReductions.clear();
+      state.ai.deck
+        ..clear()
+        ..add(filler);
+
+      expect(controller.playCard(bribe, targetHero: true), isTrue);
+      expect(state.ai.heroHealth, 24);
+      expect(state.ai.hand, [filler]);
+      expect(state.logs.any((log) => log.contains('贿赂收益')), isTrue);
       controller.dispose();
     },
   );

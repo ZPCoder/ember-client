@@ -120,6 +120,7 @@ const keywordLabels = <String, String>{
   'overload': '过载',
   'tradeable': '可交易',
   'prepare': '预备',
+  'bribe': '贿赂',
   'spell-damage': '法术伤害',
   'secret': '奥秘',
   'discover': '发现',

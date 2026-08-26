@@ -14,6 +14,7 @@ class CardDefinition {
     this.overload = 0,
     this.tradeable = false,
     this.preparable = false,
+    this.bribe = false,
     this.spellDamage = 0,
     this.keywords = const [],
     this.traits = const [],
@@ -42,6 +43,7 @@ class CardDefinition {
   final int overload;
   final bool tradeable;
   final bool preparable;
+  final bool bribe;
   final int spellDamage;
   final List<String> keywords;
   final List<String> traits;
@@ -87,6 +89,7 @@ class CardDefinition {
       overload: overload,
       tradeable: tradeable,
       preparable: preparable,
+      bribe: bribe,
       spellDamage: spellDamage,
       keywords: keywords ?? this.keywords,
       traits: traits,
@@ -130,6 +133,8 @@ class CardDefinition {
       preparable:
           json['preparable'] == true ||
           strings(json['keywords']).contains('prepare'),
+      bribe:
+          json['bribe'] == true || strings(json['keywords']).contains('bribe'),
       spellDamage: (json['spellDamage'] as num?)?.toInt() ?? 0,
       keywords: strings(json['keywords']),
       traits: strings(json['traits']),

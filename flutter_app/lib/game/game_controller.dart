@@ -1888,6 +1888,13 @@ class GameController extends ChangeNotifier {
               _draw(source);
             }
             break;
+          case 'draw-opponent':
+            final count = (effect['count'] as num?)?.toInt() ?? 1;
+            for (var i = 0; i < count; i++) {
+              _draw(enemy);
+            }
+            stateLog(sourceName, '贿赂收益：对手抽取 $count 张牌。');
+            break;
           case 'buff':
             final unit = target != null && source.board.contains(target)
                 ? target

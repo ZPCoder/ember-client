@@ -2685,7 +2685,7 @@
   {
     "id": "ember-calamity-verdict",
     "name": "灾火审判",
-    "description": "对一个敌方角色造成 6 点伤害。",
+    "description": "贿赂：对手抽 1 张牌。对一个敌方角色造成 6 点伤害。",
     "faction": "烬火",
     "type": "spell",
     "cost": 6,
@@ -2696,10 +2696,17 @@
       {
         "kind": "damage",
         "amount": 6
+      },
+      {
+        "kind": "draw-opponent",
+        "count": 1
       }
     ],
-    "keywords": [],
+    "keywords": [
+      "bribe"
+    ],
     "onDeath": [],
+    "bribe": true,
     "set": "scarab-2026"
   },
   {
@@ -3377,7 +3384,7 @@
   {
     "id": "astral-deep-divination",
     "name": "深空占卜",
-    "description": "抽三张牌。",
+    "description": "贿赂：对手抽 1 张牌。抽三张牌。",
     "faction": "星穹",
     "type": "spell",
     "cost": 5,
@@ -3388,10 +3395,17 @@
       {
         "kind": "draw",
         "count": 3
+      },
+      {
+        "kind": "draw-opponent",
+        "count": 1
       }
     ],
-    "keywords": [],
+    "keywords": [
+      "bribe"
+    ],
     "onDeath": [],
+    "bribe": true,
     "set": "scarab-2026"
   },
   {
@@ -4059,7 +4073,7 @@
   {
     "id": "verdant-flourishing-chorus",
     "name": "繁盛合唱",
-    "description": "使一个友方单位获得 +3/+4。",
+    "description": "贿赂：对手抽 1 张牌。使一个友方单位获得 +3/+4。",
     "faction": "苍林",
     "type": "spell",
     "cost": 5,
@@ -4071,10 +4085,17 @@
         "kind": "buff",
         "attack": 3,
         "health": 4
+      },
+      {
+        "kind": "draw-opponent",
+        "count": 1
       }
     ],
-    "keywords": [],
+    "keywords": [
+      "bribe"
+    ],
     "onDeath": [],
+    "bribe": true,
     "set": "scarab-2026"
   },
   {
@@ -5245,7 +5266,7 @@
   {
     "id": "sun-season-spell-05",
     "name": "棱镜风暴·05",
-    "description": "对所有敌方角色造成 1 点伤害。",
+    "description": "贿赂：对手抽 1 张牌。对所有敌方角色造成 1 点伤害。",
     "faction": "曜光",
     "type": "spell",
     "cost": 5,
@@ -5256,10 +5277,17 @@
       {
         "kind": "damage-all-enemies",
         "amount": 1
+      },
+      {
+        "kind": "draw-opponent",
+        "count": 1
       }
     ],
-    "keywords": [],
+    "keywords": [
+      "bribe"
+    ],
     "onDeath": [],
+    "bribe": true,
     "set": "scarab-2026"
   },
   {
@@ -5750,7 +5778,7 @@
   {
     "id": "void-season-spell-05",
     "name": "雾汐风暴·05",
-    "description": "对所有敌方角色造成 1 点伤害。",
+    "description": "贿赂：对手抽 1 张牌。对所有敌方角色造成 1 点伤害。",
     "faction": "幽潮",
     "type": "spell",
     "cost": 5,
@@ -5761,10 +5789,17 @@
       {
         "kind": "damage-all-enemies",
         "amount": 1
+      },
+      {
+        "kind": "draw-opponent",
+        "count": 1
       }
     ],
-    "keywords": [],
+    "keywords": [
+      "bribe"
+    ],
     "onDeath": [],
+    "bribe": true,
     "set": "scarab-2026"
   },
   {
@@ -6258,7 +6293,7 @@
   {
     "id": "neutral-season-spell-05",
     "name": "齿轮风暴·05",
-    "description": "对所有敌方角色造成 1 点伤害。",
+    "description": "贿赂：对手抽 1 张牌。对所有敌方角色造成 1 点伤害。",
     "faction": "中立",
     "type": "spell",
     "cost": 5,
@@ -6269,10 +6304,17 @@
       {
         "kind": "damage-all-enemies",
         "amount": 1
+      },
+      {
+        "kind": "draw-opponent",
+        "count": 1
       }
     ],
-    "keywords": [],
+    "keywords": [
+      "bribe"
+    ],
     "onDeath": [],
+    "bribe": true,
     "set": "scarab-2026"
   },
   {
@@ -8198,7 +8240,7 @@
   {
     "id": "storm-season-spell-05",
     "name": "电弧风暴·05",
-    "description": "对所有敌方角色造成 1 点伤害。",
+    "description": "贿赂：对手抽 1 张牌。对所有敌方角色造成 1 点伤害。",
     "faction": "雷铸",
     "type": "spell",
     "cost": 5,
@@ -8209,10 +8251,17 @@
       {
         "kind": "damage-all-enemies",
         "amount": 1
+      },
+      {
+        "kind": "draw-opponent",
+        "count": 1
       }
     ],
-    "keywords": [],
+    "keywords": [
+      "bribe"
+    ],
     "onDeath": [],
+    "bribe": true,
     "set": "scarab-2026"
   },
   {
@@ -9174,7 +9223,7 @@
   {
     "id": "frost-season-spell-04",
     "name": "霜境战令·04",
-    "description": "使一个友方单位获得 +2/+2。",
+    "description": "贿赂：对手抽 1 张牌。使一个友方单位获得 +2/+2。",
     "faction": "霜境",
     "type": "spell",
     "cost": 4,
@@ -9186,10 +9235,17 @@
         "kind": "buff",
         "attack": 2,
         "health": 2
+      },
+      {
+        "kind": "draw-opponent",
+        "count": 1
       }
     ],
-    "keywords": [],
+    "keywords": [
+      "bribe"
+    ],
     "onDeath": [],
+    "bribe": true,
     "set": "scarab-2026"
   },
   {
@@ -10348,7 +10404,7 @@
   {
     "id": "sand-season-spell-04",
     "name": "砂海战令·04",
-    "description": "使一个友方单位获得 +2/+2。",
+    "description": "贿赂：对手抽 1 张牌。使一个友方单位获得 +2/+2。",
     "faction": "砂海",
     "type": "spell",
     "cost": 4,
@@ -10360,10 +10416,17 @@
         "kind": "buff",
         "attack": 2,
         "health": 2
+      },
+      {
+        "kind": "draw-opponent",
+        "count": 1
       }
     ],
-    "keywords": [],
+    "keywords": [
+      "bribe"
+    ],
     "onDeath": [],
+    "bribe": true,
     "set": "scarab-2026"
   },
   {
@@ -11550,7 +11613,7 @@
   {
     "id": "bloodmoon-season-spell-04",
     "name": "赤月战令·04",
-    "description": "使一个友方单位获得 +2/+2。",
+    "description": "贿赂：对手抽 1 张牌。使一个友方单位获得 +2/+2。",
     "faction": "赤月",
     "type": "spell",
     "cost": 4,
@@ -11562,10 +11625,17 @@
         "kind": "buff",
         "attack": 2,
         "health": 2
+      },
+      {
+        "kind": "draw-opponent",
+        "count": 1
       }
     ],
-    "keywords": [],
+    "keywords": [
+      "bribe"
+    ],
     "onDeath": [],
+    "bribe": true,
     "set": "scarab-2026"
   },
   {
@@ -12873,7 +12943,7 @@
   {
     "id": "leyline-season-spell-04",
     "name": "灵脉战令·04",
-    "description": "使一个友方单位获得 +2/+2。",
+    "description": "贿赂：对手抽 1 张牌。使一个友方单位获得 +2/+2。",
     "faction": "灵脉",
     "type": "spell",
     "cost": 4,
@@ -12885,10 +12955,17 @@
         "kind": "buff",
         "attack": 2,
         "health": 2
+      },
+      {
+        "kind": "draw-opponent",
+        "count": 1
       }
     ],
-    "keywords": [],
+    "keywords": [
+      "bribe"
+    ],
     "onDeath": [],
+    "bribe": true,
     "set": "scarab-2026"
   },
   {
@@ -14100,7 +14177,7 @@
   {
     "id": "dusk-season-spell-04",
     "name": "暮影秘契·04",
-    "description": "奥秘：敌方攻击时对攻击者造成 2 点伤害。",
+    "description": "贿赂：对手抽 1 张牌。奥秘：敌方攻击时对攻击者造成 2 点伤害。",
     "faction": "暮影",
     "type": "spell",
     "cost": 4,
@@ -14108,7 +14185,8 @@
     "school": "tide",
     "target": "none",
     "keywords": [
-      "secret"
+      "secret",
+      "bribe"
     ],
     "effect": [
       {
@@ -14119,9 +14197,14 @@
           "kind": "damage-attacker",
           "amount": 2
         }
+      },
+      {
+        "kind": "draw-opponent",
+        "count": 1
       }
     ],
     "onDeath": [],
+    "bribe": true,
     "set": "scarab-2026"
   },
   {
@@ -15333,7 +15416,7 @@
   {
     "id": "cloudfall-season-spell-04",
     "name": "云瀑战令·04",
-    "description": "使一个友方单位获得 +2/+2。",
+    "description": "贿赂：对手抽 1 张牌。使一个友方单位获得 +2/+2。",
     "faction": "云瀑",
     "type": "spell",
     "cost": 4,
@@ -15345,10 +15428,17 @@
         "kind": "buff",
         "attack": 2,
         "health": 2
+      },
+      {
+        "kind": "draw-opponent",
+        "count": 1
       }
     ],
-    "keywords": [],
+    "keywords": [
+      "bribe"
+    ],
     "onDeath": [],
+    "bribe": true,
     "set": "scarab-2026"
   },
   {
@@ -16527,7 +16617,7 @@
   {
     "id": "magnet-season-spell-04",
     "name": "磁风战令·04",
-    "description": "使一个友方单位获得 +2/+2。",
+    "description": "贿赂：对手抽 1 张牌。使一个友方单位获得 +2/+2。",
     "faction": "磁风",
     "type": "spell",
     "cost": 4,
@@ -16539,10 +16629,17 @@
         "kind": "buff",
         "attack": 2,
         "health": 2
+      },
+      {
+        "kind": "draw-opponent",
+        "count": 1
       }
     ],
-    "keywords": [],
+    "keywords": [
+      "bribe"
+    ],
     "onDeath": [],
+    "bribe": true,
     "set": "scarab-2026"
   },
   {
@@ -17747,7 +17844,7 @@
   {
     "id": "crystal-season-spell-04",
     "name": "晶核战令·04",
-    "description": "使一个友方单位获得 +2/+2。",
+    "description": "贿赂：对手抽 1 张牌。使一个友方单位获得 +2/+2。",
     "faction": "晶核",
     "type": "spell",
     "cost": 4,
@@ -17759,10 +17856,17 @@
         "kind": "buff",
         "attack": 2,
         "health": 2
+      },
+      {
+        "kind": "draw-opponent",
+        "count": 1
       }
     ],
-    "keywords": [],
+    "keywords": [
+      "bribe"
+    ],
     "onDeath": [],
+    "bribe": true,
     "set": "scarab-2026"
   },
   {
@@ -18915,7 +19019,7 @@
   {
     "id": "dream-season-spell-04",
     "name": "梦境秘契·04",
-    "description": "奥秘：敌方攻击时对攻击者造成 2 点伤害。",
+    "description": "贿赂：对手抽 1 张牌。奥秘：敌方攻击时对攻击者造成 2 点伤害。",
     "faction": "梦境",
     "type": "spell",
     "cost": 4,
@@ -18923,7 +19027,8 @@
     "school": "astral",
     "target": "none",
     "keywords": [
-      "secret"
+      "secret",
+      "bribe"
     ],
     "effect": [
       {
@@ -18934,9 +19039,14 @@
           "kind": "damage-attacker",
           "amount": 2
         }
+      },
+      {
+        "kind": "draw-opponent",
+        "count": 1
       }
     ],
     "onDeath": [],
+    "bribe": true,
     "set": "scarab-2026"
   },
   {
@@ -20119,7 +20229,7 @@
   {
     "id": "rift-season-spell-04",
     "name": "裂星战令·04",
-    "description": "使一个友方单位获得 +2/+2。",
+    "description": "贿赂：对手抽 1 张牌。使一个友方单位获得 +2/+2。",
     "faction": "裂星",
     "type": "spell",
     "cost": 4,
@@ -20131,10 +20241,17 @@
         "kind": "buff",
         "attack": 2,
         "health": 2
+      },
+      {
+        "kind": "draw-opponent",
+        "count": 1
       }
     ],
-    "keywords": [],
+    "keywords": [
+      "bribe"
+    ],
     "onDeath": [],
+    "bribe": true,
     "set": "scarab-2026"
   },
   {
@@ -21538,7 +21655,7 @@
   {
     "id": "timesand-season-spell-04",
     "name": "时砂战令·04",
-    "description": "使一个友方单位获得 +2/+2。",
+    "description": "贿赂：对手抽 1 张牌。使一个友方单位获得 +2/+2。",
     "faction": "时砂",
     "type": "spell",
     "cost": 4,
@@ -21550,10 +21667,17 @@
         "kind": "buff",
         "attack": 2,
         "health": 2
+      },
+      {
+        "kind": "draw-opponent",
+        "count": 1
       }
     ],
-    "keywords": [],
+    "keywords": [
+      "bribe"
+    ],
     "onDeath": [],
+    "bribe": true,
     "set": "scarab-2026"
   },
   {
@@ -22739,7 +22863,7 @@
   {
     "id": "gloomwood-season-spell-04",
     "name": "幽森战令·04",
-    "description": "使一个友方单位获得 +2/+2。",
+    "description": "贿赂：对手抽 1 张牌。使一个友方单位获得 +2/+2。",
     "faction": "幽森",
     "type": "spell",
     "cost": 4,
@@ -22751,10 +22875,17 @@
         "kind": "buff",
         "attack": 2,
         "health": 2
+      },
+      {
+        "kind": "draw-opponent",
+        "count": 1
       }
     ],
-    "keywords": [],
+    "keywords": [
+      "bribe"
+    ],
     "onDeath": [],
+    "bribe": true,
     "set": "scarab-2026"
   },
   {
@@ -23941,7 +24072,7 @@
   {
     "id": "firmament-season-spell-04",
     "name": "天穹战令·04",
-    "description": "使一个友方单位获得 +2/+2。",
+    "description": "贿赂：对手抽 1 张牌。使一个友方单位获得 +2/+2。",
     "faction": "天穹",
     "type": "spell",
     "cost": 4,
@@ -23953,10 +24084,17 @@
         "kind": "buff",
         "attack": 2,
         "health": 2
+      },
+      {
+        "kind": "draw-opponent",
+        "count": 1
       }
     ],
-    "keywords": [],
+    "keywords": [
+      "bribe"
+    ],
     "onDeath": [],
+    "bribe": true,
     "set": "scarab-2026"
   },
   {
