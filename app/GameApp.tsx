@@ -64,6 +64,7 @@ import {
   totalRankedWins,
   ladderReadyTrialIsActive,
   planAiTurnReplay,
+  previewDeckCode,
   shouldScheduleLocalAiTurn,
   suggestDeckReplacements,
   EXPANDED_FACTION_THEMES,
@@ -2829,6 +2830,7 @@ export function GameApp({
   const aiTurnGenerationRef = useRef(0);
   const mulliganSubmissionRef = useRef(false);
   const turnTimeoutHandledRef = useRef<number | null>(null);
+  const declinedClipboardDeckCodeRef = useRef<string | null>(null);
   const endTurnRef = useRef<() => void>(() => undefined);
   const { soundEnabled, unlockAudio, playSound, toggleSound } = useBattleAudio();
   const pvp = useWebPvp(player.displayName);
@@ -3412,17 +3414,46 @@ export function GameApp({
     setNotice({ tone: "info", text: `已载入「${selected.name}」，保存后将设为当前卡组。` });
   };
 
-  const createNewDeck = () => {
-    if (player.decks.length >= MAX_SAVED_DECKS) {
-      setNotice({ tone: "warning", text: `已使用全部 ${MAX_SAVED_DECKS} 个卡组栏位，请先整理现有卡组。` });
-      return;
-    }
+  const createBlankDeck = () => {
     setEditingDeckId(null);
     setSelectedLadderReadyDeckId(null);
     setDeckIds([...DEFAULT_STARTER_DECK]);
     setDeckName("新建战术卡组");
     setDeckFormat("standard");
     setNotice({ tone: "info", text: "已创建新的卡组草稿，保存后会加入你的卡组列表。" });
+  };
+
+  const createNewDeck = async () => {
+    if (player.decks.length >= MAX_SAVED_DECKS) {
+      setNotice({ tone: "warning", text: `已使用全部 ${MAX_SAVED_DECKS} 个卡组栏位，请先整理现有卡组。` });
+      return;
+    }
+    let clipboardCode = "";
+    try {
+      clipboardCode = await navigator.clipboard?.readText() ?? "";
+    } catch {
+      // Clipboard access can be denied by the browser. Manual import remains available.
+    }
+    const preview = previewDeckCode(clipboardCode, deckFormat);
+    if (
+      preview &&
+      preview.code !== declinedClipboardDeckCodeRef.current &&
+      typeof window !== "undefined"
+    ) {
+      const missing = findMissingDeckCards(preview.cardIds, player.collection)
+        .reduce((sum, item) => sum + item.missing, 0);
+      const confirmed = window.confirm(
+        `检测到剪贴板中的${rankedFormatLabel(preview.format)}卡组「${preview.name}」` +
+        `${missing > 0 ? `，其中缺少 ${missing} 张卡牌` : ""}。是否导入为新卡组？`,
+      );
+      if (confirmed) {
+        declinedClipboardDeckCodeRef.current = null;
+        if (importDeck(preview.code)) return;
+      } else {
+        declinedClipboardDeckCodeRef.current = preview.code;
+      }
+    }
+    createBlankDeck();
   };
 
   const openPack = async () => {

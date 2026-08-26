@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -1375,6 +1376,12 @@ void main() {
     expect(await controller.saveDeck(), isTrue);
     final originalId = controller.activeDeckId;
     final code = controller.exportActiveDeckCode();
+    final preview = controller.previewClipboardDeckCode(code);
+    expect(preview?.name, '移动狂野');
+    expect(preview?.format, RankedFormat.wild);
+    expect(preview?.missingCount, 0);
+    controller.declineClipboardDeckCode(code);
+    expect(controller.previewClipboardDeckCode(code), isNull);
 
     controller.setDeckFormat(RankedFormat.standard);
     final result = await controller.importDeckCode(code);
@@ -1385,6 +1392,7 @@ void main() {
     expect(controller.deckName, '移动狂野');
     expect(controller.deckIds, ids);
     expect(controller.deckPlayable, isTrue);
+    expect(controller.previewClipboardDeckCode(code), isNotNull);
     expect(await controller.saveDeck(), isTrue);
     expect(controller.savedDecks, hasLength(2));
     expect(controller.activeDeckId, isNot(originalId));
@@ -2572,6 +2580,69 @@ void main() {
       AstraProtocolApp(controller: GameController(startingPlayer: 'player')),
     );
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
+  });
+
+  testWidgets('new deck detects and offers a valid clipboard deck code', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final catalog = (await tester.runAsync(loadCatalog))!;
+    final ids = catalog
+        .where(
+          (card) =>
+              card.faction == '曜光' &&
+              card.rarity != '传说' &&
+              cardAvailableInRankedFormat(card, RankedFormat.standard),
+        )
+        .take(15)
+        .expand((card) => [card.id, card.id])
+        .toList();
+    final controller = GameController()
+      ..catalog = catalog
+      ..isLoading = false
+      ..deckIds.addAll(ids);
+    for (final id in ids) {
+      controller.collection[id] = 2;
+    }
+    await controller.saveDeck();
+    final clipboardCode = encodeDeckCode(
+      format: RankedFormat.wild,
+      name: '剪贴板狂野',
+      cardIds: ids,
+    );
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, (call) async {
+          if (call.method == 'Clipboard.getData') {
+            return <String, Object?>{'text': clipboardCode};
+          }
+          return null;
+        });
+    addTearDown(
+      () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, null),
+    );
+
+    await tester.pumpWidget(AstraProtocolApp(controller: controller));
+    await tester.tap(find.text('卡组'));
+    await tester.pump();
+    await tester.tap(find.text('新建'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('检测到卡组代码'), findsOneWidget);
+    expect(find.textContaining('剪贴板狂野'), findsOneWidget);
+    expect(find.text('导入剪贴板牌组'), findsOneWidget);
+    await tester.tap(find.text('导入剪贴板牌组'));
+    await tester.pumpAndSettle();
+    expect(controller.activeDeckId, isNull);
+    expect(controller.deckName, '剪贴板狂野');
+    expect(controller.deckFormat, RankedFormat.wild);
+    expect(controller.deckIds, ids);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    controller.dispose();
   });
 
   testWidgets('deck workshop exposes the 27-slot mobile library controls', (

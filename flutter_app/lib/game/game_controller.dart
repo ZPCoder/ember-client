@@ -63,6 +63,7 @@ class GameController extends ChangeNotifier {
   SharedPreferences? _prefs;
   Timer? _turnTimer;
   int _deckIdSequence = 0;
+  String? _declinedClipboardDeckCode;
   Future<void> _deckPersistQueue = Future<void>.value();
 
   Map<String, CardDefinition> get cardsById => {
@@ -376,6 +377,36 @@ class GameController extends ChangeNotifier {
     cardIds: List<String>.from(deckIds),
   );
 
+  DeckCodePreview? previewClipboardDeckCode(String value) {
+    final code = value.trim();
+    if (code.isEmpty || code == _declinedClipboardDeckCode) return null;
+    DecodedDeckCode decoded;
+    try {
+      decoded = decodeDeckCode(code);
+    } on FormatException {
+      return null;
+    }
+    final format = decoded.format ?? deckFormat;
+    if (_validateDeck(decoded.cardIds, format) != null) return null;
+    final missing = collection.isEmpty
+        ? 0
+        : findMissingDeckCards(
+            List<String>.from(decoded.cardIds),
+            Map<String, int>.from(collection),
+          ).fold(0, (total, card) => total + card.missingCount);
+    return DeckCodePreview(
+      code: code,
+      version: decoded.version,
+      format: format,
+      name: decoded.name ?? '导入牌组',
+      missingCount: missing,
+    );
+  }
+
+  void declineClipboardDeckCode(String code) {
+    _declinedClipboardDeckCode = code.trim();
+  }
+
   Future<DeckCodeImportResult> importDeckCode(String value) async {
     if (!canCreateDeck) {
       return const DeckCodeImportResult(
@@ -404,6 +435,7 @@ class GameController extends ChangeNotifier {
     deckIds
       ..clear()
       ..addAll(decoded.cardIds);
+    _declinedClipboardDeckCode = null;
     notifyListeners();
     final missing = missingDeckCount;
     return DeckCodeImportResult(

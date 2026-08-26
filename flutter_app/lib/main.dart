@@ -3,7 +3,13 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'
-    show Clipboard, ClipboardData, HapticFeedback, SystemSound, SystemSoundType;
+    show
+        Clipboard,
+        ClipboardData,
+        HapticFeedback,
+        PlatformException,
+        SystemSound,
+        SystemSoundType;
 import 'data/catalog.dart';
 import 'data/deck_replacements.dart';
 import 'data/formats.dart';
@@ -1284,6 +1290,51 @@ class DeckPage extends StatelessWidget {
 
   final GameController controller;
 
+  Future<void> _createDeckWithClipboardOffer(BuildContext context) async {
+    String clipboardText = '';
+    try {
+      clipboardText =
+          (await Clipboard.getData('text/plain'))?.text?.trim() ?? '';
+    } on PlatformException {
+      // Some platforms deny background clipboard reads. Manual import remains.
+    }
+    final preview = controller.previewClipboardDeckCode(clipboardText);
+    if (preview != null && context.mounted) {
+      final import = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('检测到卡组代码'),
+          content: Text(
+            '剪贴板中有「${preview.name}」${preview.format.label}牌组'
+            '${preview.missingCount > 0 ? '，其中缺少 ${preview.missingCount} 张卡牌' : ''}。要直接导入吗？',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('新建普通牌组'),
+            ),
+            FilledButton.icon(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              icon: const Icon(Icons.download_outlined, size: 17),
+              label: const Text('导入剪贴板牌组'),
+            ),
+          ],
+        ),
+      );
+      if (import == true) {
+        final result = await controller.importDeckCode(preview.code);
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(result.message)));
+        if (result.success) return;
+      } else {
+        controller.declineClipboardDeckCode(preview.code);
+      }
+    }
+    await controller.createNewDeck();
+  }
+
   @override
   Widget build(BuildContext context) {
     final counts = <String, int>{};
@@ -1425,7 +1476,7 @@ class DeckPage extends StatelessWidget {
                     OutlinedButton.icon(
                       onPressed: controller.canCreateDeck
                           ? () async {
-                              await controller.createNewDeck();
+                              await _createDeckWithClipboardOffer(context);
                             }
                           : null,
                       icon: const Icon(Icons.add, size: 17),

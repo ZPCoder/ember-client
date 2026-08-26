@@ -28,6 +28,22 @@ class DeckCodeImportResult {
   final String message;
 }
 
+class DeckCodePreview {
+  const DeckCodePreview({
+    required this.code,
+    required this.version,
+    required this.format,
+    required this.name,
+    required this.missingCount,
+  });
+
+  final String code;
+  final int version;
+  final RankedFormat format;
+  final String name;
+  final int missingCount;
+}
+
 String _normalizeDeckName(String value) {
   final trimmed = value.trim();
   final normalized = trimmed.isEmpty ? '未命名卡组' : trimmed;
