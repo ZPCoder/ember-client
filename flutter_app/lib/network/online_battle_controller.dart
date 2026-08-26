@@ -78,6 +78,7 @@ class OnlineBattleController extends ChangeNotifier {
   List<int> handCostReductions = <int>[];
   List<HandFragment?> handFragments = <HandFragment?>[];
   List<int> handEnteredTurns = <int>[];
+  List<String> handEntityIds = <String>[];
   List<OnlineUnit> localBoard = <OnlineUnit>[];
   List<OnlineUnit> remoteBoard = <OnlineUnit>[];
   final List<String> logs = <String>[];
@@ -556,6 +557,7 @@ class OnlineBattleController extends ChangeNotifier {
       local['handEnteredTurns'],
       hand.length,
     );
+    handEntityIds = _parseHandEntityIds(local['handEntityIds'], hand);
     localBoard = _parseBoard(local['board']);
     remoteBoard = _parseBoard(remote['board']);
     final discover = snapshot['discover'];
@@ -786,10 +788,35 @@ class OnlineBattleController extends ChangeNotifier {
     });
   }
 
+  List<String> _parseHandEntityIds(
+    Object? raw,
+    List<CardDefinition> currentHand,
+  ) {
+    final values = raw is List ? raw : const <Object?>[];
+    final seen = <String>{};
+    return List<String>.generate(currentHand.length, (index) {
+      final fallback = 'legacy-hand-$index-${currentHand[index].id}';
+      final projected = index < values.length
+          ? values[index]?.toString() ?? ''
+          : '';
+      var candidate = projected.isNotEmpty ? projected : fallback;
+      var suffix = 1;
+      while (!seen.add(candidate)) {
+        candidate = '$fallback-${suffix++}';
+      }
+      return candidate;
+    });
+  }
+
   HandFragment? handFragment(int handIndex) =>
       handIndex >= 0 && handIndex < handFragments.length
       ? handFragments[handIndex]
       : null;
+
+  String handEntityId(int handIndex) =>
+      handIndex >= 0 && handIndex < handEntityIds.length
+      ? handEntityIds[handIndex]
+      : 'legacy-hand-$handIndex';
 
   bool quickdrawActive(int handIndex) =>
       phase == 'main' &&

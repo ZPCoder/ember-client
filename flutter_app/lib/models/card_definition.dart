@@ -367,6 +367,7 @@ class BattleSide {
     List<HandFragment?>? handFragments,
     List<bool>? handStartedInDeck,
     List<int>? handEnteredTurns,
+    List<String>? handEntityIds,
     required this.board,
     this.coinAvailable = false,
     this.weapon,
@@ -395,6 +396,13 @@ class BattleSide {
        handEnteredTurns = List<int>.from(
          handEnteredTurns ?? List<int>.filled(hand.length, 0),
        ),
+       handEntityIds = List<String>.from(
+         handEntityIds ??
+             List<String>.generate(
+               hand.length,
+               (index) => 'legacy-hand-$index-${hand[index].id}',
+             ),
+       ),
        spellSchoolsPlayedThisTurn = spellSchoolsPlayedThisTurn ?? <String>[],
        spellSchoolsPlayedLastTurn = spellSchoolsPlayedLastTurn ?? <String>[],
        spellsPlayedThisGame = spellsPlayedThisGame ?? <String>[],
@@ -418,6 +426,7 @@ class BattleSide {
   final List<HandFragment?> handFragments;
   final List<bool> handStartedInDeck;
   final List<int> handEnteredTurns;
+  final List<String> handEntityIds;
   final List<BattleUnit> board;
   bool coinAvailable;
   BattleWeapon? weapon;

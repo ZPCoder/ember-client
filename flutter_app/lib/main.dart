@@ -3059,6 +3059,11 @@ class _BattleBoardState extends State<BattleBoard> {
                     index < state.player.handEnteredTurns.length &&
                     state.player.handEnteredTurns[index] == state.turn;
                 return SizedBox(
+                  key: ValueKey(
+                    index < state.player.handEntityIds.length
+                        ? state.player.handEntityIds[index]
+                        : 'legacy-hand-$index-${handCard.id}',
+                  ),
                   width: 145,
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 180),
@@ -5168,6 +5173,7 @@ class OnlineBattlePanel extends StatelessWidget {
                     final effectiveCost = controller.handCost(index);
                     final quickdrawActive = controller.quickdrawActive(index);
                     return SizedBox(
+                      key: ValueKey(controller.handEntityId(index)),
                       width: 142,
                       child: Stack(
                         clipBehavior: Clip.none,

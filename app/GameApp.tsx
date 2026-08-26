@@ -1406,11 +1406,13 @@ function normalizeHand(
   reductionsValue?: unknown,
   fragmentsValue?: unknown,
   enteredTurnsValue?: unknown,
+  entityIdsValue?: unknown,
 ): BattleSide["hand"] {
   if (!Array.isArray(value)) return [];
   const reductions = Array.isArray(reductionsValue) ? reductionsValue : [];
   const fragments = Array.isArray(fragmentsValue) ? fragmentsValue : [];
   const enteredTurns = Array.isArray(enteredTurnsValue) ? enteredTurnsValue : [];
+  const entityIds = Array.isArray(entityIdsValue) ? entityIdsValue : [];
   return value.map((entry, index) => {
     const rawReduction = reductions[index];
     const costReduction = typeof rawReduction === "number" && Number.isFinite(rawReduction)
@@ -1425,8 +1427,9 @@ function normalizeHand(
       : undefined;
     const fragmentGroupId = piece ? asString(fragment?.groupId) || undefined : undefined;
     const enteredTurn = Math.max(0, Math.floor(asNumber(enteredTurns[index], 0)));
+    const projectedEntityId = asString(entityIds[index]);
     if (typeof entry === "string") return {
-      instanceId: `${entry}-${index}`,
+      instanceId: projectedEntityId || `legacy-hand-${index}-${entry}`,
       cardId: entry,
       handIndex: index,
       costReduction,
@@ -1436,7 +1439,9 @@ function normalizeHand(
     };
     const item = (entry ?? {}) as Record<string, unknown>;
     return {
-      instanceId: asString(item.instanceId ?? item.uid ?? item.id, `hand-${index}`),
+      instanceId:
+        projectedEntityId ||
+        asString(item.instanceId ?? item.uid ?? item.id, `legacy-hand-${index}`),
       cardId: asString(item.cardId ?? item.definitionId ?? item.id),
       handIndex: index,
       costReduction,
@@ -1644,6 +1649,7 @@ function battleFromRaw(value: unknown): BattleView | null {
       side.handCostReductions,
       side.handFragments,
       side.handEnteredTurns,
+      side.handEntityIds,
     ),
     board: normalizeBoard(side.board ?? side.units, turn),
   });

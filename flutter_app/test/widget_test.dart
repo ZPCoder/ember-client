@@ -1045,6 +1045,7 @@ void main() {
       expect(state.ai.board, isEmpty);
       expect(state.ai.hand.single, victim);
       expect(state.ai.handCostReductions, [0]);
+      expect(state.ai.handEntityIds, ['bounce-zone-unit']);
       expect(state.ai.deathHistory, isEmpty);
 
       final generated = generatedBattleCards.singleWhere(
@@ -1871,6 +1872,11 @@ void main() {
         state.player.handFragments.first?.groupId,
         state.player.handFragments.last?.groupId,
       );
+      final fragmentEntityIds = List<String>.from(state.player.handEntityIds);
+      expect(fragmentEntityIds, hasLength(3));
+      expect(fragmentEntityIds.toSet(), hasLength(3));
+      final leftEntityId = fragmentEntityIds.first;
+      expect(fragmentEntityIds.first, isNot(fragmentEntityIds.last));
 
       state.player.mana = 3;
       expect(controller.playCard(filler, handIndex: 1), isTrue);
@@ -1878,6 +1884,7 @@ void main() {
       expect(state.player.hand.single.id, shatter.id);
       expect(state.player.hand.single.name, shatter.name);
       expect(state.player.handFragments, [null]);
+      expect(state.player.handEntityIds, [leftEntityId]);
       expect(state.logs.any((log) => log.contains('破碎重组')), isTrue);
 
       expect(controller.playCard(shatter, handIndex: 0), isTrue);
@@ -3066,6 +3073,9 @@ void main() {
     state.player.handEnteredTurns
       ..clear()
       ..addAll([0, state.turn]);
+    state.player.handEntityIds
+      ..clear()
+      ..addAll(['old-quickdraw-unit', 'fresh-quickdraw-unit']);
     state.player.deck
       ..clear()
       ..add(filler);
@@ -3078,6 +3088,7 @@ void main() {
     state.player.mana = 3;
 
     expect(controller.playCard(quickdraw, handIndex: 1), isTrue);
+    expect(state.player.board.last.instanceId, 'fresh-quickdraw-unit');
     expect(state.player.hand.map((card) => card.id), [quickdraw.id, filler.id]);
     expect(state.player.handEnteredTurns, [0, state.turn]);
     expect(state.logs.where((log) => log.contains('快枪触发')), hasLength(1));
@@ -3093,6 +3104,16 @@ void main() {
       ..add(true);
     state.player.mana = 3;
     expect(controller.playCard(quickdraw, handIndex: 0), isTrue);
+    expect(
+      state.player.board.any(
+        (unit) => unit.instanceId == 'fresh-quickdraw-unit',
+      ),
+      isTrue,
+    );
+    expect(
+      state.player.board.any((unit) => unit.instanceId == 'old-quickdraw-unit'),
+      isFalse,
+    );
     expect(state.player.hand.map((card) => card.id), [filler.id]);
     expect(state.player.deck.map((card) => card.id), [filler.id]);
     expect(state.logs.where((log) => log.contains('快枪触发')), hasLength(1));
@@ -4105,6 +4126,7 @@ void main() {
                 'hand': [quickdraw.id],
                 'handCostReductions': [0],
                 'handEnteredTurns': [enteredTurn],
+                'handEntityIds': ['online-hand-quickdraw'],
                 'board': [],
               },
               {
@@ -4124,6 +4146,8 @@ void main() {
 
     sync(1, 3);
     expect(controller.handEnteredTurns, [3]);
+    expect(controller.handEntityIds, ['online-hand-quickdraw']);
+    expect(controller.handEntityId(0), 'online-hand-quickdraw');
     expect(controller.quickdrawActive(0), isTrue);
     sync(2, 2);
     expect(controller.quickdrawActive(0), isFalse);

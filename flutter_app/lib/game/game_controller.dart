@@ -68,6 +68,9 @@ class GameController extends ChangeNotifier {
   int _deckIdSequence = 0;
   int _shatterGroupSequence = 0;
   int _discardSequence = 0;
+  int _handEntitySequence = 0;
+
+  String _nextHandEntityId() => 'mobile-hand-${_handEntitySequence++}';
   String? _declinedClipboardDeckCode;
   Future<void> _deckPersistQueue = Future<void>.value();
 
@@ -903,6 +906,7 @@ class GameController extends ChangeNotifier {
         state.player.handFragments.removeAt(index);
         state.player.handStartedInDeck.removeAt(index);
         state.player.handEnteredTurns.removeAt(index);
+        state.player.handEntityIds.removeAt(index);
       }
     }
     for (var i = 0; i < returned.length; i++) {
@@ -999,6 +1003,7 @@ class GameController extends ChangeNotifier {
       side.handFragments.removeAt(index);
       side.handStartedInDeck.removeAt(index);
       side.handEnteredTurns.removeAt(index);
+      side.handEntityIds.removeAt(index);
     }
     for (var i = 0; i < returned.length; i++) {
       if (side.deck.isNotEmpty) _draw(side);
@@ -1239,6 +1244,7 @@ class GameController extends ChangeNotifier {
       side.handFragments.add(null);
       side.handStartedInDeck.add(startedInDeck);
       side.handEnteredTurns.add(enteredTurn);
+      side.handEntityIds.add(_nextHandEntityId());
       return true;
     }
     final groupId = 'm${_shatterGroupSequence++}';
@@ -1248,6 +1254,7 @@ class GameController extends ChangeNotifier {
       side.handFragments.add(HandFragment(groupId: groupId, piece: fragment));
       side.handStartedInDeck.add(startedInDeck);
       side.handEnteredTurns.add(enteredTurn);
+      side.handEntityIds.add(_nextHandEntityId());
       return true;
     }
     side.hand.insert(0, _shatterFragmentCard(drawn, 'left'));
@@ -1255,6 +1262,7 @@ class GameController extends ChangeNotifier {
     side.handFragments.insert(0, HandFragment(groupId: groupId, piece: 'left'));
     side.handStartedInDeck.insert(0, startedInDeck);
     side.handEnteredTurns.insert(0, enteredTurn);
+    side.handEntityIds.insert(0, _nextHandEntityId());
     var fragmentCount = 1;
     if (available >= 2) {
       side.hand.add(_shatterFragmentCard(drawn, 'right'));
@@ -1262,6 +1270,7 @@ class GameController extends ChangeNotifier {
       side.handFragments.add(HandFragment(groupId: groupId, piece: 'right'));
       side.handStartedInDeck.add(startedInDeck);
       side.handEnteredTurns.add(enteredTurn);
+      side.handEntityIds.add(_nextHandEntityId());
       fragmentCount = 2;
     } else {
       stateLog('破碎片燃毁', '${drawn.name} 的右片因手牌空间不足被销毁。');
@@ -1296,6 +1305,7 @@ class GameController extends ChangeNotifier {
       final fragment = source.handFragments.removeAt(index);
       source.handStartedInDeck.removeAt(index);
       source.handEnteredTurns.removeAt(index);
+      source.handEntityIds.removeAt(index);
       final state = battle!;
       final discardId = 'discard-${_discardSequence++}';
       source.discardHistory.add(
@@ -1432,6 +1442,7 @@ class GameController extends ChangeNotifier {
     state.player.handFragments.removeAt(index);
     state.player.handStartedInDeck.removeAt(index);
     state.player.handEnteredTurns.removeAt(index);
+    state.player.handEntityIds.removeAt(index);
     state.player.mana--;
     // Tradeable draws from the original deck before the physical card is
     // inserted, so a trade can never immediately redraw itself. Preserve the
@@ -1873,6 +1884,7 @@ class GameController extends ChangeNotifier {
     BattleSide? side,
     int? healthOverride,
     bool reborn = false,
+    String? instanceId,
   }) {
     final rush = card.keywords.contains('rush');
     final charge = card.keywords.contains('charge');
@@ -1882,6 +1894,7 @@ class GameController extends ChangeNotifier {
     final printedHealth = (card.health ?? 1) * multiplier;
     return BattleUnit(
       instanceId:
+          instanceId ??
           '$owner-${DateTime.now().microsecondsSinceEpoch}-${card.id}-${_random.nextInt(9999)}',
       card: card,
       owner: owner,
@@ -2280,6 +2293,7 @@ class GameController extends ChangeNotifier {
     _syncHandCostReductions(source);
     final startedInDeck = source.handStartedInDeck[resolvedHandIndex];
     final enteredTurn = source.handEnteredTurns[resolvedHandIndex];
+    final handEntityId = source.handEntityIds[resolvedHandIndex];
     final quickdrawActive =
         card.quickdraw.isNotEmpty &&
         battle?.phase == 'main' &&
@@ -2290,6 +2304,7 @@ class GameController extends ChangeNotifier {
     source.handFragments.removeAt(resolvedHandIndex);
     source.handStartedInDeck.removeAt(resolvedHandIndex);
     source.handEnteredTurns.removeAt(resolvedHandIndex);
+    source.handEntityIds.removeAt(resolvedHandIndex);
     _reassembleAdjacentFragments(source);
     source.mana -= effectiveCost;
     final comboActive = source.cardsPlayedThisTurn > 0;
@@ -2346,7 +2361,12 @@ class GameController extends ChangeNotifier {
       final upgradeTarget = _findUpgradeTarget(recipient, card);
       final unit =
           upgradeTarget ??
-          _summonUnit(card, owner: recipientOwner, side: recipient);
+          _summonUnit(
+            card,
+            owner: recipientOwner,
+            side: recipient,
+            instanceId: handEntityId,
+          );
       if (upgradeTarget == null) {
         recipient.board.add(unit);
         _summonColossalParts(
@@ -2541,6 +2561,29 @@ class GameController extends ChangeNotifier {
     while (side.handEnteredTurns.length < side.hand.length) {
       side.handEnteredTurns.add(0);
     }
+    while (side.handEntityIds.length > side.hand.length) {
+      side.handEntityIds.removeLast();
+    }
+    final seenEntityIds = side.board.map((unit) => unit.instanceId).toSet();
+    for (var index = 0; index < side.handEntityIds.length; index++) {
+      final entityId = side.handEntityIds[index];
+      if (entityId.isEmpty || !seenEntityIds.add(entityId)) {
+        var replacement = _nextHandEntityId();
+        while (seenEntityIds.contains(replacement)) {
+          replacement = _nextHandEntityId();
+        }
+        side.handEntityIds[index] = replacement;
+        seenEntityIds.add(replacement);
+      }
+    }
+    while (side.handEntityIds.length < side.hand.length) {
+      var entityId = _nextHandEntityId();
+      while (seenEntityIds.contains(entityId)) {
+        entityId = _nextHandEntityId();
+      }
+      side.handEntityIds.add(entityId);
+      seenEntityIds.add(entityId);
+    }
   }
 
   List<({String cardId, int costReduction, String? fragment})>
@@ -2674,6 +2717,7 @@ class GameController extends ChangeNotifier {
         side.handEnteredTurns[index + 1],
       );
       side.handEnteredTurns.removeAt(index + 1);
+      side.handEntityIds.removeAt(index + 1);
       stateLog('破碎重组', '${restored.name} 的两片重新相接。');
       _emitFx(
         'buff',
@@ -3649,6 +3693,7 @@ class GameController extends ChangeNotifier {
               targetSide.handFragments.add(null);
               targetSide.handStartedInDeck.add(false);
               targetSide.handEnteredTurns.add(battle!.turn);
+              targetSide.handEntityIds.add(target.instanceId);
               stateLog(sourceName, '${target.card.name} 返回其控制者的手牌并移除全部增益。');
               _emitFx(
                 'draw',
