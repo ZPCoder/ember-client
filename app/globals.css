@@ -6517,6 +6517,21 @@ button.hero-core {
   letter-spacing: 0.04em;
 }
 
+.battle-training__voice {
+  display: inline-flex;
+  margin-left: 7px;
+  align-items: center;
+  gap: 3px;
+  color: rgba(255, 223, 163, 0.72);
+  font-size: 6px;
+  font-style: normal;
+  letter-spacing: 0.09em;
+}
+
+.battle-training__voice::before {
+  content: "♪";
+}
+
 .battle-training__dialogue p {
   margin-top: 2px;
   color: #c9c1a9;

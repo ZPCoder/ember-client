@@ -7976,6 +7976,44 @@ function BattleSection({
     active: boolean;
     intent: Exclude<typeof dragIntent, null>;
   } | null>(null);
+  const lastSpokenTrainingLineRef = useRef<string | null>(null);
+  const voiceChapter = getTrainingChapter(trainingChapterId);
+  const voiceTrainingTotal = voiceChapter?.objectives.length ?? 0;
+  const voiceTrainingComplete = voiceTrainingTotal > 0
+    && Math.min(voiceTrainingTotal, Math.max(trainingProgress, trainingAttemptProgress)) === voiceTrainingTotal;
+  const voiceTrainingIndex = voiceTrainingComplete ? voiceTrainingTotal : trainingAttemptProgress;
+  const trainingVoiceLine = trainingActive
+    ? voiceChapter?.dialogue[Math.min(voiceTrainingIndex, voiceTrainingTotal)]
+    : undefined;
+  const trainingVoiceKey = battle && trainingVoiceLine
+    ? `${battle.seed}:${trainingChapterId}:${voiceTrainingIndex}:${trainingVoiceLine.speaker}:${trainingVoiceLine.line}`
+    : null;
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+    const speech = window.speechSynthesis;
+    if (!soundEnabled || !trainingVoiceKey || !trainingVoiceLine) {
+      speech.cancel();
+      lastSpokenTrainingLineRef.current = null;
+      return;
+    }
+    if (lastSpokenTrainingLineRef.current === trainingVoiceKey) return;
+    lastSpokenTrainingLineRef.current = trainingVoiceKey;
+    try {
+      speech.cancel();
+      const utterance = new SpeechSynthesisUtterance(trainingVoiceLine.line);
+      utterance.lang = "zh-CN";
+      utterance.rate = trainingVoiceLine.role === "mentor" ? 0.98 : 0.88;
+      utterance.pitch = trainingVoiceLine.role === "mentor" ? 1.06 : 0.78;
+      utterance.volume = 0.82;
+      const preferredVoice = speech.getVoices().find((voice) => /^zh(?:-|_)/i.test(voice.lang));
+      if (preferredVoice) utterance.voice = preferredVoice;
+      speech.speak(utterance);
+    } catch {
+      // Spoken dialogue is progressive enhancement; text remains authoritative.
+    }
+    return () => speech.cancel();
+  }, [soundEnabled, trainingVoiceKey, trainingVoiceLine]);
 
   if (!battle) {
     return (
@@ -8894,7 +8932,10 @@ function BattleSection({
               >
                 <span aria-hidden="true">{trainingDialogue.role === "mentor" ? "◆" : "◇"}</span>
                 <div>
-                  <small>{trainingDialogue.speaker}</small>
+                  <small>
+                    {trainingDialogue.speaker}
+                    <em className="battle-training__voice">{soundEnabled ? "语音演绎" : "语音静音"}</em>
+                  </small>
                   <p>{trainingDialogue.line}</p>
                 </div>
               </div>}
