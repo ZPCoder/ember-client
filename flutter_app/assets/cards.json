@@ -2705,16 +2705,19 @@
   {
     "id": "ember-red-lotus-finale",
     "name": "红莲焚刃",
-    "description": "武器：8 点攻击，2 点耐久。",
+    "description": "预备。武器：8 点攻击，2 点耐久。",
     "faction": "烬火",
     "type": "weapon",
     "cost": 8,
     "rarity": "史诗",
     "attack": 8,
     "durability": 2,
-    "keywords": [],
+    "keywords": [
+      "prepare"
+    ],
     "onDeath": [],
     "effect": [],
+    "preparable": true,
     "set": "scarab-2026"
   },
   {
@@ -4077,16 +4080,19 @@
   {
     "id": "verdant-all-roots-as-one",
     "name": "万根藤鞭",
-    "description": "武器：3 点攻击，4 点耐久。",
+    "description": "预备。武器：3 点攻击，4 点耐久。",
     "faction": "苍林",
     "type": "weapon",
     "cost": 8,
     "rarity": "传说",
     "attack": 3,
     "durability": 4,
-    "keywords": [],
+    "keywords": [
+      "prepare"
+    ],
     "onDeath": [],
     "effect": [],
+    "preparable": true,
     "set": "scarab-2026"
   },
   {
@@ -4763,16 +4769,19 @@
   {
     "id": "storm-ninefold-tempest",
     "name": "九霄雷锤",
-    "description": "武器：7 点攻击，2 点耐久。",
+    "description": "预备。武器：7 点攻击，2 点耐久。",
     "faction": "雷铸",
     "type": "weapon",
     "cost": 8,
     "rarity": "传说",
     "attack": 7,
     "durability": 2,
-    "keywords": [],
+    "keywords": [
+      "prepare"
+    ],
     "onDeath": [],
     "effect": [],
+    "preparable": true,
     "set": "scarab-2026"
   },
   {
@@ -4948,7 +4957,7 @@
   {
     "id": "sun-season-08",
     "name": "曙冠铸师·08",
-    "description": "登场时触发战吼。 曜光的战线单位。 登场时对一个敌方角色造成伤害。",
+    "description": "预备。登场时触发战吼。 曜光的战线单位。 登场时对一个敌方角色造成伤害。",
     "faction": "曜光",
     "type": "unit",
     "cost": 8,
@@ -4956,7 +4965,8 @@
     "attack": 8,
     "health": 11,
     "keywords": [
-      "battlecry"
+      "battlecry",
+      "prepare"
     ],
     "traits": [
       "bulwark",
@@ -4971,6 +4981,7 @@
     ],
     "onDeath": [],
     "effect": [],
+    "preparable": true,
     "set": "scarab-2026"
   },
   {
@@ -5433,7 +5444,7 @@
   {
     "id": "void-season-08",
     "name": "沉湾祭司·08",
-    "description": "冻结。幽潮的战线单位。登场时冻结一个敌方单位。",
+    "description": "预备。冻结。幽潮的战线单位。登场时冻结一个敌方单位。",
     "faction": "幽潮",
     "type": "unit",
     "cost": 8,
@@ -5442,7 +5453,8 @@
     "health": 12,
     "keywords": [
       "freeze",
-      "battlecry"
+      "battlecry",
+      "prepare"
     ],
     "traits": [
       "bulwark",
@@ -5457,6 +5469,7 @@
     ],
     "onDeath": [],
     "effect": [],
+    "preparable": true,
     "set": "scarab-2026"
   },
   {
@@ -5937,7 +5950,7 @@
   {
     "id": "neutral-season-08",
     "name": "荒原策士·08",
-    "description": "spell-damage。 中立的战线单位。 登场时对一个敌方角色造成伤害。 法术伤害 +1。",
+    "description": "预备。spell-damage。 中立的战线单位。 登场时对一个敌方角色造成伤害。 法术伤害 +1。",
     "faction": "中立",
     "type": "unit",
     "cost": 8,
@@ -5946,7 +5959,8 @@
     "health": 9,
     "keywords": [
       "spell-damage",
-      "battlecry"
+      "battlecry",
+      "prepare"
     ],
     "traits": [
       "bulwark",
@@ -5962,6 +5976,7 @@
     "spellDamage": 1,
     "onDeath": [],
     "effect": [],
+    "preparable": true,
     "set": "scarab-2026"
   },
   {
@@ -6426,7 +6441,7 @@
   {
     "id": "ember-season-08",
     "name": "灰烬战兽·08",
-    "description": "windfury。 烬火的战线单位。 登场时对一个敌方角色造成伤害。",
+    "description": "预备。windfury。 烬火的战线单位。 登场时对一个敌方角色造成伤害。",
     "faction": "烬火",
     "type": "unit",
     "cost": 8,
@@ -6435,7 +6450,8 @@
     "health": 10,
     "keywords": [
       "windfury",
-      "battlecry"
+      "battlecry",
+      "prepare"
     ],
     "traits": [
       "bulwark",
@@ -6450,6 +6466,7 @@
     ],
     "onDeath": [],
     "effect": [],
+    "preparable": true,
     "set": "scarab-2026"
   },
   {
@@ -6897,7 +6914,7 @@
   {
     "id": "astral-season-08",
     "name": "天琴秘契者·08",
-    "description": "lifesteal。 星穹的战线单位。 登场时对一个敌方角色造成伤害。",
+    "description": "预备。lifesteal。 星穹的战线单位。 登场时对一个敌方角色造成伤害。",
     "faction": "星穹",
     "type": "unit",
     "cost": 8,
@@ -6906,7 +6923,8 @@
     "health": 11,
     "keywords": [
       "lifesteal",
-      "battlecry"
+      "battlecry",
+      "prepare"
     ],
     "traits": [
       "bulwark",
@@ -6921,6 +6939,7 @@
     ],
     "onDeath": [],
     "effect": [],
+    "preparable": true,
     "set": "scarab-2026"
   },
   {
@@ -7378,7 +7397,7 @@
   {
     "id": "verdant-season-08",
     "name": "世界根护根者·08",
-    "description": "taunt。 苍林的战线单位。 登场时对一个敌方角色造成伤害。",
+    "description": "预备。taunt。 苍林的战线单位。 登场时对一个敌方角色造成伤害。",
     "faction": "苍林",
     "type": "unit",
     "cost": 8,
@@ -7387,7 +7406,8 @@
     "health": 12,
     "keywords": [
       "taunt",
-      "battlecry"
+      "battlecry",
+      "prepare"
     ],
     "traits": [
       "bulwark",
@@ -7402,6 +7422,7 @@
     ],
     "onDeath": [],
     "effect": [],
+    "preparable": true,
     "set": "scarab-2026"
   },
   {
@@ -7873,7 +7894,7 @@
   {
     "id": "storm-season-08",
     "name": "风暴雷王·08",
-    "description": "shield。 雷铸的战线单位。 登场时对一个敌方角色造成伤害。",
+    "description": "预备。shield。 雷铸的战线单位。 登场时对一个敌方角色造成伤害。",
     "faction": "雷铸",
     "type": "unit",
     "cost": 8,
@@ -7882,7 +7903,8 @@
     "health": 9,
     "keywords": [
       "shield",
-      "battlecry"
+      "battlecry",
+      "prepare"
     ],
     "traits": [
       "bulwark",
@@ -7897,6 +7919,7 @@
     ],
     "onDeath": [],
     "effect": [],
+    "preparable": true,
     "set": "scarab-2026"
   },
   {
@@ -8988,7 +9011,7 @@
   {
     "id": "frost-season-32",
     "name": "寒星观测者·32",
-    "description": "reborn。 霜境的战线单位。",
+    "description": "预备。reborn。 霜境的战线单位。",
     "faction": "霜境",
     "type": "unit",
     "cost": 8,
@@ -8996,7 +9019,8 @@
     "attack": 9,
     "health": 10,
     "keywords": [
-      "reborn"
+      "reborn",
+      "prepare"
     ],
     "traits": [
       "bulwark",
@@ -9004,6 +9028,7 @@
     ],
     "onDeath": [],
     "effect": [],
+    "preparable": true,
     "set": "scarab-2026"
   },
   {
@@ -10166,7 +10191,7 @@
   {
     "id": "sand-season-32",
     "name": "沙舟风暴使·32",
-    "description": "tradeable。 砂海的战线单位。 可交易。",
+    "description": "预备。tradeable。 砂海的战线单位。 可交易。",
     "faction": "砂海",
     "type": "unit",
     "cost": 8,
@@ -10174,7 +10199,8 @@
     "attack": 7,
     "health": 11,
     "keywords": [
-      "tradeable"
+      "tradeable",
+      "prepare"
     ],
     "traits": [
       "bulwark",
@@ -10183,6 +10209,7 @@
     "tradeable": true,
     "onDeath": [],
     "effect": [],
+    "preparable": true,
     "set": "scarab-2026"
   },
   {
@@ -11363,7 +11390,7 @@
   {
     "id": "bloodmoon-season-32",
     "name": "夜宴契约师·32",
-    "description": "亡语。 赤月的战线单位。 亡语：抽一张牌。",
+    "description": "预备。亡语。 赤月的战线单位。 亡语：抽一张牌。",
     "faction": "赤月",
     "type": "unit",
     "cost": 8,
@@ -11371,7 +11398,8 @@
     "attack": 8,
     "health": 12,
     "keywords": [
-      "deathrattle"
+      "deathrattle",
+      "prepare"
     ],
     "traits": [
       "bulwark",
@@ -11384,6 +11412,7 @@
       }
     ],
     "effect": [],
+    "preparable": true,
     "set": "scarab-2026"
   },
   {
@@ -12669,7 +12698,7 @@
   {
     "id": "leyline-season-32",
     "name": "源流灵能体·32",
-    "description": "spell-trigger。 灵脉的战线单位。 在你施放法术后抽一张牌。",
+    "description": "预备。spell-trigger。 灵脉的战线单位。 在你施放法术后抽一张牌。",
     "faction": "灵脉",
     "type": "unit",
     "cost": 8,
@@ -12677,7 +12706,8 @@
     "attack": 9,
     "health": 9,
     "keywords": [
-      "spell-trigger"
+      "spell-trigger",
+      "prepare"
     ],
     "traits": [
       "bulwark",
@@ -12691,6 +12721,7 @@
     ],
     "onDeath": [],
     "effect": [],
+    "preparable": true,
     "set": "scarab-2026"
   },
   {
@@ -13894,7 +13925,7 @@
   {
     "id": "dusk-season-32",
     "name": "薄暮窃密师·32",
-    "description": "沉默。暮影的战线单位。登场时沉默一个敌方单位。",
+    "description": "预备。沉默。暮影的战线单位。登场时沉默一个敌方单位。",
     "faction": "暮影",
     "type": "unit",
     "cost": 8,
@@ -13903,7 +13934,8 @@
     "health": 10,
     "keywords": [
       "silence",
-      "battlecry"
+      "battlecry",
+      "prepare"
     ],
     "traits": [
       "bulwark",
@@ -13917,6 +13949,7 @@
     ],
     "onDeath": [],
     "effect": [],
+    "preparable": true,
     "set": "scarab-2026"
   },
   {
@@ -15137,7 +15170,7 @@
   {
     "id": "cloudfall-season-32",
     "name": "流云云兽·32",
-    "description": "冻结。云瀑的战线单位。登场时冻结一个敌方单位。",
+    "description": "预备。冻结。云瀑的战线单位。登场时冻结一个敌方单位。",
     "faction": "云瀑",
     "type": "unit",
     "cost": 8,
@@ -15146,7 +15179,8 @@
     "health": 11,
     "keywords": [
       "freeze",
-      "battlecry"
+      "battlecry",
+      "prepare"
     ],
     "traits": [
       "bulwark",
@@ -15161,6 +15195,7 @@
     ],
     "onDeath": [],
     "effect": [],
+    "preparable": true,
     "set": "scarab-2026"
   },
   {
@@ -16329,7 +16364,7 @@
   {
     "id": "magnet-season-32",
     "name": "反转极性兽·32",
-    "description": "taunt。 磁风的战线单位。",
+    "description": "预备。taunt。 磁风的战线单位。",
     "faction": "磁风",
     "type": "unit",
     "cost": 8,
@@ -16337,7 +16372,8 @@
     "attack": 9,
     "health": 12,
     "keywords": [
-      "taunt"
+      "taunt",
+      "prepare"
     ],
     "traits": [
       "bulwark",
@@ -16345,6 +16381,7 @@
     ],
     "onDeath": [],
     "effect": [],
+    "preparable": true,
     "set": "scarab-2026"
   },
   {
@@ -17554,7 +17591,7 @@
   {
     "id": "crystal-season-32",
     "name": "矿心矿脉王·32",
-    "description": "reborn。 晶核的战线单位。",
+    "description": "预备。reborn。 晶核的战线单位。",
     "faction": "晶核",
     "type": "unit",
     "cost": 8,
@@ -17562,7 +17599,8 @@
     "attack": 7,
     "health": 9,
     "keywords": [
-      "reborn"
+      "reborn",
+      "prepare"
     ],
     "traits": [
       "bulwark",
@@ -17570,6 +17608,7 @@
     ],
     "onDeath": [],
     "effect": [],
+    "preparable": true,
     "set": "scarab-2026"
   },
   {
@@ -18715,7 +18754,7 @@
   {
     "id": "dream-season-32",
     "name": "星梦幻兽·32",
-    "description": "lifesteal。 梦境的战线单位。",
+    "description": "预备。lifesteal。 梦境的战线单位。",
     "faction": "梦境",
     "type": "unit",
     "cost": 8,
@@ -18723,7 +18762,8 @@
     "attack": 8,
     "health": 10,
     "keywords": [
-      "lifesteal"
+      "lifesteal",
+      "prepare"
     ],
     "traits": [
       "bulwark",
@@ -18731,6 +18771,7 @@
     ],
     "onDeath": [],
     "effect": [],
+    "preparable": true,
     "set": "scarab-2026"
   },
   {
@@ -19921,7 +19962,7 @@
   {
     "id": "rift-season-32",
     "name": "星陨终结者·32",
-    "description": "charge。 裂星的战线单位。",
+    "description": "预备。charge。 裂星的战线单位。",
     "faction": "裂星",
     "type": "unit",
     "cost": 8,
@@ -19929,7 +19970,8 @@
     "attack": 9,
     "health": 11,
     "keywords": [
-      "charge"
+      "charge",
+      "prepare"
     ],
     "traits": [
       "bulwark",
@@ -19937,6 +19979,7 @@
     ],
     "onDeath": [],
     "effect": [],
+    "preparable": true,
     "set": "scarab-2026"
   },
   {
@@ -21312,7 +21355,7 @@
   {
     "id": "timesand-season-32",
     "name": "沙漏钟卫·32",
-    "description": "start-of-turn。 时砂的战线单位。 回合开始：获得 1 点护甲。",
+    "description": "预备。start-of-turn。 时砂的战线单位。 回合开始：获得 1 点护甲。",
     "faction": "时砂",
     "type": "unit",
     "cost": 8,
@@ -21320,7 +21363,8 @@
     "attack": 7,
     "health": 12,
     "keywords": [
-      "start-of-turn"
+      "start-of-turn",
+      "prepare"
     ],
     "traits": [
       "bulwark",
@@ -21334,6 +21378,7 @@
     ],
     "onDeath": [],
     "effect": [],
+    "preparable": true,
     "set": "scarab-2026"
   },
   {
@@ -22534,7 +22579,7 @@
   {
     "id": "gloomwood-season-32",
     "name": "腐花腐木王·32",
-    "description": "stealth。 幽森的战线单位。",
+    "description": "预备。stealth。 幽森的战线单位。",
     "faction": "幽森",
     "type": "unit",
     "cost": 8,
@@ -22542,7 +22587,8 @@
     "attack": 8,
     "health": 9,
     "keywords": [
-      "stealth"
+      "stealth",
+      "prepare"
     ],
     "traits": [
       "bulwark",
@@ -22550,6 +22596,7 @@
     ],
     "onDeath": [],
     "effect": [],
+    "preparable": true,
     "set": "scarab-2026"
   },
   {
@@ -23732,7 +23779,7 @@
   {
     "id": "firmament-season-32",
     "name": "云端终局者·32",
-    "description": "登场时触发战吼。 天穹的战线单位。 战吼：抽一张牌。",
+    "description": "预备。登场时触发战吼。 天穹的战线单位。 战吼：抽一张牌。",
     "faction": "天穹",
     "type": "unit",
     "cost": 8,
@@ -23740,7 +23787,8 @@
     "attack": 9,
     "health": 10,
     "keywords": [
-      "battlecry"
+      "battlecry",
+      "prepare"
     ],
     "traits": [
       "bulwark",
@@ -23755,6 +23803,7 @@
     ],
     "onDeath": [],
     "effect": [],
+    "preparable": true,
     "set": "scarab-2026"
   },
   {

@@ -861,9 +861,11 @@ class GameController extends ChangeNotifier {
     }
     final selected = state.mulliganSelected.toList()..sort();
     final returned = <CardDefinition>[];
+    _syncHandCostReductions(state.player);
     for (final index in selected.reversed) {
       if (index >= 0 && index < state.player.hand.length) {
         returned.add(state.player.hand.removeAt(index));
+        state.player.handCostReductions.removeAt(index);
       }
     }
     for (var i = 0; i < returned.length; i++) {
@@ -934,6 +936,7 @@ class GameController extends ChangeNotifier {
     }
     if (keep.isEmpty && indexed.isNotEmpty) keep.add(indexed.first.key);
     final returned = <CardDefinition>[];
+    _syncHandCostReductions(side);
     for (final index
         in side.hand
             .asMap()
@@ -942,9 +945,13 @@ class GameController extends ChangeNotifier {
             .toList()
             .reversed) {
       returned.add(side.hand.removeAt(index));
+      side.handCostReductions.removeAt(index);
     }
     for (var i = 0; i < returned.length; i++) {
-      if (side.deck.isNotEmpty) side.hand.add(side.deck.removeLast());
+      if (side.deck.isNotEmpty) {
+        side.hand.add(side.deck.removeLast());
+        side.handCostReductions.add(0);
+      }
     }
     side.deck.addAll(returned);
     side.deck.shuffle(_random);
@@ -1010,6 +1017,7 @@ class GameController extends ChangeNotifier {
       final drawn = side.deck.removeLast();
       if (_occupiedHandSlots(side) < 10) {
         side.hand.add(drawn);
+        _syncHandCostReductions(side);
         return;
       }
       stateLog(
@@ -1046,18 +1054,25 @@ class GameController extends ChangeNotifier {
 
   bool playCard(
     CardDefinition card, {
+    int? handIndex,
     BattleUnit? target,
     bool targetHero = false,
   }) {
     final state = battle;
+    final resolvedHandIndex = state == null
+        ? -1
+        : _resolveHandIndex(state.player, card, handIndex);
+    final effectiveCost = state == null || resolvedHandIndex < 0
+        ? card.cost
+        : _effectiveHandCost(state.player, resolvedHandIndex);
     if (state == null ||
         state.finished ||
         state.activePlayer != 'player' ||
         state.phase != 'main' ||
-        state.player.mana < card.cost) {
+        state.player.mana < effectiveCost) {
       return false;
     }
-    if (!_validHandCard(state.player, card) ||
+    if (resolvedHandIndex < 0 ||
         (card.isUnit && state.player.board.length >= 7) ||
         (state.player.board.length >= 7 &&
             _isPureSummonSpell(card, state.player)) ||
@@ -1069,6 +1084,7 @@ class GameController extends ChangeNotifier {
       source: state.player,
       enemy: state.ai,
       owner: 'player',
+      handIndex: resolvedHandIndex,
       target: target,
       targetHero: targetHero,
     );
@@ -1077,7 +1093,7 @@ class GameController extends ChangeNotifier {
     return true;
   }
 
-  bool tradeCard(CardDefinition card) {
+  bool tradeCard(CardDefinition card, {int? handIndex}) {
     final state = battle;
     if (state == null ||
         state.finished ||
@@ -1088,9 +1104,10 @@ class GameController extends ChangeNotifier {
         state.player.mana < 1) {
       return false;
     }
-    final index = state.player.hand.indexWhere((item) => item.id == card.id);
+    final index = _resolveHandIndex(state.player, card, handIndex);
     if (index < 0) return false;
     state.player.hand.removeAt(index);
+    state.player.handCostReductions.removeAt(index);
     state.player.mana--;
     // Tradeable draws from the original deck before the physical card is
     // inserted, so a trade can never immediately redraw itself. Preserve the
@@ -1111,6 +1128,53 @@ class GameController extends ChangeNotifier {
     );
     notifyListeners();
     return true;
+  }
+
+  bool prepareCard(CardDefinition card, {int? handIndex}) {
+    final state = battle;
+    if (state == null ||
+        state.finished ||
+        state.activePlayer != 'player' ||
+        state.phase != 'main' ||
+        !card.preparable ||
+        state.player.mana < 1) {
+      return false;
+    }
+    final index = _resolveHandIndex(state.player, card, handIndex);
+    if (index < 0 || state.player.handCostReductions[index] > 0) return false;
+    final manaSpent = state.player.mana;
+    final reduction = manaSpent + 1;
+    state.player.mana = 0;
+    state.player.handCostReductions[index] = reduction;
+    state.logs.insert(0, '${card.name} 完成预备，费用永久降低 $reduction 点。');
+    _emitFx(
+      'prepare',
+      '预备完成',
+      '${card.name} 降低 $reduction 点费用',
+      Icons.keyboard_double_arrow_down,
+      0xFF79B980,
+      sourceId: card.id,
+      amount: reduction,
+    );
+    notifyListeners();
+    return true;
+  }
+
+  int playerHandCost(int handIndex) {
+    final side = battle?.player;
+    if (side == null || handIndex < 0 || handIndex >= side.hand.length) {
+      return 0;
+    }
+    return _effectiveHandCost(side, handIndex);
+  }
+
+  int playerHandCostReduction(int handIndex) {
+    final side = battle?.player;
+    if (side == null || handIndex < 0 || handIndex >= side.hand.length) {
+      return 0;
+    }
+    _syncHandCostReductions(side);
+    return side.handCostReductions[handIndex];
   }
 
   bool heroAttack({BattleUnit? target, bool targetHero = false}) {
@@ -1478,13 +1542,16 @@ class GameController extends ChangeNotifier {
     required BattleSide source,
     required BattleSide enemy,
     required String owner,
+    int? handIndex,
     BattleUnit? target,
     bool targetHero = false,
   }) {
-    final handIndex = source.hand.indexWhere((item) => item.id == card.id);
-    if (handIndex < 0) return;
-    source.hand.removeAt(handIndex);
-    source.mana -= card.cost;
+    final resolvedHandIndex = _resolveHandIndex(source, card, handIndex);
+    if (resolvedHandIndex < 0) return;
+    final effectiveCost = _effectiveHandCost(source, resolvedHandIndex);
+    source.hand.removeAt(resolvedHandIndex);
+    source.handCostReductions.removeAt(resolvedHandIndex);
+    source.mana -= effectiveCost;
     final comboActive = source.cardsPlayedThisTurn > 0;
     source.cardsPlayedThisTurn++;
     if (card.type == 'spell' &&
@@ -1598,8 +1665,38 @@ class GameController extends ChangeNotifier {
     _processDeaths();
   }
 
-  bool _validHandCard(BattleSide side, CardDefinition card) =>
-      side.hand.any((item) => item.id == card.id);
+  void _syncHandCostReductions(BattleSide side) {
+    while (side.handCostReductions.length > side.hand.length) {
+      side.handCostReductions.removeLast();
+    }
+    while (side.handCostReductions.length < side.hand.length) {
+      side.handCostReductions.add(0);
+    }
+  }
+
+  int _resolveHandIndex(
+    BattleSide side,
+    CardDefinition card,
+    int? preferredIndex,
+  ) {
+    _syncHandCostReductions(side);
+    if (preferredIndex != null &&
+        preferredIndex >= 0 &&
+        preferredIndex < side.hand.length &&
+        side.hand[preferredIndex].id == card.id) {
+      return preferredIndex;
+    }
+    return side.hand.indexWhere((item) => item.id == card.id);
+  }
+
+  int _effectiveHandCost(BattleSide side, int handIndex) {
+    _syncHandCostReductions(side);
+    if (handIndex < 0 || handIndex >= side.hand.length) return 0;
+    return max(
+      0,
+      side.hand[handIndex].cost - side.handCostReductions[handIndex],
+    );
+  }
 
   int _occupiedHandSlots(BattleSide side) =>
       side.hand.length + (side.coinAvailable ? 1 : 0);
@@ -2009,6 +2106,7 @@ class GameController extends ChangeNotifier {
     final enemy = identical(owner, state.player) ? state.ai : state.player;
     if (_occupiedHandSlots(owner) < 10) {
       owner.hand.add(discovered);
+      _syncHandCostReductions(owner);
     } else {
       stateLog('发现失败', '${discovered.name} 因手牌已满被燃毁。');
     }
@@ -2448,21 +2546,42 @@ class GameController extends ChangeNotifier {
       notifyListeners();
       await Future<void>.delayed(const Duration(milliseconds: 1050));
     }
-    final playable = [...state.ai.hand]
-      ..sort((a, b) => a.cost.compareTo(b.cost));
-    for (final card in playable) {
-      if (state.finished || card.cost > state.ai.mana) continue;
-      if (card.isUnit && state.ai.board.length >= 7) continue;
-      if (state.ai.board.length >= 7 && _isPureSummonSpell(card, state.ai)) {
-        continue;
+    while (!state.finished) {
+      _syncHandCostReductions(state.ai);
+      final candidates =
+          List<int>.generate(state.ai.hand.length, (index) => index)..sort(
+            (left, right) => _effectiveHandCost(
+              state.ai,
+              left,
+            ).compareTo(_effectiveHandCost(state.ai, right)),
+          );
+      int? handIndex;
+      CardDefinition? card;
+      BattleUnit? target;
+      for (final candidateIndex in candidates) {
+        final candidate = state.ai.hand[candidateIndex];
+        if (_effectiveHandCost(state.ai, candidateIndex) > state.ai.mana ||
+            (candidate.isUnit && state.ai.board.length >= 7) ||
+            (state.ai.board.length >= 7 &&
+                _isPureSummonSpell(candidate, state.ai))) {
+          continue;
+        }
+        final candidateTarget = _aiTarget(candidate, state);
+        if (!_validTarget(candidate, state.ai, state.player, candidateTarget)) {
+          continue;
+        }
+        handIndex = candidateIndex;
+        card = candidate;
+        target = candidateTarget;
+        break;
       }
-      final target = _aiTarget(card, state);
-      if (!_validTarget(card, state.ai, state.player, target)) continue;
+      if (handIndex == null || card == null) break;
       _playCardForSide(
         card,
         source: state.ai,
         enemy: state.player,
         owner: 'ai',
+        handIndex: handIndex,
         target: target,
       );
       if (state.phase == 'discover' &&
@@ -2482,6 +2601,40 @@ class GameController extends ChangeNotifier {
       await Future<void>.delayed(const Duration(milliseconds: 1280));
     }
     if (state.finished) return;
+    _syncHandCostReductions(state.ai);
+    if (state.ai.mana > 0) {
+      final candidates =
+          state.ai.hand
+              .asMap()
+              .entries
+              .where(
+                (entry) =>
+                    entry.value.preparable &&
+                    state.ai.handCostReductions[entry.key] == 0,
+              )
+              .toList()
+            ..sort(
+              (left, right) => right.value.cost.compareTo(left.value.cost),
+            );
+      if (candidates.isNotEmpty) {
+        final prepared = candidates.first;
+        final manaSpent = state.ai.mana;
+        final reduction = manaSpent + 1;
+        state.ai.mana = 0;
+        state.ai.handCostReductions[prepared.key] = reduction;
+        state.logs.insert(0, '敌方完成预备，一张手牌降低 $reduction 点费用。');
+        _emitFx(
+          'prepare',
+          '敌方完成预备',
+          '一张手牌降低 $reduction 点费用',
+          Icons.keyboard_double_arrow_down,
+          0xFFA692D1,
+          amount: reduction,
+        );
+        notifyListeners();
+        await Future<void>.delayed(const Duration(milliseconds: 800));
+      }
+    }
     final attackers = [...state.ai.board];
     final taunts = state.player.board
         .where((unit) => unit.hasTaunt && !unit.stealthActive)

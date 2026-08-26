@@ -1061,6 +1061,7 @@ class CardTile extends StatelessWidget {
     this.onTap,
     this.onLongPress,
     this.compact = false,
+    this.costOverride,
   });
 
   final CardDefinition card;
@@ -1068,11 +1069,14 @@ class CardTile extends StatelessWidget {
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
   final bool compact;
+  final int? costOverride;
 
   @override
   Widget build(BuildContext context) {
     final color = Color(factionColors[card.faction] ?? 0xFF86AAA3);
     final rarity = Color(rarityColors[card.rarity] ?? 0xFF87958D);
+    final displayedCost = costOverride ?? card.cost;
+    final isDiscounted = displayedCost < card.cost;
     final tags = <({String label, Color color})>[
       for (final trait in card.traits)
         (label: traitLabels[trait] ?? trait, color: const Color(0xFF69CFC3)),
@@ -1125,12 +1129,14 @@ class CardTile extends StatelessWidget {
                   height: 29,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF164E49),
+                    color: isDiscounted
+                        ? const Color(0xFF28623F)
+                        : const Color(0xFF164E49),
                     shape: BoxShape.circle,
                     border: Border.all(color: color.withValues(alpha: .7)),
                   ),
                   child: Text(
-                    '${card.cost}',
+                    '$displayedCost',
                     style: const TextStyle(fontWeight: FontWeight.w800),
                   ),
                 ),
@@ -2339,7 +2345,11 @@ class _BattleBoardState extends State<BattleBoard> {
     }
   }
 
-  Future<void> _playCard(BuildContext context, CardDefinition card) async {
+  Future<void> _playCard(
+    BuildContext context,
+    CardDefinition card, {
+    int? handIndex,
+  }) async {
     final targetType = card.target ?? '';
     _BattleTargetChoice? choice;
     if (targetType.contains('unit') || targetType.contains('character')) {
@@ -2363,6 +2373,7 @@ class _BattleBoardState extends State<BattleBoard> {
     }
     final played = controller.playCard(
       card,
+      handIndex: handIndex,
       target: choice?.unit,
       targetHero: choice?.isHero ?? false,
     );
@@ -2876,6 +2887,7 @@ class _BattleBoardState extends State<BattleBoard> {
               separatorBuilder: (_, _) => const SizedBox(width: 9),
               itemBuilder: (_, index) {
                 final handCard = state.player.hand[index];
+                final effectiveCost = controller.playerHandCost(index);
                 final selected = state.mulliganSelected.contains(index);
                 return SizedBox(
                   width: 145,
@@ -2902,15 +2914,20 @@ class _BattleBoardState extends State<BattleBoard> {
                     child: CardTile(
                       card: handCard,
                       compact: true,
+                      costOverride: effectiveCost,
                       onTap: state.phase == 'mulligan'
                           ? () => controller.toggleMulligan(index)
                           : state.activePlayer != 'player' ||
-                                state.player.mana < handCard.cost
+                                state.player.mana < effectiveCost
                           ? null
-                          : () => _playCard(context, handCard),
+                          : () =>
+                                _playCard(context, handCard, handIndex: index),
                       onLongPress: state.phase == 'main' && handCard.tradeable
                           ? () {
-                              final traded = controller.tradeCard(handCard);
+                              final traded = controller.tradeCard(
+                                handCard,
+                                handIndex: index,
+                              );
                               if (traded && context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
@@ -2927,6 +2944,53 @@ class _BattleBoardState extends State<BattleBoard> {
               },
             ),
           ),
+          if (state.phase == 'main' &&
+              state.activePlayer == 'player' &&
+              state.player.hand.any((card) => card.preparable)) ...[
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 7,
+              runSpacing: 5,
+              children: [
+                for (final entry in state.player.hand.asMap().entries)
+                  if (entry.value.preparable)
+                    OutlinedButton.icon(
+                      onPressed:
+                          state.player.mana >= 1 &&
+                              controller.playerHandCostReduction(entry.key) == 0
+                          ? () {
+                              final prepared = controller.prepareCard(
+                                entry.value,
+                                handIndex: entry.key,
+                              );
+                              if (prepared && context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      '预备完成：${entry.value.name} 已永久减费',
+                                    ),
+                                    duration: const Duration(milliseconds: 800),
+                                  ),
+                                );
+                              }
+                            }
+                          : null,
+                      icon: Icon(
+                        controller.playerHandCostReduction(entry.key) > 0
+                            ? Icons.check_circle_outline
+                            : Icons.keyboard_double_arrow_down,
+                        size: 14,
+                      ),
+                      label: Text(
+                        controller.playerHandCostReduction(entry.key) > 0
+                            ? '已预备 ${entry.value.name} · '
+                                  '−${controller.playerHandCostReduction(entry.key)}'
+                            : '预备 ${entry.value.name} · 全部法力',
+                      ),
+                    ),
+              ],
+            ),
+          ],
           const SizedBox(height: 13),
           GlassPanel(
             padding: const EdgeInsets.all(13),
@@ -4416,10 +4480,14 @@ class OnlineBattlePanel extends StatelessWidget {
     );
   }
 
-  Future<void> _playCard(BuildContext context, CardDefinition card) async {
+  Future<void> _playCard(
+    BuildContext context,
+    CardDefinition card, {
+    int? handIndex,
+  }) async {
     final targetType = card.target ?? 'none';
     if (targetType == 'none') {
-      controller.playCard(card);
+      controller.playCard(card, handIndex: handIndex);
       return;
     }
     final friendly = targetType.startsWith('friendly');
@@ -4437,7 +4505,12 @@ class OnlineBattlePanel extends StatelessWidget {
       friendly: friendly,
     );
     if (!context.mounted || choice == null) return;
-    controller.playCard(card, target: choice.unit, targetHero: choice.isHero);
+    controller.playCard(
+      card,
+      handIndex: handIndex,
+      target: choice.unit,
+      targetHero: choice.isHero,
+    );
   }
 
   Future<void> _attack(BuildContext context, OnlineUnit attacker) async {
@@ -4716,35 +4789,70 @@ class OnlineBattlePanel extends StatelessWidget {
                   scrollDirection: Axis.horizontal,
                   itemCount: controller.hand.length,
                   separatorBuilder: (_, _) => const SizedBox(width: 9),
-                  itemBuilder: (context, index) => SizedBox(
-                    width: 142,
-                    child: CardTile(
-                      card: controller.hand[index],
-                      compact: true,
-                      onTap: !controller.canAct
-                          ? null
-                          : () => _playCard(context, controller.hand[index]),
-                    ),
-                  ),
+                  itemBuilder: (context, index) {
+                    final card = controller.hand[index];
+                    final effectiveCost = controller.handCost(index);
+                    return SizedBox(
+                      width: 142,
+                      child: CardTile(
+                        card: card,
+                        compact: true,
+                        costOverride: effectiveCost,
+                        onTap:
+                            !controller.canAct ||
+                                controller.localMana < effectiveCost
+                            ? null
+                            : () => _playCard(context, card, handIndex: index),
+                      ),
+                    );
+                  },
                 ),
               ),
               if (controller.canAct &&
-                  controller.hand.any((card) => card.tradeable)) ...[
+                  controller.hand.any(
+                    (card) => card.tradeable || card.preparable,
+                  )) ...[
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 7,
                   runSpacing: 5,
                   children: [
-                    for (final card in controller.hand.where(
-                      (item) => item.tradeable,
-                    ))
-                      OutlinedButton.icon(
-                        onPressed: controller.localMana >= 1
-                            ? () => controller.tradeCard(card)
-                            : null,
-                        icon: const Icon(Icons.swap_horiz, size: 14),
-                        label: Text('交易 ${card.name}'),
-                      ),
+                    for (final entry in controller.hand.asMap().entries) ...[
+                      if (entry.value.tradeable)
+                        OutlinedButton.icon(
+                          onPressed: controller.localMana >= 1
+                              ? () => controller.tradeCard(
+                                  entry.value,
+                                  handIndex: entry.key,
+                                )
+                              : null,
+                          icon: const Icon(Icons.swap_horiz, size: 14),
+                          label: Text('交易 ${entry.value.name}'),
+                        ),
+                      if (entry.value.preparable)
+                        OutlinedButton.icon(
+                          onPressed:
+                              controller.localMana >= 1 &&
+                                  controller.handCostReduction(entry.key) == 0
+                              ? () => controller.prepareCard(
+                                  entry.value,
+                                  handIndex: entry.key,
+                                )
+                              : null,
+                          icon: Icon(
+                            controller.handCostReduction(entry.key) > 0
+                                ? Icons.check_circle_outline
+                                : Icons.keyboard_double_arrow_down,
+                            size: 14,
+                          ),
+                          label: Text(
+                            controller.handCostReduction(entry.key) > 0
+                                ? '已预备 ${entry.value.name} · '
+                                      '−${controller.handCostReduction(entry.key)}'
+                                : '预备 ${entry.value.name} · 全部法力',
+                          ),
+                        ),
+                    ],
                   ],
                 ),
               ],

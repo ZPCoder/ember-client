@@ -13,6 +13,7 @@ class CardDefinition {
     this.durability,
     this.overload = 0,
     this.tradeable = false,
+    this.preparable = false,
     this.spellDamage = 0,
     this.keywords = const [],
     this.traits = const [],
@@ -40,6 +41,7 @@ class CardDefinition {
   final int? durability;
   final int overload;
   final bool tradeable;
+  final bool preparable;
   final int spellDamage;
   final List<String> keywords;
   final List<String> traits;
@@ -84,6 +86,7 @@ class CardDefinition {
       durability: durability,
       overload: overload,
       tradeable: tradeable,
+      preparable: preparable,
       spellDamage: spellDamage,
       keywords: keywords ?? this.keywords,
       traits: traits,
@@ -124,6 +127,9 @@ class CardDefinition {
       durability: (json['durability'] as num?)?.toInt(),
       overload: (json['overload'] as num?)?.toInt() ?? 0,
       tradeable: json['tradeable'] == true,
+      preparable:
+          json['preparable'] == true ||
+          strings(json['keywords']).contains('prepare'),
       spellDamage: (json['spellDamage'] as num?)?.toInt() ?? 0,
       keywords: strings(json['keywords']),
       traits: strings(json['traits']),
@@ -236,12 +242,14 @@ class BattleSide {
     this.fatigue = 0,
     required this.deck,
     required this.hand,
+    List<int>? handCostReductions,
     required this.board,
     this.coinAvailable = false,
     this.weapon,
     this.overloadLocked = 0,
     List<BattleSecret>? secrets,
-  }) : secrets = secrets ?? <BattleSecret>[];
+  }) : handCostReductions = handCostReductions ?? <int>[],
+       secrets = secrets ?? <BattleSecret>[];
 
   int heroHealth;
   final int maxHeroHealth;
@@ -251,6 +259,7 @@ class BattleSide {
   int fatigue;
   final List<CardDefinition> deck;
   final List<CardDefinition> hand;
+  final List<int> handCostReductions;
   final List<BattleUnit> board;
   bool coinAvailable;
   BattleWeapon? weapon;

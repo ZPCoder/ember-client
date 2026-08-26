@@ -5,8 +5,26 @@ import 'package:flutter/services.dart';
 import '../models/card_definition.dart';
 
 const factionOrder = <String>[
-  '曜光', '幽潮', '中立', '烬火', '星穹', '苍林', '雷铸', '霜境', '砂海', '赤月',
-  '灵脉', '暮影', '云瀑', '磁风', '晶核', '梦境', '裂星', '时砂', '幽森', '天穹',
+  '曜光',
+  '幽潮',
+  '中立',
+  '烬火',
+  '星穹',
+  '苍林',
+  '雷铸',
+  '霜境',
+  '砂海',
+  '赤月',
+  '灵脉',
+  '暮影',
+  '云瀑',
+  '磁风',
+  '晶核',
+  '梦境',
+  '裂星',
+  '时砂',
+  '幽森',
+  '天穹',
 ];
 
 const factionDoctrine = <String, String>{
@@ -101,6 +119,7 @@ const keywordLabels = <String, String>{
   'freeze': '冻结',
   'overload': '过载',
   'tradeable': '可交易',
+  'prepare': '预备',
   'spell-damage': '法术伤害',
   'secret': '奥秘',
   'discover': '发现',

@@ -45,6 +45,18 @@ void main() {
       );
       expect(catalog.any((card) => card.overload > 0), isTrue);
       expect(catalog.any((card) => card.tradeable), isTrue);
+      expect(catalog.where((card) => card.preparable), hasLength(23));
+      expect(
+        catalog
+            .where((card) => card.preparable)
+            .every(
+              (card) =>
+                  card.setId == 'scarab-2026' &&
+                  card.cost == 8 &&
+                  card.keywords.contains('prepare'),
+            ),
+        isTrue,
+      );
       expect(catalog.any((card) => card.onTurnStart.isNotEmpty), isTrue);
       expect(catalog.any((card) => card.onSpellPlayed.isNotEmpty), isTrue);
       expect(
@@ -76,6 +88,7 @@ void main() {
       'set': 'scarab-2026',
       'attack': 3,
       'health': 4,
+      'preparable': true,
       'keywords': ['护盾'],
       'traits': ['晨辉'],
     });
@@ -85,6 +98,7 @@ void main() {
     expect(card.attack, 3);
     expect(card.keywords, contains('护盾'));
     expect(card.setId, 'scarab-2026');
+    expect(card.preparable, isTrue);
   });
 
   test('multiplayer events parse relay payloads', () {
@@ -142,6 +156,98 @@ void main() {
     expect(state.player.mana, 2);
     controller.dispose();
   });
+
+  test('mobile Prepare discounts only the selected hand instance once', () {
+    final filler = CardDefinition(
+      id: 'prepare-filler',
+      name: '预备占位牌',
+      description: '测试手牌槽位对齐。',
+      faction: '烬火',
+      type: 'spell',
+      cost: 1,
+      rarity: '普通',
+    );
+    final preparable = CardDefinition(
+      id: 'prepare-eight-cost',
+      name: '预备八费牌',
+      description: '预备。',
+      faction: '烬火',
+      type: 'spell',
+      cost: 8,
+      rarity: '史诗',
+      preparable: true,
+      keywords: const ['prepare'],
+    );
+    final controller = GameController(startingPlayer: 'player')
+      ..catalog = [filler, preparable]
+      ..deckIds.addAll(List.filled(30, filler.id));
+
+    controller.startBattle();
+    controller.confirmMulligan();
+    final state = controller.battle!;
+    state.player.hand
+      ..clear()
+      ..addAll([preparable, preparable]);
+    state.player.handCostReductions.clear();
+    state.player.mana = 3;
+
+    expect(controller.prepareCard(preparable, handIndex: 1), isTrue);
+    expect(state.player.mana, 0);
+    expect(state.player.handCostReductions, [0, 4]);
+    expect(controller.playerHandCost(0), 8);
+    expect(controller.playerHandCost(1), 4);
+    expect(controller.prepareCard(preparable, handIndex: 1), isFalse);
+
+    state.player.mana = 4;
+    expect(controller.playCard(preparable, handIndex: 1), isTrue);
+    expect(state.player.mana, 0);
+    expect(state.player.hand, [preparable]);
+    expect(state.player.handCostReductions, [0]);
+    controller.dispose();
+  });
+
+  test(
+    'mobile AI prepares an unaffordable high-cost card before passing',
+    () async {
+      final filler = CardDefinition(
+        id: 'prepare-ai-filler',
+        name: 'AI 预备占位牌',
+        description: '测试 AI 预备。',
+        faction: '烬火',
+        type: 'spell',
+        cost: 1,
+        rarity: '普通',
+      );
+      final preparable = CardDefinition(
+        id: 'prepare-ai-eight-cost',
+        name: 'AI 预备八费牌',
+        description: '预备。',
+        faction: '烬火',
+        type: 'spell',
+        cost: 8,
+        rarity: '史诗',
+        preparable: true,
+        keywords: const ['prepare'],
+      );
+      final controller = GameController(startingPlayer: 'player')
+        ..catalog = [filler, preparable]
+        ..deckIds.addAll(List.filled(30, filler.id));
+
+      controller.startBattle();
+      await controller.confirmMulligan();
+      final state = controller.battle!;
+      state.ai.hand
+        ..clear()
+        ..add(preparable);
+      state.ai.handCostReductions.clear();
+      state.ai.deck.clear();
+
+      await controller.endTurn();
+      expect(state.ai.handCostReductions, [2]);
+      expect(state.logs.any((log) => log.contains('敌方完成预备')), isTrue);
+      controller.dispose();
+    },
+  );
 
   test('AI-first opening gives the human the fourth card and Coin', () async {
     final cards = List.generate(
@@ -1840,6 +1946,71 @@ void main() {
     controller.dispose();
     client.dispose();
   });
+
+  test(
+    'online Prepare preserves hand-slot discount and sends its index',
+    () async {
+      final catalog = await loadCatalog();
+      final preparable = catalog.firstWhere((card) => card.preparable);
+      final client = _RecordingMultiplayerClient()
+        ..playerId = 'p-local'
+        ..isHost = true;
+      final controller = OnlineBattleController(
+        catalog: catalog,
+        client: client,
+      );
+
+      void sync(int version, int mana, int reduction) {
+        client.lastEvent = MultiplayerEvent(
+          type: 'action',
+          playerId: 'p-local',
+          action: 'command',
+          payload: {
+            'state': {
+              'version': version,
+              'turn': 3,
+              'phase': 'main',
+              'activePlayer': 0,
+              'players': [
+                {
+                  'hero': {'health': 30},
+                  'mana': mana,
+                  'maxMana': 3,
+                  'hand': [preparable.id],
+                  'handCostReductions': [reduction],
+                  'board': [],
+                },
+                {
+                  'hero': {'health': 30},
+                  'hand': ['__hidden-card__'],
+                  'handCostReductions': [0],
+                  'board': [],
+                },
+              ],
+            },
+          },
+        );
+        client.eventSequence++;
+        client.notifyListeners();
+      }
+
+      sync(1, 3, 0);
+      expect(controller.hand.single.preparable, isTrue);
+      expect(controller.handCost(0), 8);
+      controller.prepareCard(preparable, handIndex: 0);
+      final payload = client.actions.single['payload'] as Map<String, dynamic>;
+      final command = payload['command'] as Map<String, dynamic>;
+      expect(command['type'], 'prepare-card');
+      expect(command['cardId'], preparable.id);
+      expect(command['handIndex'], 0);
+
+      sync(2, 0, 4);
+      expect(controller.handCostReduction(0), 4);
+      expect(controller.handCost(0), 4);
+      controller.dispose();
+      client.dispose();
+    },
+  );
 
   test(
     'online units project authoritative combat state and legal attacks',

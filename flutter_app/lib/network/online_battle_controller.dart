@@ -70,6 +70,7 @@ class OnlineBattleController extends ChangeNotifier {
   final RankedFormat rankedFormat;
   late final List<String> deckIds;
   List<CardDefinition> hand = <CardDefinition>[];
+  List<int> handCostReductions = <int>[];
   List<OnlineUnit> localBoard = <OnlineUnit>[];
   List<OnlineUnit> remoteBoard = <OnlineUnit>[];
   final List<String> logs = <String>[];
@@ -184,10 +185,12 @@ class OnlineBattleController extends ChangeNotifier {
 
   void playCard(
     CardDefinition card, {
+    int? handIndex,
     OnlineUnit? target,
     bool targetHero = false,
   }) {
-    if (!canAct || !hand.any((item) => item.id == card.id)) return;
+    final resolvedHandIndex = _resolveHandIndex(card, handIndex);
+    if (!canAct || resolvedHandIndex < 0) return;
     final targetType = card.target ?? 'none';
     if (targetType != 'none') {
       final needsUnit = targetType.contains('unit');
@@ -218,7 +221,11 @@ class OnlineBattleController extends ChangeNotifier {
         : target == null
         ? null
         : <String, dynamic>{'kind': 'unit', 'entityId': target.instanceId};
-    final command = <String, dynamic>{'type': 'play-card', 'cardId': card.id};
+    final command = <String, dynamic>{
+      'type': 'play-card',
+      'cardId': card.id,
+      'handIndex': resolvedHandIndex,
+    };
     if (wireTarget != null) command['target'] = wireTarget;
     _sendCommand(command);
   }
@@ -287,11 +294,32 @@ class OnlineBattleController extends ChangeNotifier {
     _sendCommand(<String, dynamic>{'type': 'use-coin'});
   }
 
-  void tradeCard(CardDefinition card) {
+  void tradeCard(CardDefinition card, {int? handIndex}) {
+    final resolvedHandIndex = _resolveHandIndex(card, handIndex);
     if (!canAct || !card.tradeable || !hand.any((item) => item.id == card.id)) {
       return;
     }
-    _sendCommand(<String, dynamic>{'type': 'trade-card', 'cardId': card.id});
+    _sendCommand(<String, dynamic>{
+      'type': 'trade-card',
+      'cardId': card.id,
+      'handIndex': resolvedHandIndex,
+    });
+  }
+
+  void prepareCard(CardDefinition card, {int? handIndex}) {
+    final resolvedHandIndex = _resolveHandIndex(card, handIndex);
+    if (!canAct ||
+        !card.preparable ||
+        localMana < 1 ||
+        resolvedHandIndex < 0 ||
+        handCostReduction(resolvedHandIndex) > 0) {
+      return;
+    }
+    _sendCommand(<String, dynamic>{
+      'type': 'prepare-card',
+      'cardId': card.id,
+      'handIndex': resolvedHandIndex,
+    });
   }
 
   void useHeroPower({OnlineUnit? target, bool targetHero = false}) {
@@ -424,6 +452,7 @@ class OnlineBattleController extends ChangeNotifier {
     if (type == 'mulligan') return self ? '你的起手已确认。' : '对手已确认起手。';
     if (type == 'attack') return self ? '你发起了一次攻击。' : '对手发起了一次攻击。';
     if (type == 'play-card') return self ? '你使用了一张卡牌。' : '对手使用了一张卡牌。';
+    if (type == 'prepare-card') return self ? '你完成了一次预备。' : '对手完成了一次预备。';
     return self ? '你的联机指令已结算。' : '对手的联机指令已结算。';
   }
 
@@ -467,6 +496,10 @@ class OnlineBattleController extends ChangeNotifier {
     _parseSide(local, localSide: true);
     _parseSide(remote, localSide: false);
     hand = _parseHand(local['hand']);
+    handCostReductions = _parseHandCostReductions(
+      local['handCostReductions'],
+      hand.length,
+    );
     localBoard = _parseBoard(local['board']);
     remoteBoard = _parseBoard(remote['board']);
     final discover = snapshot['discover'];
@@ -572,6 +605,37 @@ class OnlineBattleController extends ChangeNotifier {
         .map((item) => card(item.toString()))
         .whereType<CardDefinition>()
         .toList();
+  }
+
+  List<int> _parseHandCostReductions(Object? raw, int handLength) {
+    final values = raw is List ? raw : const <Object?>[];
+    return List<int>.generate(handLength, (index) {
+      if (index >= values.length || values[index] is! num) return 0;
+      final reduction = (values[index] as num).toInt();
+      if (reduction < 0) return 0;
+      return reduction > 1000 ? 1000 : reduction;
+    });
+  }
+
+  int _resolveHandIndex(CardDefinition card, int? preferredIndex) {
+    if (preferredIndex != null &&
+        preferredIndex >= 0 &&
+        preferredIndex < hand.length &&
+        hand[preferredIndex].id == card.id) {
+      return preferredIndex;
+    }
+    return hand.indexWhere((item) => item.id == card.id);
+  }
+
+  int handCostReduction(int handIndex) =>
+      handIndex >= 0 && handIndex < handCostReductions.length
+      ? handCostReductions[handIndex]
+      : 0;
+
+  int handCost(int handIndex) {
+    if (handIndex < 0 || handIndex >= hand.length) return 0;
+    final discounted = hand[handIndex].cost - handCostReduction(handIndex);
+    return discounted < 0 ? 0 : discounted;
   }
 
   List<OnlineUnit> _parseBoard(Object? raw) {
