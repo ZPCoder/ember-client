@@ -8,6 +8,7 @@ import {
   useRef,
   useState,
   type CSSProperties,
+  type DragEvent as ReactDragEvent,
   type ReactNode,
 } from "react";
 import {
@@ -7289,6 +7290,8 @@ function HeroCore({
   effect,
   impact,
   targetPreview,
+  dropTarget,
+  onDropTarget,
 }: {
   side: BattleSide;
   active: boolean;
@@ -7300,6 +7303,8 @@ function HeroCore({
   effect?: BattleHeroEffect;
   impact?: BattleVisualEffect;
   targetPreview?: string;
+  dropTarget?: boolean;
+  onDropTarget?: (event: ReactDragEvent<HTMLElement>) => void;
 }) {
   const effectClass = effect ? `hero-core--${effect}` : "";
   const impactText = battleImpactText(impact);
@@ -7360,12 +7365,17 @@ function HeroCore({
       )}
     </>
   );
-  if (canTarget && onTarget) {
+  if ((canTarget && onTarget) || (dropTarget && onDropTarget)) {
     return (
       <button
-        className={`hero-core ${enemy ? "hero-core--enemy" : ""} hero-core--targetable ${active ? "hero-core--active" : ""} ${effectClass}`}
+        className={`hero-core ${enemy ? "hero-core--enemy" : ""} ${canTarget ? "hero-core--targetable" : ""} ${dropTarget ? "hero-core--drop-ready" : ""} ${active ? "hero-core--active" : ""} ${effectClass}`}
         type="button"
         onClick={onTarget}
+        onDragOver={dropTarget ? (event) => {
+          event.preventDefault();
+          event.dataTransfer.dropEffect = "move";
+        } : undefined}
+        onDrop={dropTarget ? onDropTarget : undefined}
         aria-label={targetLabel ?? `选择${enemy ? "敌方" : "我方"}核心，剩余 ${side.health} 点生命`}
       >
         {core}
@@ -7385,6 +7395,12 @@ function BoardUnit({
   effect,
   impact,
   targetPreview,
+  draggable,
+  dragging,
+  dropTarget,
+  onDragStart,
+  onDragEnd,
+  onDropTarget,
 }: {
   unit: BattleUnit;
   selected?: boolean;
@@ -7395,6 +7411,12 @@ function BoardUnit({
   effect?: BattleUnitEffect;
   impact?: BattleVisualEffect;
   targetPreview?: string;
+  draggable?: boolean;
+  dragging?: boolean;
+  dropTarget?: boolean;
+  onDragStart?: (event: ReactDragEvent<HTMLButtonElement>) => void;
+  onDragEnd?: () => void;
+  onDropTarget?: (event: ReactDragEvent<HTMLElement>) => void;
 }) {
   const card = CARD_BY_ID.get(unit.cardId);
   const visualCard: CatalogCard =
@@ -7431,10 +7453,18 @@ function BoardUnit({
   return (
     <div className="board-unit-shell">
       <button
-        className={`board-unit ${unit.stars === 2 ? "board-unit--star-2" : ""} ${selected ? "board-unit--selected" : ""} ${targetable ? "board-unit--targetable" : ""} ${!unit.canAttack && onSelect ? "board-unit--exhausted" : ""} ${unit.frozenTurns > 0 ? "board-unit--frozen" : ""} ${unit.summoningSick ? "board-unit--summoning-sick" : ""} ${effect ? `board-unit--${effect}` : ""}`}
+        className={`board-unit ${unit.stars === 2 ? "board-unit--star-2" : ""} ${selected ? "board-unit--selected" : ""} ${targetable ? "board-unit--targetable" : ""} ${draggable ? "board-unit--draggable" : ""} ${dragging ? "board-unit--dragging" : ""} ${dropTarget ? "board-unit--drop-ready" : ""} ${!unit.canAttack && onSelect ? "board-unit--exhausted" : ""} ${unit.frozenTurns > 0 ? "board-unit--frozen" : ""} ${unit.summoningSick ? "board-unit--summoning-sick" : ""} ${effect ? `board-unit--${effect}` : ""}`}
         type="button"
         onClick={targetable ? onTarget : onSelect}
         disabled={!targetable && (!onSelect || !unit.canAttack)}
+        draggable={draggable}
+        onDragStart={onDragStart}
+        onDragEnd={onDragEnd}
+        onDragOver={dropTarget ? (event) => {
+          event.preventDefault();
+          event.dataTransfer.dropEffect = "move";
+        } : undefined}
+        onDrop={dropTarget ? onDropTarget : undefined}
         aria-pressed={onSelect ? selected : undefined}
         aria-label={`${unit.name}${unit.minionTypes.length > 0 ? `，${unit.minionTypes.map((type) => MINION_TYPE_DEFINITIONS[type].label).join("、")}` : ""}，${unit.stars} 星，攻击 ${unit.attack}，生命 ${unit.health}${targetable ? "，设为攻击目标" : unit.canAttack ? "，选择攻击" : "，本回合无法攻击"}${statusText ? `，${statusText.replaceAll("❄ ", "").replaceAll("↗ ", "").replaceAll("◌ ", "").replaceAll("↯ ", "")}` : ""}`}
         title={visualCard.description || `${unit.name} · ${unit.attack}/${unit.health}`}
@@ -7910,6 +7940,12 @@ function BattleSection({
   online: boolean;
   opponentName: string | null;
 }) {
+  const [dragIntent, setDragIntent] = useState<
+    | { kind: "card"; instanceId: string }
+    | { kind: "attacker"; unitId: string }
+    | null
+  >(null);
+
   if (!battle) {
     return (
       <section className="screen screen--battle battle-lobby" aria-labelledby="battle-title">
@@ -8011,6 +8047,29 @@ function BattleSection({
         : opponentName?.includes("棱镜")
           ? "prism"
           : "ember";
+  const draggedHandCard = dragIntent?.kind === "card"
+    ? battle.player.hand.find((card) => card.instanceId === dragIntent.instanceId)
+    : undefined;
+  const draggedCardDefinition = draggedHandCard ? CARD_BY_ID.get(draggedHandCard.cardId) : undefined;
+  const cardDragActive = Boolean(draggedHandCard);
+  const attackerDragActive = dragIntent?.kind === "attacker";
+  const finishDrag = () => setDragIntent(null);
+  const allowDrop = (event: ReactDragEvent<HTMLElement>) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+  };
+  const dropCard = (event: ReactDragEvent<HTMLElement>, placement: "friendly" | "enemy") => {
+    if (!draggedHandCard) return;
+    event.preventDefault();
+    onPlayCard(draggedHandCard, placement);
+    finishDrag();
+  };
+  const dropAttack = (event: ReactDragEvent<HTMLElement>, target: BattleTarget) => {
+    if (!attackerDragActive) return;
+    event.preventDefault();
+    onAttack(target);
+    finishDrag();
+  };
   const pendingDefinition = pendingCard ? CARD_BY_ID.get(pendingCard.cardId) : undefined;
   const pendingRuleCard = pendingCard ? cardRuleForHandSlot(pendingCard) : undefined;
   const targetRule = pendingHeroPower
@@ -8314,7 +8373,7 @@ function BattleSection({
       </header>
 
       <div className="battle-layout">
-        <div className={`battlefield battlefield--theme-${battlefieldTheme} ${effect ? `battlefield--fx-${effect.kind}` : ""}`}>
+        <div className={`battlefield battlefield--theme-${battlefieldTheme} ${effect ? `battlefield--fx-${effect.kind}` : ""} ${cardDragActive ? "battlefield--drag-card" : ""} ${attackerDragActive ? "battlefield--drag-attacker" : ""}`}>
           <div className="battlefield__grid" aria-hidden="true" />
           {effect && <BattleEffectLayer key={effect.id} effect={effect} />}
           <div className="battlefield__enemy-zone">
@@ -8328,6 +8387,8 @@ function BattleSection({
                 effect={effectForHero("ai")}
                 impact={impactForHero("ai")}
                 targetPreview={targetPreviewForHero("ai")}
+                dropTarget={attackerDragActive && enemyHeroTargetable}
+                onDropTarget={(event) => dropAttack(event, { kind: "hero" })}
                 onTarget={() =>
                   pendingCard || pendingHeroPower
                     ? onCardTarget({ kind: "hero", side: "ai" })
@@ -8354,8 +8415,10 @@ function BattleSection({
             <SecretTray secrets={battle.ai.secrets} enemy />
             <ZoneHistoryTray side={battle.ai} enemy />
             <div
-              className="board-row board-row--enemy"
+              className={`board-row board-row--enemy ${cardDragActive && draggedCardDefinition?.disguised ? "board-row--drop-ready" : ""}`}
               aria-label={`敌方战场 ${battle.ai.board.length}/${BOARD_SLOT_COUNT}`}
+              onDragOver={cardDragActive && draggedCardDefinition?.disguised ? allowDrop : undefined}
+              onDrop={cardDragActive && draggedCardDefinition?.disguised ? (event) => dropCard(event, "enemy") : undefined}
             >
               {battle.ai.board.length > 0 ? battle.ai.board.map((unit) => (
                 <BoardUnit
@@ -8365,6 +8428,8 @@ function BattleSection({
                   effect={effectForUnit(unit.id)}
                   impact={impactForUnit(unit.id)}
                   targetPreview={targetPreviewForUnit(unit)}
+                  dropTarget={attackerDragActive && enemyUnitTargetable(unit)}
+                  onDropTarget={(event) => dropAttack(event, { kind: "unit", id: unit.id })}
                   onTarget={() =>
                     pendingCard || pendingHeroPower
                       ? onCardTarget({ kind: "unit", side: "ai", id: unit.id })
@@ -8391,8 +8456,10 @@ function BattleSection({
 
           <div className="battlefield__player-zone">
             <div
-              className="board-row board-row--player"
+              className={`board-row board-row--player ${cardDragActive ? "board-row--drop-ready" : ""}`}
               aria-label={`我方战场 ${battle.player.board.length}/${BOARD_SLOT_COUNT}`}
+              onDragOver={cardDragActive ? allowDrop : undefined}
+              onDrop={cardDragActive ? (event) => dropCard(event, "friendly") : undefined}
             >
               {battle.player.board.length > 0 ? battle.player.board.map((unit) => (
                 <BoardUnit
@@ -8403,6 +8470,15 @@ function BattleSection({
                   effect={effectForUnit(unit.id)}
                   impact={impactForUnit(unit.id)}
                   targetPreview={targetPreviewForUnit(unit, "player")}
+                  draggable={Boolean(onSelectAttacker && playerCanAct && trainingAllowsUnitSelection && unit.canAttack)}
+                  dragging={dragIntent?.kind === "attacker" && dragIntent.unitId === unit.id}
+                  onDragStart={(event) => {
+                    event.dataTransfer.effectAllowed = "move";
+                    event.dataTransfer.setData("text/plain", `attacker:${unit.id}`);
+                    setDragIntent({ kind: "attacker", unitId: unit.id });
+                    if (selectedAttacker !== unit.id) onSelectAttacker(unit.id);
+                  }}
+                  onDragEnd={finishDrag}
                   onSelect={pendingCard || pendingHeroPower || !playerCanAct || !trainingAllowsUnitSelection ? undefined : () => onSelectAttacker(unit.id)}
                   onTarget={() => onCardTarget({ kind: "unit", side: "player", id: unit.id })}
                   onInspect={() => {
@@ -8494,8 +8570,16 @@ function BattleSection({
                   : !playerCanAct || effectiveCost > battle.player.mana || pendingHeroPower || trainingActionLocked;
                 return (
                   <div
-                    className={`hand-card ${handCard.fragment ? `hand-card--fragment hand-card--fragment-${handCard.fragment}` : card.shatter ? "hand-card--reassembled" : ""} ${quickdrawActive ? "hand-card--quickdraw" : ""} ${disabled ? "hand-card--disabled" : ""} ${pendingCard?.instanceId === handCard.instanceId || selectedForMulligan ? "hand-card--selected" : ""}`}
+                    className={`hand-card ${handCard.fragment ? `hand-card--fragment hand-card--fragment-${handCard.fragment}` : card.shatter ? "hand-card--reassembled" : ""} ${quickdrawActive ? "hand-card--quickdraw" : ""} ${disabled ? "hand-card--disabled" : ""} ${pendingCard?.instanceId === handCard.instanceId || selectedForMulligan ? "hand-card--selected" : ""} ${dragIntent?.kind === "card" && dragIntent.instanceId === handCard.instanceId ? "hand-card--dragging" : ""}`}
                     key={handCard.instanceId}
+                    draggable={!mulliganActive && !disabled}
+                    title={!mulliganActive && !disabled ? `拖动${card.name}到战场，或点击使用` : undefined}
+                    onDragStart={(event) => {
+                      event.dataTransfer.effectAllowed = "move";
+                      event.dataTransfer.setData("text/plain", `card:${handCard.instanceId}`);
+                      setDragIntent({ kind: "card", instanceId: handCard.instanceId });
+                    }}
+                    onDragEnd={finishDrag}
                   >
                     <CardTile
                       card={visualCard}

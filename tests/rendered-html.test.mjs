@@ -272,6 +272,14 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(styles, /@keyframes battle-signature-prism-shard/);
   assert.match(styles, /@keyframes battle-signature-orbit/);
   assert.match(styles, /\.battle-fx__signature,[\s\S]*display: none/);
+  assert.match(game, /draggable=\{!mulliganActive && !disabled\}/);
+  assert.match(game, /event\.dataTransfer\.setData\("text\/plain", `card:/);
+  assert.match(game, /event\.dataTransfer\.setData\("text\/plain", `attacker:/);
+  assert.match(game, /onDropTarget=\{\(event\) => dropAttack/);
+  assert.match(styles, /\.board-row--drop-ready/);
+  assert.match(styles, /\.board-unit--draggable/);
+  assert.match(styles, /\.hero-core--drop-ready/);
+  assert.match(styles, /\.hand-card--dragging/);
   assert.match(styles, /@media \(prefers-reduced-motion: reduce\)/);
   assert.doesNotMatch(game, /<svg/i);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
