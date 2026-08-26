@@ -1345,20 +1345,21 @@ function applyLocalAction(
     if (current.packsAvailable < packCount) throw new Error(`当前只有 ${current.packsAvailable} 个可开启标准包。`);
     const seed = current.stats.matchesPlayed + current.packsAvailable + current.currencies.gold;
     const packPity = current.packPity ?? { packsOpened: 0, packsSinceLegendary: 0 };
+    const currentCatchUp = current.catchUpPack ?? {
+      claimedAt: null,
+      cardsGranted: 0,
+      ...catchUpProgressFromCollection(current.collection),
+    };
     const batch = drawPackBatch(
       current.collection,
       packPity,
       packCount,
       {
         randomValuesByPack: Array.from({ length: packCount }, (_, packIndex) =>
-          Array.from({ length: 5 }, (_, slotIndex) => seed + packIndex * 131 + slotIndex * 7)),
+          Array.from({ length: 10 }, (_, slotIndex) => seed + packIndex * 131 + slotIndex * 7)),
+        duplicateProtectionCollection: currentCatchUp.receivedCopiesByCard,
       },
     );
-    const currentCatchUp = current.catchUpPack ?? {
-      claimedAt: null,
-      cardsGranted: 0,
-      ...catchUpProgressFromCollection(current.collection),
-    };
     const catchUpProgress = recordCatchUpCards(
       currentCatchUp,
       batch.openedCards.flatMap((entry) => Array.from({ length: entry.count }, () => entry.cardId)),
@@ -5745,6 +5746,7 @@ export function GameApp({
                   trialCards={player.trialCards}
                   returnJourney={player.returnJourney}
                   matchesPlayed={player.stats.matchesPlayed}
+                  snapshotAt={player.updatedAt}
                   selectedLadderReadyDeckId={selectedLadderReadyDeckId}
                   ladderReadyBusy={apiBusy === "activate_ladder_ready" || apiBusy === "claim_ladder_ready_deck" || apiBusy === "claim_catch_up_pack" || apiBusy === "claim_return_quest"}
                   onName={setDeckName}
@@ -6815,6 +6817,7 @@ function DeckSection({
   trialCards,
   returnJourney,
   matchesPlayed,
+  snapshotAt,
   selectedLadderReadyDeckId,
   ladderReadyBusy,
   onName,
@@ -6855,6 +6858,7 @@ function DeckSection({
   trialCards?: PlayerSnapshot["trialCards"];
   returnJourney?: PlayerSnapshot["returnJourney"];
   matchesPlayed: number;
+  snapshotAt: string;
   selectedLadderReadyDeckId: LadderReadyDeckId | null;
   ladderReadyBusy: boolean;
   onName: (name: string) => void;
@@ -6892,10 +6896,11 @@ function DeckSection({
     const interval = window.setInterval(tick, 30_000);
     return () => window.clearInterval(interval);
   }, []);
+  const formatTimestamp = clockNow || Date.parse(snapshotAt);
   const trialActivated = Boolean(ladderReady?.activatedAt && ladderReady.expiresAt);
-  const standardSnapshot = standardFormatSnapshot(clockNow || Date.now());
-  const standardCardCount = rankedFormatCardCount(CARD_CATALOG, "standard", clockNow || Date.now());
-  const wildCardCount = rankedFormatCardCount(CARD_CATALOG, "wild", clockNow || Date.now());
+  const standardSnapshot = standardFormatSnapshot(formatTimestamp);
+  const standardCardCount = rankedFormatCardCount(CARD_CATALOG, "standard", formatTimestamp);
+  const wildCardCount = rankedFormatCardCount(CARD_CATALOG, "wild", formatTimestamp);
   const standardWaveText = standardSnapshot.currentWave === 1 ? "第一" : standardSnapshot.currentWave === 2 ? "第二" : "第三";
   const nextStandardReleaseMonth = standardSnapshot.nextRelease
     ? new Intl.DateTimeFormat("zh-CN", { month: "long", timeZone: "UTC" }).format(new Date(standardSnapshot.nextRelease.availableFrom))
@@ -9734,7 +9739,7 @@ function OperationsSection({
           <div><Icon name="check" size={16} /><span>联机战报必须匹配服务器对局快照、参赛身份和唯一对局凭证</span></div>
           <div><Icon name="check" size={16} /><span>联机分为 Ranked 天梯与 Casual 休闲：仅 Ranked 影响赛季段位；白银至白金段位连续胜利会获得额外星级进度，失败会重置连胜。</span></div>
           <div><Icon name="check" size={16} /><span>每周商店提供 1 个免费标准包，按周一 UTC 00:00 刷新并由服务端幂等结算</span></div>
-          <div><Icon name="check" size={16} /><span>标准包只产出当前标准环境卡牌；前 10 包内保证首张传说，之后连续 39 包未出传说时，第 40 包首槽强制传说。</span></div>
+          <div><Icon name="check" size={16} /><span>标准包按普通 75%、稀有 20%、史诗 4%、传说 1% 独立抽取稀有度，并保证每包至少 1 张稀有；前 10 包内保证首张传说，之后使用 40 包保底。</span></div>
           <div><Icon name="check" size={16} /><span>好友请求每日最多 20 次，聊天每分钟最多 20 条；屏蔽、举报和好友关系由服务端保存，幂等重试不会重复发放或重复发送。</span></div>
         </div>
       </section>
