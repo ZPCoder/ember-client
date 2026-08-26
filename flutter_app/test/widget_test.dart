@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:astra_protocol/data/catalog.dart';
 import 'package:astra_protocol/data/deck_code.dart';
+import 'package:astra_protocol/data/deck_recipes.dart';
 import 'package:astra_protocol/data/deck_share.dart';
 import 'package:astra_protocol/data/formats.dart';
 import 'package:astra_protocol/game/game_controller.dart';
@@ -1303,6 +1304,88 @@ void main() {
         );
       }
       expect(controller.autoCompleteDeck(), 0);
+      controller.dispose();
+    },
+  );
+
+  test(
+    'every faction has three legal deterministic Standard recipes',
+    () async {
+      final catalog = await loadCatalog();
+      final factions = catalog
+          .map((card) => card.faction)
+          .where((faction) => faction != '中立')
+          .toSet();
+      expect(factions, hasLength(19));
+
+      for (final faction in factions) {
+        final recipes = deckRecipesForFaction(faction, catalog);
+        expect(recipes.map((recipe) => recipe.kind), [
+          DeckRecipeKind.core,
+          DeckRecipeKind.raptor,
+          DeckRecipeKind.scarab,
+        ]);
+        expect(
+          deckRecipesForFaction(
+            faction,
+            catalog,
+          ).map((recipe) => recipe.cardIds),
+          recipes.map((recipe) => recipe.cardIds),
+        );
+        for (final recipe in recipes) {
+          expect(recipe.cardIds, hasLength(30));
+          final cards = recipe.cardIds
+              .map((cardId) => catalog.singleWhere((card) => card.id == cardId))
+              .toList();
+          expect(
+            cards.every(
+              (card) => card.faction == faction || card.faction == '中立',
+            ),
+            isTrue,
+          );
+          expect(cards.every((card) => card.setId != 'pegasus-2024'), isTrue);
+          expect(
+            cards.where((card) => card.setId == recipe.focusSetId).length,
+            greaterThanOrEqualTo(10),
+          );
+          if (recipe.kind == DeckRecipeKind.core) {
+            expect(cards.every((card) => card.setId == 'core'), isTrue);
+          }
+          final controller = GameController()
+            ..catalog = catalog
+            ..deckIds.addAll(recipe.cardIds);
+          expect(controller.deckValid, isTrue);
+          controller.dispose();
+        }
+      }
+    },
+  );
+
+  test(
+    'mobile applies a recommended recipe as a new missing-aware draft',
+    () async {
+      final catalog = await loadCatalog();
+      final recipe = deckRecipesForFaction('曜光', catalog)[1];
+      final controller = GameController()
+        ..catalog = catalog
+        ..deckName = '原牌组'
+        ..deckIds.addAll(recipe.cardIds.take(2))
+        ..collection['missing-sentinel'] = 0;
+
+      expect(controller.applyDeckRecipe(recipe), 30);
+      expect(controller.activeDeckId, isNull);
+      expect(controller.deckName, recipe.name);
+      expect(controller.deckFormat, RankedFormat.standard);
+      expect(controller.deckIds, recipe.cardIds);
+      expect(controller.deckValid, isTrue);
+      expect(controller.deckPlayable, isFalse);
+      expect(controller.missingDeckCount, 30);
+
+      for (final cardId in recipe.cardIds) {
+        controller.collection[cardId] = 2;
+      }
+      expect(controller.applyDeckRecipe(recipe), 0);
+      expect(controller.deckPlayable, isTrue);
       controller.dispose();
     },
   );
@@ -2756,6 +2839,9 @@ void main() {
     expect(find.text('复制'), findsOneWidget);
     expect(find.text('复制牌表'), findsOneWidget);
     expect(find.text('智能补全'), findsOneWidget);
+    expect(find.text('推荐牌组配方'), findsOneWidget);
+    expect(find.byKey(const ValueKey('deck-recipe-faction')), findsOneWidget);
+    expect(find.text('套用此配方'), findsNWidgets(3));
     expect(find.text('导入代码'), findsOneWidget);
     expect(find.text('删除'), findsOneWidget);
     expect(find.byKey(const ValueKey('deck-format-selector')), findsOneWidget);

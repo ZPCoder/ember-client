@@ -2539,6 +2539,167 @@ button.game-card:not(:disabled):hover .game-card__artwork,
   }
 }
 
+.deck-recipes {
+  margin-bottom: 18px;
+  padding: 18px;
+  border: 1px solid rgba(105, 207, 195, 0.16);
+  border-radius: 16px;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(105, 207, 195, 0.08), transparent 34%),
+    linear-gradient(145deg, rgba(13, 29, 25, 0.96), rgba(7, 18, 16, 0.98));
+}
+
+.deck-recipes__header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(230px, 310px);
+  gap: 20px;
+  align-items: end;
+  margin-bottom: 14px;
+}
+
+.deck-recipes__header h2 {
+  margin: 4px 0 5px;
+  color: var(--paper);
+  font-family: var(--font-display), serif;
+  font-size: 22px;
+}
+
+.deck-recipes__header p {
+  max-width: 700px;
+  margin: 0;
+  color: #7f9087;
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.deck-recipes__header label {
+  display: grid;
+  gap: 6px;
+}
+
+.deck-recipes__header label > span {
+  color: #7d8e85;
+  font-size: 8px;
+  letter-spacing: 0.08em;
+}
+
+.deck-recipes__header select {
+  min-height: 38px;
+  padding: 0 10px;
+  border: 1px solid rgba(105, 207, 195, 0.28);
+  border-radius: 8px;
+  color: var(--paper-soft);
+  background: #101f1b;
+  font-size: 10px;
+}
+
+.deck-recipes__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.deck-recipe {
+  --recipe-tone: #69cfc3;
+  display: grid;
+  grid-template-rows: auto auto minmax(42px, auto) auto auto auto;
+  gap: 8px;
+  padding: 15px;
+  border: 1px solid color-mix(in srgb, var(--recipe-tone) 22%, var(--line));
+  border-radius: 12px;
+  background: linear-gradient(150deg, color-mix(in srgb, var(--recipe-tone) 7%, rgba(13, 28, 24, 0.96)), rgba(5, 15, 13, 0.98));
+}
+
+.deck-recipe--core {
+  --recipe-tone: #b6a17e;
+}
+
+.deck-recipe--raptor {
+  --recipe-tone: #e46d3f;
+}
+
+.deck-recipe--scarab {
+  --recipe-tone: #69cfc3;
+}
+
+.deck-recipe__set {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--recipe-tone);
+}
+
+.deck-recipe__set span {
+  font-size: 17px;
+}
+
+.deck-recipe__set small {
+  font-size: 8px;
+  letter-spacing: 0.08em;
+}
+
+.deck-recipe h3 {
+  margin: 0;
+  color: var(--paper);
+  font-size: 15px;
+}
+
+.deck-recipe p,
+.deck-recipe__cards {
+  margin: 0;
+  color: #778880;
+  font-size: 9px;
+  line-height: 1.55;
+}
+
+.deck-recipe__cards {
+  color: color-mix(in srgb, var(--recipe-tone) 62%, #9aa9a1);
+}
+
+.deck-recipe__metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.16);
+}
+
+.deck-recipe__metrics span {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 7px 3px;
+}
+
+.deck-recipe__metrics span + span {
+  border-left: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.deck-recipe__metrics small {
+  color: #697a72;
+  font-size: 7px;
+}
+
+.deck-recipe__metrics strong {
+  color: #d4ded8;
+  font-size: 10px;
+}
+
+.deck-recipe__metrics .is-missing strong {
+  color: #e7bd7a;
+}
+
+.deck-recipe__metrics .is-owned strong {
+  color: #79b980;
+}
+
+.deck-recipe > .button {
+  width: 100%;
+  min-height: 34px;
+  font-size: 9px;
+}
+
 .deck-workbench {
   display: grid;
   grid-template-columns: 330px minmax(0, 1fr);
@@ -7749,6 +7910,10 @@ button.hero-core {
     grid-template-columns: 1fr;
   }
 
+  .deck-recipes__grid {
+    grid-template-columns: 1fr;
+  }
+
   .deck-manifest {
     position: static;
   }
@@ -7875,6 +8040,15 @@ button.hero-core {
 }
 
 @media (max-width: 640px) {
+  .deck-recipes {
+    padding: 14px;
+  }
+
+  .deck-recipes__header {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
   .ladder-ready__header {
     grid-template-columns: 1fr;
     padding: 18px 16px 12px;

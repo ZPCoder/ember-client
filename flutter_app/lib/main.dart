@@ -11,6 +11,7 @@ import 'package:flutter/services.dart'
         SystemSound,
         SystemSoundType;
 import 'data/catalog.dart';
+import 'data/deck_recipes.dart';
 import 'data/deck_replacements.dart';
 import 'data/formats.dart';
 import 'game/game_controller.dart';
@@ -1352,6 +1353,7 @@ class DeckPage extends StatelessWidget {
       for (final card in missingCards) card.cardId: card,
     };
     final availableCards = controller.cardsAvailableForDeck;
+    final recipes = controller.deckRecipes;
     return PageFrame(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1696,6 +1698,126 @@ class DeckPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 14),
+          GlassPanel(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'DECK RECIPES / THREE PATHS',
+                            style: TextStyle(
+                              color: Color(0xFFE46D3F),
+                              fontSize: 9,
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                          SizedBox(height: 5),
+                          Text(
+                            '推荐牌组配方',
+                            style: TextStyle(
+                              color: Color(0xFFF1E6C8),
+                              fontSize: 17,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(
+                      width: 170,
+                      child: DropdownButtonFormField<String>(
+                        key: const ValueKey('deck-recipe-faction'),
+                        initialValue: controller.recipeFaction,
+                        isExpanded: true,
+                        decoration: const InputDecoration(labelText: '配方阵营'),
+                        items: [
+                          for (final faction in factionOrder)
+                            if (faction != '中立')
+                              DropdownMenuItem(
+                                value: faction,
+                                child: Text(
+                                  '${factionSigil[faction]} $faction',
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                        ],
+                        onChanged: (faction) {
+                          if (faction != null) {
+                            controller.setRecipeFaction(faction);
+                          }
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 7),
+                const Text(
+                  '每个阵营提供核心、猛禽年与圣甲虫年三套标准配方；套用后可逐张替换收藏中缺少的卡牌。',
+                  style: TextStyle(color: Color(0xFF84938A), fontSize: 10),
+                ),
+                const SizedBox(height: 14),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final cards = [
+                      for (final recipe in recipes)
+                        _DeckRecipeCard(
+                          recipe: recipe,
+                          controller: controller,
+                          onApply: controller.canCreateDeck
+                              ? () {
+                                  final missing = controller.applyDeckRecipe(
+                                    recipe,
+                                  );
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        missing > 0
+                                            ? '已套用「${recipe.name}」；缺少 $missing 张卡牌'
+                                            : '已套用「${recipe.name}」完整配方',
+                                      ),
+                                    ),
+                                  );
+                                }
+                              : null,
+                        ),
+                    ];
+                    if (constraints.maxWidth < 820) {
+                      return Column(
+                        children: [
+                          for (
+                            var index = 0;
+                            index < cards.length;
+                            index++
+                          ) ...[
+                            cards[index],
+                            if (index < cards.length - 1)
+                              const SizedBox(height: 10),
+                          ],
+                        ],
+                      );
+                    }
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        for (var index = 0; index < cards.length; index++) ...[
+                          Expanded(child: cards[index]),
+                          if (index < cards.length - 1)
+                            const SizedBox(width: 10),
+                        ],
+                      ],
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
           LayoutBuilder(
             builder: (context, constraints) {
               final wide = constraints.maxWidth >= 900;
@@ -1868,6 +1990,141 @@ class DeckPage extends StatelessWidget {
       ),
     );
   }
+}
+
+class _DeckRecipeCard extends StatelessWidget {
+  const _DeckRecipeCard({
+    required this.recipe,
+    required this.controller,
+    required this.onApply,
+  });
+
+  final DeckRecipe recipe;
+  final GameController controller;
+  final VoidCallback? onApply;
+
+  @override
+  Widget build(BuildContext context) {
+    final cards = recipe.cardIds
+        .map(controller.card)
+        .whereType<CardDefinition>()
+        .toList(growable: false);
+    final averageCost = cards.isEmpty
+        ? 0.0
+        : cards.fold<int>(0, (total, card) => total + card.cost) / cards.length;
+    final missing = findMissingDeckCards(
+      recipe.cardIds,
+      controller.collection,
+    ).fold(0, (total, card) => total + card.missingCount);
+    final featured = <String>[];
+    for (final card in cards) {
+      if (!featured.contains(card.name)) featured.add(card.name);
+      if (featured.length == 3) break;
+    }
+    final tone = Color(factionColors[recipe.faction] ?? 0xFF69CFC3);
+
+    return Container(
+      padding: const EdgeInsets.all(13),
+      decoration: BoxDecoration(
+        color: tone.withValues(alpha: .045),
+        border: Border.all(color: tone.withValues(alpha: .22)),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                factionSigil[recipe.faction] ?? '◇',
+                style: TextStyle(color: tone, fontSize: 17),
+              ),
+              const SizedBox(width: 7),
+              Text(
+                cardSetDefinition(recipe.focusSetId).label,
+                style: TextStyle(color: tone, fontSize: 9),
+              ),
+            ],
+          ),
+          const SizedBox(height: 7),
+          Text(
+            recipe.name,
+            style: const TextStyle(
+              color: Color(0xFFF1E6C8),
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            recipe.description,
+            style: const TextStyle(color: Color(0xFF84938A), fontSize: 9),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            featured.join(' · '),
+            style: TextStyle(color: tone.withValues(alpha: .78), fontSize: 9),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              _RecipeMetric(label: '卡牌', value: '${recipe.cardIds.length}'),
+              _RecipeMetric(label: '均费', value: averageCost.toStringAsFixed(1)),
+              _RecipeMetric(
+                label: '收藏',
+                value: missing > 0 ? '缺 $missing' : '完整',
+                color: missing > 0
+                    ? const Color(0xFFE7BD7A)
+                    : const Color(0xFF79B980),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: onApply,
+              icon: const Icon(Icons.layers_outlined, size: 16),
+              label: const Text('套用此配方'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RecipeMetric extends StatelessWidget {
+  const _RecipeMetric({
+    required this.label,
+    required this.value,
+    this.color = const Color(0xFFD4DED8),
+  });
+
+  final String label;
+  final String value;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) => Expanded(
+    child: Column(
+      children: [
+        Text(
+          label,
+          style: const TextStyle(color: Color(0xFF6F8077), fontSize: 8),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          style: TextStyle(
+            color: color,
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 class _DeckEntry extends StatelessWidget {

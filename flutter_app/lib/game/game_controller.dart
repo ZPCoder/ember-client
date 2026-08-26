@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../data/catalog.dart';
 import '../data/deck_code.dart';
+import '../data/deck_recipes.dart';
 import '../data/deck_share.dart';
 import '../data/deck_replacements.dart';
 import '../data/formats.dart';
@@ -44,6 +45,7 @@ class GameController extends ChangeNotifier {
   String? activeDeckId;
   String deckName = '曜光先锋';
   RankedFormat deckFormat = RankedFormat.standard;
+  String recipeFaction = '曜光';
   BattleState? battle;
   bool isLoading = true;
   String? errorMessage;
@@ -267,6 +269,30 @@ class GameController extends ChangeNotifier {
     unawaited(_queueDeckPersistence());
     notifyListeners();
     return completion.addedCardIds.length;
+  }
+
+  List<DeckRecipe> get deckRecipes =>
+      deckRecipesForFaction(recipeFaction, catalog);
+
+  void setRecipeFaction(String faction) {
+    if (faction == '中立' || faction == recipeFaction) return;
+    recipeFaction = faction;
+    notifyListeners();
+  }
+
+  int applyDeckRecipe(DeckRecipe recipe) {
+    if (!canCreateDeck) return -1;
+    _stageActiveDeck();
+    activeDeckId = null;
+    deckFormat = recipe.format;
+    deckName = _normalizeDeckName(recipe.name);
+    deckIds
+      ..clear()
+      ..addAll(recipe.cardIds);
+    _declinedClipboardDeckCode = null;
+    unawaited(_queueDeckPersistence());
+    notifyListeners();
+    return missingDeckCount;
   }
 
   String? get _deckFaction {

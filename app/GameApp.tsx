@@ -51,6 +51,7 @@ import {
   createRankedSnapshot,
   createRankedLadders,
   decodeDeckCode,
+  deckRecipesForFaction,
   describeRankedRewardBundle,
   encodeDeckCode,
   highestRankedFormat,
@@ -76,6 +77,7 @@ import {
   type BattleCommand,
   type CardDefinition,
   type CardTargetRule,
+  type DeckRecipe,
   type Faction,
   type HeroPowerEffect,
   type Keyword,
@@ -3300,6 +3302,29 @@ export function GameApp({
     });
   };
 
+  const applyDeckRecipe = (recipe: DeckRecipe) => {
+    if (player.decks.length >= MAX_SAVED_DECKS) {
+      setNotice({
+        tone: "warning",
+        text: `已使用全部 ${MAX_SAVED_DECKS} 个卡组栏位，请先删除一套再应用配方。`,
+      });
+      return;
+    }
+    const missing = findMissingDeckCards(recipe.cardIds, player.collection)
+      .reduce((total, card) => total + card.missing, 0);
+    setEditingDeckId(null);
+    setSelectedLadderReadyDeckId(null);
+    setDeckFormat(recipe.format);
+    setDeckName(recipe.name);
+    setDeckIds([...recipe.cardIds]);
+    setNotice({
+      tone: missing > 0 ? "info" : "success",
+      text: missing > 0
+        ? `已套用「${recipe.name}」草稿；缺少 ${missing} 张卡牌，可按建议逐张替换。`
+        : `已套用「${recipe.name}」完整配方，可保存后投入演算。`,
+    });
+  };
+
   const saveDeck = async () => {
     if (selectedLadderReadyDeckId) {
       setNotice({ tone: "warning", text: "试玩套牌不能改写；永久领取后会自动加入已保存卡组。" });
@@ -4929,6 +4954,7 @@ export function GameApp({
                   onAdd={addCard}
                   onRemove={removeCard}
                   onAutoComplete={autoCompleteDeck}
+                  onApplyRecipe={applyDeckRecipe}
                   onSave={() => void saveDeck()}
                   onDelete={() => void deleteCurrentDeck()}
                   onImport={importDeck}
@@ -5793,6 +5819,7 @@ function DeckSection({
   onAdd,
   onRemove,
   onAutoComplete,
+  onApplyRecipe,
   onSave,
   onDelete,
   onImport,
@@ -5826,6 +5853,7 @@ function DeckSection({
   onAdd: (card: CatalogCard) => void;
   onRemove: (cardId: string) => void;
   onAutoComplete: () => void;
+  onApplyRecipe: (recipe: DeckRecipe) => void;
   onSave: () => void;
   onDelete: () => void;
   onImport: (code: string) => boolean;
@@ -5838,6 +5866,9 @@ function DeckSection({
   const [deckCode, setDeckCode] = useState("");
   const [copiedDeckFingerprint, setCopiedDeckFingerprint] = useState<string | null>(null);
   const [claimConfirmation, setClaimConfirmation] = useState<LadderReadyDeckId | null>(null);
+  const [recipeFaction, setRecipeFaction] = useState<Faction>(() =>
+    factionForDeck(deckIds) ?? "曜光"
+  );
   const deckFingerprint = `${format}\u0000${name}\u0000${deckIds.join(",")}`;
   const [clockNow, setClockNow] = useState(0);
   useEffect(() => {
@@ -5888,6 +5919,10 @@ function DeckSection({
   const deckSlotsFull = decks.length >= MAX_SAVED_DECKS;
   const missingByCardId = new Map(missingCards.map((item) => [item.cardId, item]));
   const missingTotal = missingCards.reduce((sum, item) => sum + item.missing, 0);
+  const deckRecipes = useMemo(
+    () => deckRecipesForFaction(recipeFaction),
+    [recipeFaction],
+  );
 
   const copyDeckCode = () => {
     const encoded = encodeDeckCode({ format, name, cardIds: deckIds });
@@ -6018,6 +6053,58 @@ function DeckSection({
           </div>
         );
       })()}
+
+      <section className="deck-recipes" aria-labelledby="deck-recipes-title">
+        <div className="deck-recipes__header">
+          <div>
+            <span className="panel__eyebrow">DECK RECIPES / THREE PATHS</span>
+            <h2 id="deck-recipes-title">推荐牌组配方</h2>
+            <p>每个阵营提供核心、猛禽年与圣甲虫年三套标准配方；可直接套用，再替换收藏中缺少的卡牌。</p>
+          </div>
+          <label>
+            <span>选择阵营</span>
+            <select value={recipeFaction} onChange={(event) => setRecipeFaction(event.target.value as Faction)}>
+              {FACTION_ORDER.filter((faction) => faction !== "中立").map((faction) => (
+                <option value={faction} key={faction}>{FACTION_DEFINITIONS[faction].sigil} {faction} · {FACTION_DEFINITIONS[faction].doctrine}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+        <div className="deck-recipes__grid">
+          {deckRecipes.map((recipe) => {
+            const missing = findMissingDeckCards(recipe.cardIds, collection)
+              .reduce((total, card) => total + card.missing, 0);
+            const averageCost = recipe.cardIds.reduce(
+              (total, cardId) => total + (CARD_BY_ID.get(cardId)?.cost ?? 0),
+              0,
+            ) / recipe.cardIds.length;
+            const featured = [...new Set(recipe.cardIds)]
+              .map((cardId) => CARD_BY_ID.get(cardId)?.name)
+              .filter(Boolean)
+              .slice(0, 3)
+              .join(" · ");
+            return (
+              <article className={`deck-recipe deck-recipe--${recipe.kind}`} key={recipe.id}>
+                <div className="deck-recipe__set">
+                  <span>{FACTION_DEFINITIONS[recipe.faction].sigil}</span>
+                  <small>{CARD_SET_DEFINITIONS[recipe.focusSet].label}</small>
+                </div>
+                <h3>{recipe.name}</h3>
+                <p>{recipe.description}</p>
+                <div className="deck-recipe__cards">{featured}</div>
+                <div className="deck-recipe__metrics">
+                  <span><small>卡牌</small><strong>30</strong></span>
+                  <span><small>均费</small><strong>{averageCost.toFixed(1)}</strong></span>
+                  <span className={missing > 0 ? "is-missing" : "is-owned"}><small>收藏</small><strong>{missing > 0 ? `缺 ${missing}` : "完整"}</strong></span>
+                </div>
+                <button className="button button--outline" type="button" disabled={deckSlotsFull} onClick={() => onApplyRecipe(recipe)}>
+                  <Icon name="layers" size={15} />套用此配方
+                </button>
+              </article>
+            );
+          })}
+        </div>
+      </section>
 
       <div className="deck-workbench">
         <aside className="panel deck-manifest">
