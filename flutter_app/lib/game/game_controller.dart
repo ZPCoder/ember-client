@@ -1149,6 +1149,7 @@ class GameController extends ChangeNotifier {
         costOverride: costOverride,
         startedInDeck: startedInDeck,
         entityId: entityId,
+        sourceZone: 'deck',
       );
     }
     final state = battle;
@@ -1262,9 +1263,22 @@ class GameController extends ChangeNotifier {
     String? fragment,
     bool startedInDeck = false,
     String? entityId,
+    String sourceZone = 'generated',
   }) {
+    final resolvedEntityId = entityId ?? _nextCardEntityId();
     final available = 10 - _occupiedHandSlots(side);
-    if (available <= 0) return false;
+    if (available <= 0) {
+      if (!drawn.isUnit) {
+        _sendCardToGraveyard(
+          side,
+          drawn,
+          resolvedEntityId,
+          fromZone: sourceZone,
+          reason: 'burned',
+        );
+      }
+      return false;
+    }
     _syncHandCostReductions(side);
     final enteredTurn = battle?.phase == 'mulligan' ? 0 : battle?.turn ?? 0;
     final retainedReduction = costReduction == null
@@ -1278,7 +1292,7 @@ class GameController extends ChangeNotifier {
       side.handFragments.add(null);
       side.handStartedInDeck.add(startedInDeck);
       side.handEnteredTurns.add(enteredTurn);
-      side.handEntityIds.add(entityId ?? _nextCardEntityId());
+      side.handEntityIds.add(resolvedEntityId);
       return true;
     }
     final groupId = 'm${_shatterGroupSequence++}';
@@ -1288,7 +1302,7 @@ class GameController extends ChangeNotifier {
       side.handFragments.add(HandFragment(groupId: groupId, piece: fragment));
       side.handStartedInDeck.add(startedInDeck);
       side.handEnteredTurns.add(enteredTurn);
-      side.handEntityIds.add(entityId ?? _nextCardEntityId());
+      side.handEntityIds.add(resolvedEntityId);
       return true;
     }
     side.hand.insert(0, _shatterFragmentCard(drawn, 'left'));
@@ -1296,7 +1310,7 @@ class GameController extends ChangeNotifier {
     side.handFragments.insert(0, HandFragment(groupId: groupId, piece: 'left'));
     side.handStartedInDeck.insert(0, startedInDeck);
     side.handEnteredTurns.insert(0, enteredTurn);
-    side.handEntityIds.insert(0, entityId ?? _nextCardEntityId());
+    side.handEntityIds.insert(0, resolvedEntityId);
     var fragmentCount = 1;
     if (available >= 2) {
       side.hand.add(_shatterFragmentCard(drawn, 'right'));

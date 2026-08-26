@@ -3855,11 +3855,9 @@ void main() {
         name: '被燃毁的档案',
         description: '测试燃毁。',
         faction: '中立',
-        type: 'unit',
+        type: 'spell',
         cost: 1,
         rarity: '普通',
-        attack: 1,
-        health: 1,
       );
       final controller = GameController(startingPlayer: 'player')
         ..catalog = [drawCard, filler]
@@ -3875,10 +3873,16 @@ void main() {
       state.player.deck
         ..clear()
         ..add(filler);
+      state.player.deckEntityIds
+        ..clear()
+        ..add('mobile-overdraw-spell-entity');
       expect(controller.useHeroPower(), isTrue);
       expect(state.player.hand, hasLength(10));
       expect(state.player.deck, isEmpty);
       expect(state.logs.any((log) => log.contains('燃毁')), isTrue);
+      expect(state.player.cardGraveyard.single.entityId, 'mobile-overdraw-spell-entity');
+      expect(state.player.cardGraveyard.single.fromZone, 'deck');
+      expect(state.player.cardGraveyard.single.reason, 'burned');
       controller.dispose();
     },
   );
