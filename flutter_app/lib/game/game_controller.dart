@@ -68,9 +68,9 @@ class GameController extends ChangeNotifier {
   int _deckIdSequence = 0;
   int _shatterGroupSequence = 0;
   int _discardSequence = 0;
-  int _handEntitySequence = 0;
+  int _cardEntitySequence = 0;
 
-  String _nextHandEntityId() => 'mobile-hand-${_handEntitySequence++}';
+  String _nextCardEntityId() => 'mobile-card-${_cardEntitySequence++}';
   String? _declinedClipboardDeckCode;
   Future<void> _deckPersistQueue = Future<void>.value();
 
@@ -804,6 +804,10 @@ class GameController extends ChangeNotifier {
       maxMana: 1,
       deck: playerDeck,
       deckCostOverrides: List<int?>.filled(playerDeck.length, null),
+      deckEntityIds: List<String>.generate(
+        playerDeck.length,
+        (_) => _nextCardEntityId(),
+      ),
       hand: [],
       board: [],
       coinAvailable: playerIsSecond,
@@ -816,6 +820,10 @@ class GameController extends ChangeNotifier {
       maxMana: 1,
       deck: aiDeck,
       deckCostOverrides: List<int?>.filled(aiDeck.length, null),
+      deckEntityIds: List<String>.generate(
+        aiDeck.length,
+        (_) => _nextCardEntityId(),
+      ),
       hand: [],
       board: [],
       coinAvailable: aiIsSecond,
@@ -888,18 +896,21 @@ class GameController extends ChangeNotifier {
       state.player,
       state.mulliganSelected,
     );
-    final returned = <({CardDefinition card, bool startedInDeck})>[];
+    final returned =
+        <({CardDefinition card, bool startedInDeck, String entityId})>[];
     final returnedGroups = <String>{};
     _syncHandCostReductions(state.player);
     for (final index in selected.reversed) {
       if (index >= 0 && index < state.player.hand.length) {
         final fragment = state.player.handFragments[index];
         final startedInDeck = state.player.handStartedInDeck[index];
+        final entityId = state.player.handEntityIds[index];
         final removed = state.player.hand.removeAt(index);
         if (fragment == null || returnedGroups.add(fragment.groupId)) {
           returned.add((
             card: card(removed.id) ?? removed,
             startedInDeck: startedInDeck,
+            entityId: entityId,
           ));
         }
         state.player.handCostReductions.removeAt(index);
@@ -919,6 +930,9 @@ class GameController extends ChangeNotifier {
       );
       state.player.deckStartedInDeck.addAll(
         returned.map((entry) => entry.startedInDeck),
+      );
+      state.player.deckEntityIds.addAll(
+        returned.map((entry) => entry.entityId),
       );
       _shuffleDeck(state.player);
     }
@@ -982,7 +996,8 @@ class GameController extends ChangeNotifier {
       keep.add(entry.key);
     }
     if (keep.isEmpty && indexed.isNotEmpty) keep.add(indexed.first.key);
-    final returned = <({CardDefinition card, bool startedInDeck})>[];
+    final returned =
+        <({CardDefinition card, bool startedInDeck, String entityId})>[];
     _syncHandCostReductions(side);
     final returnIndexes = _expandedMulliganIndexes(
       side,
@@ -992,11 +1007,13 @@ class GameController extends ChangeNotifier {
     for (final index in returnIndexes.reversed) {
       final fragment = side.handFragments[index];
       final startedInDeck = side.handStartedInDeck[index];
+      final entityId = side.handEntityIds[index];
       final removed = side.hand.removeAt(index);
       if (fragment == null || returnedGroups.add(fragment.groupId)) {
         returned.add((
           card: card(removed.id) ?? removed,
           startedInDeck: startedInDeck,
+          entityId: entityId,
         ));
       }
       side.handCostReductions.removeAt(index);
@@ -1011,6 +1028,7 @@ class GameController extends ChangeNotifier {
     side.deck.addAll(returned.map((entry) => entry.card));
     side.deckCostOverrides.addAll(List<int?>.filled(returned.length, null));
     side.deckStartedInDeck.addAll(returned.map((entry) => entry.startedInDeck));
+    side.deckEntityIds.addAll(returned.map((entry) => entry.entityId));
     _shuffleDeck(side);
   }
 
@@ -1075,11 +1093,13 @@ class GameController extends ChangeNotifier {
       final drawn = side.deck.removeLast();
       final costOverride = side.deckCostOverrides.removeLast();
       final startedInDeck = side.deckStartedInDeck.removeLast();
+      final entityId = side.deckEntityIds.removeLast();
       if (_resolveDrawnCard(
         side,
         drawn,
         costOverride: costOverride,
         startedInDeck: startedInDeck,
+        entityId: entityId,
       )) {
         return;
       }
@@ -1120,6 +1140,7 @@ class GameController extends ChangeNotifier {
     CardDefinition drawn, {
     int? costOverride,
     bool startedInDeck = false,
+    required String entityId,
   }) {
     if (!drawn.castsWhenDrawn) {
       return _addCardToHand(
@@ -1127,6 +1148,7 @@ class GameController extends ChangeNotifier {
         drawn,
         costOverride: costOverride,
         startedInDeck: startedInDeck,
+        entityId: entityId,
       );
     }
     final state = battle;
@@ -1168,11 +1190,13 @@ class GameController extends ChangeNotifier {
     final drawn = side.deck.removeAt(matchIndex);
     final costOverride = side.deckCostOverrides.removeAt(matchIndex);
     final startedInDeck = side.deckStartedInDeck.removeAt(matchIndex);
+    final entityId = side.deckEntityIds.removeAt(matchIndex);
     if (_resolveDrawnCard(
       side,
       drawn,
       costOverride: costOverride,
       startedInDeck: startedInDeck,
+      entityId: entityId,
     )) {
       return true;
     }
@@ -1192,11 +1216,13 @@ class GameController extends ChangeNotifier {
     final drawn = side.deck.removeAt(matchIndex);
     final costOverride = side.deckCostOverrides.removeAt(matchIndex);
     final startedInDeck = side.deckStartedInDeck.removeAt(matchIndex);
+    final entityId = side.deckEntityIds.removeAt(matchIndex);
     if (_resolveDrawnCard(
       side,
       drawn,
       costOverride: costOverride,
       startedInDeck: startedInDeck,
+      entityId: entityId,
     )) {
       return true;
     }
@@ -1228,6 +1254,7 @@ class GameController extends ChangeNotifier {
     int? costReduction,
     String? fragment,
     bool startedInDeck = false,
+    String? entityId,
   }) {
     final available = 10 - _occupiedHandSlots(side);
     if (available <= 0) return false;
@@ -1244,7 +1271,7 @@ class GameController extends ChangeNotifier {
       side.handFragments.add(null);
       side.handStartedInDeck.add(startedInDeck);
       side.handEnteredTurns.add(enteredTurn);
-      side.handEntityIds.add(_nextHandEntityId());
+      side.handEntityIds.add(entityId ?? _nextCardEntityId());
       return true;
     }
     final groupId = 'm${_shatterGroupSequence++}';
@@ -1254,7 +1281,7 @@ class GameController extends ChangeNotifier {
       side.handFragments.add(HandFragment(groupId: groupId, piece: fragment));
       side.handStartedInDeck.add(startedInDeck);
       side.handEnteredTurns.add(enteredTurn);
-      side.handEntityIds.add(_nextHandEntityId());
+      side.handEntityIds.add(entityId ?? _nextCardEntityId());
       return true;
     }
     side.hand.insert(0, _shatterFragmentCard(drawn, 'left'));
@@ -1262,7 +1289,7 @@ class GameController extends ChangeNotifier {
     side.handFragments.insert(0, HandFragment(groupId: groupId, piece: 'left'));
     side.handStartedInDeck.insert(0, startedInDeck);
     side.handEnteredTurns.insert(0, enteredTurn);
-    side.handEntityIds.insert(0, _nextHandEntityId());
+    side.handEntityIds.insert(0, entityId ?? _nextCardEntityId());
     var fragmentCount = 1;
     if (available >= 2) {
       side.hand.add(_shatterFragmentCard(drawn, 'right'));
@@ -1270,7 +1297,7 @@ class GameController extends ChangeNotifier {
       side.handFragments.add(HandFragment(groupId: groupId, piece: 'right'));
       side.handStartedInDeck.add(startedInDeck);
       side.handEnteredTurns.add(enteredTurn);
-      side.handEntityIds.add(_nextHandEntityId());
+      side.handEntityIds.add(_nextCardEntityId());
       fragmentCount = 2;
     } else {
       stateLog('破碎片燃毁', '${drawn.name} 的右片因手牌空间不足被销毁。');
@@ -1437,6 +1464,7 @@ class GameController extends ChangeNotifier {
     if (index < 0) return false;
     _syncHandCostReductions(state.player);
     final startedInDeck = state.player.handStartedInDeck[index];
+    final handEntityId = state.player.handEntityIds[index];
     state.player.hand.removeAt(index);
     state.player.handCostReductions.removeAt(index);
     state.player.handFragments.removeAt(index);
@@ -1453,6 +1481,7 @@ class GameController extends ChangeNotifier {
     state.player.deck.insert(insertionIndex, this.card(card.id) ?? card);
     state.player.deckCostOverrides.insert(insertionIndex, null);
     state.player.deckStartedInDeck.insert(insertionIndex, startedInDeck);
+    state.player.deckEntityIds.insert(insertionIndex, handEntityId);
     state.logs.insert(0, '${card.name} 已交易，抽取一张替代档案。');
     _emitFx(
       'trade',
@@ -2564,22 +2593,25 @@ class GameController extends ChangeNotifier {
     while (side.handEntityIds.length > side.hand.length) {
       side.handEntityIds.removeLast();
     }
-    final seenEntityIds = side.board.map((unit) => unit.instanceId).toSet();
+    final seenEntityIds = <String>{
+      ...side.deckEntityIds.take(side.deck.length),
+      ...side.board.map((unit) => unit.instanceId),
+    };
     for (var index = 0; index < side.handEntityIds.length; index++) {
       final entityId = side.handEntityIds[index];
       if (entityId.isEmpty || !seenEntityIds.add(entityId)) {
-        var replacement = _nextHandEntityId();
+        var replacement = _nextCardEntityId();
         while (seenEntityIds.contains(replacement)) {
-          replacement = _nextHandEntityId();
+          replacement = _nextCardEntityId();
         }
         side.handEntityIds[index] = replacement;
         seenEntityIds.add(replacement);
       }
     }
     while (side.handEntityIds.length < side.hand.length) {
-      var entityId = _nextHandEntityId();
+      var entityId = _nextCardEntityId();
       while (seenEntityIds.contains(entityId)) {
-        entityId = _nextHandEntityId();
+        entityId = _nextCardEntityId();
       }
       side.handEntityIds.add(entityId);
       seenEntityIds.add(entityId);
@@ -2621,6 +2653,32 @@ class GameController extends ChangeNotifier {
     while (side.deckStartedInDeck.length < side.deck.length) {
       side.deckStartedInDeck.add(true);
     }
+    while (side.deckEntityIds.length > side.deck.length) {
+      side.deckEntityIds.removeLast();
+    }
+    final seenEntityIds = <String>{
+      ...side.handEntityIds,
+      ...side.board.map((unit) => unit.instanceId),
+    };
+    for (var index = 0; index < side.deckEntityIds.length; index++) {
+      final entityId = side.deckEntityIds[index];
+      if (entityId.isEmpty || !seenEntityIds.add(entityId)) {
+        var replacement = _nextCardEntityId();
+        while (seenEntityIds.contains(replacement)) {
+          replacement = _nextCardEntityId();
+        }
+        side.deckEntityIds[index] = replacement;
+        seenEntityIds.add(replacement);
+      }
+    }
+    while (side.deckEntityIds.length < side.deck.length) {
+      var entityId = _nextCardEntityId();
+      while (seenEntityIds.contains(entityId)) {
+        entityId = _nextCardEntityId();
+      }
+      side.deckEntityIds.add(entityId);
+      seenEntityIds.add(entityId);
+    }
   }
 
   void _shuffleDeck(BattleSide side) {
@@ -2631,6 +2689,7 @@ class GameController extends ChangeNotifier {
         card: side.deck[index],
         cost: side.deckCostOverrides[index],
         startedInDeck: side.deckStartedInDeck[index],
+        entityId: side.deckEntityIds[index],
       ),
     )..shuffle(_random);
     side.deck
@@ -2642,6 +2701,9 @@ class GameController extends ChangeNotifier {
     side.deckStartedInDeck
       ..clear()
       ..addAll(entries.map((entry) => entry.startedInDeck));
+    side.deckEntityIds
+      ..clear()
+      ..addAll(entries.map((entry) => entry.entityId));
   }
 
   List<int> _expandedMulliganIndexes(BattleSide side, Iterable<int> requested) {
@@ -3540,6 +3602,10 @@ class GameController extends ChangeNotifier {
               recipient.deck.insert(insertionIndex, generated);
               recipient.deckCostOverrides.insert(insertionIndex, fixedCost);
               recipient.deckStartedInDeck.insert(insertionIndex, false);
+              recipient.deckEntityIds.insert(
+                insertionIndex,
+                _nextCardEntityId(),
+              );
             }
             stateLog(
               sourceName,

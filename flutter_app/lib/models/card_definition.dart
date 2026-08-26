@@ -362,6 +362,7 @@ class BattleSide {
     required this.deck,
     List<int?>? deckCostOverrides,
     List<bool>? deckStartedInDeck,
+    List<String>? deckEntityIds,
     required this.hand,
     List<int>? handCostReductions,
     List<HandFragment?>? handFragments,
@@ -387,6 +388,13 @@ class BattleSide {
   }) : deckCostOverrides = List<int?>.from(deckCostOverrides ?? const <int?>[]),
        deckStartedInDeck = List<bool>.from(
          deckStartedInDeck ?? List<bool>.filled(deck.length, true),
+       ),
+       deckEntityIds = List<String>.from(
+         deckEntityIds ??
+             List<String>.generate(
+               deck.length,
+               (index) => 'legacy-deck-$index-${deck[index].id}',
+             ),
        ),
        handCostReductions = handCostReductions ?? <int>[],
        handFragments = handFragments ?? <HandFragment?>[],
@@ -421,6 +429,7 @@ class BattleSide {
   final List<CardDefinition> deck;
   final List<int?> deckCostOverrides;
   final List<bool> deckStartedInDeck;
+  final List<String> deckEntityIds;
   final List<CardDefinition> hand;
   final List<int> handCostReductions;
   final List<HandFragment?> handFragments;

@@ -343,6 +343,12 @@ void main() {
     controller.startBattle();
     final state = controller.battle!;
     expect(state.phase, 'mulligan');
+    final openingEntityIds = <String>{
+      ...state.player.deckEntityIds,
+      ...state.player.handEntityIds,
+    };
+    expect(openingEntityIds, hasLength(30));
+    expect(state.player.deckEntityIds, hasLength(state.player.deck.length));
     state.player.hand
       ..clear()
       ..addAll([expensive, cheap, cheap]);
@@ -3025,14 +3031,22 @@ void main() {
       state.player.hand
         ..clear()
         ..add(tradeCard);
+      state.player.handEntityIds
+        ..clear()
+        ..add('mobile-physical-trade');
       state.player.deck
         ..clear()
         ..add(filler);
+      state.player.deckEntityIds
+        ..clear()
+        ..add('mobile-physical-replacement');
       state.player.mana = 2;
       expect(controller.tradeCard(tradeCard), isTrue);
       expect(state.player.mana, 1);
       expect(state.player.hand.map((card) => card.id), [filler.id]);
       expect(state.player.deck.map((card) => card.id), [tradeCard.id]);
+      expect(state.player.handEntityIds, ['mobile-physical-replacement']);
+      expect(state.player.deckEntityIds, ['mobile-physical-trade']);
 
       state.player.hand
         ..clear()
@@ -3163,6 +3177,7 @@ void main() {
 
     expect(controller.playCard(shuffler), isTrue);
     expect(state.ai.deck.where((card) => card.id == mine.id), hasLength(2));
+    expect(state.ai.deckEntityIds.toSet(), hasLength(state.ai.deck.length));
 
     state.ai.deck
       ..clear()
@@ -3173,6 +3188,9 @@ void main() {
     state.ai.deckStartedInDeck
       ..clear()
       ..addAll([true, false]);
+    state.ai.deckEntityIds
+      ..clear()
+      ..addAll(['mobile-physical-filler', 'mobile-physical-mine']);
     state.ai.hand.clear();
     state.ai.handCostReductions.clear();
     state.ai.handFragments.clear();
@@ -3183,6 +3201,7 @@ void main() {
 
     expect(state.ai.heroHealth, 27);
     expect(state.ai.hand.map((card) => card.id), contains(filler.id));
+    expect(state.ai.handEntityIds, contains('mobile-physical-filler'));
     expect(state.ai.hand.map((card) => card.id), isNot(contains(mine.id)));
     expect(
       state.logs.any(
