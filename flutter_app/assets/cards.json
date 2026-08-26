@@ -1042,14 +1042,16 @@
   {
     "id": "sun-supernova-judgment",
     "name": "新星裁决刃",
-    "description": "武器：6 点攻击，2 点耐久。",
+    "description": "你的英雄在攻击时免疫。",
     "faction": "曜光",
     "type": "weapon",
     "cost": 6,
     "rarity": "史诗",
     "attack": 6,
     "durability": 2,
-    "keywords": [],
+    "keywords": [
+      "immune-while-attacking"
+    ],
     "onDeath": [],
     "effect": [],
     "set": "scarab-2026"

@@ -8369,6 +8369,7 @@ function HeroCore({
         {side.weapon && (
           <span className="hero-core__weapon" aria-label={`装备 ${side.weapon.name}，攻击 ${side.weapon.attack}，耐久 ${side.weapon.durability}/${side.weapon.maxDurability}`}>
             ⚔ {side.weapon.name} · {side.weapon.attack}/{side.weapon.durability}
+            {CARD_BY_ID.get(side.weapon.cardId)?.keywords?.includes("immune-while-attacking") ? " · 攻击时免疫" : ""}
           </span>
         )}
         {side.heroAttackBonus > 0 && (

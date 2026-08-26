@@ -68,6 +68,7 @@ test("ships the complete product surface and removes starter assets", async () =
   const elusiveCard = CARD_CATALOG.find((card) => card.id === "neutral-caravan-guard");
   const immuneCard = CARD_CATALOG.find((card) => card.id === "neutral-season-spell-03");
   const permanentImmuneCard = CARD_CATALOG.find((card) => card.id === "neutral-season-14");
+  const attackImmuneWeapon = CARD_CATALOG.find((card) => card.id === "sun-supernova-judgment");
   const cardArt = await Promise.all(
     cardIds.map(async (cardId) => {
       const assetUrl = new URL(`../public/cards/${cardId}.webp`, import.meta.url);
@@ -183,8 +184,10 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(game, /扰魔：不能成为法术或技能目标/);
   assert.equal(immuneCard?.effect?.[0]?.kind, "grant-immune");
   assert.ok(permanentImmuneCard?.keywords?.includes("immune"));
+  assert.ok(attackImmuneWeapon?.keywords?.includes("immune-while-attacking"));
   assert.match(game, /heroImmuneThisTurn/);
   assert.match(game, /battleUnitIsImmune/);
+  assert.match(game, /攻击时免疫/);
   assert.match(game, /本回合免疫/);
   assert.match(game, /heroFrozenTurns/);
   assert.match(game, /英雄被冻结，必须跳过下一次攻击/);

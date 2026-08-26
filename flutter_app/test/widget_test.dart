@@ -2810,6 +2810,63 @@ void main() {
     controller.dispose();
   });
 
+  test('mobile attack-time Immune blocks retaliation and then expires', () {
+    final weapon = CardDefinition(
+      id: 'attack-immune-weapon',
+      name: '攻击免疫测试刃',
+      description: '你的英雄在攻击时免疫。',
+      faction: '曜光',
+      type: 'weapon',
+      cost: 1,
+      rarity: '稀有',
+      attack: 3,
+      durability: 2,
+      keywords: const ['immune-while-attacking'],
+    );
+    final defenderCard = CardDefinition(
+      id: 'attack-immune-defender',
+      name: '反击测试单位',
+      description: '用于验证攻击窗口。',
+      faction: '中立',
+      type: 'unit',
+      cost: 1,
+      rarity: '普通',
+      attack: 5,
+      health: 6,
+    );
+    final controller = GameController(startingPlayer: 'player')
+      ..catalog = [weapon, defenderCard]
+      ..deckIds.addAll(List.filled(30, defenderCard.id));
+    controller.startBattle();
+    controller.confirmMulligan();
+    final state = controller.battle!;
+    final defender = BattleUnit(
+      instanceId: 'attack-immune-mobile-target',
+      card: defenderCard,
+      owner: 'ai',
+      attack: 5,
+      health: 6,
+      maxHealth: 6,
+    );
+    state.ai.board
+      ..clear()
+      ..add(defender);
+    state.player.hand
+      ..clear()
+      ..add(weapon);
+    state.player.handEntityIds
+      ..clear()
+      ..add('attack-immune-mobile-weapon');
+    state.player.mana = 10;
+
+    expect(controller.playCard(weapon), isTrue);
+    expect(controller.heroAttack(target: defender), isTrue);
+    expect(state.player.heroHealth, 30);
+    expect(state.player.heroImmuneThisTurn, isFalse);
+    expect(state.player.weapon?.durability, 1);
+    controller.dispose();
+  });
+
   test('lethal unit combat still deals simultaneous retaliation damage', () {
     CardDefinition unit(String id, int attack, int health) => CardDefinition(
       id: id,

@@ -1679,6 +1679,10 @@ class GameController extends ChangeNotifier {
       return false;
     }
     if (target == null && state.ai.heroImmuneThisTurn) return false;
+    final previousImmunity = state.player.heroImmuneThisTurn;
+    final attackImmunity =
+        weapon?.card.keywords.contains('immune-while-attacking') ?? false;
+    if (attackImmunity) state.player.heroImmuneThisTurn = true;
     if (target == null) {
       _triggerSecrets(
         state.ai,
@@ -1686,6 +1690,7 @@ class GameController extends ChangeNotifier {
         triggeringSide: state.player,
       );
       if (state.player.heroHealth <= 0) {
+        state.player.heroImmuneThisTurn = previousImmunity;
         _processDeaths();
         _checkFinished();
         notifyListeners();
@@ -1705,6 +1710,7 @@ class GameController extends ChangeNotifier {
         _healHero(state.ai, reflected);
       }
     }
+    if (attackImmunity) state.player.heroImmuneThisTurn = previousImmunity;
     state.player.heroHasAttacked = true;
     if (weapon != null) weapon.durability--;
     final attackSource = weapon?.card.name ?? state.player.heroName;
@@ -5118,6 +5124,10 @@ class GameController extends ChangeNotifier {
     final weapon = state.ai.weapon;
     final attack = (weapon?.attack ?? 0) + state.ai.heroAttackBonus;
     if (attack <= 0 || state.ai.heroFrozenTurns > 0) return;
+    final previousImmunity = state.ai.heroImmuneThisTurn;
+    final attackImmunity =
+        weapon?.card.keywords.contains('immune-while-attacking') ?? false;
+    if (attackImmunity) state.ai.heroImmuneThisTurn = true;
     if (target == null) {
       _triggerSecrets(
         state.player,
@@ -5125,6 +5135,7 @@ class GameController extends ChangeNotifier {
         triggeringSide: state.ai,
       );
       if (state.ai.heroHealth <= 0) {
+        state.ai.heroImmuneThisTurn = previousImmunity;
         _processDeaths();
         _checkFinished();
         return;
@@ -5141,6 +5152,7 @@ class GameController extends ChangeNotifier {
         _healHero(state.player, reflected);
       }
     }
+    if (attackImmunity) state.ai.heroImmuneThisTurn = previousImmunity;
     state.ai.heroHasAttacked = true;
     if (weapon != null) weapon.durability--;
     final attackSource = weapon?.card.name ?? state.ai.heroName;
