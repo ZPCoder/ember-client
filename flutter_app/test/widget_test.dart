@@ -265,8 +265,12 @@ void main() {
       );
       expect(generatedBattleCards, hasLength(20));
       expect(
-        generatedBattleCards.singleWhere((card) => card.id == 'the-coin').effect,
-        [<String, dynamic>{'kind': 'gain-temporary-mana', 'amount': 1}],
+        generatedBattleCards
+            .singleWhere((card) => card.id == 'the-coin')
+            .effect,
+        [
+          <String, dynamic>{'kind': 'gain-temporary-mana', 'amount': 1},
+        ],
       );
       expect(
         generatedBattleCards
@@ -568,6 +572,71 @@ void main() {
       expect(state.player.hand.single, echo);
       expect(state.player.handCostReductions, [0]);
       expect(state.player.discardHistory, hasLength(1));
+      controller.dispose();
+    },
+  );
+
+  test(
+    'mobile Coin participates in generic random discard with one identity',
+    () async {
+      final filler = CardDefinition(
+        id: 'coin-discard-filler',
+        name: '弃牌占位',
+        description: '构造合法测试牌组。',
+        faction: '幽潮',
+        type: 'unit',
+        cost: 1,
+        rarity: '普通',
+        attack: 1,
+        health: 1,
+      );
+      final discard = CardDefinition(
+        id: 'coin-discard-source',
+        name: '弃置幸运币',
+        description: '随机弃 1 张牌。',
+        faction: '幽潮',
+        type: 'spell',
+        cost: 0,
+        rarity: '普通',
+        effect: const [
+          {'kind': 'discard-random', 'count': 1},
+        ],
+      );
+      final coin = generatedBattleCards.singleWhere(
+        (card) => card.id == 'the-coin',
+      );
+      final controller = GameController(startingPlayer: 'player')
+        ..catalog = [filler, discard]
+        ..deckIds.addAll(List.filled(30, filler.id));
+      controller.startBattle();
+      await controller.confirmMulligan();
+      final state = controller.battle!;
+      state.player.hand
+        ..clear()
+        ..addAll([discard, coin]);
+      state.player.handCostReductions
+        ..clear()
+        ..addAll([0, 0]);
+      state.player.handFragments
+        ..clear()
+        ..addAll([null, null]);
+      state.player.handStartedInDeck
+        ..clear()
+        ..addAll([true, false]);
+      state.player.handEnteredTurns
+        ..clear()
+        ..addAll([0, 0]);
+      state.player.handEntityIds
+        ..clear()
+        ..addAll(['mobile-discard-source', 'mobile-discarded-coin']);
+
+      expect(controller.playCard(discard, handIndex: 0), isTrue);
+      expect(state.player.hand, isEmpty);
+      expect(state.player.coinAvailable, isFalse);
+      expect(state.player.coinEntityId, isNull);
+      expect(state.player.discardHistory.last.cardId, coin.id);
+      expect(state.player.cardGraveyard.last.entityId, 'mobile-discarded-coin');
+      expect(state.player.cardGraveyard.last.reason, 'discarded');
       controller.dispose();
     },
   );
@@ -1363,6 +1432,45 @@ void main() {
       expect(controller.chooseDiscover(duplicate.id, choiceIndex: 1), isTrue);
       expect(state.player.hand, [duplicate]);
       expect(state.player.handCostReductions, [3]);
+
+      final coin = generatedBattleCards.singleWhere(
+        (card) => card.id == 'the-coin',
+      );
+      state.player.hand
+        ..clear()
+        ..add(handCopy);
+      state.player.handCostReductions
+        ..clear()
+        ..add(0);
+      state.player.handFragments
+        ..clear()
+        ..add(null);
+      state.ai.hand
+        ..clear()
+        ..add(coin);
+      state.ai.handCostReductions
+        ..clear()
+        ..add(0);
+      state.ai.handFragments
+        ..clear()
+        ..add(null);
+      state.ai.handStartedInDeck
+        ..clear()
+        ..add(false);
+      state.ai.handEnteredTurns
+        ..clear()
+        ..add(0);
+      state.ai.handEntityIds
+        ..clear()
+        ..add('mobile-enemy-coin');
+      expect(controller.playCard(handCopy), isTrue);
+      expect(state.discoverChoices, [coin.id]);
+      expect(controller.chooseDiscover(coin.id, choiceIndex: 0), isTrue);
+      expect(state.ai.hand, [coin]);
+      expect(state.player.hand, [coin]);
+      expect(state.player.coinAvailable, isTrue);
+      expect(state.player.handStartedInDeck, [false]);
+      expect(state.player.coinEntityId, isNot('mobile-enemy-coin'));
 
       state.player.hand
         ..clear()
@@ -2227,7 +2335,11 @@ void main() {
     expect(state.ai.hand, hasLength(4));
     expect(state.ai.maxMana, 1);
     expect(state.aiTurnsStarted, 1);
-    expect(state.player.hand, hasLength(5));
+    expect(state.player.hand, hasLength(6));
+    expect(
+      state.player.hand.where((card) => card.id == 'the-coin'),
+      hasLength(1),
+    );
     expect(state.player.maxMana, 1);
     expect(state.player.mana, 1);
     expect(state.playerTurnsStarted, 1);
@@ -3374,15 +3486,18 @@ void main() {
     final state = controller.battle!;
     state.player.mana = 10;
     state.player.coinAvailable = true;
+    final coin = generatedBattleCards.singleWhere(
+      (card) => card.id == 'the-coin',
+    );
     state.player.hand
       ..clear()
-      ..addAll(List.filled(9, drawCard));
+      ..addAll([...List.filled(9, drawCard), coin]);
     state.player.deck
       ..clear()
       ..add(drawCard);
 
     expect(controller.useHeroPower(), isTrue);
-    expect(state.player.hand, hasLength(9));
+    expect(state.player.hand, hasLength(10));
     expect(state.player.deck, isEmpty);
     expect(state.logs.any((log) => log.contains('燃毁')), isTrue);
     controller.dispose();
@@ -3896,7 +4011,10 @@ void main() {
       expect(state.player.hand, hasLength(10));
       expect(state.player.deck, isEmpty);
       expect(state.logs.any((log) => log.contains('燃毁')), isTrue);
-      expect(state.player.cardGraveyard.single.entityId, 'mobile-overdraw-spell-entity');
+      expect(
+        state.player.cardGraveyard.single.entityId,
+        'mobile-overdraw-spell-entity',
+      );
       expect(state.player.cardGraveyard.single.fromZone, 'deck');
       expect(state.player.cardGraveyard.single.reason, 'burned');
       controller.dispose();
@@ -5345,7 +5463,10 @@ void main() {
       expect(state.player.spellsPlayedEntityIds, [
         'mobile-discover-spell-entity',
       ]);
-      expect(state.player.cardGraveyard.single.entityId, 'mobile-discover-spell-entity');
+      expect(
+        state.player.cardGraveyard.single.entityId,
+        'mobile-discover-spell-entity',
+      );
       expect(state.player.cardGraveyard.single.reason, 'resolved');
       expect(state.phase, 'discover');
       expect(state.discoverChoices, [choice.id]);
@@ -5555,7 +5676,10 @@ void main() {
       expect(controller.playCard(heroCard), isTrue);
       expect(state.player.heroName, '赤曜灭世者');
       expect(state.player.heroCardEntityId, 'mobile-hero-card-entity');
-      expect(state.player.cardGraveyard.single.entityId, 'mobile-hero-card-entity');
+      expect(
+        state.player.cardGraveyard.single.entityId,
+        'mobile-hero-card-entity',
+      );
       expect(state.player.cardGraveyard.single.reason, 'transformed');
       expect(state.player.armor, 12);
       expect(state.playerHeroPower.name, '残酷撕裂');

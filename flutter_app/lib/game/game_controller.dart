@@ -38,6 +38,16 @@ class GameController extends ChangeNotifier {
       _forcedStartingPlayer = startingPlayer,
       _startingPlayerRandom = startingPlayerRandom ?? Random();
 
+  @override
+  void notifyListeners() {
+    final state = battle;
+    if (state != null && state.phase != 'mulligan') {
+      _syncCoinMirror(state.player);
+      _syncCoinMirror(state.ai);
+    }
+    super.notifyListeners();
+  }
+
   List<CardDefinition> catalog = const [];
   final Map<String, int> collection = <String, int>{};
   final List<String> deckIds = <String>[];
@@ -945,6 +955,9 @@ class GameController extends ChangeNotifier {
       returned.isEmpty ? '起手牌已确认。' : '起手换牌完成，替换 ${returned.length} 张牌。',
     );
 
+    _ensureCoinInHand(state.player);
+    _ensureCoinInHand(state.ai);
+
     if (state.activePlayer == 'ai') {
       isResolvingTurn = true;
       state.phase = 'end';
@@ -1456,6 +1469,17 @@ class GameController extends ChangeNotifier {
         (placement != 'enemy' || !card.isUnit || !card.disguised)) {
       return false;
     }
+    if (card.id == 'the-coin') {
+      final played = _playCoinForSide(
+        source: state.player,
+        enemy: state.ai,
+        owner: 'player',
+        handIndex: resolvedHandIndex,
+      );
+      if (!played) return false;
+      notifyListeners();
+      return true;
+    }
     final recipient = placement == 'enemy' ? state.ai : state.player;
     if (resolvedHandIndex < 0 ||
         (card.isUnit &&
@@ -1891,11 +1915,16 @@ class GameController extends ChangeNotifier {
     if (state == null ||
         state.finished ||
         state.phase != 'main' ||
-        state.activePlayer != 'player' ||
-        !state.player.coinAvailable) {
+        state.activePlayer != 'player') {
       return false;
     }
-    _playCoinForSide(source: state.player, enemy: state.ai, owner: 'player');
+    if (!_playCoinForSide(
+      source: state.player,
+      enemy: state.ai,
+      owner: 'player',
+    )) {
+      return false;
+    }
     notifyListeners();
     return true;
   }
@@ -1904,12 +1933,22 @@ class GameController extends ChangeNotifier {
     required BattleSide source,
     required BattleSide enemy,
     required String owner,
+    int? handIndex,
   }) {
-    if (!source.coinAvailable) return false;
+    _ensureCoinInHand(source);
     final coin = card('the-coin');
-    final coinEntityId = source.coinEntityId ?? _nextCardEntityId();
-    source.coinAvailable = false;
-    source.coinEntityId = null;
+    if (coin == null) return false;
+    final resolvedHandIndex = _resolveHandIndex(source, coin, handIndex);
+    if (resolvedHandIndex < 0) return false;
+    _syncHandCostReductions(source);
+    final coinEntityId = source.handEntityIds[resolvedHandIndex];
+    source.hand.removeAt(resolvedHandIndex);
+    source.handCostReductions.removeAt(resolvedHandIndex);
+    source.handFragments.removeAt(resolvedHandIndex);
+    source.handStartedInDeck.removeAt(resolvedHandIndex);
+    source.handEnteredTurns.removeAt(resolvedHandIndex);
+    source.handEntityIds.removeAt(resolvedHandIndex);
+    _syncCoinMirror(source);
     // The Coin is a real 0-cost spell: it counts as the previous card for
     // Combo even when Counterspell prevents its mana effect.
     source.cardsPlayedThisTurn++;
@@ -1919,43 +1958,39 @@ class GameController extends ChangeNotifier {
       triggeringSide: source,
     );
     if (countered) {
-      if (coin != null) {
-        _sendCardToGraveyard(
-          source,
-          coin,
-          coinEntityId,
-          fromZone: 'hand',
-          reason: 'countered',
-        );
-      }
+      _sendCardToGraveyard(
+        source,
+        coin,
+        coinEntityId,
+        fromZone: 'hand',
+        reason: 'countered',
+      );
       stateLog(owner == 'player' ? '幸运币被反制。' : '敌方的幸运币被反制。');
       _processDeaths();
       _checkFinished();
       return true;
     }
 
-    if (coin != null) {
-      while (source.spellsPlayedEntityIds.length <
-          source.spellsPlayedThisGame.length) {
-        source.spellsPlayedEntityIds.add(
-          'legacy-spell-${source.spellsPlayedEntityIds.length}-${source.spellsPlayedThisGame[source.spellsPlayedEntityIds.length]}',
-        );
-      }
-      while (source.spellsPlayedFromStartingDeck.length <
-          source.spellsPlayedThisGame.length) {
-        source.spellsPlayedFromStartingDeck.add(true);
-      }
-      source.spellsPlayedThisGame.add(coin.id);
-      source.spellsPlayedEntityIds.add(coinEntityId);
-      source.spellsPlayedFromStartingDeck.add(false);
-      _sendCardToGraveyard(
-        source,
-        coin,
-        coinEntityId,
-        fromZone: 'hand',
-        reason: 'resolved',
+    while (source.spellsPlayedEntityIds.length <
+        source.spellsPlayedThisGame.length) {
+      source.spellsPlayedEntityIds.add(
+        'legacy-spell-${source.spellsPlayedEntityIds.length}-${source.spellsPlayedThisGame[source.spellsPlayedEntityIds.length]}',
       );
     }
+    while (source.spellsPlayedFromStartingDeck.length <
+        source.spellsPlayedThisGame.length) {
+      source.spellsPlayedFromStartingDeck.add(true);
+    }
+    source.spellsPlayedThisGame.add(coin.id);
+    source.spellsPlayedEntityIds.add(coinEntityId);
+    source.spellsPlayedFromStartingDeck.add(false);
+    _sendCardToGraveyard(
+      source,
+      coin,
+      coinEntityId,
+      fromZone: 'hand',
+      reason: 'resolved',
+    );
 
     final absorbsOverloadDebt = source.overloadLocked > source.maxMana;
     if (absorbsOverloadDebt) {
@@ -2746,6 +2781,36 @@ class GameController extends ChangeNotifier {
     }
   }
 
+  void _syncCoinMirror(BattleSide side) {
+    _syncHandCostReductions(side);
+    final coinIndex = side.hand.indexWhere((item) => item.id == 'the-coin');
+    side.coinAvailable = coinIndex >= 0;
+    side.coinEntityId = coinIndex >= 0 ? side.handEntityIds[coinIndex] : null;
+  }
+
+  void _ensureCoinInHand(BattleSide side) {
+    final existingIndex = side.hand.indexWhere((item) => item.id == 'the-coin');
+    if (existingIndex >= 0) {
+      _syncCoinMirror(side);
+      return;
+    }
+    if (!side.coinAvailable || side.hand.length >= 10) {
+      _syncCoinMirror(side);
+      return;
+    }
+    final coin = card('the-coin');
+    if (coin == null) return;
+    final reservedEntityId = side.coinEntityId ?? _nextCardEntityId();
+    _syncHandCostReductions(side);
+    side.hand.add(coin);
+    side.handCostReductions.add(0);
+    side.handFragments.add(null);
+    side.handStartedInDeck.add(false);
+    side.handEnteredTurns.add(0);
+    side.handEntityIds.add(reservedEntityId);
+    _syncCoinMirror(side);
+  }
+
   List<({String cardId, int costReduction, String? fragment})>
   _opponentHandCopyChoices(BattleSide side) {
     _syncHandCostReductions(side);
@@ -2945,8 +3010,7 @@ class GameController extends ChangeNotifier {
     );
   }
 
-  int _occupiedHandSlots(BattleSide side) =>
-      side.hand.length + (side.coinAvailable ? 1 : 0);
+  int _occupiedHandSlots(BattleSide side) => side.hand.length;
 
   bool _isPureSummonSpell(CardDefinition card, BattleSide source) {
     if (card.type != 'spell') return false;
@@ -4440,7 +4504,8 @@ class GameController extends ChangeNotifier {
     required String fromZone,
     required String reason,
   }) {
-    if (card.isUnit || side.cardGraveyard.any((entry) => entry.entityId == entityId)) {
+    if (card.isUnit ||
+        side.cardGraveyard.any((entry) => entry.entityId == entityId)) {
       return;
     }
     side.cardGraveyard.add(
@@ -4643,7 +4708,7 @@ class GameController extends ChangeNotifier {
 
   Future<void> _aiTurn(BattleState state) async {
     if (state.finished) return;
-    if (state.ai.coinAvailable &&
+    if (state.ai.hand.any((card) => card.id == 'the-coin') &&
         state.ai.hand.any(
           (card) => card.cost > state.ai.mana && card.cost <= state.ai.mana + 1,
         )) {
@@ -4700,6 +4765,7 @@ class GameController extends ChangeNotifier {
       var placement = 'friendly';
       for (final candidateIndex in candidates) {
         final candidate = state.ai.hand[candidateIndex];
+        if (candidate.id == 'the-coin') continue;
         final candidatePlacement = _chooseAiCardPlacement(state, candidate);
         final recipient = candidatePlacement == 'enemy'
             ? state.player

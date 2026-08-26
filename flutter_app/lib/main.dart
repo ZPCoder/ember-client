@@ -2964,15 +2964,6 @@ class _BattleBoardState extends State<BattleBoard> {
                             runSpacing: 7,
                             alignment: WrapAlignment.end,
                             children: [
-                              if (state.player.coinAvailable)
-                                OutlinedButton.icon(
-                                  onPressed: controller.useCoin,
-                                  icon: const Icon(
-                                    Icons.monetization_on,
-                                    size: 15,
-                                  ),
-                                  label: const Text('幸运币'),
-                                ),
                               if (state.player.weapon != null ||
                                   state.player.heroAttackBonus > 0)
                                 OutlinedButton.icon(
@@ -5049,14 +5040,6 @@ class OnlineBattlePanel extends StatelessWidget {
                           color: Color(0xFFB99ACF),
                           fontSize: 10,
                         ),
-                      ),
-                    if (controller.localCoinAvailable)
-                      OutlinedButton.icon(
-                        onPressed: controller.canAct
-                            ? controller.useCoin
-                            : null,
-                        icon: const Icon(Icons.monetization_on, size: 14),
-                        label: const Text('幸运币'),
                       ),
                     if (controller.localWeaponCard != null ||
                         controller.localHeroAttackBonus > 0)

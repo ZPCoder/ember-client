@@ -4872,12 +4872,6 @@ export function GameApp({
     }
   };
 
-  const useCoin = () => {
-    if (battleEffectLockRef.current) return;
-    const next = issueCommand({ type: "use-coin", player: 0 });
-    if (next) setBattleMessage("已使用幸运币，获得 1 点临时能量。");
-  };
-
   const endTurn = () => {
     if (battleEffectLockRef.current) return;
     if (!battle || !battleView || battleView.currentPlayer !== "player") return;
@@ -5345,7 +5339,6 @@ export function GameApp({
                   }}
                   onAttack={attackTarget}
                   onHeroPower={useHeroPower}
-                  onUseCoin={useCoin}
                   onEndTurn={endTurn}
                   onSkipEffects={skipBattleReplay}
                   onConcede={concedeBattle}
@@ -7269,7 +7262,6 @@ function BattleSection({
   onCancelTarget,
   onAttack,
   onHeroPower,
-  onUseCoin,
   onEndTurn,
   onSkipEffects,
   onConcede,
@@ -7333,7 +7325,6 @@ function BattleSection({
   onCancelTarget: () => void;
   onAttack: (target: BattleTarget) => void;
   onHeroPower: () => void;
-  onUseCoin: () => void;
   onEndTurn: () => void;
   onSkipEffects: () => void;
   onConcede: () => void;
@@ -7795,9 +7786,8 @@ function BattleSection({
                 {battle.ai.overload > 0 && <small className="mana-readout__overload">下回合锁定 {battle.ai.overload}</small>}
               </div>
             </div>
-            <div className="enemy-hand" aria-label={`敌方有 ${battle.ai.hand.length + (battle.ai.coinAvailable ? 1 : 0)} 张手牌`}>
+            <div className="enemy-hand" aria-label={`敌方有 ${battle.ai.hand.length} 张手牌`}>
               {battle.ai.hand.map((card, index) => <span className="card-back" key={`${card.instanceId}-${index}`} />)}
-              {battle.ai.coinAvailable && <span className="card-back" key="enemy-coin" />}
               <small>{battle.ai.deckCount} 张牌库</small>
             </div>
             <SecretTray secrets={battle.ai.secrets} enemy />
@@ -7886,18 +7876,6 @@ function BattleSection({
                   })}
                 </div>
               </div>
-              {battle.player.coinAvailable && (
-                <button
-                  className="coin-button"
-                  type="button"
-                  disabled={!playerCanAct}
-                  onClick={onUseCoin}
-                  aria-label="使用幸运币，获得 1 点临时能量"
-                >
-                  <span className="coin-button__icon">◉</span>
-                  <span><strong>幸运币</strong><small>+1 临时能量</small></span>
-                </button>
-              )}
               {(battle.player.weapon || battle.player.heroAttackBonus > 0) && (
                 <button
                   className={`weapon-attack-button ${selectedAttacker === "hero-0" ? "weapon-attack-button--selected" : ""}`}
@@ -7925,8 +7903,8 @@ function BattleSection({
             <SecretTray secrets={battle.player.secrets} />
             <ZoneHistoryTray side={battle.player} />
             <div className="player-hand">
-              <span className={`player-hand__count ${battle.player.hand.length + (battle.player.coinAvailable ? 1 : 0) >= 10 ? "player-hand__count--full" : ""}`}>
-                手牌 {battle.player.hand.length + (battle.player.coinAvailable ? 1 : 0)} / 10
+              <span className={`player-hand__count ${battle.player.hand.length >= 10 ? "player-hand__count--full" : ""}`}>
+                手牌 {battle.player.hand.length} / 10
               </span>
               {battle.player.hand.map((handCard, handIndex) => {
                 const card = CARD_BY_ID.get(handCard.cardId);
@@ -8031,7 +8009,7 @@ function BattleSection({
                   </div>
                 );
               })}
-              {battle.player.hand.length === 0 && !battle.player.coinAvailable && <span className="player-hand__empty">手牌为空</span>}
+              {battle.player.hand.length === 0 && <span className="player-hand__empty">手牌为空</span>}
             </div>
             <div className="battle-mobile-dock" aria-label="移动端战斗操作">
               {effectsLocked ? (
