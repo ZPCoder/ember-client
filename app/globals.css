@@ -1541,6 +1541,31 @@ button.resource-chip:hover {
   font-size: 9px;
 }
 
+.pack-type-picker {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 6px 12px;
+  align-items: center;
+  margin: 0 0 16px;
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+.pack-type-picker select {
+  min-width: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: rgba(5, 12, 24, 0.78);
+  color: var(--paper);
+  padding: 9px 34px 9px 11px;
+  font: inherit;
+}
+
+.pack-type-picker small {
+  grid-column: 2;
+  color: var(--muted);
+}
+
 .pack-offer {
   display: grid;
   min-height: 300px;

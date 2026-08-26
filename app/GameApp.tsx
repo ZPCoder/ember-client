@@ -22,6 +22,7 @@ import {
   DEFAULT_STARTER_DECK,
   BULK_PACK_MAX_COUNT,
   BULK_PACK_MIN_COUNT,
+  EXPANSION_PACK_SET_IDS,
   drawPackBatch,
   ETERNAL_SCARAB_CARD_BACK_NAME,
   ETERNAL_SCARAB_LEGEND_SEASON_TARGET,
@@ -44,6 +45,8 @@ import {
   cardAvailableInRankedFormat,
   matchesParsedCardSearch,
   parseCardSearch,
+  packTypeAvailable,
+  packTypeLabel,
   chooseAiMulliganIndexes,
   completeDeckFromCollection,
   createMatch,
@@ -53,6 +56,7 @@ import {
   formatDeckShareText,
   getHeroPower,
   hasMinionType,
+  isPackType,
   getLadderReadyDeck,
   generateCatchUpPackReward,
   catchUpProgressFromCollection,
@@ -116,6 +120,8 @@ import {
   type BattleCommand,
   type CardDefinition,
   type CardSetId,
+  type ExpansionPackSetId,
+  type PackType,
   type CardTargetRule,
   type DeckRecipe,
   type Faction,
@@ -234,6 +240,8 @@ type PlayerSnapshot = {
   currencies: { gold: number; dust: number };
   packsAvailable: number;
   packPity?: { packsOpened: number; packsSinceLegendary: number };
+  expansionPacks?: Record<ExpansionPackSetId, number>;
+  expansionPackPity?: Record<ExpansionPackSetId, { packsOpened: number; packsSinceLegendary: number }>;
   collection: Record<string, number>;
   decks: SavedDeck[];
   activeDeckId: string | null;
@@ -828,6 +836,27 @@ type ProfileSource = "cloud" | "device" | "demo" | "cached";
 
 const LOCAL_PROFILE_KEY_PREFIX = "astra-protocol:player:v2:";
 
+function emptyExpansionPacks(): Record<ExpansionPackSetId, number> {
+  return Object.fromEntries(EXPANSION_PACK_SET_IDS.map((setId) => [setId, 0])) as Record<ExpansionPackSetId, number>;
+}
+
+function emptyExpansionPackPity(): Record<ExpansionPackSetId, { packsOpened: number; packsSinceLegendary: number }> {
+  return Object.fromEntries(EXPANSION_PACK_SET_IDS.map((setId) => [
+    setId,
+    { packsOpened: 0, packsSinceLegendary: 0 },
+  ])) as Record<ExpansionPackSetId, { packsOpened: number; packsSinceLegendary: number }>;
+}
+
+function playerPackCount(player: PlayerSnapshot, packType: PackType): number {
+  return packType === "standard" ? player.packsAvailable : player.expansionPacks?.[packType] ?? 0;
+}
+
+function playerPackPity(player: PlayerSnapshot, packType: PackType) {
+  return packType === "standard"
+    ? player.packPity ?? { packsOpened: 0, packsSinceLegendary: 0 }
+    : player.expansionPackPity?.[packType] ?? { packsOpened: 0, packsSinceLegendary: 0 };
+}
+
 function localProfileKey(email: string): string {
   return `${LOCAL_PROFILE_KEY_PREFIX}${encodeURIComponent(email.trim().toLowerCase())}`;
 }
@@ -899,6 +928,14 @@ function readLocalPlayer(email: string): PlayerSnapshot | null {
       rankedRewards: rolled.rankedRewards,
       collection: rolled.collection,
       packsAvailable: rolled.packsAvailable,
+      expansionPacks: {
+        ...emptyExpansionPacks(),
+        ...(parsed.expansionPacks ?? {}),
+      },
+      expansionPackPity: {
+        ...emptyExpansionPackPity(),
+        ...(parsed.expansionPackPity ?? {}),
+      },
       catchUpPack: {
         ...baseCatchUp,
         ...rolledCatchUpProgress,
@@ -954,6 +991,8 @@ function makeDemoPlayer(identity?: {
     currencies: { gold: 1280, dust: 360 },
     packsAvailable: 1,
     packPity: { packsOpened: 0, packsSinceLegendary: 0 },
+    expansionPacks: emptyExpansionPacks(),
+    expansionPackPity: emptyExpansionPackPity(),
     collection,
     decks: [deck],
     activeDeckId: deck.id,
@@ -1348,6 +1387,8 @@ function applyLocalAction(
     return { ok: true, player: { ...current, updatedAt: now }, targetId, localFallback: true };
   }
   if (action === "open_pack" || action === "open_packs") {
+    const packType: PackType = isPackType(body.packType) ? body.packType : "standard";
+    if (!packTypeAvailable(packType)) throw new Error(`${packTypeLabel(packType)}尚未开放。`);
     const packCount = action === "open_packs" ? asNumber(body.count) : 1;
     if (!Number.isInteger(packCount) || packCount < 1 || packCount > BULK_PACK_MAX_COUNT) {
       throw new Error(`开包数量必须是 1–${BULK_PACK_MAX_COUNT} 的整数。`);
@@ -1355,9 +1396,10 @@ function applyLocalAction(
     if (action === "open_packs" && packCount < BULK_PACK_MIN_COUNT) {
       throw new Error(`至少持有并开启 ${BULK_PACK_MIN_COUNT} 个同类卡包才能批量解密。`);
     }
-    if (current.packsAvailable < packCount) throw new Error(`当前只有 ${current.packsAvailable} 个可开启标准包。`);
-    const seed = current.stats.matchesPlayed + current.packsAvailable + current.currencies.gold;
-    const packPity = current.packPity ?? { packsOpened: 0, packsSinceLegendary: 0 };
+    const available = playerPackCount(current, packType);
+    if (available < packCount) throw new Error(`当前只有 ${available} 个可开启${packTypeLabel(packType)}。`);
+    const seed = current.stats.matchesPlayed + available + current.currencies.gold;
+    const packPity = playerPackPity(current, packType);
     const currentCatchUp = current.catchUpPack ?? {
       claimedAt: null,
       cardsGranted: 0,
@@ -1371,6 +1413,7 @@ function applyLocalAction(
         randomValuesByPack: Array.from({ length: packCount }, (_, packIndex) =>
           Array.from({ length: 10 }, (_, slotIndex) => seed + packIndex * 131 + slotIndex * 7)),
         duplicateProtectionCollection: currentCatchUp.receivedCopiesByCard,
+        packType,
       },
     );
     const catchUpProgress = recordCatchUpCards(
@@ -1378,13 +1421,22 @@ function applyLocalAction(
       batch.openedCards.flatMap((entry) => Array.from({ length: entry.count }, () => entry.cardId)),
     );
     const progressionXp = (current.progression?.xp ?? 0) + packCount * 50;
+    const selectedPackState = packType === "standard"
+      ? {
+          packsAvailable: Math.max(0, available - packCount),
+          packPity: { packsOpened: batch.packsOpened, packsSinceLegendary: batch.packsSinceLegendary },
+        }
+      : {
+          expansionPacks: { ...emptyExpansionPacks(), ...current.expansionPacks, [packType]: Math.max(0, available - packCount) },
+          expansionPackPity: {
+            ...emptyExpansionPackPity(),
+            ...current.expansionPackPity,
+            [packType]: { packsOpened: batch.packsOpened, packsSinceLegendary: batch.packsSinceLegendary },
+          },
+        };
     const player = {
       ...current,
-      packsAvailable: Math.max(0, current.packsAvailable - packCount),
-      packPity: {
-        packsOpened: batch.packsOpened,
-        packsSinceLegendary: batch.packsSinceLegendary,
-      },
+      ...selectedPackState,
       catchUpPack: { ...currentCatchUp, ...catchUpProgress },
       collection: batch.collection,
       progression: { xp: progressionXp, level: Math.floor(progressionXp / 1000) + 1 },
@@ -1400,6 +1452,7 @@ function applyLocalAction(
       player,
       openedCards: batch.openedCards,
       packsOpened: packCount,
+      packType,
       localFallback: true,
     };
   }
@@ -1412,17 +1465,23 @@ function applyLocalAction(
   }
 
   if (action === "buy_pack") {
+    const packType: PackType = isPackType(body.packType) ? body.packType : "standard";
+    if (!packTypeAvailable(packType)) throw new Error(`${packTypeLabel(packType)}尚未开放。`);
     const cycle = current.taskCycle ?? { dayKey: now.slice(0, 10), weekKey: "demo", dailyRerollsRemaining: 1, packsBoughtToday: 0 };
     if (current.currencies.gold < 100) throw new Error("金币不足，无法购买卡包。");
     if (cycle.packsBoughtToday >= 10) throw new Error("今日卡包购买次数已达上限。");
+    const available = playerPackCount(current, packType);
+    const selectedPackState = packType === "standard"
+      ? { packsAvailable: available + 1 }
+      : { expansionPacks: { ...emptyExpansionPacks(), ...current.expansionPacks, [packType]: available + 1 } };
     const player = {
       ...current,
       currencies: { ...current.currencies, gold: current.currencies.gold - 100 },
-      packsAvailable: current.packsAvailable + 1,
+      ...selectedPackState,
       taskCycle: { ...cycle, packsBoughtToday: cycle.packsBoughtToday + 1 },
       updatedAt: now,
     };
-    return { ok: true, player, costGold: 100, localFallback: true };
+    return { ok: true, player, costGold: 100, packType, localFallback: true };
   }
 
   if (action === "reroll_task") {
@@ -3378,6 +3437,7 @@ export function GameApp({
   const [openedCards, setOpenedCards] = useState<Array<{ cardId: string; count: number }>>([]);
   const [openedPackCount, setOpenedPackCount] = useState(0);
   const [revealedCardCount, setRevealedCardCount] = useState(0);
+  const [selectedPackType, setSelectedPackType] = useState<PackType>("standard");
   const [search, setSearch] = useState("");
   const [collectionEnvironment, setCollectionEnvironment] = useState<"released" | "standard" | "wild-only">("released");
   const [cardSetFilter, setCardSetFilter] = useState<"全部" | CardSetId>("全部");
@@ -4157,12 +4217,13 @@ export function GameApp({
   };
 
   const openPack = async (count = 1) => {
-    if (player.packsAvailable < count) {
+    const available = playerPackCount(player, selectedPackType);
+    if (available < count) {
       setNotice({
         tone: "info",
         text: count > 1
-          ? `当前只有 ${player.packsAvailable} 个可开启标准包。`
-          : "当前没有可开启标准包；可前往商店购买或等待奖励。",
+          ? `当前只有 ${available} 个可开启${packTypeLabel(selectedPackType)}。`
+          : `当前没有可开启${packTypeLabel(selectedPackType)}；可在此购买。`,
       });
       return;
     }
@@ -4170,6 +4231,7 @@ export function GameApp({
     const payload = await postAction(bulk ? "open_packs" : "open_pack", {
       idempotencyKey: makeId(bulk ? "packs" : "pack"),
       ...(bulk ? { count } : {}),
+      packType: selectedPackType,
     });
     if (payload) {
       setOpenedCards(payload.openedCards ?? []);
@@ -4178,7 +4240,7 @@ export function GameApp({
       setRevealedCardCount((payload.packsOpened ?? count) > 1 ? physicalCardCount : 0);
       setNotice({
         tone: payload.localFallback ? "info" : "success",
-        text: `${payload.packsOpened ?? count} 个标准档案包解密完成，新卡牌已归入收藏${payload.localFallback ? "（本地演示）" : ""}。`,
+        text: `${payload.packsOpened ?? count} 个${packTypeLabel(selectedPackType)}解密完成，新卡牌已归入收藏${payload.localFallback ? "（本地演示）" : ""}。`,
       });
     }
   };
@@ -4198,11 +4260,12 @@ export function GameApp({
   const buyPack = async () => {
     const payload = await postAction("buy_pack", {
       idempotencyKey: makeId("shop-pack"),
+      packType: selectedPackType,
     });
     if (payload) {
       setNotice({
         tone: payload.localFallback ? "info" : "success",
-        text: `已购买 1 个标准档案包，消耗 ${payload.costGold ?? 100} 金币${payload.localFallback ? "（本地演示）" : ""}。`,
+        text: `已购买 1 个${packTypeLabel(selectedPackType)}，消耗 ${payload.costGold ?? 100} 金币${payload.localFallback ? "（本地演示）" : ""}。`,
       });
     }
   };
@@ -5506,6 +5569,10 @@ export function GameApp({
   }, [battleView, onlineMatch, onlineOpponent, postAction, pvp.state.format, pvp.state.rankedFormat, trainingActive]);
 
   const totalOwned = Object.values(player.collection).reduce((sum, count) => sum + count, 0);
+  const totalPacks = player.packsAvailable + EXPANSION_PACK_SET_IDS.reduce(
+    (sum, setId) => sum + (player.expansionPacks?.[setId] ?? 0),
+    0,
+  );
   const uniqueOwned = Object.values(player.collection).filter((count) => count > 0).length;
   const winRate =
     player.stats.matchesPlayed > 0
@@ -5625,12 +5692,12 @@ export function GameApp({
               className="resource-chip resource-chip--pack"
               type="button"
               onClick={() => switchSection("overview")}
-              aria-label={`${player.packsAvailable} 个可开启标准档案包`}
+              aria-label={`${totalPacks} 个可开启卡包`}
             >
               <Icon name="pack" size={18} />
               <span>
-                <small>标准档案包</small>
-                <strong>{player.packsAvailable}</strong>
+                <small>全部卡包</small>
+                <strong>{totalPacks}</strong>
               </span>
             </button>
           </div>
@@ -5683,6 +5750,13 @@ export function GameApp({
                   openedPackCount={openedPackCount}
                   revealedCardCount={revealedCardCount}
                   apiBusy={apiBusy}
+                  selectedPackType={selectedPackType}
+                  onSelectPackType={(packType) => {
+                    setSelectedPackType(packType);
+                    setOpenedCards([]);
+                    setOpenedPackCount(0);
+                    setRevealedCardCount(0);
+                  }}
                   onOpenPack={() => void openPack()}
                   onOpenPacks={(count) => void openPack(count)}
                   onRevealNextCard={() => setRevealedCardCount((count) => Math.min(5, count + 1))}
@@ -6007,6 +6081,8 @@ function OverviewSection({
   openedPackCount,
   revealedCardCount,
   apiBusy,
+  selectedPackType,
+  onSelectPackType,
   onOpenPack,
   onOpenPacks,
   onRevealNextCard,
@@ -6027,6 +6103,8 @@ function OverviewSection({
   openedPackCount: number;
   revealedCardCount: number;
   apiBusy: string | null;
+  selectedPackType: PackType;
+  onSelectPackType: (packType: PackType) => void;
   onOpenPack: () => void;
   onOpenPacks: (count: number) => void;
   onRevealNextCard: () => void;
@@ -6046,6 +6124,10 @@ function OverviewSection({
     const timer = window.setInterval(tick, 1000);
     return () => window.clearInterval(timer);
   }, []);
+  const availablePackTypes = (["standard", ...EXPANSION_PACK_SET_IDS] as PackType[])
+    .filter((packType) => packTypeAvailable(packType));
+  const selectedPackCount = playerPackCount(player, selectedPackType);
+  const selectedPity = playerPackPity(player, selectedPackType);
   const apprenticeFacts = {
     packsOpened: player.packPity?.packsOpened ?? 0,
     matchesPlayed: player.stats.matchesPlayed,
@@ -6312,10 +6394,19 @@ function OverviewSection({
           <div className="panel__header">
             <div>
               <span className="panel__eyebrow">ARCHIVE DROP</span>
-              <h2 id="pack-title">标准档案包</h2>
+              <h2 id="pack-title">{packTypeLabel(selectedPackType)}</h2>
             </div>
             <span className="pack-panel__timer"><Icon name="clock" size={15} /> {formatUtcResetCountdown("day", clockNow)} 刷新</span>
           </div>
+          <label className="pack-type-picker">
+            <span>选择卡包</span>
+            <select value={selectedPackType} onChange={(event) => onSelectPackType(event.target.value as PackType)}>
+              {availablePackTypes.map((packType) => (
+                <option value={packType} key={packType}>{packTypeLabel(packType)} · {playerPackCount(player, packType)} 包</option>
+              ))}
+            </select>
+            <small>本包型传说保底：{Math.min(selectedPity.packsSinceLegendary, 39)} / 40</small>
+          </label>
           {openedCards.length > 0 ? (
             <div className="pack-reveal">
               <div className="pack-reveal__cards">
@@ -6370,7 +6461,7 @@ function OverviewSection({
               <button className="button button--ghost button--wide" type="button" onClick={() => onNavigate("collection")}>
                 查看收藏
               </button>
-              {player.packsAvailable > 0 && (!singlePackReveal || revealedCardCount >= 5) && (
+              {selectedPackCount > 0 && (!singlePackReveal || revealedCardCount >= 5) && (
                 <button
                   className="button button--primary button--wide"
                   type="button"
@@ -6378,25 +6469,25 @@ function OverviewSection({
                   disabled={apiBusy === "open_pack" || apiBusy === "open_packs"}
                 >
                   <Icon name="pack" />
-                  {apiBusy === "open_pack" ? "解密中…" : `继续开启 1 包 · 剩余 ${player.packsAvailable}`}
+                  {apiBusy === "open_pack" ? "解密中…" : `继续开启 1 包 · 剩余 ${selectedPackCount}`}
                 </button>
               )}
-              {player.packsAvailable >= BULK_PACK_MIN_COUNT && (!singlePackReveal || revealedCardCount >= 5) && (
+              {selectedPackCount >= BULK_PACK_MIN_COUNT && (!singlePackReveal || revealedCardCount >= 5) && (
                 <button
                   className="button button--outline button--wide"
                   type="button"
-                  onClick={() => onOpenPacks(Math.min(BULK_PACK_MAX_COUNT, player.packsAvailable))}
+                  onClick={() => onOpenPacks(Math.min(BULK_PACK_MAX_COUNT, selectedPackCount))}
                   disabled={apiBusy === "open_pack" || apiBusy === "open_packs"}
                 >
                   <Icon name="cards" />
                   {apiBusy === "open_packs"
                     ? "批量解密中…"
-                    : `批量开启 ${Math.min(BULK_PACK_MAX_COUNT, player.packsAvailable)} 包`}
+                    : `批量开启 ${Math.min(BULK_PACK_MAX_COUNT, selectedPackCount)} 包`}
                 </button>
               )}
               <button className="button button--outline button--wide" type="button" onClick={onBuyPack} disabled={apiBusy === "buy_pack" || player.currencies.gold < 100}>
                 <Icon name="coin" />
-                {apiBusy === "buy_pack" ? "购买中…" : "100 金币购买标准包"}
+                {apiBusy === "buy_pack" ? "购买中…" : `100 金币购买${packTypeLabel(selectedPackType)}`}
               </button>
             </div>
           ) : (
@@ -6405,37 +6496,37 @@ function OverviewSection({
                 className="pack-object"
                 type="button"
                 onClick={onOpenPack}
-                disabled={apiBusy === "open_pack" || apiBusy === "open_packs" || player.packsAvailable <= 0}
-                aria-label="开启标准档案包"
+                disabled={apiBusy === "open_pack" || apiBusy === "open_packs" || selectedPackCount <= 0}
+                aria-label={`开启${packTypeLabel(selectedPackType)}`}
               >
                 <span className="pack-object__halo" />
                 <span className="pack-object__shell">
                   <Icon name="spark" size={36} />
                 </span>
-                <span className="pack-object__count">× {player.packsAvailable}</span>
+                <span className="pack-object__count">× {selectedPackCount}</span>
               </button>
-              <h3>{player.packsAvailable > 0 ? "有一份加密档案等待解锁" : "今日档案已解密"}</h3>
-              <p>每份包含 5 张当前标准环境卡牌，至少 1 张稀有或更高品质。</p>
+              <h3>{selectedPackCount > 0 ? "有一份加密档案等待解锁" : "该卡包库存为空"}</h3>
+              <p>每份包含 5 张{selectedPackType === "standard" ? "当前标准环境" : CARD_SET_DEFINITIONS[selectedPackType].label}卡牌，至少 1 张稀有或更高品质；各包型独立计算传说保底。</p>
               <button
                 className="button button--primary button--wide"
                 type="button"
                 onClick={onOpenPack}
-                disabled={apiBusy === "open_pack" || apiBusy === "open_packs" || player.packsAvailable <= 0}
+                disabled={apiBusy === "open_pack" || apiBusy === "open_packs" || selectedPackCount <= 0}
               >
                 <Icon name="pack" />
-                {apiBusy === "open_pack" ? "解密中…" : player.packsAvailable > 0 ? "免费开启" : "明日再来"}
+                {apiBusy === "open_pack" ? "解密中…" : selectedPackCount > 0 ? "开启 1 包" : "暂无库存"}
               </button>
-              {player.packsAvailable >= BULK_PACK_MIN_COUNT && (
+              {selectedPackCount >= BULK_PACK_MIN_COUNT && (
                 <button
                   className="button button--outline button--wide"
                   type="button"
-                  onClick={() => onOpenPacks(Math.min(BULK_PACK_MAX_COUNT, player.packsAvailable))}
+                  onClick={() => onOpenPacks(Math.min(BULK_PACK_MAX_COUNT, selectedPackCount))}
                   disabled={apiBusy === "open_pack" || apiBusy === "open_packs"}
                 >
                   <Icon name="cards" />
                   {apiBusy === "open_packs"
                     ? "批量解密中…"
-                    : `批量开启 ${Math.min(BULK_PACK_MAX_COUNT, player.packsAvailable)} 包`}
+                    : `批量开启 ${Math.min(BULK_PACK_MAX_COUNT, selectedPackCount)} 包`}
                 </button>
               )}
               <button
@@ -6445,7 +6536,7 @@ function OverviewSection({
                 disabled={apiBusy === "buy_pack" || player.currencies.gold < 100}
               >
                 <Icon name="coin" />
-                {apiBusy === "buy_pack" ? "购买中…" : "100 金币购买标准包"}
+                {apiBusy === "buy_pack" ? "购买中…" : `100 金币购买${packTypeLabel(selectedPackType)}`}
               </button>
             </div>
           )}
