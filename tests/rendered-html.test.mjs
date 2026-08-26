@@ -67,6 +67,11 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(game, /新兵晋升轨道/);
   assert.match(game, /claim_apprentice_reward/);
   assert.match(game, /APPRENTICE_MILESTONES/);
+  assert.match(game, /天梯预备套牌/);
+  assert.match(game, /activate_ladder_ready/);
+  assert.match(game, /claim_ladder_ready_deck/);
+  assert.match(game, /LADDER_READY_DECKS/);
+  assert.match(game, /AI 与在线对战均可使用/);
   assert.match(game, /\/api\/game/);
   assert.match(game, /\/cards\/\$\{card\.id\}\.webp/);
   assert.match(game, /<Image[\s\S]*?\bunoptimized\b[\s\S]*?\/>/);
@@ -111,6 +116,8 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(styles, /\.ai-archetype-picker/);
   assert.match(styles, /\.apprentice-track/);
   assert.match(styles, /\.apprentice-step\.is-ready/);
+  assert.match(styles, /\.ladder-ready__grid/);
+  assert.match(styles, /\.ladder-ready-card\.is-claimed/);
   assert.match(styles, /\.turn-clock/);
   assert.match(styles, /\.board-slot/);
   assert.match(styles, /battle-target-pulse/);

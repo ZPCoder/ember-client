@@ -31,10 +31,15 @@ import {
   createMatch,
   factionForDeck,
   getHeroPower,
+  getLadderReadyDeck,
   getTraitStatuses,
+  LADDER_READY_DECKS,
+  LADDER_READY_TRIAL_DAYS,
+  LADDER_READY_TRIAL_MS,
   LADDER_START_RATING,
   ladderStarsForRating,
   ladderTierForRating,
+  ladderReadyTrialIsActive,
   planAiTurnReplay,
   shouldScheduleLocalAiTurn,
   updateRankedSnapshot,
@@ -47,6 +52,7 @@ import {
   type Faction,
   type HeroPowerEffect,
   type Keyword,
+  type LadderReadyDeckId,
   type MatchState,
   type SpellSchool,
   type Trait,
@@ -155,6 +161,11 @@ type PlayerSnapshot = {
   blockedPlayerIds?: string[];
   rewardTrack?: { claimedLevels: number[] };
   apprenticeTrack?: { claimedMilestones: ApprenticeMilestoneId[] };
+  ladderReady?: {
+    activatedAt: string | null;
+    expiresAt: string | null;
+    claimedDeckId: LadderReadyDeckId | null;
+  };
   recentMatches: RecentMatch[];
   stats: { wins: number; losses: number; matchesPlayed: number };
   updatedAt: string;
@@ -180,6 +191,7 @@ type GamePayload = {
   amount?: number;
   kind?: "craft" | "disenchant";
   savedDeck?: SavedDeck;
+  claimedLadderReadyDeck?: SavedDeck;
   aiMatch?: {
     token: string;
     seed: number;
@@ -578,6 +590,16 @@ function formatUtcResetCountdown(period: "day" | "week", now: number): string {
   return `${hours}时 ${minutes.toString().padStart(2, "0")}分 ${remainingSeconds.toString().padStart(2, "0")}秒`;
 }
 
+function formatLadderReadyCountdown(expiresAt: string | null | undefined, now: number): string {
+  if (!expiresAt || !now) return "尚未激活";
+  const seconds = Math.max(0, Math.floor((Date.parse(expiresAt) - now) / 1000));
+  if (seconds <= 0) return "试玩已到期";
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor((seconds % 86400) / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  return `${days}天 ${hours.toString().padStart(2, "0")}时 ${minutes.toString().padStart(2, "0")}分`;
+}
+
 function makeId(prefix: string) {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
     return `${prefix}-${crypto.randomUUID()}`;
@@ -707,6 +729,7 @@ function makeDemoPlayer(identity?: {
     progression: { xp: 850, level: 1 },
     rewardTrack: { claimedLevels: [] },
     apprenticeTrack: { claimedMilestones: [] },
+    ladderReady: { activatedAt: null, expiresAt: null, claimedDeckId: null },
     ladder: { seasonKey: new Date().toISOString().slice(0, 7), rating: LADDER_START_RATING, tier: ladderTierForRating(LADDER_START_RATING), stars: ladderStarsForRating(LADDER_START_RATING), wins: 7, losses: 3, highestRating: LADDER_START_RATING, winStreak: 0 },
     recentMatches: [
       {
@@ -745,10 +768,22 @@ function applyLocalAction(
     return { ok: true, player, localFallback: true };
   }
   if (action === "create_ai_match") {
-    const deckId = asString(body.deckId);
-    const deck = current.decks.find((candidate) => candidate.id === deckId);
-    if (!deck) throw new Error("AI 对局必须使用已保存的卡组。");
-    const validation = validateDeck(deck.cardIds);
+    const ladderReadyDeckId = asString(body.ladderReadyDeckId);
+    const offer = ladderReadyDeckId ? getLadderReadyDeck(ladderReadyDeckId) : undefined;
+    let playerDeck: readonly string[];
+    if (offer) {
+      const trial = current.ladderReady;
+      if (!trial?.activatedAt || !trial.expiresAt) throw new Error("请先激活七日试玩。");
+      if (trial.claimedDeckId) throw new Error("永久领取后，其他套牌试玩已经结束。");
+      if (!ladderReadyTrialIsActive(trial)) throw new Error("七日试玩已经结束，请选择一套永久领取。");
+      playerDeck = offer.deck;
+    } else {
+      const deckId = asString(body.deckId);
+      const deck = current.decks.find((candidate) => candidate.id === deckId);
+      if (!deck) throw new Error("AI 对局必须使用已保存的卡组或有效试玩套牌。");
+      playerDeck = deck.cardIds;
+    }
+    const validation = validateDeck(playerDeck);
     if (!validation.valid) throw new Error(validation.errors[0]?.message ?? "卡组不符合组牌规则。");
     const archetypeId = asString(body.opponentArchetypeId);
     if (!AI_ARCHETYPES.some((candidate) => candidate.id === archetypeId)) {
@@ -762,12 +797,60 @@ function applyLocalAction(
         token: `local-${crypto.randomUUID()}`,
         seed: (randomness[0] ?? 0) & 0x7fffffff,
         startingPlayer: ((randomness[1] ?? 0) & 1) as 0 | 1,
-        playerDeck: [...deck.cardIds],
+        playerDeck: [...playerDeck],
         opponentArchetypeId: archetypeId,
         expiresAt: new Date(Date.now() + 2 * 60 * 60 * 1_000).toISOString(),
       },
       localFallback: true,
     };
+  }
+  if (action === "activate_ladder_ready") {
+    const trial = current.ladderReady ?? { activatedAt: null, expiresAt: null, claimedDeckId: null };
+    if (trial.claimedDeckId) throw new Error("本档案已经领取过一套天梯预备套牌。");
+    if (trial.activatedAt) throw new Error("七日试玩已经激活。");
+    const activatedAt = new Date();
+    return {
+      ok: true,
+      player: {
+        ...current,
+        ladderReady: {
+          activatedAt: activatedAt.toISOString(),
+          expiresAt: new Date(activatedAt.getTime() + LADDER_READY_TRIAL_MS).toISOString(),
+          claimedDeckId: null,
+        },
+        updatedAt: now,
+      },
+      localFallback: true,
+    };
+  }
+  if (action === "claim_ladder_ready_deck") {
+    const offer = getLadderReadyDeck(asString(body.deckId));
+    if (!offer) throw new Error("天梯预备套牌不存在。");
+    const trial = current.ladderReady;
+    if (!trial?.activatedAt) throw new Error("请先激活七日试玩。");
+    if (trial.claimedDeckId) throw new Error("本档案已经领取过一套天梯预备套牌。");
+    const claimedLadderReadyDeck: SavedDeck = {
+      id: `ladder-ready-${offer.id}`,
+      name: `${offer.faction} · ${offer.name}`,
+      cardIds: [...offer.deck],
+      updatedAt: now,
+    };
+    if (current.decks.length >= 20 && !current.decks.some((deck) => deck.id === claimedLadderReadyDeck.id)) {
+      throw new Error("已保存卡组已达 20 套上限，请先整理卡组。");
+    }
+    const required = new Map<string, number>();
+    offer.deck.forEach((cardId) => required.set(cardId, (required.get(cardId) ?? 0) + 1));
+    const collection = { ...current.collection };
+    required.forEach((count, cardId) => { collection[cardId] = Math.max(collection[cardId] ?? 0, count); });
+    const player = {
+      ...current,
+      collection,
+      decks: [...current.decks.filter((deck) => deck.id !== claimedLadderReadyDeck.id), claimedLadderReadyDeck],
+      activeDeckId: claimedLadderReadyDeck.id,
+      ladderReady: { ...trial, claimedDeckId: offer.id },
+      updatedAt: now,
+    };
+    return { ok: true, player, claimedLadderReadyDeck, localFallback: true };
   }
   if (action === "update_profile") {
     const displayName = asString(body.displayName, current.displayName).trim().replace(/\s+/g, " ");
@@ -2582,6 +2665,7 @@ export function GameApp({
   const [deckName, setDeckName] = useState("星火远征队");
   const [deckIds, setDeckIds] = useState<string[]>(() => [...STARTER_IDS]);
   const [editingDeckId, setEditingDeckId] = useState<string | null>(null);
+  const [selectedLadderReadyDeckId, setSelectedLadderReadyDeckId] = useState<LadderReadyDeckId | null>(null);
   const [battle, setBattle] = useState<unknown>(null);
   const [inspectedCard, setInspectedCard] = useState<CatalogCard | null>(null);
   const [selectedAttacker, setSelectedAttacker] = useState<string | null>(null);
@@ -3014,6 +3098,7 @@ export function GameApp({
   };
 
   const addCard = (card: CatalogCard) => {
+    setSelectedLadderReadyDeckId(null);
     const owned = player.collection[card.id] ?? 0;
     const current = deckCounts.get(card.id) ?? 0;
     const limit = card.rarity === "legendary" ? 1 : 2;
@@ -3032,6 +3117,7 @@ export function GameApp({
   };
 
   const removeCard = (cardId: string) => {
+    setSelectedLadderReadyDeckId(null);
     setDeckIds((ids) => {
       const index = ids.lastIndexOf(cardId);
       if (index < 0) return ids;
@@ -3040,6 +3126,10 @@ export function GameApp({
   };
 
   const saveDeck = async () => {
+    if (selectedLadderReadyDeckId) {
+      setNotice({ tone: "warning", text: "试玩套牌不能改写；永久领取后会自动加入已保存卡组。" });
+      return;
+    }
     if (!deckValidation.valid) {
       setNotice({ tone: "warning", text: deckValidation.errors[0] ?? "请先修正卡组规则错误。" });
       return;
@@ -3077,6 +3167,7 @@ export function GameApp({
       return;
     }
     setDeckIds([...ids]);
+    setSelectedLadderReadyDeckId(null);
     setNotice({ tone: "success", text: "卡组代码已解析，保存后即可投入演算。" });
   };
 
@@ -3084,6 +3175,7 @@ export function GameApp({
     const selected = player.decks.find((deck) => deck.id === deckId);
     if (!selected) return;
     setEditingDeckId(selected.id);
+    setSelectedLadderReadyDeckId(null);
     setDeckIds([...selected.cardIds]);
     setDeckName(selected.name);
     setNotice({ tone: "info", text: `已载入「${selected.name}」，保存后将设为当前卡组。` });
@@ -3091,6 +3183,7 @@ export function GameApp({
 
   const createNewDeck = () => {
     setEditingDeckId(null);
+    setSelectedLadderReadyDeckId(null);
     setDeckIds([...DEFAULT_STARTER_DECK]);
     setDeckName("新建战术卡组");
     setNotice({ tone: "info", text: "已创建新的卡组草稿，保存后会加入你的卡组列表。" });
@@ -3191,6 +3284,57 @@ export function GameApp({
     }
   };
 
+  const activateLadderReady = async () => {
+    const payload = await postAction("activate_ladder_ready", {
+      idempotencyKey: makeId("ladder-ready-activate"),
+    });
+    if (payload) {
+      setNotice({
+        tone: payload.localFallback ? "info" : "success",
+        text: `六套天梯预备套牌已解锁 ${LADDER_READY_TRIAL_DAYS} 天，可直接用于 AI 与在线对战。`,
+      });
+    }
+  };
+
+  const trialLadderReadyDeck = (deckId: LadderReadyDeckId) => {
+    const offer = getLadderReadyDeck(deckId);
+    const trial = player.ladderReady;
+    if (!offer || !trial?.activatedAt || !trial.expiresAt) {
+      setNotice({ tone: "warning", text: "请先激活七日试玩。" });
+      return;
+    }
+    if (!ladderReadyTrialIsActive(trial)) {
+      setNotice({ tone: "warning", text: trial.claimedDeckId ? "你已完成永久领取，其他试玩套牌已关闭。" : "试玩已经到期，请选择一套永久领取。" });
+      return;
+    }
+    setSelectedLadderReadyDeckId(deckId);
+    setEditingDeckId(null);
+    setDeckIds([...offer.deck]);
+    setDeckName(`${offer.faction} · ${offer.name}（试玩）`);
+    setTrainingActive(false);
+    switchSection("battle");
+    setNotice({ tone: "info", text: `已载入「${offer.name}」试玩套牌，可进入 AI 演算或在线对战。` });
+  };
+
+  const claimLadderReady = async (deckId: LadderReadyDeckId) => {
+    const offer = getLadderReadyDeck(deckId);
+    if (!offer) return;
+    const payload = await postAction("claim_ladder_ready_deck", {
+      idempotencyKey: makeId(`ladder-ready-claim-${deckId}`),
+      deckId,
+    });
+    if (!payload?.claimedLadderReadyDeck) return;
+    const saved = payload.claimedLadderReadyDeck;
+    setSelectedLadderReadyDeckId(null);
+    setEditingDeckId(saved.id);
+    setDeckIds([...saved.cardIds]);
+    setDeckName(saved.name);
+    setNotice({
+      tone: payload.localFallback ? "info" : "success",
+      text: `已永久领取「${offer.name}」：缺少卡牌已补齐，卡组已加入收藏。`,
+    });
+  };
+
   const claimTask = async (task: PlayerTask) => {
     if (task.claimed || task.progress < task.target) return;
     const payload = await postAction("claim_task", {
@@ -3213,6 +3357,7 @@ export function GameApp({
     const payload = await postAction("reset_demo", {});
     if (payload) {
       setOpenedCards([]);
+      setSelectedLadderReadyDeckId(null);
       const firstDeck =
         payload.player.decks.find((deck) => deck.id === payload.player.activeDeckId) ??
         payload.player.decks[0];
@@ -3402,7 +3547,7 @@ export function GameApp({
     if (aiMatchStartingRef.current) return;
     const requestedOpponent = selectedAiArchetype ?? AI_ARCHETYPES[0];
     const savedDeckId = editingDeckId ?? player.activeDeckId;
-    if (!savedDeckId) {
+    if (!selectedLadderReadyDeckId && !savedDeckId) {
       switchSection("deck");
       setNotice({ tone: "warning", text: "请先保存当前卡组，再开始 AI 演算。" });
       return;
@@ -3410,7 +3555,9 @@ export function GameApp({
     aiMatchStartingRef.current = true;
     try {
       const payload = await postAction("create_ai_match", {
-        deckId: savedDeckId,
+        ...(selectedLadderReadyDeckId
+          ? { ladderReadyDeckId: selectedLadderReadyDeckId }
+          : { deckId: savedDeckId }),
         opponentArchetypeId: requestedOpponent?.id ?? "tide-control",
       });
       const ticket = payload?.aiMatch;
@@ -4442,6 +4589,9 @@ export function GameApp({
                   name={deckName}
                   validation={deckValidation}
                   saving={apiBusy === "save_deck"}
+                  ladderReady={player.ladderReady}
+                  selectedLadderReadyDeckId={selectedLadderReadyDeckId}
+                  ladderReadyBusy={apiBusy === "activate_ladder_ready" || apiBusy === "claim_ladder_ready_deck"}
                   onName={setDeckName}
                   onSelectDeck={selectDeck}
                   onNewDeck={createNewDeck}
@@ -4450,6 +4600,9 @@ export function GameApp({
                   onSave={() => void saveDeck()}
                   onImport={importDeck}
                   onBattle={startStandardBattle}
+                  onActivateLadderReady={() => void activateLadderReady()}
+                  onTrialLadderReady={trialLadderReadyDeck}
+                  onClaimLadderReady={(deckId) => void claimLadderReady(deckId)}
                 />
               )}
               {section === "battle" && (
@@ -5265,6 +5418,9 @@ function DeckSection({
   name,
   validation,
   saving,
+  ladderReady,
+  selectedLadderReadyDeckId,
+  ladderReadyBusy,
   onName,
   onSelectDeck,
   onNewDeck,
@@ -5273,6 +5429,9 @@ function DeckSection({
   onSave,
   onImport,
   onBattle,
+  onActivateLadderReady,
+  onTrialLadderReady,
+  onClaimLadderReady,
 }: {
   cards: CatalogCard[];
   collection: Record<string, number>;
@@ -5283,6 +5442,9 @@ function DeckSection({
   name: string;
   validation: ValidationView;
   saving: boolean;
+  ladderReady?: PlayerSnapshot["ladderReady"];
+  selectedLadderReadyDeckId: LadderReadyDeckId | null;
+  ladderReadyBusy: boolean;
   onName: (name: string) => void;
   onSelectDeck: (deckId: string) => void;
   onNewDeck: () => void;
@@ -5291,8 +5453,23 @@ function DeckSection({
   onSave: () => void;
   onImport: (ids: string[]) => void;
   onBattle: () => void;
+  onActivateLadderReady: () => void;
+  onTrialLadderReady: (deckId: LadderReadyDeckId) => void;
+  onClaimLadderReady: (deckId: LadderReadyDeckId) => void;
 }) {
   const [deckCode, setDeckCode] = useState("");
+  const [claimConfirmation, setClaimConfirmation] = useState<LadderReadyDeckId | null>(null);
+  const [clockNow, setClockNow] = useState(0);
+  useEffect(() => {
+    const tick = () => setClockNow(Date.now());
+    tick();
+    const interval = window.setInterval(tick, 30_000);
+    return () => window.clearInterval(interval);
+  }, []);
+  const trialActivated = Boolean(ladderReady?.activatedAt && ladderReady.expiresAt);
+  const trialExpired = Boolean(ladderReady?.expiresAt && clockNow && Date.parse(ladderReady.expiresAt) <= clockNow);
+  const trialClaimed = Boolean(ladderReady?.claimedDeckId);
+  const trialPlayable = ladderReadyTrialIsActive(ladderReady, clockNow);
   const uniqueDeckCards = Array.from(deckCounts.entries())
     .map(([id, count]) => ({ card: CARD_BY_ID.get(id), count }))
     .filter((entry): entry is { card: CatalogCard; count: number } => Boolean(entry.card))
@@ -5356,9 +5533,9 @@ function DeckSection({
         description="编排 30 张战术档案；不同单位启动特质，同名双份则用于对局内二星共鸣。"
         action={
           <div className="deck-heading-actions">
-            <button className="button button--outline" type="button" disabled={saving} onClick={onSave}>
+            <button className="button button--outline" type="button" disabled={saving || Boolean(selectedLadderReadyDeckId)} onClick={onSave}>
               <Icon name="check" />
-              {saving ? "保存中…" : "保存卡组"}
+              {saving ? "保存中…" : selectedLadderReadyDeckId ? "试玩套牌只读" : "保存卡组"}
             </button>
             <button className="button button--primary" type="button" disabled={!validation.valid} onClick={onBattle}>
               <Icon name="swords" />
@@ -5367,6 +5544,93 @@ function DeckSection({
           </div>
         }
       />
+
+      <section className="ladder-ready" aria-labelledby="ladder-ready-title">
+        <div className="ladder-ready__header">
+          <div>
+            <span className="panel__eyebrow">LADDER READY / 7-DAY ARMORY</span>
+            <h2 id="ladder-ready-title">天梯预备套牌</h2>
+            <p>六套完整 30 张卡组可在七天内无限试玩；最终任选一套永久领取，缺少卡牌会自动补齐。</p>
+          </div>
+          <div className={`ladder-ready__status ${trialClaimed ? "is-claimed" : trialPlayable ? "is-live" : ""}`}>
+            <Icon name={trialClaimed ? "check" : "clock"} size={18} />
+            <span>
+              <small>{trialClaimed ? "领取完成" : trialPlayable ? "试玩剩余" : trialExpired ? "试玩到期" : "尚未启动"}</small>
+              <strong>{trialClaimed
+                ? getLadderReadyDeck(ladderReady?.claimedDeckId ?? "")?.name ?? "已领取"
+                : formatLadderReadyCountdown(ladderReady?.expiresAt, clockNow)}</strong>
+            </span>
+          </div>
+          {!trialActivated && !trialClaimed && (
+            <button className="button button--primary" type="button" disabled={ladderReadyBusy} onClick={onActivateLadderReady}>
+              <Icon name="spark" />
+              {ladderReadyBusy ? "激活中…" : `启动 ${LADDER_READY_TRIAL_DAYS} 日试玩`}
+            </button>
+          )}
+        </div>
+        <div className="ladder-ready__rules" aria-label="试玩规则">
+          <span><Icon name="check" size={14} /> AI 与在线对战均可使用</span>
+          <span><Icon name="clock" size={14} /> 激活后连续计时七天</span>
+          <span><Icon name="shield" size={14} /> 每个账号仅能永久领取一套</span>
+        </div>
+        <div className="ladder-ready__grid">
+          {LADDER_READY_DECKS.map((offer) => {
+            const definition = FACTION_DEFINITIONS[offer.faction];
+            const averageCost = offer.deck.reduce((sum, cardId) => sum + (CARD_BY_ID.get(cardId)?.cost ?? 0), 0) / offer.deck.length;
+            const legendaryCount = offer.deck.filter((cardId) => CARD_BY_ID.get(cardId)?.rarity === "legendary").length;
+            const isClaimed = ladderReady?.claimedDeckId === offer.id;
+            const isSelected = selectedLadderReadyDeckId === offer.id;
+            return (
+              <article
+                className={`ladder-ready-card ${isClaimed ? "is-claimed" : ""} ${isSelected ? "is-selected" : ""}`}
+                style={{ "--offer-tone": definition.tone } as CSSProperties}
+                key={offer.id}
+              >
+                <div className="ladder-ready-card__crest"><span>{definition.sigil}</span><small>{offer.faction}</small></div>
+                <div className="ladder-ready-card__copy">
+                  <span>{offer.style} · {offer.difficulty}</span>
+                  <h3>{offer.name}</h3>
+                  <p>{offer.description}</p>
+                </div>
+                <div className="ladder-ready-card__metrics">
+                  <span><small>卡牌</small><strong>30</strong></span>
+                  <span><small>均费</small><strong>{averageCost.toFixed(1)}</strong></span>
+                  <span><small>传说</small><strong>{legendaryCount}</strong></span>
+                </div>
+                <div className="ladder-ready-card__actions">
+                  <button className="button button--outline" type="button" disabled={!trialPlayable || ladderReadyBusy} onClick={() => onTrialLadderReady(offer.id)}>
+                    <Icon name="swords" size={15} />{isSelected ? "试玩已载入" : "试玩此套"}
+                  </button>
+                  <button className="button button--small" type="button" disabled={!trialActivated || trialClaimed || ladderReadyBusy} onClick={() => setClaimConfirmation(offer.id)}>
+                    {isClaimed ? "已永久领取" : "永久领取"}
+                  </button>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      </section>
+
+      {claimConfirmation && (() => {
+        const offer = getLadderReadyDeck(claimConfirmation);
+        if (!offer) return null;
+        return (
+          <div className="ladder-ready-confirm" role="presentation" onClick={() => setClaimConfirmation(null)}>
+            <section role="dialog" aria-modal="true" aria-labelledby="ladder-ready-confirm-title" onClick={(event) => event.stopPropagation()}>
+              <span className="ladder-ready-confirm__sigil">{FACTION_DEFINITIONS[offer.faction].sigil}</span>
+              <span className="panel__eyebrow">ONE-TIME CLAIM / FINAL CHECK</span>
+              <h2 id="ladder-ready-confirm-title">永久领取「{offer.name}」？</h2>
+              <p>每个账号只能领取一套。确认后缺少卡牌会补入收藏，此卡组自动保存，其余五套试玩立即关闭。</p>
+              <div>
+                <button className="button button--ghost" type="button" onClick={() => setClaimConfirmation(null)}>继续试玩</button>
+                <button className="button button--primary" type="button" disabled={ladderReadyBusy} onClick={() => { setClaimConfirmation(null); onClaimLadderReady(offer.id); }}>
+                  <Icon name="check" />确认永久领取
+                </button>
+              </div>
+            </section>
+          </div>
+        );
+      })()}
 
       <div className="deck-workbench">
         <aside className="panel deck-manifest">
@@ -5390,7 +5654,7 @@ function DeckSection({
             <span className="deck-name-field__sigil"><Icon name="layers" /></span>
             <label>
               <span>卡组代号</span>
-              <input value={name} onChange={(event) => onName(event.target.value)} maxLength={32} />
+              <input value={name} readOnly={Boolean(selectedLadderReadyDeckId)} onChange={(event) => onName(event.target.value)} maxLength={32} />
             </label>
             <strong className={deckIds.length === 30 ? "is-complete" : ""}>{deckIds.length}<small>/30</small></strong>
           </div>
