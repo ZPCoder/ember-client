@@ -69,6 +69,7 @@ import {
   ladderReadyCatalogAt,
   ladderReadyCatalogForTrial,
   ladderReadyDecksForTrial,
+  ladderReadyReturningPlayerIsEligible,
   generateCatchUpPackReward,
   catchUpProgressFromCollection,
   recordCatchUpCards,
@@ -293,6 +294,7 @@ type PlayerSnapshot = {
     claimedDeckId: LadderReadyDeckId | null;
     catalogVersionId: LadderReadyCatalogVersionId | null;
     purchasedDeckIds: LadderReadyDeckId[];
+    cycle: number;
   };
   catchUpPack?: {
     claimedAt: string | null;
@@ -963,8 +965,29 @@ function readLocalPlayer(email: string): PlayerSnapshot | null {
       for (let index = 0; index < granted; index += 1) rankedGrantedCardIds.push(cardId);
     }
     const rolledCatchUpProgress = recordCatchUpCards(baseCatchUp, rankedGrantedCardIds);
+    const storedLadderReady = parsed.ladderReady;
+    const ladderReady = storedLadderReady?.claimedDeckId && ladderReadyReturningPlayerIsEligible(parsed.updatedAt, now)
+      ? {
+          activatedAt: null,
+          expiresAt: null,
+          claimedDeckId: null,
+          catalogVersionId: null,
+          purchasedDeckIds: [],
+          cycle: (storedLadderReady.cycle ?? 1) + 1,
+        }
+      : {
+          activatedAt: storedLadderReady?.activatedAt ?? null,
+          expiresAt: storedLadderReady?.expiresAt ?? null,
+          claimedDeckId: storedLadderReady?.claimedDeckId ?? null,
+          catalogVersionId: storedLadderReady?.catalogVersionId ?? (
+            storedLadderReady?.activatedAt ? ladderReadyCatalogAt(storedLadderReady.activatedAt).id : null
+          ),
+          purchasedDeckIds: storedLadderReady?.purchasedDeckIds ?? [],
+          cycle: storedLadderReady?.cycle ?? 1,
+        };
     const migrated = {
       ...parsed,
+      updatedAt: now,
       decks: parsed.decks.map((deck) => ({
         ...deck,
         format: deck.format === "wild" || validateDeckForFormat(deck.cardIds, "standard").valid ? deck.format ?? "standard" : "wild",
@@ -991,6 +1014,7 @@ function readLocalPlayer(email: string): PlayerSnapshot | null {
         ...baseCatchUp,
         ...rolledCatchUpProgress,
       },
+      ladderReady,
       trialCards: parsed.trialCards ?? (
         parsed.ladderReady?.activatedAt && parsed.ladderReady.expiresAt
           ? {
@@ -1102,7 +1126,7 @@ function makeDemoPlayer(identity?: {
     progression: { xp: 850, level: 1 },
     rewardTrack: { claimedLevels: [] },
     apprenticeTrack: { claimedMilestones: [] },
-    ladderReady: { activatedAt: null, expiresAt: null, claimedDeckId: null, catalogVersionId: null, purchasedDeckIds: [] },
+    ladderReady: { activatedAt: null, expiresAt: null, claimedDeckId: null, catalogVersionId: null, purchasedDeckIds: [], cycle: 1 },
     catchUpPack: { claimedAt: null, cardsGranted: 0, ...catchUpProgress },
     trialCards: { activatedAt: null, expiresAt: null },
     returnJourney: { claimedStageIds: [], matchesPlayedAtActivation: 0 },
@@ -1238,7 +1262,10 @@ function applyLocalAction(
     };
   }
   if (action === "activate_ladder_ready") {
-    const trial = current.ladderReady ?? { activatedAt: null, expiresAt: null, claimedDeckId: null, catalogVersionId: null, purchasedDeckIds: [] };
+    const storedTrial = current.ladderReady ?? { activatedAt: null, expiresAt: null, claimedDeckId: null, catalogVersionId: null, purchasedDeckIds: [], cycle: 1 };
+    const trial = storedTrial.claimedDeckId && ladderReadyReturningPlayerIsEligible(current.updatedAt, now)
+      ? { activatedAt: null, expiresAt: null, claimedDeckId: null, catalogVersionId: null, purchasedDeckIds: [], cycle: storedTrial.cycle + 1 }
+      : storedTrial;
     if (trial.claimedDeckId) throw new Error("本档案已经领取过一套天梯预备套牌。");
     if (trial.activatedAt) throw new Error("七日试玩已经激活。");
     const activatedAt = new Date(now);
@@ -1253,6 +1280,7 @@ function applyLocalAction(
           claimedDeckId: null,
           catalogVersionId,
           purchasedDeckIds: [],
+          cycle: Math.max(1, trial.cycle),
         },
         trialCards: {
           activatedAt: activatedAt.toISOString(),
@@ -1275,7 +1303,7 @@ function applyLocalAction(
     const offer = getLadderReadyDeck(asString(body.deckId), catalog.id);
     if (!offer) throw new Error("天梯预备套牌不存在。");
     const claimedLadderReadyDeck: SavedDeck = {
-      id: `ladder-ready-${offer.id}`,
+      id: `ladder-ready-${catalog.id}-${offer.id}`,
       name: `${offer.faction} · ${offer.name}`,
       cardIds: [...offer.deck],
       format: "standard",
@@ -1324,7 +1352,7 @@ function applyLocalAction(
     const offer = getLadderReadyDeck(deckId, catalog.id);
     if (!offer) throw new Error("天梯预备套牌不存在。");
     const purchasedLadderReadyDeck: SavedDeck = {
-      id: `ladder-ready-${offer.id}`,
+      id: `ladder-ready-${catalog.id}-${offer.id}`,
       name: `${offer.faction} · ${offer.name}`,
       cardIds: [...offer.deck],
       format: "standard",
@@ -7539,9 +7567,10 @@ function DeckSection({
         <div className="ladder-ready__rules" aria-label="试玩规则">
           <span><Icon name="check" size={14} /> AI 与在线对战均可使用</span>
           <span><Icon name="clock" size={14} /> 激活后连续计时七天</span>
-          <span><Icon name="shield" size={14} /> 每个账号仅能永久领取一套</span>
+          <span><Icon name="shield" size={14} /> 每个资格周期可免费领取一套</span>
           <span><Icon name="spark" size={14} /> 领取后其余套牌每套 {LADDER_READY_DECK_PRICE_GOLD} 金币</span>
           <span><Icon name="cards" size={14} /> 当前目录：{ladderReadyCatalog.label}</span>
+          <span><Icon name="clock" size={14} /> 回归资格周期：第 {ladderReady?.cycle ?? 1} 期 · 离开 90 天后可重新符合资格</span>
           <span>
             <Icon name="cards" size={14} />
             {catchUpPack?.claimedAt
@@ -7655,7 +7684,7 @@ function DeckSection({
               <span className="ladder-ready-confirm__sigil">{FACTION_DEFINITIONS[offer.faction].sigil}</span>
               <span className="panel__eyebrow">ONE-TIME CLAIM / FINAL CHECK</span>
               <h2 id="ladder-ready-confirm-title">永久领取「{offer.name}」？</h2>
-              <p>每个账号只能领取一套。确认后缺少卡牌会补入收藏，此卡组自动保存，其余五套试玩立即关闭。</p>
+              <p>每个资格周期只能免费领取一套。确认后缺少卡牌会补入收藏，此卡组自动保存，其余五套试玩立即关闭。</p>
               <div>
                 <button className="button button--ghost" type="button" onClick={() => setClaimConfirmation(null)}>继续试玩</button>
                 <button className="button button--primary" type="button" disabled={ladderReadyBusy} onClick={() => { setClaimConfirmation(null); onClaimLadderReady(offer.id); }}>
