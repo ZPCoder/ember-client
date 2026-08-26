@@ -358,6 +358,7 @@ class BattleSide {
     this.heroAttackBonus = 0,
     List<String>? spellSchoolsPlayedThisTurn,
     List<String>? spellSchoolsPlayedLastTurn,
+    List<String>? spellsPlayedThisGame,
     List<BattleDeathRecord>? deathHistory,
     List<BattleDiscardRecord>? discardHistory,
     List<BattleSecret>? secrets,
@@ -366,6 +367,7 @@ class BattleSide {
        handFragments = handFragments ?? <HandFragment?>[],
        spellSchoolsPlayedThisTurn = spellSchoolsPlayedThisTurn ?? <String>[],
        spellSchoolsPlayedLastTurn = spellSchoolsPlayedLastTurn ?? <String>[],
+       spellsPlayedThisGame = spellsPlayedThisGame ?? <String>[],
        deathHistory = deathHistory ?? <BattleDeathRecord>[],
        discardHistory = discardHistory ?? <BattleDiscardRecord>[],
        secrets = secrets ?? <BattleSecret>[];
@@ -392,6 +394,7 @@ class BattleSide {
   int cardsPlayedThisTurn = 0;
   final List<String> spellSchoolsPlayedThisTurn;
   final List<String> spellSchoolsPlayedLastTurn;
+  final List<String> spellsPlayedThisGame;
   final List<BattleDeathRecord> deathHistory;
   final List<BattleDiscardRecord> discardHistory;
   bool heroHasAttacked = false;

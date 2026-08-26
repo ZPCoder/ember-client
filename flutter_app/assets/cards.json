@@ -22930,33 +22930,36 @@
   },
   {
     "id": "timesand-season-35",
-    "name": "刻度时兽·35",
-    "description": "start-of-turn。 时砂的战线单位。 回合开始：获得 1 点护甲。",
+    "name": "时砂回声龙",
+    "description": "嘲讽。战吼：施放对手上一张使用的战术的复制（目标随机选择）。",
     "faction": "时砂",
     "type": "unit",
-    "cost": 3,
+    "cost": 6,
     "rarity": "传说",
-    "attack": 2,
-    "health": 5,
+    "attack": 3,
+    "health": 4,
     "keywords": [
-      "start-of-turn"
+      "taunt",
+      "battlecry"
     ],
     "traits": [
       "swift",
       "craft"
     ],
-    "onTurnStart": [
-      {
-        "kind": "armor",
-        "amount": 1
-      }
-    ],
+    "onTurnStart": [],
     "onDeath": [],
     "effect": [],
     "set": "scarab-2026",
     "minionTypes": [
       "beast"
-    ]
+    ],
+    "target": "none",
+    "onPlay": [
+      {
+        "kind": "recast-last-opponent-spell"
+      }
+    ],
+    "onTurnEnd": []
   },
   {
     "id": "timesand-season-spell-01",

@@ -202,6 +202,13 @@ void main() {
             .single['count'],
         2,
       );
+      expect(
+        catalog
+            .singleWhere((card) => card.id == 'timesand-season-35')
+            .onPlay
+            .single['kind'],
+        'recast-last-opponent-spell',
+      );
       expect(generatedBattleCards, hasLength(18));
       expect(
         generatedBattleCards
@@ -1246,11 +1253,14 @@ void main() {
       expect(controller.chooseDiscover(shatter.id), isTrue);
       expect(state.phase, 'main');
       expect(state.discoverCopiedFrom, isNull);
-      expect(state.player.hand.map((card) => card.id), [shatter.id, shatter.id]);
-      expect(
-        state.player.handFragments.map((fragment) => fragment?.piece),
-        ['left', 'right'],
-      );
+      expect(state.player.hand.map((card) => card.id), [
+        shatter.id,
+        shatter.id,
+      ]);
+      expect(state.player.handFragments.map((fragment) => fragment?.piece), [
+        'left',
+        'right',
+      ]);
       expect(state.player.handCostReductions, [0, 0]);
       expect(state.ai.hand, [shatter]);
 
@@ -1298,6 +1308,46 @@ void main() {
       expect(controller.playCard(handCopy), isTrue);
       expect(state.phase, 'main');
       expect(state.discoverChoices, isEmpty);
+      controller.dispose();
+    },
+  );
+
+  test(
+    'mobile recasts the opponent last hand-played spell with a fresh target',
+    () async {
+      final catalog = await loadCatalog();
+      final recaster = catalog.singleWhere(
+        (card) => card.id == 'timesand-season-35',
+      );
+      final damageSpell = catalog.singleWhere(
+        (card) => card.id == 'sun-focused-ray',
+      );
+      final filler = catalog.singleWhere((card) => card.id == 'sun-dawn-scout');
+      final controller = GameController(startingPlayer: 'player')
+        ..catalog = catalog
+        ..deckIds.addAll(List.filled(30, filler.id));
+      controller.startBattle();
+      await controller.confirmMulligan();
+      final state = controller.battle!;
+      state.player.hand
+        ..clear()
+        ..add(recaster);
+      state.player.handCostReductions
+        ..clear()
+        ..add(0);
+      state.player.handFragments
+        ..clear()
+        ..add(null);
+      state.player.mana = 10;
+      state.ai.spellsPlayedThisGame.add(damageSpell.id);
+      state.ai.board.clear();
+
+      expect(controller.playCard(recaster), isTrue);
+      expect(state.player.board.single.card.id, recaster.id);
+      expect(state.ai.heroHealth, 28);
+      expect(state.player.spellsPlayedThisGame, isEmpty);
+      expect(state.ai.spellsPlayedThisGame, [damageSpell.id]);
+      expect(state.logs.any((log) => log.contains('重施放')), isTrue);
       controller.dispose();
     },
   );

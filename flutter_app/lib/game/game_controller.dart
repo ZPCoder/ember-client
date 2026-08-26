@@ -2153,8 +2153,11 @@ class GameController extends ChangeNotifier {
       _processDeaths();
       return;
     }
-    if (card.type == 'spell' && card.school != null) {
-      source.spellSchoolsPlayedThisTurn.add(card.school!);
+    if (card.type == 'spell') {
+      source.spellsPlayedThisGame.add(card.id);
+      if (card.school != null) {
+        source.spellSchoolsPlayedThisTurn.add(card.school!);
+      }
     }
     source.overloadLocked += card.overload;
     if (card.isHero) {
@@ -2232,6 +2235,8 @@ class GameController extends ChangeNotifier {
         enemy: enemy,
         target: target ?? (card.target == null ? unit : null),
         targetHero: targetHero,
+        targetFriendlyHero:
+            targetHero && (card.target ?? '').startsWith('friendly'),
         sourceName: card.name,
         sourceCard: card,
         sourceUnit: unit,
@@ -2243,6 +2248,8 @@ class GameController extends ChangeNotifier {
           enemy: enemy,
           target: target,
           targetHero: targetHero,
+          targetFriendlyHero:
+              targetHero && (card.target ?? '').startsWith('friendly'),
           sourceName: '${card.name} · 连击',
           sourceCard: card,
         );
@@ -2269,6 +2276,8 @@ class GameController extends ChangeNotifier {
         enemy: enemy,
         target: target,
         targetHero: targetHero,
+        targetFriendlyHero:
+            targetHero && (card.target ?? '').startsWith('friendly'),
         sourceName: card.name,
         sourceCard: card,
       );
@@ -2279,6 +2288,8 @@ class GameController extends ChangeNotifier {
           enemy: enemy,
           target: target,
           targetHero: targetHero,
+          targetFriendlyHero:
+              targetHero && (card.target ?? '').startsWith('friendly'),
           sourceName: '${card.name} · 连击',
           sourceCard: card,
         );
@@ -2495,12 +2506,189 @@ class GameController extends ChangeNotifier {
     }
   }
 
+  ({BattleUnit? target, bool targetHero, bool targetFriendlyHero})?
+  _randomRecastTarget(
+    CardDefinition card, {
+    required BattleSide source,
+    required BattleSide enemy,
+  }) {
+    final rule = card.target ?? 'none';
+    if (rule == 'none') {
+      return (target: null, targetHero: false, targetFriendlyHero: false);
+    }
+    final friendlyUnits = source.board
+        .where((unit) => unit.health > 0)
+        .toList();
+    final enemyUnits = enemy.board.where((unit) => unit.health > 0).toList();
+    switch (rule) {
+      case 'enemy-unit':
+        if (enemyUnits.isEmpty) return null;
+        return (
+          target: enemyUnits[_random.nextInt(enemyUnits.length)],
+          targetHero: false,
+          targetFriendlyHero: false,
+        );
+      case 'friendly-unit':
+        if (friendlyUnits.isEmpty) return null;
+        return (
+          target: friendlyUnits[_random.nextInt(friendlyUnits.length)],
+          targetHero: false,
+          targetFriendlyHero: false,
+        );
+      case 'enemy-character':
+        final index = _random.nextInt(enemyUnits.length + 1);
+        return index == 0
+            ? (target: null, targetHero: true, targetFriendlyHero: false)
+            : (
+                target: enemyUnits[index - 1],
+                targetHero: false,
+                targetFriendlyHero: false,
+              );
+      case 'friendly-character':
+        final index = _random.nextInt(friendlyUnits.length + 1);
+        return index == 0
+            ? (target: null, targetHero: true, targetFriendlyHero: true)
+            : (
+                target: friendlyUnits[index - 1],
+                targetHero: false,
+                targetFriendlyHero: false,
+              );
+      case 'any-character':
+        final candidates = <Object>[
+          source,
+          ...friendlyUnits,
+          enemy,
+          ...enemyUnits,
+        ];
+        final chosen = candidates[_random.nextInt(candidates.length)];
+        if (chosen is BattleUnit) {
+          return (target: chosen, targetHero: false, targetFriendlyHero: false);
+        }
+        return (
+          target: null,
+          targetHero: true,
+          targetFriendlyHero: identical(chosen, source),
+        );
+      default:
+        return null;
+    }
+  }
+
+  void _recastLastOpponentSpell({
+    required BattleSide source,
+    required BattleSide enemy,
+    required String sourceName,
+  }) {
+    final state = battle;
+    if (state == null || enemy.spellsPlayedThisGame.isEmpty) {
+      stateLog(sourceName, '没有可重施放的敌方战术。');
+      return;
+    }
+    final copiedSpell = card(enemy.spellsPlayedThisGame.last);
+    if (copiedSpell == null || copiedSpell.type != 'spell') {
+      stateLog(sourceName, '没有可重施放的敌方战术。');
+      return;
+    }
+    final selection = _randomRecastTarget(
+      copiedSpell,
+      source: source,
+      enemy: enemy,
+    );
+    if (selection == null) {
+      stateLog(sourceName, '${copiedSpell.name} 没有合法的随机目标。');
+      return;
+    }
+    stateLog(sourceName, '重施放 ${copiedSpell.name}，目标由时砂随机选择。');
+    _emitFx(
+      'spell',
+      '${copiedSpell.name} 重施放',
+      '复制对手上一张使用的战术',
+      Icons.replay,
+      0xFFA692D1,
+      sourceId: copiedSpell.id,
+    );
+    if (_triggerSecrets(
+      enemy,
+      'opponent-plays-spell',
+      triggeringSide: source,
+    )) {
+      stateLog(sourceName, '${copiedSpell.name} 的复制被奥秘反制。');
+      return;
+    }
+    if (copiedSpell.school != null) {
+      source.spellSchoolsPlayedThisTurn.add(copiedSpell.school!);
+    }
+    source.overloadLocked += copiedSpell.overload;
+
+    final discover = copiedSpell.effect.where(
+      (effect) =>
+          effect['kind'] == 'discover' ||
+          effect['kind'] == 'discover-copy-opponent-hand',
+    );
+    final chooseOne = copiedSpell.effect.where(
+      (effect) => effect['kind'] == 'choose-one',
+    );
+    if (discover.isNotEmpty) {
+      final effect = discover.first;
+      final rawChoices = effect['kind'] == 'discover-copy-opponent-hand'
+          ? enemy.hand.map((candidate) => candidate.id)
+          : (effect['choices'] is List
+                ? (effect['choices'] as List).map(
+                    (candidate) => candidate.toString(),
+                  )
+                : const Iterable<String>.empty());
+      final choices = rawChoices
+          .where((candidateId) => card(candidateId) != null)
+          .toSet()
+          .toList(growable: false);
+      if (choices.isNotEmpty) {
+        final chosen = card(choices[_random.nextInt(choices.length)]);
+        if (chosen != null && !_addCardToHand(source, chosen)) {
+          stateLog('重施放燃毁', '${chosen.name} 因手牌已满被销毁。');
+        }
+      }
+    } else if (chooseOne.isNotEmpty) {
+      final options = chooseOne.first['options'];
+      if (options is List && options.isNotEmpty) {
+        final option = options[_random.nextInt(options.length)];
+        if (option is Map && option['effects'] is List) {
+          _resolveEffects(
+            (option['effects'] as List)
+                .whereType<Map>()
+                .map((effect) => Map<String, dynamic>.from(effect))
+                .toList(growable: false),
+            source: source,
+            enemy: enemy,
+            target: selection.target,
+            targetHero: selection.targetHero,
+            targetFriendlyHero: selection.targetFriendlyHero,
+            sourceName: '${copiedSpell.name} · 随机抉择',
+            sourceCard: copiedSpell,
+          );
+        }
+      }
+    } else {
+      _resolveEffects(
+        copiedSpell.effect,
+        source: source,
+        enemy: enemy,
+        target: selection.target,
+        targetHero: selection.targetHero,
+        targetFriendlyHero: selection.targetFriendlyHero,
+        sourceName: '${copiedSpell.name} · 重施放',
+        sourceCard: copiedSpell,
+      );
+    }
+    _resolveSpellTriggers(source: source, enemy: enemy);
+  }
+
   void _resolveEffects(
     List<Map<String, dynamic>> effects, {
     required BattleSide source,
     required BattleSide enemy,
     BattleUnit? target,
     bool targetHero = false,
+    bool targetFriendlyHero = false,
     required String sourceName,
     CardDefinition? sourceCard,
     BattleUnit? sourceUnit,
@@ -2618,12 +2806,25 @@ class GameController extends ChangeNotifier {
               );
             }
             break;
+          case 'recast-last-opponent-spell':
+            _recastLastOpponentSpell(
+              source: source,
+              enemy: enemy,
+              sourceName: sourceName,
+            );
+            break;
           case 'damage':
-            if (target != null && enemy.board.contains(target)) {
+            if (target != null &&
+                (enemy.board.contains(target) ||
+                    source.board.contains(target))) {
               _damageUnit(target, damageAmount);
             } else {
-              final dealt = _damageHero(enemy, damageAmount);
-              stateLog('$sourceName：', '对敌方核心造成 $dealt 点伤害');
+              final hero = targetHero && targetFriendlyHero ? source : enemy;
+              final dealt = _damageHero(hero, damageAmount);
+              stateLog(
+                '$sourceName：',
+                '${identical(hero, source) ? '对友方' : '对敌方'}核心造成 $dealt 点伤害',
+              );
             }
             break;
           case 'damage-all-enemies':
@@ -2685,10 +2886,13 @@ class GameController extends ChangeNotifier {
             }
             break;
           case 'heal':
-            if (target != null && source.board.contains(target)) {
+            if (target != null &&
+                (source.board.contains(target) ||
+                    enemy.board.contains(target))) {
               target.health = min(target.maxHealth, target.health + amount);
             } else {
-              final healed = _healHero(source, amount);
+              final hero = targetHero && !targetFriendlyHero ? enemy : source;
+              final healed = _healHero(hero, amount);
               if (healed > 0) {
                 stateLog('$sourceName：', '恢复 $healed 点核心生命');
               }
@@ -2776,6 +2980,7 @@ class GameController extends ChangeNotifier {
                 enemy: enemy,
                 target: target,
                 targetHero: targetHero,
+                targetFriendlyHero: targetFriendlyHero,
                 sourceName: '$sourceName · 派系共鸣',
                 sourceCard: sourceCard,
                 sourceUnit: sourceUnit,
