@@ -44,6 +44,17 @@ void main() {
         catalog.where((card) => card.keywords.contains('discover')),
         hasLength(8),
       );
+      final discoverEffects = catalog
+          .expand((card) => card.effect)
+          .where((effect) => effect['kind'] == 'discover')
+          .toList(growable: false);
+      expect(discoverEffects, hasLength(31));
+      expect(
+        discoverEffects.every(
+          (effect) => effect['pool'] is Map && effect['choices'] == null,
+        ),
+        isTrue,
+      );
       expect(
         catalog.where((card) => card.keywords.contains('choose-one')),
         hasLength(1),
@@ -5038,6 +5049,73 @@ void main() {
       controller.dispose();
     },
   );
+
+  test('dynamic Discover filters by format, excludes tokens and itself', () async {
+    CardDefinition unit(String id, String setId, {bool collectible = true}) =>
+        CardDefinition(
+          id: id,
+          name: id,
+          description: '动态发现候选',
+          faction: '中立',
+          type: 'unit',
+          cost: 1,
+          rarity: '普通',
+          setId: setId,
+          attack: 1,
+          health: 1,
+          collectible: collectible,
+        );
+
+    final discover = CardDefinition(
+      id: 'dynamic-discover',
+      name: '动态发现',
+      description: '从当前模式的中立牌池中发现一张牌。',
+      faction: '中立',
+      type: 'spell',
+      cost: 1,
+      rarity: '稀有',
+      setId: 'scarab-2026',
+      effect: const [
+        {
+          'kind': 'discover',
+          'pool': {'faction': 'neutral'},
+        },
+      ],
+    );
+    final standard = unit('standard-choice', 'scarab-2026');
+    final wildA = unit('wild-choice-a', 'pegasus-2024');
+    final wildB = unit('wild-choice-b', 'pegasus-2024');
+    final token = unit(
+      'generated-choice',
+      'scarab-2026',
+      collectible: false,
+    );
+    final fixture = [discover, standard, wildA, wildB, token];
+
+    Future<List<String>> choicesFor(RankedFormat format) async {
+      final controller = GameController(startingPlayer: 'player')
+        ..catalog = fixture;
+      controller.setDeckFormat(format);
+      controller.startBattle();
+      await controller.confirmMulligan();
+      final state = controller.battle!;
+      state.player.mana = 10;
+      state.player.hand
+        ..clear()
+        ..add(discover);
+      expect(controller.playCard(discover), isTrue);
+      final choices = List<String>.from(state.discoverChoices);
+      controller.dispose();
+      return choices;
+    }
+
+    expect(await choicesFor(RankedFormat.standard), [standard.id]);
+    final wildChoices = await choicesFor(RankedFormat.wild);
+    expect(wildChoices, hasLength(3));
+    expect(wildChoices.toSet(), {standard.id, wildA.id, wildB.id});
+    expect(wildChoices, isNot(contains(discover.id)));
+    expect(wildChoices, isNot(contains(token.id)));
+  });
 
   test('choose-one and start-of-turn triggers resolve on mobile', () async {
     final branchCard = CardDefinition(

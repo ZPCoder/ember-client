@@ -967,7 +967,7 @@
   {
     "id": "sun-orbit-insight",
     "name": "环日启示",
-    "description": "发现一张曜光卡牌。",
+    "description": "从当前模式的曜光卡池中发现一张牌。",
     "faction": "曜光",
     "type": "spell",
     "cost": 2,
@@ -980,11 +980,9 @@
     "effect": [
       {
         "kind": "discover",
-        "choices": [
-          "sun-dawn-scout",
-          "sun-mirror-warden",
-          "sun-focused-ray"
-        ]
+        "pool": {
+          "faction": "friendly"
+        }
       }
     ],
     "onDeath": [],
@@ -1509,7 +1507,7 @@
   {
     "id": "void-moonpool-mutation",
     "name": "月池异变",
-    "description": "发现一张幽潮卡牌。",
+    "description": "从当前模式的幽潮卡池中发现一张牌。",
     "faction": "幽潮",
     "type": "spell",
     "cost": 3,
@@ -1522,11 +1520,9 @@
     "effect": [
       {
         "kind": "discover",
-        "choices": [
-          "void-mist-lurker",
-          "void-undertow-guard",
-          "void-chill-needle"
-        ]
+        "pool": {
+          "faction": "friendly"
+        }
       }
     ],
     "onDeath": [],
@@ -2067,7 +2063,7 @@
   {
     "id": "neutral-route-ledger",
     "name": "通途账册",
-    "description": "发现一张中立卡牌。账册记得每处补给站。",
+    "description": "从当前模式的中立牌池中发现一张牌。账册记得每处补给站。",
     "faction": "中立",
     "type": "spell",
     "cost": 2,
@@ -2082,13 +2078,9 @@
     "effect": [
       {
         "kind": "discover",
-        "choices": [
-          "neutral-moss-runner",
-          "neutral-clockwork-beetle",
-          "neutral-tactical-map",
-          "neutral-field-reinforcement",
-          "neutral-pocket-remedy"
-        ]
+        "pool": {
+          "faction": "neutral"
+        }
       }
     ],
     "onDeath": [],
@@ -2860,7 +2852,7 @@
   {
     "id": "ember-cinder-rain",
     "name": "烬雨齐射",
-    "description": "发现一张烬火卡牌。",
+    "description": "从当前模式的烬火卡池中发现一张牌。",
     "faction": "烬火",
     "type": "spell",
     "cost": 5,
@@ -2873,11 +2865,9 @@
     "effect": [
       {
         "kind": "discover",
-        "choices": [
-          "ember-leaping-spark",
-          "ember-flame-pierce",
-          "ember-ignite-morale"
-        ]
+        "pool": {
+          "faction": "friendly"
+        }
       }
     ],
     "onDeath": [],
@@ -3448,7 +3438,7 @@
   {
     "id": "astral-chart-revelation",
     "name": "星图启示",
-    "description": "发现一张星穹卡牌。星轨交会之处，答案自行显现。",
+    "description": "从当前模式的星穹卡池中发现一张牌。星轨交会之处，答案自行显现。",
     "faction": "星穹",
     "type": "spell",
     "cost": 1,
@@ -3461,11 +3451,9 @@
     "effect": [
       {
         "kind": "discover",
-        "choices": [
-          "astral-stardust-familiar",
-          "astral-chart-revelation",
-          "astral-phase-shift"
-        ]
+        "pool": {
+          "faction": "friendly"
+        }
       }
     ],
     "onDeath": [],
@@ -4265,7 +4253,7 @@
   {
     "id": "verdant-pathfinder-call",
     "name": "寻径者号角",
-    "description": "发现一张苍林卡牌。",
+    "description": "从当前模式的苍林卡池中发现一张牌。",
     "faction": "苍林",
     "type": "spell",
     "cost": 3,
@@ -4280,11 +4268,9 @@
     "effect": [
       {
         "kind": "discover",
-        "choices": [
-          "verdant-sprout-pact",
-          "verdant-morning-dew",
-          "verdant-thorn-lash"
-        ]
+        "pool": {
+          "faction": "friendly"
+        }
       }
     ],
     "onDeath": [],
@@ -4996,7 +4982,7 @@
   {
     "id": "storm-capacitor-draw",
     "name": "电容抽载",
-    "description": "发现一张雷铸卡牌。",
+    "description": "从当前模式的雷铸卡池中发现一张牌。",
     "faction": "雷铸",
     "type": "spell",
     "cost": 2,
@@ -5011,11 +4997,9 @@
     "effect": [
       {
         "kind": "discover",
-        "choices": [
-          "storm-static-spark",
-          "storm-bolt-calibration",
-          "storm-emergency-plating"
-        ]
+        "pool": {
+          "faction": "friendly"
+        }
       }
     ],
     "onDeath": [],
@@ -10009,7 +9993,7 @@
   {
     "id": "frost-season-spell-06",
     "name": "雪脉发现·06",
-    "description": "从三张本体系卡牌中发现一张。",
+    "description": "从当前模式的本体系卡池中发现一张牌。",
     "faction": "霜境",
     "type": "spell",
     "cost": 6,
@@ -10019,11 +10003,9 @@
     "effect": [
       {
         "kind": "discover",
-        "choices": [
-          "frost-season-06",
-          "frost-season-07",
-          "frost-season-08"
-        ]
+        "pool": {
+          "faction": "friendly"
+        }
       }
     ],
     "keywords": [],
@@ -10134,7 +10116,7 @@
   {
     "id": "frost-season-spell-12",
     "name": "霜境发现·12",
-    "description": "从三张本体系卡牌中发现一张。",
+    "description": "从当前模式的本体系卡池中发现一张牌。",
     "faction": "霜境",
     "type": "spell",
     "cost": 4,
@@ -10144,11 +10126,9 @@
     "effect": [
       {
         "kind": "discover",
-        "choices": [
-          "frost-season-12",
-          "frost-season-13",
-          "frost-season-14"
-        ]
+        "pool": {
+          "faction": "friendly"
+        }
       }
     ],
     "keywords": [],
@@ -11234,7 +11214,7 @@
   {
     "id": "sand-season-spell-06",
     "name": "黄昏发现·06",
-    "description": "从三张本体系卡牌中发现一张。",
+    "description": "从当前模式的本体系卡池中发现一张牌。",
     "faction": "砂海",
     "type": "spell",
     "cost": 6,
@@ -11244,11 +11224,9 @@
     "effect": [
       {
         "kind": "discover",
-        "choices": [
-          "sand-season-06",
-          "sand-season-07",
-          "sand-season-08"
-        ]
+        "pool": {
+          "faction": "friendly"
+        }
       }
     ],
     "keywords": [],
@@ -11359,7 +11337,7 @@
   {
     "id": "sand-season-spell-12",
     "name": "砂海发现·12",
-    "description": "从三张本体系卡牌中发现一张。",
+    "description": "从当前模式的本体系卡池中发现一张牌。",
     "faction": "砂海",
     "type": "spell",
     "cost": 4,
@@ -11369,11 +11347,9 @@
     "effect": [
       {
         "kind": "discover",
-        "choices": [
-          "sand-season-12",
-          "sand-season-13",
-          "sand-season-14"
-        ]
+        "pool": {
+          "faction": "friendly"
+        }
       }
     ],
     "keywords": [],
@@ -12487,7 +12463,7 @@
   {
     "id": "bloodmoon-season-spell-06",
     "name": "血契发现·06",
-    "description": "从三张本体系卡牌中发现一张。",
+    "description": "从当前模式的本体系卡池中发现一张牌。",
     "faction": "赤月",
     "type": "spell",
     "cost": 6,
@@ -12497,11 +12473,9 @@
     "effect": [
       {
         "kind": "discover",
-        "choices": [
-          "bloodmoon-season-06",
-          "bloodmoon-season-07",
-          "bloodmoon-season-08"
-        ]
+        "pool": {
+          "faction": "friendly"
+        }
       }
     ],
     "keywords": [],
@@ -12612,7 +12586,7 @@
   {
     "id": "bloodmoon-season-spell-12",
     "name": "赤月发现·12",
-    "description": "从三张本体系卡牌中发现一张。",
+    "description": "从当前模式的本体系卡池中发现一张牌。",
     "faction": "赤月",
     "type": "spell",
     "cost": 4,
@@ -12622,11 +12596,9 @@
     "effect": [
       {
         "kind": "discover",
-        "choices": [
-          "bloodmoon-season-12",
-          "bloodmoon-season-13",
-          "bloodmoon-season-14"
-        ]
+        "pool": {
+          "faction": "friendly"
+        }
       }
     ],
     "keywords": [],
@@ -13886,7 +13858,7 @@
   {
     "id": "leyline-season-spell-06",
     "name": "符文发现·06",
-    "description": "从三张本体系卡牌中发现一张。",
+    "description": "从当前模式的本体系卡池中发现一张牌。",
     "faction": "灵脉",
     "type": "spell",
     "cost": 6,
@@ -13896,11 +13868,9 @@
     "effect": [
       {
         "kind": "discover",
-        "choices": [
-          "leyline-season-06",
-          "leyline-season-07",
-          "leyline-season-08"
-        ]
+        "pool": {
+          "faction": "friendly"
+        }
       }
     ],
     "keywords": [],
@@ -14011,7 +13981,7 @@
   {
     "id": "leyline-season-spell-12",
     "name": "灵脉发现·12",
-    "description": "从三张本体系卡牌中发现一张。",
+    "description": "从当前模式的本体系卡池中发现一张牌。",
     "faction": "灵脉",
     "type": "spell",
     "cost": 4,
@@ -14021,11 +13991,9 @@
     "effect": [
       {
         "kind": "discover",
-        "choices": [
-          "leyline-season-12",
-          "leyline-season-13",
-          "leyline-season-14"
-        ]
+        "pool": {
+          "faction": "friendly"
+        }
       }
     ],
     "keywords": [],
@@ -16476,7 +16444,7 @@
   {
     "id": "cloudfall-season-spell-06",
     "name": "天港发现·06",
-    "description": "从三张本体系卡牌中发现一张。",
+    "description": "从当前模式的本体系卡池中发现一张牌。",
     "faction": "云瀑",
     "type": "spell",
     "cost": 6,
@@ -16486,11 +16454,9 @@
     "effect": [
       {
         "kind": "discover",
-        "choices": [
-          "cloudfall-season-06",
-          "cloudfall-season-07",
-          "cloudfall-season-08"
-        ]
+        "pool": {
+          "faction": "friendly"
+        }
       }
     ],
     "keywords": [],
@@ -16601,7 +16567,7 @@
   {
     "id": "cloudfall-season-spell-12",
     "name": "云瀑发现·12",
-    "description": "从三张本体系卡牌中发现一张。",
+    "description": "从当前模式的本体系卡池中发现一张牌。",
     "faction": "云瀑",
     "type": "spell",
     "cost": 4,
@@ -16611,11 +16577,9 @@
     "effect": [
       {
         "kind": "discover",
-        "choices": [
-          "cloudfall-season-12",
-          "cloudfall-season-13",
-          "cloudfall-season-14"
-        ]
+        "pool": {
+          "faction": "friendly"
+        }
       }
     ],
     "keywords": [],
@@ -17755,7 +17719,7 @@
   {
     "id": "magnet-season-spell-06",
     "name": "铁潮发现·06",
-    "description": "从三张本体系卡牌中发现一张。",
+    "description": "从当前模式的本体系卡池中发现一张牌。",
     "faction": "磁风",
     "type": "spell",
     "cost": 6,
@@ -17765,11 +17729,9 @@
     "effect": [
       {
         "kind": "discover",
-        "choices": [
-          "magnet-season-06",
-          "magnet-season-07",
-          "magnet-season-08"
-        ]
+        "pool": {
+          "faction": "friendly"
+        }
       }
     ],
     "keywords": [],
@@ -17880,7 +17842,7 @@
   {
     "id": "magnet-season-spell-12",
     "name": "磁风发现·12",
-    "description": "从三张本体系卡牌中发现一张。",
+    "description": "从当前模式的本体系卡池中发现一张牌。",
     "faction": "磁风",
     "type": "spell",
     "cost": 4,
@@ -17890,11 +17852,9 @@
     "effect": [
       {
         "kind": "discover",
-        "choices": [
-          "magnet-season-12",
-          "magnet-season-13",
-          "magnet-season-14"
-        ]
+        "pool": {
+          "faction": "friendly"
+        }
       }
     ],
     "keywords": [],
@@ -19044,7 +19004,7 @@
   {
     "id": "crystal-season-spell-06",
     "name": "折光发现·06",
-    "description": "从三张本体系卡牌中发现一张。",
+    "description": "从当前模式的本体系卡池中发现一张牌。",
     "faction": "晶核",
     "type": "spell",
     "cost": 6,
@@ -19054,11 +19014,9 @@
     "effect": [
       {
         "kind": "discover",
-        "choices": [
-          "crystal-season-06",
-          "crystal-season-07",
-          "crystal-season-08"
-        ]
+        "pool": {
+          "faction": "friendly"
+        }
       }
     ],
     "keywords": [],
@@ -19169,7 +19127,7 @@
   {
     "id": "crystal-season-spell-12",
     "name": "晶核发现·12",
-    "description": "从三张本体系卡牌中发现一张。",
+    "description": "从当前模式的本体系卡池中发现一张牌。",
     "faction": "晶核",
     "type": "spell",
     "cost": 4,
@@ -19179,11 +19137,9 @@
     "effect": [
       {
         "kind": "discover",
-        "choices": [
-          "crystal-season-12",
-          "crystal-season-13",
-          "crystal-season-14"
-        ]
+        "pool": {
+          "faction": "friendly"
+        }
       }
     ],
     "keywords": [],
@@ -20306,7 +20262,7 @@
   {
     "id": "dream-season-spell-06",
     "name": "睡莲发现·06",
-    "description": "从三张本体系卡牌中发现一张。",
+    "description": "从当前模式的本体系卡池中发现一张牌。",
     "faction": "梦境",
     "type": "spell",
     "cost": 6,
@@ -20316,11 +20272,9 @@
     "effect": [
       {
         "kind": "discover",
-        "choices": [
-          "dream-season-06",
-          "dream-season-07",
-          "dream-season-08"
-        ]
+        "pool": {
+          "faction": "friendly"
+        }
       }
     ],
     "keywords": [],
@@ -20442,7 +20396,7 @@
   {
     "id": "dream-season-spell-12",
     "name": "梦境发现·12",
-    "description": "从三张本体系卡牌中发现一张。",
+    "description": "从当前模式的本体系卡池中发现一张牌。",
     "faction": "梦境",
     "type": "spell",
     "cost": 4,
@@ -20452,11 +20406,9 @@
     "effect": [
       {
         "kind": "discover",
-        "choices": [
-          "dream-season-12",
-          "dream-season-13",
-          "dream-season-14"
-        ]
+        "pool": {
+          "faction": "friendly"
+        }
       }
     ],
     "keywords": [],
@@ -21599,7 +21551,7 @@
   {
     "id": "rift-season-spell-06",
     "name": "断界发现·06",
-    "description": "从三张本体系卡牌中发现一张。",
+    "description": "从当前模式的本体系卡池中发现一张牌。",
     "faction": "裂星",
     "type": "spell",
     "cost": 6,
@@ -21609,11 +21561,9 @@
     "effect": [
       {
         "kind": "discover",
-        "choices": [
-          "rift-season-06",
-          "rift-season-07",
-          "rift-season-08"
-        ]
+        "pool": {
+          "faction": "friendly"
+        }
       }
     ],
     "keywords": [],
@@ -21724,7 +21674,7 @@
   {
     "id": "rift-season-spell-12",
     "name": "裂星发现·12",
-    "description": "从三张本体系卡牌中发现一张。",
+    "description": "从当前模式的本体系卡池中发现一张牌。",
     "faction": "裂星",
     "type": "spell",
     "cost": 4,
@@ -21734,11 +21684,9 @@
     "effect": [
       {
         "kind": "discover",
-        "choices": [
-          "rift-season-12",
-          "rift-season-13",
-          "rift-season-14"
-        ]
+        "pool": {
+          "faction": "friendly"
+        }
       }
     ],
     "keywords": [],
@@ -23087,7 +23035,7 @@
   {
     "id": "timesand-season-spell-06",
     "name": "刻度发现·06",
-    "description": "从三张本体系卡牌中发现一张。",
+    "description": "从当前模式的本体系卡池中发现一张牌。",
     "faction": "时砂",
     "type": "spell",
     "cost": 6,
@@ -23097,11 +23045,9 @@
     "effect": [
       {
         "kind": "discover",
-        "choices": [
-          "timesand-season-06",
-          "timesand-season-07",
-          "timesand-season-08"
-        ]
+        "pool": {
+          "faction": "friendly"
+        }
       }
     ],
     "keywords": [],
@@ -23212,7 +23158,7 @@
   {
     "id": "timesand-season-spell-12",
     "name": "时砂发现·12",
-    "description": "从三张本体系卡牌中发现一张。",
+    "description": "从当前模式的本体系卡池中发现一张牌。",
     "faction": "时砂",
     "type": "spell",
     "cost": 4,
@@ -23222,11 +23168,9 @@
     "effect": [
       {
         "kind": "discover",
-        "choices": [
-          "timesand-season-12",
-          "timesand-season-13",
-          "timesand-season-14"
-        ]
+        "pool": {
+          "faction": "friendly"
+        }
       }
     ],
     "keywords": [],
@@ -24357,7 +24301,7 @@
   {
     "id": "gloomwood-season-spell-06",
     "name": "黑根发现·06",
-    "description": "从三张本体系卡牌中发现一张。",
+    "description": "从当前模式的本体系卡池中发现一张牌。",
     "faction": "幽森",
     "type": "spell",
     "cost": 6,
@@ -24367,11 +24311,9 @@
     "effect": [
       {
         "kind": "discover",
-        "choices": [
-          "gloomwood-season-06",
-          "gloomwood-season-07",
-          "gloomwood-season-08"
-        ]
+        "pool": {
+          "faction": "friendly"
+        }
       }
     ],
     "keywords": [],
@@ -24482,7 +24424,7 @@
   {
     "id": "gloomwood-season-spell-12",
     "name": "幽森发现·12",
-    "description": "从三张本体系卡牌中发现一张。",
+    "description": "从当前模式的本体系卡池中发现一张牌。",
     "faction": "幽森",
     "type": "spell",
     "cost": 4,
@@ -24492,11 +24434,9 @@
     "effect": [
       {
         "kind": "discover",
-        "choices": [
-          "gloomwood-season-12",
-          "gloomwood-season-13",
-          "gloomwood-season-14"
-        ]
+        "pool": {
+          "faction": "friendly"
+        }
       }
     ],
     "keywords": [],
@@ -25657,7 +25597,7 @@
   {
     "id": "firmament-season-spell-06",
     "name": "日冕发现·06",
-    "description": "从三张本体系卡牌中发现一张。",
+    "description": "从当前模式的本体系卡池中发现一张牌。",
     "faction": "天穹",
     "type": "spell",
     "cost": 6,
@@ -25667,11 +25607,9 @@
     "effect": [
       {
         "kind": "discover",
-        "choices": [
-          "firmament-season-06",
-          "firmament-season-07",
-          "firmament-season-08"
-        ]
+        "pool": {
+          "faction": "friendly"
+        }
       }
     ],
     "keywords": [],
@@ -25782,7 +25720,7 @@
   {
     "id": "firmament-season-spell-12",
     "name": "天穹发现·12",
-    "description": "从三张本体系卡牌中发现一张。",
+    "description": "从当前模式的本体系卡池中发现一张牌。",
     "faction": "天穹",
     "type": "spell",
     "cost": 4,
@@ -25792,11 +25730,9 @@
     "effect": [
       {
         "kind": "discover",
-        "choices": [
-          "firmament-season-12",
-          "firmament-season-13",
-          "firmament-season-14"
-        ]
+        "pool": {
+          "faction": "friendly"
+        }
       }
     ],
     "keywords": [],

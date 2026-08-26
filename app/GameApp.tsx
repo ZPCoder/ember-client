@@ -254,6 +254,7 @@ type GamePayload = {
     token: string;
     seed: number;
     startingPlayer: 0 | 1;
+    rankedFormat: RankedFormat;
     playerDeck: string[];
     opponentArchetypeId: string;
     expiresAt: string;
@@ -265,6 +266,7 @@ type AiMatchProofPayload = {
   ticketToken: string;
   seed: number;
   startingPlayer: 0 | 1;
+  rankedFormat: RankedFormat;
   playerDeck: string[];
   opponentArchetypeId: string;
   commands: BattleCommand[];
@@ -924,19 +926,22 @@ function applyLocalAction(
     const ladderReadyDeckId = asString(body.ladderReadyDeckId);
     const offer = ladderReadyDeckId ? getLadderReadyDeck(ladderReadyDeckId) : undefined;
     let playerDeck: readonly string[];
+    let rankedFormat: RankedFormat;
     if (offer) {
       const trial = current.ladderReady;
       if (!trial?.activatedAt || !trial.expiresAt) throw new Error("请先激活七日试玩。");
       if (trial.claimedDeckId) throw new Error("永久领取后，其他套牌试玩已经结束。");
       if (!ladderReadyTrialIsActive(trial)) throw new Error("七日试玩已经结束，请选择一套永久领取。");
       playerDeck = offer.deck;
+      rankedFormat = "standard";
     } else {
       const deckId = asString(body.deckId);
       const deck = current.decks.find((candidate) => candidate.id === deckId);
       if (!deck) throw new Error("AI 对局必须使用已保存的卡组或有效试玩套牌。");
       playerDeck = deck.cardIds;
+      rankedFormat = deck.format === "wild" ? "wild" : "standard";
     }
-    const validation = validateDeck(playerDeck);
+    const validation = validateDeckForFormat(playerDeck, rankedFormat);
     if (!validation.valid) throw new Error(validation.errors[0]?.message ?? "卡组不符合组牌规则。");
     const archetypeId = asString(body.opponentArchetypeId);
     if (!AI_ARCHETYPES.some((candidate) => candidate.id === archetypeId)) {
@@ -950,6 +955,7 @@ function applyLocalAction(
         token: `local-${crypto.randomUUID()}`,
         seed: (randomness[0] ?? 0) & 0x7fffffff,
         startingPlayer: ((randomness[1] ?? 0) & 1) as 0 | 1,
+        rankedFormat,
         playerDeck: [...playerDeck],
         opponentArchetypeId: archetypeId,
         expiresAt: new Date(Date.now() + 2 * 60 * 60 * 1_000).toISOString(),
@@ -3977,7 +3983,7 @@ export function GameApp({
 
   // This transition is shared by AI and transport-driven PVP starts.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const beginBattle = (decks: [string[], string[]], startingPlayer: 0 | 1, online: boolean, opponentName?: string, seed?: number, opponentArchetypeId?: string, aiTicketToken?: string) => {
+  const beginBattle = (decks: [string[], string[]], startingPlayer: 0 | 1, online: boolean, rankedFormat: RankedFormat, opponentName?: string, seed?: number, opponentArchetypeId?: string, aiTicketToken?: string) => {
     const launchDeckValidation = validateDeck(decks[0]);
     if (!online && !launchDeckValidation.valid) {
       switchSection("deck");
@@ -3993,7 +3999,7 @@ export function GameApp({
       aiReplayFinalStateRef.current = null;
       mulliganSubmissionRef.current = false;
       unlockAudio();
-      let next = createMatch({ decks, startingPlayer, ...(seed === undefined ? {} : { seed }) });
+      let next = createMatch({ decks, startingPlayer, rankedFormat, ...(seed === undefined ? {} : { seed }) });
       aiCommandTranscriptRef.current = [];
       aiMatchProofRef.current = null;
       // In a local match the AI confirms its opening hand immediately; the
@@ -4012,6 +4018,7 @@ export function GameApp({
           ticketToken: aiTicketToken,
           seed: next.seed,
           startingPlayer,
+          rankedFormat,
           playerDeck: [...decks[0]],
           opponentArchetypeId: opponentArchetypeId ?? AI_ARCHETYPES[0]?.id ?? "tide-control",
           commands: aiCommandTranscriptRef.current,
@@ -4108,6 +4115,7 @@ export function GameApp({
         [[...ticket.playerDeck], [...(opponent.deck ?? DEFAULT_OPPONENT_DECK)]],
         ticket.startingPlayer,
         false,
+        ticket.rankedFormat,
         opponent.name,
         ticket.seed,
         ticket.opponentArchetypeId,
@@ -4379,7 +4387,7 @@ export function GameApp({
       const localStartingPlayer = role === "host"
         ? canonicalStartingPlayer
         : canonicalStartingPlayer === 0 ? 1 : 0;
-      beginBattle(orderedDecks, localStartingPlayer, true, pvp.state.peerName ?? "联机对手", event.payload.seed);
+      beginBattle(orderedDecks, localStartingPlayer, true, event.payload.rankedFormat ?? pvp.state.rankedFormat, pvp.state.peerName ?? "联机对手", event.payload.seed);
       pvp.acknowledgeIncoming(event.id);
       return;
     }

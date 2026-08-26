@@ -20,6 +20,7 @@ class CardDefinition {
     this.herald,
     this.colossal,
     this.heroCard,
+    this.collectible = true,
     this.spellDamage = 0,
     this.keywords = const [],
     this.traits = const [],
@@ -56,6 +57,7 @@ class CardDefinition {
   final Map<String, dynamic>? herald;
   final Map<String, dynamic>? colossal;
   final Map<String, dynamic>? heroCard;
+  final bool collectible;
   final int spellDamage;
   final List<String> keywords;
   final List<String> traits;
@@ -120,6 +122,7 @@ class CardDefinition {
       herald: herald ?? this.herald,
       colossal: colossal ?? this.colossal,
       heroCard: heroCard ?? this.heroCard,
+      collectible: collectible,
       spellDamage: spellDamage,
       keywords: keywords ?? this.keywords,
       traits: traits,
@@ -182,6 +185,7 @@ class CardDefinition {
       heroCard: json['heroCard'] is Map
           ? Map<String, dynamic>.from(json['heroCard'] as Map)
           : null,
+      collectible: json['collectible'] != false,
       spellDamage: (json['spellDamage'] as num?)?.toInt() ?? 0,
       keywords: strings(json['keywords']),
       traits: strings(json['traits']),
@@ -337,6 +341,7 @@ class BattleDiscardRecord {
 
 class BattleSide {
   BattleSide({
+    required this.faction,
     required this.heroHealth,
     required this.maxHeroHealth,
     required this.mana,
@@ -383,6 +388,7 @@ class BattleSide {
        discardHistory = discardHistory ?? <BattleDiscardRecord>[],
        secrets = secrets ?? <BattleSecret>[];
 
+  final String faction;
   int heroHealth;
   final int maxHeroHealth;
   int mana;

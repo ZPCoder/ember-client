@@ -794,6 +794,7 @@ class GameController extends ChangeNotifier {
     final playerIsSecond = startingPlayer == 'ai';
     final aiIsSecond = startingPlayer == 'player';
     final player = BattleSide(
+      faction: playerFaction,
       heroHealth: 30,
       maxHeroHealth: 30,
       mana: 1,
@@ -805,6 +806,7 @@ class GameController extends ChangeNotifier {
       coinAvailable: playerIsSecond,
     );
     final ai = BattleSide(
+      faction: aiFaction,
       heroHealth: 30,
       maxHeroHealth: 30,
       mana: 1,
@@ -2709,6 +2711,43 @@ class GameController extends ChangeNotifier {
     }
   }
 
+  List<String> _discoverPoolForEffect(
+    Map<String, dynamic> effect,
+    BattleSide source,
+    String? sourceCardId,
+  ) {
+    final dynamicPool = effect['pool'];
+    Iterable<String> candidates;
+    if (dynamicPool is Map) {
+      final factionRule = dynamicPool['faction']?.toString();
+      final includeNeutral = dynamicPool['includeNeutral'] == true;
+      final cardType = dynamicPool['cardType']?.toString();
+      candidates = catalog.where((candidate) {
+        if (candidate.id == sourceCardId) return false;
+        if (!candidate.collectible ||
+            !cardAvailableInRankedFormat(candidate, deckFormat)) {
+          return false;
+        }
+        if (cardType != null && candidate.type != cardType) return false;
+        if (factionRule == 'neutral') return candidate.faction == '中立';
+        return candidate.faction == source.faction ||
+            (includeNeutral && candidate.faction == '中立');
+      }).map((candidate) => candidate.id);
+    } else {
+      final choices = effect['choices'];
+      candidates = choices is List
+          ? choices.map((candidate) => candidate.toString())
+          : const Iterable<String>.empty();
+    }
+    return candidates
+        .where(
+          (candidateId) =>
+              candidateId != sourceCardId && card(candidateId) != null,
+        )
+        .toSet()
+        .toList(growable: false);
+  }
+
   void _recastLastOpponentSpell({
     required BattleSide source,
     required BattleSide enemy,
@@ -2781,11 +2820,7 @@ class GameController extends ChangeNotifier {
       final effect = discover.first;
       final rawChoices = effect['kind'] == 'discover-copy-opponent-hand'
           ? enemy.hand.map((candidate) => candidate.id)
-          : (effect['choices'] is List
-                ? (effect['choices'] as List).map(
-                    (candidate) => candidate.toString(),
-                  )
-                : const Iterable<String>.empty());
+          : _discoverPoolForEffect(effect, source, copiedSpell.id);
       final choices = rawChoices
           .where((candidateId) => card(candidateId) != null)
           .toSet()
@@ -2914,13 +2949,15 @@ class GameController extends ChangeNotifier {
             }
             break;
           case 'discover':
-            final choices = effect['choices'];
             final state = battle;
-            if (state != null && choices is List) {
-              final validChoices = choices
-                  .map((item) => item.toString())
-                  .where((id) => card(id) != null)
-                  .toList();
+            if (state != null) {
+              final pool = _discoverPoolForEffect(
+                effect,
+                source,
+                sourceCard?.id,
+              );
+              if (pool.length > 3) pool.shuffle(_random);
+              final validChoices = pool.take(3).toList(growable: false);
               if (validChoices.isNotEmpty) {
                 state.phase = 'discover';
                 state.discoverChoices = validChoices;
