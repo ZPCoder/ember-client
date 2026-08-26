@@ -162,6 +162,9 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(gameStore, /refreshLadderReadyReturnEligibility/);
   assert.match(gameStore, /updated_at AS lastActiveAt/);
   assert.match(game, /离开 90 天后可重新符合资格/);
+  assert.match(game, /RETURNING COMMANDER · ELIGIBILITY RESTORED/);
+  assert.match(game, /此前领取的卡牌和保存卡组不会被覆盖/);
+  assert.match(game, /回归军械库已有新资格/);
   assert.match(game, /ladder-ready-\$\{catalog\.id\}-\$\{offer\.id\}/);
   assert.match(game, /领取后其余套牌每套/);
   assert.match(game, /AI 与在线对战均可使用/);

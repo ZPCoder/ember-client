@@ -5971,6 +5971,10 @@ export function GameApp({
     wins: player.stats.wins,
     level: player.progression?.level ?? 1,
   }) === "apprentice";
+  const returningArmoryReady =
+    (player.ladderReady?.cycle ?? 1) > 1 &&
+    !player.ladderReady?.activatedAt &&
+    !player.ladderReady?.claimedDeckId;
 
   return (
     <div className={`game-shell ${section === "battle" && battleView ? "game-shell--battle-focus" : ""}`}>
@@ -6001,7 +6005,7 @@ export function GameApp({
           <span className="sidebar-nav__label">战略终端</span>
           {NAV_ITEMS.map((item) => (
             <button
-              className={`nav-item ${section === item.id ? "nav-item--active" : ""}`}
+              className={`nav-item ${section === item.id ? "nav-item--active" : ""} ${item.id === "deck" && returningArmoryReady ? "nav-item--attention" : ""}`}
               type="button"
               key={item.id}
               onClick={() => switchSection(item.id)}
@@ -6015,6 +6019,9 @@ export function GameApp({
                 <small>{item.eyebrow}</small>
               </span>
               <span className="nav-item__signal" />
+              {item.id === "deck" && returningArmoryReady && (
+                <span className="sr-only">回归军械库已有新资格</span>
+              )}
             </button>
           ))}
         </nav>
@@ -6586,6 +6593,26 @@ function OverviewSection({
           </button>
         }
       />
+
+      {(player.ladderReady?.cycle ?? 1) > 1 &&
+        !player.ladderReady?.activatedAt &&
+        !player.ladderReady?.claimedDeckId && (
+          <section className="training-callout returning-callout" aria-labelledby="returning-callout-title">
+            <span className="training-callout__sigil returning-callout__sigil" aria-hidden="true"><Icon name="cards" size={26} /></span>
+            <div className="training-callout__copy returning-callout__copy">
+              <span>RETURNING COMMANDER · ELIGIBILITY RESTORED</span>
+              <h2 id="returning-callout-title">第 {player.ladderReady?.cycle ?? 1} 期回归军械库已开放</h2>
+              <p>新的七日天梯预备试玩与免费套牌选择已经恢复；此前领取的卡牌和保存卡组不会被覆盖。</p>
+            </div>
+            <span className="returning-callout__cycle">
+              <small>新资格周期</small>
+              <strong>可立即启动</strong>
+            </span>
+            <button className="button button--accent" type="button" onClick={() => onNavigate("deck")}>
+              查看回归军械库 <Icon name="arrow" />
+            </button>
+          </section>
+        )}
 
       <section className="training-callout" aria-labelledby="training-callout-title">
         <span className="training-callout__sigil" aria-hidden="true"><Icon name="shield" size={26} /></span>

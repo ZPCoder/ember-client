@@ -298,6 +298,19 @@ p {
   box-shadow: 0 0 10px var(--ember);
 }
 
+.nav-item--attention:not(.nav-item--active) .nav-item__signal {
+  background: #e9be75;
+  box-shadow: 0 0 0 4px rgba(233, 190, 117, 0.08), 0 0 12px rgba(233, 190, 117, 0.5);
+  animation: nav-attention-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes nav-attention-pulse {
+  50% {
+    opacity: 0.55;
+    transform: scale(1.35);
+  }
+}
+
 .sidebar__status {
   padding: 18px;
   border-top: 1px solid var(--line);
@@ -894,6 +907,45 @@ button.resource-chip:hover {
   height: 1px;
   margin-bottom: 12px;
   background: rgba(216, 162, 81, 0.22);
+}
+
+.returning-callout {
+  border-color: rgba(105, 207, 195, 0.38);
+  background:
+    linear-gradient(105deg, rgba(55, 154, 145, 0.18), rgba(216, 162, 81, 0.07) 66%, transparent),
+    rgba(9, 27, 23, 0.92);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2), inset 0 0 42px rgba(105, 207, 195, 0.035);
+}
+
+.returning-callout__sigil {
+  border-color: rgba(105, 207, 195, 0.46);
+  color: #8de0d6;
+  background: rgba(65, 166, 156, 0.14);
+}
+
+.returning-callout__copy > span {
+  color: #83d5cb;
+}
+
+.returning-callout__cycle {
+  display: grid;
+  gap: 2px;
+  min-width: 112px;
+  padding: 8px 11px;
+  border: 1px solid rgba(105, 207, 195, 0.24);
+  border-radius: 10px;
+  background: rgba(7, 20, 17, 0.46);
+}
+
+.returning-callout__cycle small {
+  color: #758d84;
+  font-size: 8px;
+  letter-spacing: 0.08em;
+}
+
+.returning-callout__cycle strong {
+  color: #c8f2ec;
+  font-size: 11px;
 }
 
 .apprentice-track {
@@ -9071,6 +9123,10 @@ button.hero-core {
   }
 
   .training-callout__route {
+    display: none;
+  }
+
+  .returning-callout__cycle {
     display: none;
   }
 
