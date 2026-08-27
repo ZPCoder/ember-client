@@ -4331,6 +4331,11 @@ class _BoardRow extends StatelessWidget {
                         const _UnitBadge(label: '复生', color: Color(0xFFA692D1)),
                       if (unit.isImmune)
                         const _UnitBadge(label: '免疫', color: Color(0xFFE7BD7A)),
+                      if (unit.card.keywords.contains('immune-while-attacking'))
+                        const _UnitBadge(
+                          label: '攻击时免疫',
+                          color: Color(0xFFE7BD7A),
+                        ),
                     ],
                   ),
                   const Spacer(),
@@ -5771,6 +5776,14 @@ class _OnlineBoardRow extends StatelessWidget {
                           if (unit.isImmune)
                             const Text(
                               '免疫',
+                              style: TextStyle(
+                                color: Color(0xFFE7BD7A),
+                                fontSize: 9,
+                              ),
+                            ),
+                          if (unit.keywords.contains('immune-while-attacking'))
+                            const Text(
+                              '攻击时免疫',
                               style: TextStyle(
                                 color: Color(0xFFE7BD7A),
                                 fontSize: 9,

@@ -69,6 +69,7 @@ test("ships the complete product surface and removes starter assets", async () =
   const immuneCard = CARD_CATALOG.find((card) => card.id === "neutral-season-spell-03");
   const permanentImmuneCard = CARD_CATALOG.find((card) => card.id === "neutral-season-14");
   const attackImmuneWeapon = CARD_CATALOG.find((card) => card.id === "sun-supernova-judgment");
+  const attackImmuneUnit = CARD_CATALOG.find((card) => card.id === "neutral-season-13");
   const cardArt = await Promise.all(
     cardIds.map(async (cardId) => {
       const assetUrl = new URL(`../public/cards/${cardId}.webp`, import.meta.url);
@@ -185,6 +186,7 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.equal(immuneCard?.effect?.[0]?.kind, "grant-immune");
   assert.ok(permanentImmuneCard?.keywords?.includes("immune"));
   assert.ok(attackImmuneWeapon?.keywords?.includes("immune-while-attacking"));
+  assert.ok(attackImmuneUnit?.keywords?.includes("immune-while-attacking"));
   assert.match(game, /heroImmuneThisTurn/);
   assert.match(game, /battleUnitIsImmune/);
   assert.match(game, /攻击时免疫/);

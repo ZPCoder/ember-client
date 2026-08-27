@@ -2867,6 +2867,54 @@ void main() {
     controller.dispose();
   });
 
+  test(
+    'mobile minion attack-time Immune only covers its attack window',
+    () async {
+      final catalog = await loadCatalog();
+      final attackerCard = catalog.singleWhere(
+        (card) => card.id == 'neutral-season-13',
+      );
+      final defenderCard = catalog.singleWhere(
+        (card) => card.id == 'neutral-stonehorn',
+      );
+      final controller = GameController(startingPlayer: 'player')
+        ..catalog = catalog
+        ..deckIds.addAll(List.filled(30, attackerCard.id));
+      controller.startBattle();
+      await controller.confirmMulligan();
+      final state = controller.battle!;
+      final attacker = BattleUnit(
+        instanceId: 'mobile-unit-attack-immune',
+        card: attackerCard,
+        owner: 'player',
+        attack: attackerCard.attack ?? 0,
+        health: attackerCard.health ?? 1,
+        maxHealth: attackerCard.health ?? 1,
+        summoningSick: false,
+      );
+      final defender = BattleUnit(
+        instanceId: 'mobile-unit-attack-defender',
+        card: defenderCard,
+        owner: 'ai',
+        attack: 4,
+        health: 8,
+        maxHealth: 8,
+      );
+      state.player.board
+        ..clear()
+        ..add(attacker);
+      state.ai.board
+        ..clear()
+        ..add(defender);
+
+      expect(attackerCard.keywords, contains('immune-while-attacking'));
+      expect(controller.attack(attacker, target: defender), isTrue);
+      expect(attacker.health, attackerCard.health);
+      expect(attacker.immuneThisTurn, isFalse);
+      controller.dispose();
+    },
+  );
+
   test('lethal unit combat still deals simultaneous retaliation damage', () {
     CardDefinition unit(String id, int attack, int health) => CardDefinition(
       id: id,

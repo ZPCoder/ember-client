@@ -8486,6 +8486,8 @@ function BoardUnit({
     ? unit.immuneThisTurn
       ? "◇ 本回合免疫"
       : "◇ 免疫"
+    : unit.keywords.includes("immune-while-attacking")
+      ? "◇ 攻击时免疫"
     : unit.frozenTurns > 0
     ? `❄ 冻结 ${unit.frozenTurns} 回合`
     : unit.summoningSick

@@ -6632,8 +6632,8 @@
   },
   {
     "id": "neutral-season-13",
-    "name": "远途旅者·13",
-    "description": "tradeable。 中立的战线单位。 登场时抽一张牌。 可交易。",
+    "name": "舷侧突击手",
+    "description": "攻击时免疫。战吼：抽一张牌。可交易。",
     "faction": "中立",
     "type": "unit",
     "cost": 5,
@@ -6642,7 +6642,8 @@
     "health": 8,
     "keywords": [
       "tradeable",
-      "battlecry"
+      "battlecry",
+      "immune-while-attacking"
     ],
     "traits": [
       "swift",

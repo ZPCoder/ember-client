@@ -4455,66 +4455,80 @@ class GameController extends ChangeNotifier {
     BattleSide defender,
     BattleUnit? target,
   ) {
-    if (target == null) {
-      _triggerSecrets(
-        defender,
-        'opponent-attacks-hero',
-        triggeringSide: _sideFor(attacker),
-        attackingUnit: attacker,
-      );
-      if (attacker.health <= 0 ||
-          !_sideFor(attacker).board.contains(attacker)) {
-        _processDeaths();
-        return;
-      }
-    }
-    attacker.stealthActive = false;
-    attacker.attacksMade++;
-    attacker.hasAttacked = true;
-    final defenderName = target?.card.name ?? '敌方核心';
-    // Both combatants deal their snapshotted attack at the same time. In
-    // particular, a defender still retaliates when the incoming hit is lethal.
-    final defenderAttack = target?.attack ?? 0;
-    final defenderHasLifesteal = target?.hasLifesteal ?? false;
-    final outgoing = target == null
-        ? _damageHero(defender, attacker.attack)
-        : _damageUnit(target, attacker.attack, source: attacker, combat: true);
-    final reflected = target == null
-        ? 0
-        : _damageUnit(attacker, defenderAttack, source: target, combat: true);
-    if (attacker.hasLifesteal && outgoing > 0) {
-      final side = _sideFor(attacker);
-      final healed = _healHero(side, outgoing);
-      if (healed > 0) {
-        stateLog('${attacker.card.name}：', '汲取 $healed 点生命');
-        _emitFx(
-          'heal',
-          '生命汲取',
-          '${attacker.card.name} 恢复自身核心',
-          Icons.favorite,
-          0xFF79B980,
+    final previousImmunity = attacker.immuneThisTurn;
+    final attackImmunity =
+        !attacker.silenced &&
+        attacker.card.keywords.contains('immune-while-attacking');
+    if (attackImmunity) attacker.immuneThisTurn = true;
+    try {
+      if (target == null) {
+        _triggerSecrets(
+          defender,
+          'opponent-attacks-hero',
+          triggeringSide: _sideFor(attacker),
+          attackingUnit: attacker,
         );
+        if (attacker.health <= 0 ||
+            !_sideFor(attacker).board.contains(attacker)) {
+          _processDeaths();
+          return;
+        }
       }
+      attacker.stealthActive = false;
+      attacker.attacksMade++;
+      attacker.hasAttacked = true;
+      final defenderName = target?.card.name ?? '敌方核心';
+      // Both combatants deal their snapshotted attack at the same time. In
+      // particular, a defender still retaliates when the incoming hit is lethal.
+      final defenderAttack = target?.attack ?? 0;
+      final defenderHasLifesteal = target?.hasLifesteal ?? false;
+      final outgoing = target == null
+          ? _damageHero(defender, attacker.attack)
+          : _damageUnit(
+              target,
+              attacker.attack,
+              source: attacker,
+              combat: true,
+            );
+      final reflected = target == null
+          ? 0
+          : _damageUnit(attacker, defenderAttack, source: target, combat: true);
+      if (attacker.hasLifesteal && outgoing > 0) {
+        final side = _sideFor(attacker);
+        final healed = _healHero(side, outgoing);
+        if (healed > 0) {
+          stateLog('${attacker.card.name}：', '汲取 $healed 点生命');
+          _emitFx(
+            'heal',
+            '生命汲取',
+            '${attacker.card.name} 恢复自身核心',
+            Icons.favorite,
+            0xFF79B980,
+          );
+        }
+      }
+      if (target != null && defenderHasLifesteal && reflected > 0) {
+        final side = _sideFor(target);
+        _healHero(side, reflected);
+      }
+      _emitFx(
+        'attack',
+        '${attacker.card.name} 发起攻击',
+        target == null ? '对敌方核心造成 $outgoing 点伤害' : '与 $defenderName 发生交战',
+        Icons.flash_on,
+        0xFFE46D3F,
+        sourceId: attacker.instanceId,
+        targetId: target?.instanceId ?? 'ai-hero',
+        amount: outgoing,
+      );
+      stateLog(
+        attacker.card.name,
+        target == null ? '对敌方核心造成 $outgoing 点伤害。' : '与 $defenderName 交战。',
+      );
+      _processDeaths();
+    } finally {
+      if (attackImmunity) attacker.immuneThisTurn = previousImmunity;
     }
-    if (target != null && defenderHasLifesteal && reflected > 0) {
-      final side = _sideFor(target);
-      _healHero(side, reflected);
-    }
-    _emitFx(
-      'attack',
-      '${attacker.card.name} 发起攻击',
-      target == null ? '对敌方核心造成 $outgoing 点伤害' : '与 $defenderName 发生交战',
-      Icons.flash_on,
-      0xFFE46D3F,
-      sourceId: attacker.instanceId,
-      targetId: target?.instanceId ?? 'ai-hero',
-      amount: outgoing,
-    );
-    stateLog(
-      attacker.card.name,
-      target == null ? '对敌方核心造成 $outgoing 点伤害。' : '与 $defenderName 交战。',
-    );
-    _processDeaths();
   }
 
   int _damageHero(BattleSide side, int amount) {
