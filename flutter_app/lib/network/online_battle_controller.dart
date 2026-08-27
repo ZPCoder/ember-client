@@ -24,6 +24,7 @@ class OnlineUnit {
     this.frozenTurns = 0,
     this.immuneThisTurn = false,
     this.conditionalImmuneActive = false,
+    this.dormantTurns = 0,
     this.stars = 1,
     this.silenced = false,
   });
@@ -43,6 +44,7 @@ class OnlineUnit {
   final int frozenTurns;
   final bool immuneThisTurn;
   final bool conditionalImmuneActive;
+  final int dormantTurns;
   final int stars;
   final bool silenced;
 
@@ -52,10 +54,15 @@ class OnlineUnit {
   bool get isElusive => keywords.contains('elusive');
   bool get isImmune =>
       immuneThisTurn || keywords.contains('immune') || conditionalImmuneActive;
+  bool get isDormant => dormantTurns > 0;
   bool get isFrozen => frozenTurns > 0;
   int get attackLimit => hasWindfury ? 2 : 1;
   bool get canAttack =>
-      attack > 0 && !summoningSick && !isFrozen && attacksMade < attackLimit;
+      !isDormant &&
+      attack > 0 &&
+      !summoningSick &&
+      !isFrozen &&
+      attacksMade < attackLimit;
 }
 
 class OnlineLocation {
@@ -273,6 +280,7 @@ class OnlineBattleController extends ChangeNotifier {
       final friendly = targetType.startsWith('friendly');
       final unitIsValid =
           target != null &&
+          !target.isDormant &&
           (targetType == 'any-unit'
               ? localBoard.contains(target) ||
                     (remoteBoard.contains(target) && !target.stealthActive)
@@ -341,6 +349,7 @@ class OnlineBattleController extends ChangeNotifier {
         !attacker.canAttack ||
         !localBoard.contains(attacker) ||
         !remoteBoard.contains(target) ||
+        target.isDormant ||
         target.stealthActive ||
         target.isImmune ||
         (_visibleRemoteTaunts.isNotEmpty && !target.hasTaunt)) {
@@ -368,6 +377,7 @@ class OnlineBattleController extends ChangeNotifier {
     if (target == null) {
       if (taunts.isNotEmpty || remoteHeroImmuneThisTurn) return;
     } else if (!remoteBoard.contains(target) ||
+        target.isDormant ||
         target.stealthActive ||
         target.isImmune ||
         (taunts.isNotEmpty && !target.hasTaunt)) {
@@ -441,6 +451,7 @@ class OnlineBattleController extends ChangeNotifier {
       final friendly = targetType.startsWith('friendly');
       final board = friendly ? localBoard : remoteBoard;
       if (!board.contains(target) ||
+          target.isDormant ||
           (!friendly && target.isImmune) ||
           target.isElusive ||
           (!friendly && target.stealthActive)) {
@@ -1008,6 +1019,7 @@ class OnlineBattleController extends ChangeNotifier {
             frozenTurns: (unit['frozenTurns'] as num?)?.toInt() ?? 0,
             immuneThisTurn: unit['immuneThisTurn'] == true,
             conditionalImmuneActive: unit['conditionalImmuneActive'] == true,
+            dormantTurns: (unit['dormantTurns'] as num?)?.toInt() ?? 0,
             stars: (unit['stars'] as num?)?.toInt() ?? 1,
             silenced: silenced,
           );
@@ -1043,6 +1055,7 @@ class OnlineBattleController extends ChangeNotifier {
       .where(
         (unit) =>
             unit.health > 0 &&
+            !unit.isDormant &&
             !unit.stealthActive &&
             !unit.isImmune &&
             unit.hasTaunt,
@@ -1055,7 +1068,11 @@ class OnlineBattleController extends ChangeNotifier {
     }
     final visible = remoteBoard
         .where(
-          (unit) => unit.health > 0 && !unit.stealthActive && !unit.isImmune,
+          (unit) =>
+              unit.health > 0 &&
+              !unit.isDormant &&
+              !unit.stealthActive &&
+              !unit.isImmune,
         )
         .toList(growable: false);
     final taunts = visible
@@ -1078,7 +1095,11 @@ class OnlineBattleController extends ChangeNotifier {
   List<OnlineUnit> get heroAttackTargets {
     final visible = remoteBoard
         .where(
-          (unit) => unit.health > 0 && !unit.stealthActive && !unit.isImmune,
+          (unit) =>
+              unit.health > 0 &&
+              !unit.isDormant &&
+              !unit.stealthActive &&
+              !unit.isImmune,
         )
         .toList(growable: false);
     final taunts = visible

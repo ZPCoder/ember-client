@@ -2486,11 +2486,14 @@ class _BattleBoardState extends State<BattleBoard> {
       final targetUnits = targetType == 'any-unit'
           ? <BattleUnit>[
               ...state.player.board.where(
-                (unit) => card.type != 'spell' || !unit.isElusive,
+                (unit) =>
+                    !unit.isDormant &&
+                    (card.type != 'spell' || !unit.isElusive),
               ),
               ...state.ai.board.where(
                 (unit) =>
                     !unit.stealthActive &&
+                    !unit.isDormant &&
                     !battleUnitIsImmune(state, unit) &&
                     (card.type != 'spell' || !unit.isElusive),
               ),
@@ -2500,6 +2503,7 @@ class _BattleBoardState extends State<BattleBoard> {
                     : state.ai.board)
                 .where(
                   (unit) =>
+                      !unit.isDormant &&
                       (!targetType.startsWith('enemy') ||
                           (!unit.stealthActive &&
                               !battleUnitIsImmune(state, unit))) &&
@@ -2540,12 +2544,16 @@ class _BattleBoardState extends State<BattleBoard> {
           (unit) =>
               unit.hasTaunt &&
               !unit.stealthActive &&
+              !unit.isDormant &&
               !battleUnitIsImmune(state, unit),
         )
         .toList();
     final visibleUnits = state.ai.board
         .where(
-          (unit) => !unit.stealthActive && !battleUnitIsImmune(state, unit),
+          (unit) =>
+              !unit.isDormant &&
+              !unit.stealthActive &&
+              !battleUnitIsImmune(state, unit),
         )
         .toList();
     final choice = await _pickBattleTarget(
@@ -2576,12 +2584,16 @@ class _BattleBoardState extends State<BattleBoard> {
           (unit) =>
               unit.hasTaunt &&
               !unit.stealthActive &&
+              !unit.isDormant &&
               !battleUnitIsImmune(state, unit),
         )
         .toList();
     final visibleUnits = state.ai.board
         .where(
-          (unit) => !unit.stealthActive && !battleUnitIsImmune(state, unit),
+          (unit) =>
+              !unit.isDormant &&
+              !unit.stealthActive &&
+              !battleUnitIsImmune(state, unit),
         )
         .toList();
     final choice = await _pickBattleTarget(
@@ -2615,6 +2627,7 @@ class _BattleBoardState extends State<BattleBoard> {
       final targetUnits = (friendly ? state.player.board : state.ai.board)
           .where(
             (unit) =>
+                !unit.isDormant &&
                 !unit.isElusive &&
                 (friendly ||
                     (!unit.stealthActive && !battleUnitIsImmune(state, unit))),
@@ -4351,6 +4364,11 @@ class _BoardRow extends StatelessWidget {
                         const _UnitBadge(label: '复生', color: Color(0xFFA692D1)),
                       if (battleUnitIsImmune(state, unit))
                         const _UnitBadge(label: '免疫', color: Color(0xFFE7BD7A)),
+                      if (unit.isDormant)
+                        _UnitBadge(
+                          label: '休眠 ${unit.dormantTurns}',
+                          color: const Color(0xFFA692D1),
+                        ),
                       if (unit.card.keywords.contains('immune-while-attacking'))
                         const _UnitBadge(
                           label: '攻击时免疫',
@@ -4360,7 +4378,9 @@ class _BoardRow extends StatelessWidget {
                   ),
                   const Spacer(),
                   Text(
-                    unit.isFrozen
+                    unit.isDormant
+                        ? '休眠中 · 不可交互'
+                        : unit.isFrozen
                         ? '冻结中'
                         : unit.summoningSick
                         ? '等待下回合'
@@ -4892,23 +4912,30 @@ class OnlineBattlePanel extends StatelessWidget {
     final units = targetType == 'any-unit'
         ? <OnlineUnit>[
             ...controller.localBoard.where(
-              (unit) => card.type != 'spell' || !unit.isElusive,
+              (unit) =>
+                  !unit.isDormant && (card.type != 'spell' || !unit.isElusive),
             ),
             ...controller.remoteBoard.where(
               (unit) =>
                   !unit.stealthActive &&
+                  !unit.isDormant &&
                   !unit.isImmune &&
                   (card.type != 'spell' || !unit.isElusive),
             ),
           ]
         : friendly
         ? controller.localBoard
-              .where((unit) => card.type != 'spell' || !unit.isElusive)
+              .where(
+                (unit) =>
+                    !unit.isDormant &&
+                    (card.type != 'spell' || !unit.isElusive),
+              )
               .toList(growable: false)
         : controller.remoteBoard
               .where(
                 (unit) =>
                     !unit.stealthActive &&
+                    !unit.isDormant &&
                     !unit.isImmune &&
                     (card.type != 'spell' || !unit.isElusive),
               )
@@ -4977,12 +5004,13 @@ class OnlineBattlePanel extends StatelessWidget {
         title: '选择「${power.name}」的目标',
         units: friendly
             ? controller.localBoard
-                  .where((unit) => !unit.isElusive)
+                  .where((unit) => !unit.isDormant && !unit.isElusive)
                   .toList(growable: false)
             : controller.remoteBoard
                   .where(
                     (unit) =>
                         !unit.stealthActive &&
+                        !unit.isDormant &&
                         !unit.isImmune &&
                         !unit.isElusive,
                   )
@@ -5787,9 +5815,15 @@ class _OnlineBoardRow extends StatelessWidget {
                               ),
                             ),
                           const Spacer(),
-                          if (unit.isFrozen || unit.summoningSick)
+                          if (unit.isDormant ||
+                              unit.isFrozen ||
+                              unit.summoningSick)
                             Text(
-                              unit.isFrozen ? '冻结中' : '等待下回合',
+                              unit.isDormant
+                                  ? '休眠 ${unit.dormantTurns} · 不可交互'
+                                  : unit.isFrozen
+                                  ? '冻结中'
+                                  : '等待下回合',
                               style: const TextStyle(
                                 color: Color(0xFF65746D),
                                 fontSize: 9,

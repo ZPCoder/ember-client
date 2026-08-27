@@ -1047,6 +1047,45 @@ class GameController extends ChangeNotifier {
     _shuffleDeck(side);
   }
 
+  void _advanceDormantUnits(BattleSide side) {
+    final state = battle;
+    if (state == null) return;
+    final enemy = identical(side, state.player) ? state.ai : state.player;
+    for (final unit in [...side.board].where((unit) => unit.isDormant)) {
+      if (!side.board.contains(unit)) continue;
+      unit.dormantTurns = max(0, unit.dormantTurns - 1);
+      if (unit.isDormant) continue;
+      unit.attacksMade = 0;
+      unit.hasAttacked = false;
+      unit.summoningSick = false;
+      unit.rushOnly = false;
+      stateLog('单位唤醒', '${unit.card.name} 从休眠中苏醒。');
+      _emitFx(
+        'summon',
+        '${unit.card.name} 唤醒',
+        '休眠结束，卡牌重新可交互',
+        Icons.wb_sunny_outlined,
+        0xFFE7BD7A,
+        sourceId: unit.instanceId,
+      );
+      final rawEffects = unit.card.dormant?['onAwaken'];
+      if (rawEffects is List) {
+        _resolveEffects(
+          rawEffects
+              .whereType<Map>()
+              .map((effect) => Map<String, dynamic>.from(effect))
+              .toList(growable: false),
+          source: side,
+          enemy: enemy,
+          sourceName: '${unit.card.name} · 唤醒',
+          sourceCard: unit.card,
+          sourceUnit: unit,
+        );
+      }
+      if (state.finished) break;
+    }
+  }
+
   void _beginSideTurn(BattleState state, {required String owner}) {
     final isPlayer = owner == 'player';
     final side = isPlayer ? state.player : state.ai;
@@ -1069,6 +1108,7 @@ class GameController extends ChangeNotifier {
       state.aiHeroPowerUsed = false;
     }
     _refreshSideForTurn(side);
+    _advanceDormantUnits(side);
     _resolveTurnTriggers(side, start: true);
     _processDeaths();
     _checkFinished();
@@ -1659,6 +1699,7 @@ class GameController extends ChangeNotifier {
 
   bool _isUnitImmune(BattleUnit? unit) {
     if (unit == null) return false;
+    if (unit.isDormant) return true;
     final state = battle;
     return state == null ? unit.isImmune : battleUnitIsImmune(state, unit);
   }
@@ -1801,6 +1842,7 @@ class GameController extends ChangeNotifier {
     required bool targetHero,
   }) {
     if (source.mana < power.cost) return false;
+    if (target?.isDormant ?? false) return false;
     if (power.effect['kind'] == 'summon' && _battlefieldSize(source) >= 7) {
       return false;
     }
@@ -2159,6 +2201,7 @@ class GameController extends ChangeNotifier {
       temporaryAttackBonus: original.temporaryAttackBonus,
       temporaryHealthBonus: original.temporaryHealthBonus,
       silenced: original.silenced,
+      dormantTurns: original.dormantTurns,
     );
   }
 
@@ -3139,6 +3182,7 @@ class GameController extends ChangeNotifier {
       return false;
     }
     final targetType = card.target ?? '';
+    if (target?.isDormant ?? false) return false;
     if (card.type == 'spell' && target != null && target.isElusive)
       return false;
     if (target != null &&
@@ -3161,7 +3205,7 @@ class GameController extends ChangeNotifier {
   }
 
   int _spellDamageBonus(BattleSide side) => side.board
-      .where((unit) => !unit.silenced)
+      .where((unit) => !unit.silenced && !unit.isDormant)
       .fold(0, (total, unit) => total + unit.card.spellDamage);
 
   void _resolveSpellTriggers({
@@ -3171,6 +3215,7 @@ class GameController extends ChangeNotifier {
     for (final unit in [...source.board]) {
       if (!source.board.contains(unit) ||
           unit.silenced ||
+          unit.isDormant ||
           unit.card.onSpellPlayed.isEmpty) {
         continue;
       }
@@ -3195,9 +3240,11 @@ class GameController extends ChangeNotifier {
       return (target: null, targetHero: false, targetFriendlyHero: false);
     }
     final friendlyUnits = source.board
-        .where((unit) => unit.health > 0)
+        .where((unit) => unit.health > 0 && !unit.isDormant)
         .toList();
-    final enemyUnits = enemy.board.where((unit) => unit.health > 0).toList();
+    final enemyUnits = enemy.board
+        .where((unit) => unit.health > 0 && !unit.isDormant)
+        .toList();
     switch (rule) {
       case 'enemy-unit':
         if (enemyUnits.isEmpty) return null;
@@ -3641,6 +3688,7 @@ class GameController extends ChangeNotifier {
           case 'become-copy-of-unit':
             if (sourceUnit == null ||
                 target == null ||
+                target.isDormant ||
                 identical(sourceUnit, target)) {
               break;
             }
@@ -3672,6 +3720,7 @@ class GameController extends ChangeNotifier {
           case 'summon-copy-of-unit':
             if (target == null ||
                 target.health <= 0 ||
+                target.isDormant ||
                 _battlefieldSize(source) >= 7) {
               break;
             }
@@ -3697,7 +3746,7 @@ class GameController extends ChangeNotifier {
             );
             break;
           case 'copy-unit-to-hand':
-            if (target == null || target.health <= 0) break;
+            if (target == null || target.health <= 0 || target.isDormant) break;
             if (_addCardToHand(source, target.card)) {
               stateLog(sourceName, '将 ${target.card.name} 的印刷复制置入手牌。');
               _emitFx(
@@ -3744,7 +3793,9 @@ class GameController extends ChangeNotifier {
             break;
           case 'destroy-highest-health-enemy':
             final candidates =
-                enemy.board.where((unit) => unit.health > 0).toList()
+                enemy.board
+                    .where((unit) => unit.health > 0 && !unit.isDormant)
+                    .toList()
                   ..sort((left, right) => right.health.compareTo(left.health));
             if (candidates.isNotEmpty) {
               final destroyed = candidates.first;
@@ -3780,6 +3831,7 @@ class GameController extends ChangeNotifier {
                 // Hearthstone random effects may hit Stealth units. Stealth
                 // only prevents explicit targeting and attacks.
                 .where((unit) => unit.health > 0)
+                .where((unit) => !unit.isDormant)
                 .toList();
             if (candidates.isNotEmpty) {
               final frozen = candidates[_random.nextInt(candidates.length)];
@@ -3788,7 +3840,9 @@ class GameController extends ChangeNotifier {
             }
             break;
           case 'random-enemy-damage':
-            final candidates = [...enemy.board];
+            final candidates = enemy.board
+                .where((unit) => !unit.isDormant)
+                .toList();
             if (candidates.isEmpty) {
               _damageHero(enemy, damageAmount);
             } else {
@@ -3803,6 +3857,7 @@ class GameController extends ChangeNotifier {
             break;
           case 'heal':
             if (target != null &&
+                !target.isDormant &&
                 (source.board.contains(target) ||
                     enemy.board.contains(target))) {
               target.health = min(target.maxHealth, target.health + amount);
@@ -3945,11 +4000,14 @@ class GameController extends ChangeNotifier {
             stateLog(sourceName, '对其控制者的核心造成 $dealt 点伤害。');
             break;
           case 'buff':
-            final unit = target != null && source.board.contains(target)
+            final unit =
+                target != null &&
+                    source.board.contains(target) &&
+                    !target.isDormant
                 ? target
-                : source.board.isEmpty
+                : source.board.where((unit) => !unit.isDormant).isEmpty
                 ? null
-                : source.board.last;
+                : source.board.lastWhere((unit) => !unit.isDormant);
             if (unit != null) {
               final attack = (effect['attack'] as num?)?.toInt() ?? 0;
               final health = (effect['health'] as num?)?.toInt() ?? 0;
@@ -3968,6 +4026,7 @@ class GameController extends ChangeNotifier {
             final attack = (effect['attack'] as num?)?.toInt() ?? 0;
             final health = (effect['health'] as num?)?.toInt() ?? 0;
             for (final unit in [...source.board]) {
+              if (unit.isDormant) continue;
               unit.attack += attack;
               unit.maxHealth += health;
               unit.health += health;
@@ -3983,6 +4042,7 @@ class GameController extends ChangeNotifier {
             final excludeSource = effect['excludeSource'] == true;
             var affected = 0;
             for (final unit in [...source.board]) {
+              if (unit.isDormant) continue;
               if (excludeSource && identical(unit, sourceUnit)) continue;
               if (!hasMinionType(unit.card, minionType)) continue;
               unit.attack += attack;
@@ -3998,11 +4058,14 @@ class GameController extends ChangeNotifier {
             );
             break;
           case 'temporary-buff':
-            final unit = target != null && source.board.contains(target)
+            final unit =
+                target != null &&
+                    source.board.contains(target) &&
+                    !target.isDormant
                 ? target
-                : source.board.isEmpty
+                : source.board.where((unit) => !unit.isDormant).isEmpty
                 ? null
-                : source.board.last;
+                : source.board.lastWhere((unit) => !unit.isDormant);
             if (unit != null) {
               final attack = (effect['attack'] as num?)?.toInt() ?? 0;
               final health = (effect['health'] as num?)?.toInt() ?? 0;
@@ -4025,7 +4088,9 @@ class GameController extends ChangeNotifier {
                 Icons.shield_moon,
                 0xFFE7BD7A,
               );
-            } else if (target != null && source.board.contains(target)) {
+            } else if (target != null &&
+                !target.isDormant &&
+                source.board.contains(target)) {
               target.immuneThisTurn = true;
               stateLog(sourceName, '${target.card.name} 本回合获得免疫。');
               _emitFx(
@@ -4039,7 +4104,7 @@ class GameController extends ChangeNotifier {
             }
             break;
           case 'silence':
-            if (target == null) break;
+            if (target == null || target.isDormant) break;
             final targetSide = source.board.contains(target)
                 ? source
                 : enemy.board.contains(target)
@@ -4064,7 +4129,7 @@ class GameController extends ChangeNotifier {
             stateLog(sourceName, '${target.card.name} 被沉默。');
             break;
           case 'transform':
-            if (target == null) break;
+            if (target == null || target.isDormant) break;
             final cardId = effect['cardId']?.toString();
             final transformed = cardId == null ? null : card(cardId);
             if (transformed == null || !transformed.isUnit) break;
@@ -4088,7 +4153,7 @@ class GameController extends ChangeNotifier {
             );
             break;
           case 'return-unit-to-hand':
-            if (target == null) break;
+            if (target == null || target.isDormant) break;
             final targetSide = source.board.contains(target)
                 ? source
                 : enemy.board.contains(target)
@@ -4138,7 +4203,7 @@ class GameController extends ChangeNotifier {
           case 'take-control-random-enemy':
             if (_battlefieldSize(source) >= 7) break;
             final candidates = enemy.board
-                .where((unit) => unit.health > 0)
+                .where((unit) => unit.health > 0 && !unit.isDormant)
                 .toList(growable: false);
             if (candidates.isEmpty) break;
             _takeControlOfUnit(
@@ -4634,6 +4699,7 @@ class GameController extends ChangeNotifier {
   }) {
     if (_battlefieldSize(source) >= 7 ||
         unit.health <= 0 ||
+        unit.isDormant ||
         !enemy.board.contains(unit)) {
       return false;
     }
@@ -5273,7 +5339,9 @@ class GameController extends ChangeNotifier {
     if (state == null) return;
     final enemy = identical(side, state.player) ? state.ai : state.player;
     for (final unit in [...side.board]) {
-      if (!side.board.contains(unit) || unit.silenced) continue;
+      if (!side.board.contains(unit) || unit.silenced || unit.isDormant) {
+        continue;
+      }
       final effects = start ? unit.card.onTurnStart : unit.card.onTurnEnd;
       if (effects.isEmpty) continue;
       _resolveEffects(

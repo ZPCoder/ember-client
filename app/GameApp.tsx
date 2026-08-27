@@ -377,6 +377,7 @@ type BattleUnit = {
   frozenTurns: number;
   immuneThisTurn: boolean;
   conditionalImmuneActive: boolean;
+  dormantTurns: number;
   summoningSick: boolean;
   rushOnly: boolean;
   furyStacks: number;
@@ -389,6 +390,10 @@ function battleUnitIsImmune(
   unit: Pick<BattleUnit, "keywords" | "immuneThisTurn" | "conditionalImmuneActive">,
 ): boolean {
   return unit.immuneThisTurn || unit.keywords.includes("immune") || unit.conditionalImmuneActive;
+}
+
+function battleUnitIsDormant(unit: Pick<BattleUnit, "dormantTurns">): boolean {
+  return unit.dormantTurns > 0;
 }
 
 type BattleLocation = {
@@ -2147,6 +2152,7 @@ function normalizeBoard(value: unknown, turn: number): BattleUnit[] {
       frozenTurns,
       immuneThisTurn: Boolean(item.immuneThisTurn),
       conditionalImmuneActive: Boolean(item.conditionalImmuneActive),
+      dormantTurns: Math.max(0, asNumber(item.dormantTurns, 0)),
       summoningSick,
       rushOnly: Boolean(item.rushOnly),
       furyStacks: asNumber(item.furyStacks, 0),
@@ -2156,7 +2162,7 @@ function normalizeBoard(value: unknown, turn: number): BattleUnit[] {
       // A stale snapshot can carry a previously computed `canAttack` flag
       // even after the unit has reached zero health.  The death window always
       // wins over derived UI state, so never surface a dead unit as READY.
-      canAttack: health > 0 && (
+      canAttack: health > 0 && asNumber(item.dormantTurns, 0) <= 0 && (
         typeof item.canAttack === "boolean"
           ? item.canAttack
           : attack > 0 &&
@@ -5531,12 +5537,19 @@ export function GameApp({
     const hasAvailableTarget = (() => {
       switch (targetRule) {
         case "enemy-unit":
-          return battleView.ai.board.some((unit) => unit.health > 0 && !unit.stealthActive);
+          return battleView.ai.board.some(
+            (unit) => unit.health > 0 && !battleUnitIsDormant(unit) && !unit.stealthActive,
+          );
         case "friendly-unit":
-          return battleView.player.board.some((unit) => unit.health > 0);
+          return battleView.player.board.some(
+            (unit) => unit.health > 0 && !battleUnitIsDormant(unit),
+          );
         case "any-unit":
-          return battleView.player.board.some((unit) => unit.health > 0) ||
-            battleView.ai.board.some((unit) => unit.health > 0 && !unit.stealthActive);
+          return battleView.player.board.some(
+            (unit) => unit.health > 0 && !battleUnitIsDormant(unit),
+          ) || battleView.ai.board.some(
+            (unit) => unit.health > 0 && !battleUnitIsDormant(unit) && !unit.stealthActive,
+          );
         case "enemy-character":
           return true;
         case "friendly-character":
@@ -8486,7 +8499,9 @@ function BoardUnit({
       stealthActive: false,
     };
   const impactText = battleImpactText(impact);
-  const statusText = battleUnitIsImmune(unit)
+  const statusText = battleUnitIsDormant(unit)
+    ? `◇ 休眠 · ${unit.dormantTurns}`
+    : battleUnitIsImmune(unit)
     ? unit.immuneThisTurn
       ? "◇ 本回合免疫"
       : unit.conditionalImmuneActive
@@ -9360,7 +9375,8 @@ function BattleSection({
     return effect;
   };
   const visibleEnemyTaunts = battle.ai.board.filter(
-    (unit) => unit.health > 0 && unit.keywords.includes("taunt") && !unit.stealthActive,
+    (unit) => unit.health > 0 && !battleUnitIsDormant(unit) &&
+      unit.keywords.includes("taunt") && !unit.stealthActive && !battleUnitIsImmune(unit),
   );
   const attackBlockedByTaunt = Boolean(selectedAttacker && visibleEnemyTaunts.length > 0);
   const selectedAttackerUnit = selectedAttacker
@@ -9368,6 +9384,7 @@ function BattleSection({
     : undefined;
   const traitTierForBoard = (board: BattleUnit[], trait: Trait) => {
     const cards = board
+      .filter((unit) => !battleUnitIsDormant(unit))
       .map((unit) => CARD_BY_ID.get(unit.cardId))
       .filter((card): card is CatalogCard => Boolean(card));
     return getTraitStatuses(cards).find((status) => status.id === trait)?.tier ?? 0;
@@ -9395,7 +9412,7 @@ function BattleSection({
   const elusiveBlocksPendingTarget = (unit: BattleUnit): boolean =>
     Boolean(pendingSourceBlocksElusive && unit.keywords.includes("elusive"));
   const enemyUnitTargetable = (unit: BattleUnit) => {
-    if (unit.health <= 0) return false;
+    if (unit.health <= 0 || battleUnitIsDormant(unit)) return false;
     if (battleUnitIsImmune(unit)) return false;
     if (selectedAttacker) {
       if (unit.stealthActive) return false;
@@ -9415,6 +9432,7 @@ function BattleSection({
   };
   const targetPreviewForPendingUnit = (unit: BattleUnit, side: "player" | "ai"): string | undefined => {
     if (!pendingCard && !pendingHeroPower) return undefined;
+    if (battleUnitIsDormant(unit)) return `休眠 ${unit.dormantTurns}：不可交互`;
     if (battleUnitIsImmune(unit) && side === "ai") return "免疫：不能成为敌方直接目标";
     if (elusiveBlocksPendingTarget(unit)) return "扰魔：不能成为法术或技能目标";
     if (pendingHeroPower) {
@@ -9748,7 +9766,7 @@ function BattleSection({
                   key={unit.id}
                   unit={unit}
                   selected={selectedAttacker === unit.id}
-                  targetable={cardCanTarget("player", "unit") && unit.health > 0 && !elusiveBlocksPendingTarget(unit)}
+                  targetable={cardCanTarget("player", "unit") && unit.health > 0 && !battleUnitIsDormant(unit) && !elusiveBlocksPendingTarget(unit)}
                   effect={effectForUnit(unit.id)}
                   impact={impactForUnit(unit.id)}
                   targetPreview={targetPreviewForUnit(unit, "player")}

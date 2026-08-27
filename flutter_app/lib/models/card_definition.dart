@@ -1,3 +1,5 @@
+import 'dart:math';
+
 class CardDefinition {
   const CardDefinition({
     required this.id,
@@ -24,6 +26,7 @@ class CardDefinition {
     this.collectible = true,
     this.spellDamage = 0,
     this.conditionalImmune,
+    this.dormant,
     this.keywords = const [],
     this.traits = const [],
     this.minionTypes = const [],
@@ -64,6 +67,7 @@ class CardDefinition {
   final bool collectible;
   final int spellDamage;
   final Map<String, dynamic>? conditionalImmune;
+  final Map<String, dynamic>? dormant;
   final List<String> keywords;
   final List<String> traits;
   final List<String> minionTypes;
@@ -109,6 +113,7 @@ class CardDefinition {
     Map<String, dynamic>? colossal,
     Map<String, dynamic>? heroCard,
     Map<String, dynamic>? conditionalImmune,
+    Map<String, dynamic>? dormant,
   }) {
     return CardDefinition(
       id: id,
@@ -135,6 +140,7 @@ class CardDefinition {
       collectible: collectible,
       spellDamage: spellDamage,
       conditionalImmune: conditionalImmune ?? this.conditionalImmune,
+      dormant: dormant ?? this.dormant,
       keywords: keywords ?? this.keywords,
       traits: traits,
       minionTypes: minionTypes ?? this.minionTypes,
@@ -204,6 +210,9 @@ class CardDefinition {
       spellDamage: (json['spellDamage'] as num?)?.toInt() ?? 0,
       conditionalImmune: json['conditionalImmune'] is Map
           ? Map<String, dynamic>.from(json['conditionalImmune'] as Map)
+          : null,
+      dormant: json['dormant'] is Map
+          ? Map<String, dynamic>.from(json['dormant'] as Map)
           : null,
       keywords: strings(json['keywords']),
       traits: strings(json['traits']),
@@ -277,7 +286,10 @@ class BattleUnit {
     this.temporaryAttackBonus = 0,
     this.temporaryHealthBonus = 0,
     this.silenced = false,
-  });
+    int? dormantTurns,
+  }) : dormantTurns =
+           dormantTurns ??
+           max(0, (card.dormant?['turns'] as num?)?.toInt() ?? 0);
 
   final String instanceId;
   final CardDefinition card;
@@ -304,6 +316,7 @@ class BattleUnit {
   int temporaryAttackBonus;
   int temporaryHealthBonus;
   bool silenced;
+  int dormantTurns;
 
   bool get hasTaunt => !silenced && card.keywords.contains('taunt');
   bool get hasLifesteal => !silenced && card.keywords.contains('lifesteal');
@@ -316,11 +329,12 @@ class BattleUnit {
   bool get isElusive => !silenced && card.keywords.contains('elusive');
   bool get isImmune =>
       immuneThisTurn || (!silenced && card.keywords.contains('immune'));
+  bool get isDormant => dormantTurns > 0;
   bool get hasReborn => !silenced && card.keywords.contains('reborn');
   bool get isFrozen => frozenTurns > 0;
   int get attackLimit => hasWindfury ? 2 : 1;
   bool get canAttack =>
-      !summoningSick && !isFrozen && attacksMade < attackLimit;
+      !isDormant && !summoningSick && !isFrozen && attacksMade < attackLimit;
 }
 
 class BattleDeathRecord {
@@ -626,13 +640,14 @@ class BattleState {
 
 bool battleUnitIsImmune(BattleState state, BattleUnit unit) {
   if (unit.isImmune) return true;
-  if (unit.silenced) return false;
+  if (unit.silenced || unit.isDormant) return false;
   final condition = unit.card.conditionalImmune;
   if (condition?['kind'] != 'while-friendly-minion-type') return false;
   final minionType = condition?['minionType']?.toString();
   if (minionType == null || minionType.isEmpty) return false;
   final board = unit.owner == 'player' ? state.player.board : state.ai.board;
   return board.any((candidate) {
+    if (candidate.isDormant) return false;
     if (condition?['excludeSelf'] == true &&
         candidate.instanceId == unit.instanceId) {
       return false;

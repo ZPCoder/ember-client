@@ -71,6 +71,7 @@ test("ships the complete product surface and removes starter assets", async () =
   const attackImmuneWeapon = CARD_CATALOG.find((card) => card.id === "sun-supernova-judgment");
   const attackImmuneUnit = CARD_CATALOG.find((card) => card.id === "neutral-season-13");
   const conditionalImmuneUnit = CARD_CATALOG.find((card) => card.id === "neutral-season-15");
+  const dormantUnit = CARD_CATALOG.find((card) => card.id === "neutral-season-12");
   const cardArt = await Promise.all(
     cardIds.map(async (cardId) => {
       const assetUrl = new URL(`../public/cards/${cardId}.webp`, import.meta.url);
@@ -189,10 +190,14 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.ok(attackImmuneWeapon?.keywords?.includes("immune-while-attacking"));
   assert.ok(attackImmuneUnit?.keywords?.includes("immune-while-attacking"));
   assert.equal(conditionalImmuneUnit?.conditionalImmune?.kind, "while-friendly-minion-type");
+  assert.equal(dormantUnit?.dormant?.turns, 2);
   assert.match(game, /heroImmuneThisTurn/);
   assert.match(game, /battleUnitIsImmune/);
   assert.match(game, /conditionalImmuneActive/);
   assert.match(game, /条件免疫/);
+  assert.match(game, /battleUnitIsDormant/);
+  assert.match(game, /dormantTurns/);
+  assert.match(game, /休眠/);
   assert.match(game, /攻击时免疫/);
   assert.match(game, /本回合免疫/);
   assert.match(game, /heroFrozenTurns/);

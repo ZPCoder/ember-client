@@ -92,6 +92,15 @@ void main() {
         ).isImmune,
         isTrue,
       );
+      final dormant = catalog.singleWhere(
+        (card) => card.id == 'neutral-season-12',
+      );
+      expect(dormant.name, '禁锢观星者');
+      expect(dormant.dormant, containsPair('turns', 2));
+      expect(
+        (dormant.dormant?['onAwaken'] as List).single,
+        containsPair('kind', 'damage-all-enemy-units'),
+      );
       final conditionalImmunity = catalog.singleWhere(
         (card) => card.id == 'neutral-season-15',
       );
@@ -4364,6 +4373,14 @@ void main() {
                   'health': 10,
                   'conditionalImmuneActive': true,
                 },
+                {
+                  'entityId': 'dormant-online-unit',
+                  'cardId': 'neutral-season-12',
+                  'attack': 4,
+                  'health': 5,
+                  'dormantTurns': 2,
+                  'canAttack': true,
+                },
               ],
             },
             {
@@ -4404,8 +4421,11 @@ void main() {
     expect(controller.hand.single.id, 'sun-dawn-scout');
     expect(controller.localBoard.first.instanceId, 'u1');
     expect(controller.localBoard.first.minionTypes, ['beast', 'construct']);
-    expect(controller.localBoard.last.instanceId, 'conditional-online-unit');
-    expect(controller.localBoard.last.isImmune, isTrue);
+    expect(controller.localBoard[1].instanceId, 'conditional-online-unit');
+    expect(controller.localBoard[1].isImmune, isTrue);
+    expect(controller.localBoard.last.instanceId, 'dormant-online-unit');
+    expect(controller.localBoard.last.isDormant, isTrue);
+    expect(controller.localBoard.last.canAttack, isFalse);
     expect(controller.localSpellSchoolsThisTurn, ['construct', 'astral']);
     expect(controller.localSpellSchoolsLastTurn, ['radiance']);
     expect(controller.localDeathHistory.single.cardId, 'sun-dawn-scout');
@@ -5588,6 +5608,57 @@ void main() {
       controller.dispose();
     },
   );
+
+  test('mobile Dormant awakens on its controller second turn start', () async {
+    final catalog = await loadCatalog();
+    final dormantCard = catalog.singleWhere(
+      (card) => card.id == 'neutral-season-12',
+    );
+    final targetCard = catalog.singleWhere(
+      (card) => card.id == 'neutral-stonehorn',
+    );
+    final controller = GameController(startingPlayer: 'player')
+      ..catalog = catalog
+      ..deckIds.addAll(List.filled(30, targetCard.id));
+    controller.startBattle();
+    await controller.confirmMulligan();
+    final state = controller.battle!;
+    final dormant = BattleUnit(
+      instanceId: 'mobile-dormant-unit',
+      card: dormantCard,
+      owner: 'player',
+      attack: dormantCard.attack ?? 0,
+      health: dormantCard.health ?? 1,
+      maxHealth: dormantCard.health ?? 1,
+    );
+    final target = BattleUnit(
+      instanceId: 'mobile-dormant-target',
+      card: targetCard,
+      owner: 'ai',
+      attack: 0,
+      health: targetCard.health ?? 1,
+      maxHealth: targetCard.health ?? 1,
+    );
+    state.player.board
+      ..clear()
+      ..add(dormant);
+    state.ai.board
+      ..clear()
+      ..add(target);
+    state.ai.hand.clear();
+
+    expect(dormant.dormantTurns, 2);
+    expect(dormant.canAttack, isFalse);
+    await controller.endTurn();
+    expect(dormant.dormantTurns, 1);
+    expect(target.health, target.maxHealth);
+    await controller.endTurn();
+    expect(dormant.dormantTurns, 0);
+    expect(target.health, target.maxHealth - 2);
+    expect(dormant.canAttack, isTrue);
+    expect(controller.attack(dormant, target: target), isTrue);
+    controller.dispose();
+  });
 
   test('mobile hero powers follow their faction and target rules', () {
     CardDefinition factionCard(String id, String faction) => CardDefinition(
