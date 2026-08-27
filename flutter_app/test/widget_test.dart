@@ -16,6 +16,38 @@ import 'package:astra_protocol/network/multiplayer_client.dart';
 import 'package:astra_protocol/network/online_battle_controller.dart';
 
 void main() {
+  group('default multiplayer endpoint', () {
+    test('keeps the loopback server for native clients', () {
+      expect(
+        defaultMultiplayerEndpoint(
+          isWebEnvironment: false,
+          pageUri: Uri.parse('https://play.example.com/app'),
+        ),
+        localMultiplayerEndpoint,
+      );
+    });
+
+    test('uses same-origin WebSocket for an HTTP web page', () {
+      expect(
+        defaultMultiplayerEndpoint(
+          isWebEnvironment: true,
+          pageUri: Uri.parse('http://localhost:8080/rooms?from=test'),
+        ),
+        'ws://localhost:8080/ws',
+      );
+    });
+
+    test('uses secure same-origin WebSocket for an HTTPS web page', () {
+      expect(
+        defaultMultiplayerEndpoint(
+          isWebEnvironment: true,
+          pageUri: Uri.parse('https://play.example.com/'),
+        ),
+        'wss://play.example.com/ws',
+      );
+    });
+  });
+
   test(
     'mobile catalog includes the complete Hearthstone-style rule fields',
     () async {

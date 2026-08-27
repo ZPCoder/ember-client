@@ -4408,15 +4408,17 @@ class MultiplayerPage extends StatefulWidget {
 }
 
 class _MultiplayerPageState extends State<MultiplayerPage> {
-  final MultiplayerClient client = MultiplayerClient();
+  late final MultiplayerClient client;
   OnlineBattleController? onlineBattle;
-  final endpointController = TextEditingController(text: 'ws://127.0.0.1:8787');
+  late final TextEditingController endpointController;
   final playerController = TextEditingController(text: '旅者 071');
   final roomController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
+    client = MultiplayerClient();
+    endpointController = TextEditingController(text: client.endpoint);
     client.addListener(_handleClientState);
   }
 
@@ -4786,7 +4788,7 @@ class _MultiplayerPageState extends State<MultiplayerPage> {
     keyboardType: TextInputType.url,
     decoration: const InputDecoration(
       labelText: 'WebSocket 地址',
-      hintText: 'ws://127.0.0.1:8787',
+      hintText: 'wss://example.com/ws',
       prefixIcon: Icon(Icons.dns_outlined),
     ),
   );

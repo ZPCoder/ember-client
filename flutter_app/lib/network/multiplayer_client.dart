@@ -4,6 +4,20 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
+const String localMultiplayerEndpoint = 'ws://127.0.0.1:8787';
+
+String defaultMultiplayerEndpoint({bool? isWebEnvironment, Uri? pageUri}) {
+  if (!(isWebEnvironment ?? kIsWeb)) return localMultiplayerEndpoint;
+
+  final base = pageUri ?? Uri.base;
+  return Uri(
+    scheme: base.scheme == 'https' ? 'wss' : 'ws',
+    host: base.host,
+    port: base.hasPort ? base.port : null,
+    path: '/ws',
+  ).toString();
+}
+
 class MultiplayerEvent {
   const MultiplayerEvent({
     required this.type,
@@ -51,10 +65,13 @@ class MultiplayerEvent {
 }
 
 class MultiplayerClient extends ChangeNotifier {
+  MultiplayerClient({String? initialEndpoint})
+    : endpoint = initialEndpoint ?? defaultMultiplayerEndpoint();
+
   WebSocketChannel? _channel;
   StreamSubscription<dynamic>? _subscription;
 
-  String endpoint = 'ws://127.0.0.1:8787';
+  String endpoint;
   String playerName = '旅者 071';
   String status = '未连接';
   String? errorMessage;
