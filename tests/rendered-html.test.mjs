@@ -70,6 +70,7 @@ test("ships the complete product surface and removes starter assets", async () =
   const permanentImmuneCard = CARD_CATALOG.find((card) => card.id === "neutral-season-14");
   const attackImmuneWeapon = CARD_CATALOG.find((card) => card.id === "sun-supernova-judgment");
   const attackImmuneUnit = CARD_CATALOG.find((card) => card.id === "neutral-season-13");
+  const conditionalImmuneUnit = CARD_CATALOG.find((card) => card.id === "neutral-season-15");
   const cardArt = await Promise.all(
     cardIds.map(async (cardId) => {
       const assetUrl = new URL(`../public/cards/${cardId}.webp`, import.meta.url);
@@ -187,8 +188,11 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.ok(permanentImmuneCard?.keywords?.includes("immune"));
   assert.ok(attackImmuneWeapon?.keywords?.includes("immune-while-attacking"));
   assert.ok(attackImmuneUnit?.keywords?.includes("immune-while-attacking"));
+  assert.equal(conditionalImmuneUnit?.conditionalImmune?.kind, "while-friendly-minion-type");
   assert.match(game, /heroImmuneThisTurn/);
   assert.match(game, /battleUnitIsImmune/);
+  assert.match(game, /conditionalImmuneActive/);
+  assert.match(game, /条件免疫/);
   assert.match(game, /攻击时免疫/);
   assert.match(game, /本回合免疫/);
   assert.match(game, /heroFrozenTurns/);

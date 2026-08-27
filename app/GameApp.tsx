@@ -376,6 +376,7 @@ type BattleUnit = {
   stealthActive: boolean;
   frozenTurns: number;
   immuneThisTurn: boolean;
+  conditionalImmuneActive: boolean;
   summoningSick: boolean;
   rushOnly: boolean;
   furyStacks: number;
@@ -384,8 +385,10 @@ type BattleUnit = {
   temporaryHealthBonus: number;
 };
 
-function battleUnitIsImmune(unit: Pick<BattleUnit, "keywords" | "immuneThisTurn">): boolean {
-  return unit.immuneThisTurn || unit.keywords.includes("immune");
+function battleUnitIsImmune(
+  unit: Pick<BattleUnit, "keywords" | "immuneThisTurn" | "conditionalImmuneActive">,
+): boolean {
+  return unit.immuneThisTurn || unit.keywords.includes("immune") || unit.conditionalImmuneActive;
 }
 
 type BattleLocation = {
@@ -2143,6 +2146,7 @@ function normalizeBoard(value: unknown, turn: number): BattleUnit[] {
       stealthActive,
       frozenTurns,
       immuneThisTurn: Boolean(item.immuneThisTurn),
+      conditionalImmuneActive: Boolean(item.conditionalImmuneActive),
       summoningSick,
       rushOnly: Boolean(item.rushOnly),
       furyStacks: asNumber(item.furyStacks, 0),
@@ -8485,7 +8489,9 @@ function BoardUnit({
   const statusText = battleUnitIsImmune(unit)
     ? unit.immuneThisTurn
       ? "◇ 本回合免疫"
-      : "◇ 免疫"
+      : unit.conditionalImmuneActive
+        ? "◇ 条件免疫"
+        : "◇ 免疫"
     : unit.keywords.includes("immune-while-attacking")
       ? "◇ 攻击时免疫"
     : unit.frozenTurns > 0

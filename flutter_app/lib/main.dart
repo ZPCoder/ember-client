@@ -2491,7 +2491,7 @@ class _BattleBoardState extends State<BattleBoard> {
               ...state.ai.board.where(
                 (unit) =>
                     !unit.stealthActive &&
-                    !unit.isImmune &&
+                    !battleUnitIsImmune(state, unit) &&
                     (card.type != 'spell' || !unit.isElusive),
               ),
             ]
@@ -2501,7 +2501,8 @@ class _BattleBoardState extends State<BattleBoard> {
                 .where(
                   (unit) =>
                       (!targetType.startsWith('enemy') ||
-                          (!unit.stealthActive && !unit.isImmune)) &&
+                          (!unit.stealthActive &&
+                              !battleUnitIsImmune(state, unit))) &&
                       (card.type != 'spell' || !unit.isElusive),
                 )
                 .toList();
@@ -2535,10 +2536,17 @@ class _BattleBoardState extends State<BattleBoard> {
 
   Future<void> _attack(BuildContext context, BattleUnit attacker) async {
     final taunts = state.ai.board
-        .where((unit) => unit.hasTaunt && !unit.stealthActive && !unit.isImmune)
+        .where(
+          (unit) =>
+              unit.hasTaunt &&
+              !unit.stealthActive &&
+              !battleUnitIsImmune(state, unit),
+        )
         .toList();
     final visibleUnits = state.ai.board
-        .where((unit) => !unit.stealthActive && !unit.isImmune)
+        .where(
+          (unit) => !unit.stealthActive && !battleUnitIsImmune(state, unit),
+        )
         .toList();
     final choice = await _pickBattleTarget(
       context,
@@ -2564,10 +2572,17 @@ class _BattleBoardState extends State<BattleBoard> {
     final weapon = state.player.weapon;
     if ((weapon?.attack ?? 0) + state.player.heroAttackBonus <= 0) return;
     final taunts = state.ai.board
-        .where((unit) => unit.hasTaunt && !unit.stealthActive && !unit.isImmune)
+        .where(
+          (unit) =>
+              unit.hasTaunt &&
+              !unit.stealthActive &&
+              !battleUnitIsImmune(state, unit),
+        )
         .toList();
     final visibleUnits = state.ai.board
-        .where((unit) => !unit.stealthActive && !unit.isImmune)
+        .where(
+          (unit) => !unit.stealthActive && !battleUnitIsImmune(state, unit),
+        )
         .toList();
     final choice = await _pickBattleTarget(
       context,
@@ -2601,7 +2616,8 @@ class _BattleBoardState extends State<BattleBoard> {
           .where(
             (unit) =>
                 !unit.isElusive &&
-                (friendly || (!unit.stealthActive && !unit.isImmune)),
+                (friendly ||
+                    (!unit.stealthActive && !battleUnitIsImmune(state, unit))),
           )
           .toList();
       choice = await _pickBattleTarget(
@@ -2931,6 +2947,7 @@ class _BattleBoardState extends State<BattleBoard> {
                         const SizedBox(height: 8),
                       ],
                       _BoardRow(
+                        state: state,
                         units: state.ai.board,
                         enemy: true,
                         onAttack: null,
@@ -2940,6 +2957,7 @@ class _BattleBoardState extends State<BattleBoard> {
                         child: Divider(color: Color(0xFF29403A)),
                       ),
                       _BoardRow(
+                        state: state,
                         units: state.player.board,
                         enemy: false,
                         onAttack: state.phase == 'main'
@@ -4210,11 +4228,13 @@ class _LocationRow extends StatelessWidget {
 
 class _BoardRow extends StatelessWidget {
   const _BoardRow({
+    required this.state,
     required this.units,
     required this.enemy,
     required this.onAttack,
   });
 
+  final BattleState state;
   final List<BattleUnit> units;
   final bool enemy;
   final ValueChanged<BattleUnit>? onAttack;
@@ -4329,7 +4349,7 @@ class _BoardRow extends StatelessWidget {
                         const _UnitBadge(label: '潜行', color: Color(0xFF65CDDA)),
                       if (unit.hasReborn)
                         const _UnitBadge(label: '复生', color: Color(0xFFA692D1)),
-                      if (unit.isImmune)
+                      if (battleUnitIsImmune(state, unit))
                         const _UnitBadge(label: '免疫', color: Color(0xFFE7BD7A)),
                       if (unit.card.keywords.contains('immune-while-attacking'))
                         const _UnitBadge(

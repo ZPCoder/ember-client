@@ -23,6 +23,7 @@ class CardDefinition {
     this.heroCard,
     this.collectible = true,
     this.spellDamage = 0,
+    this.conditionalImmune,
     this.keywords = const [],
     this.traits = const [],
     this.minionTypes = const [],
@@ -62,6 +63,7 @@ class CardDefinition {
   final Map<String, dynamic>? heroCard;
   final bool collectible;
   final int spellDamage;
+  final Map<String, dynamic>? conditionalImmune;
   final List<String> keywords;
   final List<String> traits;
   final List<String> minionTypes;
@@ -106,6 +108,7 @@ class CardDefinition {
     Map<String, dynamic>? herald,
     Map<String, dynamic>? colossal,
     Map<String, dynamic>? heroCard,
+    Map<String, dynamic>? conditionalImmune,
   }) {
     return CardDefinition(
       id: id,
@@ -131,6 +134,7 @@ class CardDefinition {
       heroCard: heroCard ?? this.heroCard,
       collectible: collectible,
       spellDamage: spellDamage,
+      conditionalImmune: conditionalImmune ?? this.conditionalImmune,
       keywords: keywords ?? this.keywords,
       traits: traits,
       minionTypes: minionTypes ?? this.minionTypes,
@@ -198,6 +202,9 @@ class CardDefinition {
           : null,
       collectible: json['collectible'] != false,
       spellDamage: (json['spellDamage'] as num?)?.toInt() ?? 0,
+      conditionalImmune: json['conditionalImmune'] is Map
+          ? Map<String, dynamic>.from(json['conditionalImmune'] as Map)
+          : null,
       keywords: strings(json['keywords']),
       traits: strings(json['traits']),
       minionTypes: strings(json['minionTypes']),
@@ -615,6 +622,24 @@ class BattleState {
   final List<String> chooseOneChosenLabels = <String>[];
   BattleFxEvent? fx;
   int fxSequence = 0;
+}
+
+bool battleUnitIsImmune(BattleState state, BattleUnit unit) {
+  if (unit.isImmune) return true;
+  if (unit.silenced) return false;
+  final condition = unit.card.conditionalImmune;
+  if (condition?['kind'] != 'while-friendly-minion-type') return false;
+  final minionType = condition?['minionType']?.toString();
+  if (minionType == null || minionType.isEmpty) return false;
+  final board = unit.owner == 'player' ? state.player.board : state.ai.board;
+  return board.any((candidate) {
+    if (condition?['excludeSelf'] == true &&
+        candidate.instanceId == unit.instanceId) {
+      return false;
+    }
+    return candidate.card.minionTypes.contains(minionType) ||
+        (minionType != 'all' && candidate.card.minionTypes.contains('all'));
+  });
 }
 
 class BattleFxEvent {

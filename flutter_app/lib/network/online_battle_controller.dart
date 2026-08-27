@@ -23,6 +23,7 @@ class OnlineUnit {
     this.stealthActive = false,
     this.frozenTurns = 0,
     this.immuneThisTurn = false,
+    this.conditionalImmuneActive = false,
     this.stars = 1,
     this.silenced = false,
   });
@@ -41,6 +42,7 @@ class OnlineUnit {
   final bool stealthActive;
   final int frozenTurns;
   final bool immuneThisTurn;
+  final bool conditionalImmuneActive;
   final int stars;
   final bool silenced;
 
@@ -48,7 +50,8 @@ class OnlineUnit {
   bool get hasWindfury => keywords.contains('windfury');
   bool get hasDivineShield => keywords.contains('shield');
   bool get isElusive => keywords.contains('elusive');
-  bool get isImmune => immuneThisTurn || keywords.contains('immune');
+  bool get isImmune =>
+      immuneThisTurn || keywords.contains('immune') || conditionalImmuneActive;
   bool get isFrozen => frozenTurns > 0;
   int get attackLimit => hasWindfury ? 2 : 1;
   bool get canAttack =>
@@ -1004,6 +1007,7 @@ class OnlineBattleController extends ChangeNotifier {
             stealthActive: unit['stealthActive'] == true,
             frozenTurns: (unit['frozenTurns'] as num?)?.toInt() ?? 0,
             immuneThisTurn: unit['immuneThisTurn'] == true,
+            conditionalImmuneActive: unit['conditionalImmuneActive'] == true,
             stars: (unit['stars'] as num?)?.toInt() ?? 1,
             silenced: silenced,
           );

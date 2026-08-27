@@ -92,6 +92,26 @@ void main() {
         ).isImmune,
         isTrue,
       );
+      final conditionalImmunity = catalog.singleWhere(
+        (card) => card.id == 'neutral-season-15',
+      );
+      expect(conditionalImmunity.name, '龙巢守望者');
+      expect(conditionalImmunity.minionTypes, contains('dragon'));
+      expect(
+        conditionalImmunity.conditionalImmune,
+        containsPair('kind', 'while-friendly-minion-type'),
+      );
+      expect(
+        OnlineUnit(
+          instanceId: 'online-conditional-immune',
+          card: conditionalImmunity,
+          attack: 7,
+          health: 10,
+          maxHealth: 10,
+          conditionalImmuneActive: true,
+        ).isImmune,
+        isTrue,
+      );
       final location = catalog.singleWhere((card) => card.isLocation);
       expect(location.id, 'sun-daybreak-order');
       expect(location.durability, 3);
@@ -4337,6 +4357,13 @@ void main() {
                   'minionTypes': ['beast', 'construct'],
                   'hasAttacked': false,
                 },
+                {
+                  'entityId': 'conditional-online-unit',
+                  'cardId': 'neutral-season-15',
+                  'attack': 7,
+                  'health': 10,
+                  'conditionalImmuneActive': true,
+                },
               ],
             },
             {
@@ -4375,8 +4402,10 @@ void main() {
     expect(controller.localHealth, 28);
     expect(controller.remoteHealth, 24);
     expect(controller.hand.single.id, 'sun-dawn-scout');
-    expect(controller.localBoard.single.instanceId, 'u1');
-    expect(controller.localBoard.single.minionTypes, ['beast', 'construct']);
+    expect(controller.localBoard.first.instanceId, 'u1');
+    expect(controller.localBoard.first.minionTypes, ['beast', 'construct']);
+    expect(controller.localBoard.last.instanceId, 'conditional-online-unit');
+    expect(controller.localBoard.last.isImmune, isTrue);
     expect(controller.localSpellSchoolsThisTurn, ['construct', 'astral']);
     expect(controller.localSpellSchoolsLastTurn, ['radiance']);
     expect(controller.localDeathHistory.single.cardId, 'sun-dawn-scout');
@@ -5494,6 +5523,68 @@ void main() {
       state.ai.board.clear();
       await controller.endTurn();
       expect(target.isImmune, isTrue);
+      controller.dispose();
+    },
+  );
+
+  test(
+    'mobile conditional Immune follows its friendly Dragon source',
+    () async {
+      final catalog = await loadCatalog();
+      final conditional = catalog.singleWhere(
+        (card) => card.id == 'neutral-season-15',
+      );
+      final dragon = catalog.singleWhere(
+        (card) => card.id == 'astral-zenith-dragon',
+      );
+      final attackerCard = catalog.singleWhere(
+        (card) => card.id == 'sun-skyfire-roc',
+      );
+      final controller = GameController(startingPlayer: 'player')
+        ..catalog = catalog
+        ..deckIds.addAll(List.filled(30, attackerCard.id));
+      controller.startBattle();
+      await controller.confirmMulligan();
+      final state = controller.battle!;
+      final attacker = BattleUnit(
+        instanceId: 'mobile-conditional-attacker',
+        card: attackerCard,
+        owner: 'player',
+        attack: attackerCard.attack ?? 0,
+        health: attackerCard.health ?? 1,
+        maxHealth: attackerCard.health ?? 1,
+        summoningSick: false,
+      );
+      final target = BattleUnit(
+        instanceId: 'mobile-conditional-target',
+        card: conditional,
+        owner: 'ai',
+        attack: conditional.attack ?? 0,
+        health: conditional.health ?? 1,
+        maxHealth: conditional.health ?? 1,
+      );
+      final source = BattleUnit(
+        instanceId: 'mobile-conditional-source',
+        card: dragon,
+        owner: 'ai',
+        attack: dragon.attack ?? 0,
+        health: dragon.health ?? 1,
+        maxHealth: dragon.health ?? 1,
+      );
+      state.player.board
+        ..clear()
+        ..add(attacker);
+      state.ai.board
+        ..clear()
+        ..addAll([target, source]);
+
+      expect(battleUnitIsImmune(state, target), isTrue);
+      expect(controller.attack(attacker, target: target), isFalse);
+      state.ai.board.remove(source);
+      source.owner = 'player';
+      state.player.board.add(source);
+      expect(battleUnitIsImmune(state, target), isFalse);
+      expect(controller.attack(attacker, target: target), isTrue);
       controller.dispose();
     },
   );

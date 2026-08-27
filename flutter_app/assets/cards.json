@@ -6692,8 +6692,8 @@
   },
   {
     "id": "neutral-season-15",
-    "name": "商路护卫·15",
-    "description": "taunt。 中立的战线单位。 登场时对一个敌方角色造成伤害。",
+    "name": "龙巢守望者",
+    "description": "当你控制另一个龙时，获得免疫。战吼：对一个敌方角色造成 2 点伤害。",
     "faction": "中立",
     "type": "unit",
     "cost": 7,
@@ -6718,7 +6718,14 @@
     "onDeath": [],
     "effect": [],
     "set": "pegasus-2024",
-    "minionTypes": []
+    "minionTypes": [
+      "dragon"
+    ],
+    "conditionalImmune": {
+      "kind": "while-friendly-minion-type",
+      "minionType": "dragon",
+      "excludeSelf": true
+    }
   },
   {
     "id": "neutral-season-spell-01",
