@@ -29,3 +29,13 @@ jobs:
       # runtime peers are supplied only by the cross-repository matrix build.
       - run: npm ci --ignore-scripts --no-audit --no-fund
       - run: npm run typecheck:ci
+
+  frozen-react-fallback:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci --prefix reference-react/legacy --no-audit --no-fund
+      - run: npm run test:react-reference

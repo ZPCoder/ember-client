@@ -5,12 +5,13 @@ the migration. `src/reference-harness.ts` canonicalizes each redacted snapshot
 and event list into a deterministic hash. Cocos, React, local AI, and server
 replay fixtures must agree on that hash before a compatibility tuple can ship.
 
-`legacy/` preserves the filtered monolith UI, its dependency lock, and the
-existing Sites layout under `legacy/.openai/hosting.json`. It is deliberately
-non-authoritative and cannot write formal assets or PVP state directly.
+`legacy/` preserves the complete frozen monolith UI, Worker, rule/database
+dependencies, D1 migrations, dependency lock, and Sites layout under
+`legacy/.openai/hosting.json`. It can reproduce the `monolith-freeze-v1`
+rollback build without reaching into another repository.
 
-The legacy subtree is not yet a standalone build: its historical API route
-references server and rule modules that moved to `ember-backend-admin` and
-`ember-sdk`. Until that route is replaced by generated protocol clients, the
-emergency H5 rollback target is the frozen `monolith-freeze-v1` Sites release.
-Do not silently deploy this subtree as a replacement for that release.
+It is still architecturally non-authoritative: active Cocos, SDK, backend, and
+protocol code must never import it. Ops may select it only as a whole frozen
+rollback tuple, after hydrating the remote card-art bundle and passing the
+documented release gate. A future generated protocol/backend adapter replaces
+this subtree rather than evolving its duplicated rules.

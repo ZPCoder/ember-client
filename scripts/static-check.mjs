@@ -32,6 +32,14 @@ assert.equal(
 );
 assert.equal(packageJson.devDependencies["@changesets/cli"], undefined);
 assert.match(packageJson.scripts.changeset, /@changesets\/cli@2\.29\.8/);
+assert.equal(
+  packageJson.scripts["test:react-reference"],
+  "npm --prefix reference-react/legacy test",
+);
+assert.equal(
+  packageJson.scripts["build:react-reference"],
+  "npm --prefix reference-react/legacy run build",
+);
 for (const dependency of [
   "@zpcoder/ember-config",
   "@zpcoder/ember-protocol",
@@ -43,7 +51,33 @@ for (const dependency of [
 
 await stat(join(root, "reference-react/legacy/.openai/hosting.json"));
 await stat(join(root, "reference-react/legacy/package-lock.json"));
+await stat(join(root, "reference-react/legacy/db/game-store.ts"));
+await stat(join(root, "reference-react/legacy/lib/game/engine.ts"));
+await stat(join(root, "reference-react/legacy/worker/index.ts"));
 await stat(join(root, "legacy-flutter-app/pubspec.lock"));
+
+const fallbackCards = await readdir(join(root, "reference-react/legacy/public/cards"));
+assert.deepEqual(
+  fallbackCards.filter((file) => file.endsWith(".webp")),
+  [],
+  "frozen React card WebPs must remain external",
+);
+
+for (const file of files.filter((candidate) => {
+  const local = relative(root, candidate);
+  return (
+    local.startsWith("assets/") ||
+    local.startsWith("tools/") ||
+    local.startsWith("reference-react/src/")
+  ) && [".ts", ".mjs"].includes(extname(candidate));
+})) {
+  const source = await readFile(file, "utf8");
+  assert.doesNotMatch(
+    source,
+    /reference-react\/legacy/,
+    `${relative(root, file)} imports the deprecated React fallback`,
+  );
+}
 
 const migration = await readFile(join(root, "MIGRATION.md"), "utf8");
 assert.match(migration, /monolith-freeze-v1/);

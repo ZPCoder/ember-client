@@ -28,11 +28,11 @@ compatibility builds must install the exact tuple recorded by `ember-ops`.
 
 - `reference-react/src` is the small deterministic protocol parity harness.
 - `reference-react/legacy` preserves the filtered React source, its lockfile,
-  and its Sites `.openai/hosting.json`. It is a **non-authoritative migration
-  reference**, not a standalone split-repository release yet: the historical
-  API route still depends on server/rule modules that now belong to backend and
-  SDK packages. Until that adapter work lands, emergency rollback uses the
-  frozen `monolith-freeze-v1` Sites release.
+  Sites metadata, Worker, D1 migrations, and frozen rule/database dependencies.
+  It is a reproducible, self-contained `monolith-freeze-v1` emergency rollback
+  tuple, but remains architecturally deprecated and non-authoritative: no active
+  Cocos, SDK, or backend code may import it. Promotion also requires hydrating
+  all 1,000 card WebPs from object storage and passing its hydrated release gate.
 - `legacy-flutter-app` is the frozen Flutter source and 90-test baseline. It is
   excluded from Cocos builds and must not receive product features.
 - `tools/flutter-save-exporter` is the temporary, operator-only JSON normalizer;

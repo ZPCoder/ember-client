@@ -1,0 +1,31 @@
+{
+  "sourceRepository": "ZPCoder/ember-protocol-monolith",
+  "sourceTag": "monolith-freeze-v1",
+  "sourceCommit": "ba8610c7664f0f8a7cfdd70f479e61c8c41a77d1",
+  "authorityStatus": "deprecated-emergency-rollback-only",
+  "includedRoots": [
+    ".openai",
+    "app",
+    "build",
+    "db",
+    "docs",
+    "drizzle",
+    "lib",
+    "public",
+    "tests",
+    "worker"
+  ],
+  "intentionalExclusions": [
+    "public/cards/*.webp",
+    "flutter_app",
+    "server",
+    "docker",
+    "container configuration",
+    "card generation and Flutter export scripts"
+  ],
+  "intentionalAdaptations": [
+    "isolated fallback boundary test",
+    "manifest-only release test when card art is not hydrated",
+    "explicit hydrated asset promotion test"
+  ]
+}

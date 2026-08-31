@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { access, readFile, stat } from "node:fs/promises";
+import { access, readFile, readdir, stat } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 
@@ -9,6 +9,7 @@ import sharp from "sharp";
 import { CARD_CATALOG } from "../lib/game/catalog.ts";
 
 const projectRoot = new URL("../", import.meta.url);
+const requireCardArt = process.env.EMBER_REACT_REQUIRE_CARD_ART === "1";
 
 test("build emits a deployable worker, D1 metadata, and migrations", async () => {
   const [worker, hosting, migration, matchmakingMigration, formatMigration] = await Promise.all([
@@ -72,18 +73,20 @@ test("ships the complete product surface and removes starter assets", async () =
   const attackImmuneUnit = CARD_CATALOG.find((card) => card.id === "neutral-season-13");
   const conditionalImmuneUnit = CARD_CATALOG.find((card) => card.id === "neutral-season-15");
   const dormantUnit = CARD_CATALOG.find((card) => card.id === "neutral-season-12");
-  const cardArt = await Promise.all(
-    cardIds.map(async (cardId) => {
-      const assetUrl = new URL(`../public/cards/${cardId}.webp`, import.meta.url);
-      const [asset, contents] = await Promise.all([
-        stat(assetUrl),
-        readFile(fileURLToPath(assetUrl)),
-      ]);
-      const metadata = await sharp(contents).metadata();
-      const hash = createHash("sha256").update(contents).digest("hex");
-      return { asset, hash, metadata };
-    }),
-  );
+  const cardArt = requireCardArt
+    ? await Promise.all(
+      cardIds.map(async (cardId) => {
+        const assetUrl = new URL(`../public/cards/${cardId}.webp`, import.meta.url);
+        const [asset, contents] = await Promise.all([
+          stat(assetUrl),
+          readFile(fileURLToPath(assetUrl)),
+        ]);
+        const metadata = await sharp(contents).metadata();
+        const hash = createHash("sha256").update(contents).digest("hex");
+        return { asset, hash, metadata };
+      }),
+    )
+    : [];
 
   assert.match(page, /<GameApp/);
   assert.match(layout, /generateMetadata/);
@@ -397,18 +400,32 @@ test("ships the complete product surface and removes starter assets", async () =
     new Set(parsedManifest.cards.map((entry) => entry.id)),
     new Set(cardIds),
   );
-  // Generated WebP art is intentionally optimized for mobile delivery; even
-  // the smallest card remains a real bitmap rather than a placeholder.
-  assert.ok(cardArt.every(({ asset }) => asset.size > 8_000));
   assert.ok(
-    cardArt.every(({ metadata }) =>
-      metadata.format === "webp" &&
-      ((metadata.width === 384 && metadata.height === 480) ||
-        (metadata.width === 512 && metadata.height === 640) ||
-        (metadata.width === 768 && metadata.height === 960)),
-    ),
+    parsedManifest.cards.every((entry) => entry.art === `/cards/${entry.id}.webp`),
   );
-  assert.equal(new Set(cardArt.map(({ hash }) => hash)).size, 1000);
+  if (requireCardArt) {
+    // Hydrated release validation: every remote object must be a distinct,
+    // production-sized WebP before Ops may promote this fallback.
+    assert.ok(cardArt.every(({ asset }) => asset.size > 8_000));
+    assert.ok(
+      cardArt.every(({ metadata }) =>
+        metadata.format === "webp" &&
+        ((metadata.width === 384 && metadata.height === 480) ||
+          (metadata.width === 512 && metadata.height === 640) ||
+          (metadata.width === 768 && metadata.height === 960)),
+      ),
+    );
+    assert.equal(new Set(cardArt.map(({ hash }) => hash)).size, 1000);
+  } else {
+    const checkedInCardFiles = await readdir(
+      new URL("../public/cards", import.meta.url),
+    );
+    assert.deepEqual(
+      checkedInCardFiles.filter((file) => file.endsWith(".webp")),
+      [],
+      "card WebPs must be hydrated from object storage, not committed",
+    );
+  }
 
   await assert.rejects(
     access(new URL("../app/_sites-preview", projectRoot)),
