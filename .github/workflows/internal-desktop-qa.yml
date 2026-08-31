@@ -1,0 +1,38 @@
+name: internal-desktop-qa
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: ${{ matrix.target }} internal QA
+    environment: internal-qa
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: windows
+            runner: cocos-3.8.8-windows
+          - target: macos
+            runner: cocos-3.8.8-macos
+    runs-on: [self-hosted, "${{ matrix.runner }}"]
+    env:
+      EMBER_ENVIRONMENT: internal-qa
+      EMBER_IDENTITY_PROVIDER: internal-qa
+      EMBER_PUBLIC_DISTRIBUTION: "false"
+      COCOS_CREATOR_CLI: ${{ secrets.COCOS_CREATOR_CLI }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm test
+      - run: node scripts/build-internal-qa.mjs ${{ matrix.target }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ember-${{ matrix.target }}-internal-qa
+          path: build/ember-internal-qa/
+          retention-days: 14

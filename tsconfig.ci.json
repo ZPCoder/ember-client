@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "strict": true,
+    "noImplicitOverride": true,
+    "noUncheckedIndexedAccess": true,
+    "useDefineForClassFields": false,
+    "experimentalDecorators": true,
+    "lib": ["ES2020", "DOM"],
+    "types": ["@cocos/creator-types/engine", "node"],
+    "skipLibCheck": true,
+    "noEmit": true
+  },
+  "include": [
+    "assets/**/*.ts",
+    "reference-react/src/**/*.ts",
+    "tools/**/*.ts",
+    "types/**/*.d.ts"
+  ],
+  "exclude": [
+    "tests",
+    "reference-react/legacy",
+    "legacy-flutter-app",
+    "tools/**/tests",
+    "tools/flutter-save-exporter/src/cli.ts"
+  ]
+}

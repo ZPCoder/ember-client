@@ -1,0 +1,31 @@
+name: client-ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  no-editor-boundary-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm test
+
+  creator-typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # The lockfile pins public Creator/TypeScript tooling. Optional private
+      # runtime peers are supplied only by the cross-repository matrix build.
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: npm run typecheck:ci
