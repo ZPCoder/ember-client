@@ -884,7 +884,7 @@
   {
     "id": "sun-daystar-titan",
     "name": "曜日泰坦",
-    "description": "嘲讽，激昂。沉睡的太阳引擎终于再次迈步。",
+    "description": "泰坦。三项能力各限一次：日珥（对所有敌方单位造成 2 点伤害）；耀铸（为所有友方单位获得 +1/+2）；曙光（抽 2 张牌）。",
     "faction": "曜光",
     "type": "unit",
     "cost": 8,
@@ -893,7 +893,8 @@
     "health": 10,
     "keywords": [
       "taunt",
-      "fury"
+      "fury",
+      "titan"
     ],
     "traits": [
       "bulwark",
@@ -902,7 +903,29 @@
     "onDeath": [],
     "effect": [],
     "set": "raptor-2025",
-    "minionTypes": []
+    "minionTypes": [],
+    "titan": {
+      "abilities": [
+        {
+          "label": "日珥",
+          "effects": [
+            { "kind": "damage-all-enemy-units", "amount": 2 }
+          ]
+        },
+        {
+          "label": "耀铸",
+          "effects": [
+            { "kind": "buff-all-friendly", "attack": 1, "health": 2 }
+          ]
+        },
+        {
+          "label": "曙光",
+          "effects": [
+            { "kind": "draw", "count": 2 }
+          ]
+        }
+      ]
+    }
   },
   {
     "id": "sun-flare-spark",

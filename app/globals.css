@@ -6145,6 +6145,41 @@ button.hero-core {
   font-weight: 900;
 }
 
+.board-unit__titan-abilities {
+  position: relative;
+  z-index: 18;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2px;
+  margin: 2px -3px 0;
+}
+
+.board-unit__titan-abilities button {
+  min-width: 0;
+  overflow: hidden;
+  padding: 3px 1px;
+  border: 1px solid rgba(242, 192, 92, 0.68);
+  border-radius: 5px;
+  color: #fff0bd;
+  background: rgba(66, 39, 14, 0.96);
+  font-size: 6px;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.board-unit__titan-abilities button:not(:disabled):hover,
+.board-unit__titan-abilities button:not(:disabled):focus-visible {
+  border-color: #fff0a8;
+  background: rgba(132, 79, 20, 0.98);
+  transform: translateY(-1px);
+}
+
+.board-unit__titan-abilities button:disabled {
+  cursor: default;
+  opacity: 0.42;
+}
+
 .board-unit__impact {
   position: absolute;
   z-index: 12;

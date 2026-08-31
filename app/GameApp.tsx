@@ -213,6 +213,7 @@ type CatalogCard = {
   colossal?: boolean;
   quickdraw?: boolean;
   heroCard?: boolean;
+  titan?: boolean;
   target: CardTargetRule;
   keywords: Keyword[];
   traits: Trait[];
@@ -378,6 +379,8 @@ type BattleUnit = {
   immuneThisTurn: boolean;
   conditionalImmuneActive: boolean;
   dormantTurns: number;
+  titanAbilitiesUsed: number[];
+  canUseTitanAbility: boolean;
   summoningSick: boolean;
   rushOnly: boolean;
   furyStacks: number;
@@ -766,6 +769,7 @@ function cardFromRaw(raw: Record<string, unknown>): CatalogCard {
     colossal: Boolean(raw.colossal),
     quickdraw: Array.isArray(raw.quickdraw) && raw.quickdraw.length > 0,
     heroCard: Boolean(raw.heroCard),
+    titan: Boolean(raw.titan),
     target: asString(raw.target, "none") as CardTargetRule,
     keywords: Array.isArray(raw.keywords)
       ? (raw.keywords.map(String) as Keyword[])
@@ -2127,6 +2131,13 @@ function normalizeBoard(value: unknown, turn: number): BattleUnit[] {
     const attacksMade = asNumber(item.attacksMade, hasAttacked ? 1 : 0);
     const attack = asNumber(item.attack ?? item.power, card?.attack ?? 0);
     const frozenTurns = asNumber(item.frozenTurns, 0);
+    const titanAbilitiesUsed = Array.isArray(item.titanAbilitiesUsed)
+      ? item.titanAbilitiesUsed
+          .map((index) => asNumber(index, -1))
+          .filter((index) => Number.isInteger(index) && index >= 0)
+      : [];
+    const titanAbilityCount = CARD_RULE_BY_ID.get(cardId)?.titan?.abilities.length ?? 0;
+    const titanHasAbilities = keywords.includes("titan") && titanAbilitiesUsed.length < titanAbilityCount;
     const summoningSick =
       typeof item.summoningSick === "boolean"
         ? item.summoningSick
@@ -2153,6 +2164,13 @@ function normalizeBoard(value: unknown, turn: number): BattleUnit[] {
       immuneThisTurn: Boolean(item.immuneThisTurn),
       conditionalImmuneActive: Boolean(item.conditionalImmuneActive),
       dormantTurns: Math.max(0, asNumber(item.dormantTurns, 0)),
+      titanAbilitiesUsed,
+      canUseTitanAbility:
+        health > 0 &&
+        asNumber(item.dormantTurns, 0) <= 0 &&
+        titanHasAbilities &&
+        frozenTurns <= 0 &&
+        attacksMade < (keywords.includes("windfury") ? 2 : 1),
       summoningSick,
       rushOnly: Boolean(item.rushOnly),
       furyStacks: asNumber(item.furyStacks, 0),
@@ -2162,7 +2180,7 @@ function normalizeBoard(value: unknown, turn: number): BattleUnit[] {
       // A stale snapshot can carry a previously computed `canAttack` flag
       // even after the unit has reached zero health.  The death window always
       // wins over derived UI state, so never surface a dead unit as READY.
-      canAttack: health > 0 && asNumber(item.dormantTurns, 0) <= 0 && (
+      canAttack: health > 0 && asNumber(item.dormantTurns, 0) <= 0 && !titanHasAbilities && (
         typeof item.canAttack === "boolean"
           ? item.canAttack
           : attack > 0 &&
@@ -5694,6 +5712,35 @@ export function GameApp({
     }
   };
 
+  const useTitanAbility = (unitId: string, abilityIndex: number) => {
+    if (battleEffectLockRef.current) {
+      setBattleMessage("战况回放中，请等待行动窗口稳定。");
+      return;
+    }
+    if (!battleView || battleView.status !== "playing" || battleView.currentPlayer !== "player") {
+      setBattleMessage("当前不是你的行动窗口。");
+      return;
+    }
+    const unit = battleView.player.board.find((entry) => entry.id === unitId);
+    const ability = unit ? CARD_RULE_BY_ID.get(unit.cardId)?.titan?.abilities[abilityIndex] : undefined;
+    if (!unit?.canUseTitanAbility || !ability || unit.titanAbilitiesUsed.includes(abilityIndex)) {
+      setBattleMessage("该泰坦能力当前不可用。");
+      return;
+    }
+    const next = issueCommand({
+      type: "use-titan-ability",
+      player: 0,
+      unitId,
+      abilityIndex,
+    });
+    if (next) {
+      setSelectedAttacker(null);
+      setPendingCard(null);
+      setPendingHeroPower(false);
+      setBattleMessage(`已使用泰坦能力「${ability.label}」。`);
+    }
+  };
+
   const chooseDiscover = (cardId: string, choiceIndex: number) => {
     if (battleEffectLockRef.current) {
       setBattleMessage("战况回放中，请等待选择窗口稳定。");
@@ -6329,6 +6376,7 @@ export function GameApp({
                   onTradeCard={tradeCard}
                   onPrepareCard={prepareCard}
                   onActivateLocation={activateLocation}
+                  onUseTitanAbility={useTitanAbility}
                   onChooseDiscover={chooseDiscover}
                   onChooseOne={chooseOne}
                   onToggleMulligan={toggleMulliganCard}
@@ -8442,6 +8490,7 @@ function BoardUnit({
   selected,
   targetable,
   onSelect,
+  onTitanAbility,
   onTarget,
   onInspect,
   effect,
@@ -8463,6 +8512,7 @@ function BoardUnit({
   selected?: boolean;
   targetable?: boolean;
   onSelect?: () => void;
+  onTitanAbility?: (abilityIndex: number) => void;
   onTarget?: () => void;
   onInspect?: () => void;
   effect?: BattleUnitEffect;
@@ -8481,6 +8531,9 @@ function BoardUnit({
   onDropTarget?: (event: ReactDragEvent<HTMLElement>) => void;
 }) {
   const card = CARD_BY_ID.get(unit.cardId);
+  const titanAbilities = CARD_RULE_BY_ID.get(unit.cardId)?.titan?.abilities ?? [];
+  const hasTitanAbilities =
+    unit.keywords.includes("titan") && unit.titanAbilitiesUsed.length < titanAbilities.length;
   const visualCard: CatalogCard =
     card ?? {
       id: unit.cardId,
@@ -8511,6 +8564,8 @@ function BoardUnit({
       ? "◇ 攻击时免疫"
     : unit.frozenTurns > 0
     ? `❄ 冻结 ${unit.frozenTurns} 回合`
+    : hasTitanAbilities
+      ? `✦ 泰坦 ${unit.titanAbilitiesUsed.length}/${titanAbilities.length}`
     : unit.summoningSick
       ? unit.rushOnly
         ? "↗ 突袭窗口"
@@ -8582,6 +8637,25 @@ function BoardUnit({
       )}
       {unit.canAttack && onSelect && <span className="board-unit__ready">READY</span>}
       </button>
+      {hasTitanAbilities && (
+        <div className="board-unit__titan-abilities" aria-label={`${unit.name}的泰坦能力`}>
+          {titanAbilities.map((ability, index) => {
+            const used = unit.titanAbilitiesUsed.includes(index);
+            return (
+              <button
+                type="button"
+                key={`${unit.id}-titan-${index}`}
+                disabled={used || !unit.canUseTitanAbility || !onTitanAbility}
+                aria-pressed={used}
+                title={used ? `${ability.label}已使用` : `${ability.label}：${ability.effects.length} 项效果`}
+                onClick={() => onTitanAbility?.(index)}
+              >
+                {used ? "✓ " : "✦ "}{ability.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
       {onInspect && (
         <button
           className="board-unit__inspect"
@@ -8950,6 +9024,7 @@ function BattleSection({
   onTradeCard,
   onPrepareCard,
   onActivateLocation,
+  onUseTitanAbility,
   onChooseDiscover,
   onChooseOne,
   onToggleMulligan,
@@ -9020,6 +9095,7 @@ function BattleSection({
   onTradeCard: (card: BattleSide["hand"][number]) => void;
   onPrepareCard: (card: BattleSide["hand"][number]) => void;
   onActivateLocation: (location: BattleLocation) => void;
+  onUseTitanAbility: (unitId: string, abilityIndex: number) => void;
   onChooseDiscover: (cardId: string, choiceIndex: number) => void;
   onChooseOne: (optionIndex: number) => void;
   onToggleMulligan: (index: number) => void;
@@ -9786,6 +9862,7 @@ function BattleSection({
                   onPointerUp={playerCanAct && trainingAllowsUnitSelection && unit.canAttack ? endPointerDrag : undefined}
                   onPointerCancel={playerCanAct && trainingAllowsUnitSelection && unit.canAttack ? cancelPointerDrag : undefined}
                   onSelect={pendingCard || pendingHeroPower || !playerCanAct || !trainingAllowsUnitSelection ? undefined : () => onSelectAttacker(unit.id)}
+                  onTitanAbility={playerCanAct && !trainingActive ? (abilityIndex) => onUseTitanAbility(unit.id, abilityIndex) : undefined}
                   onTarget={() => onCardTarget({ kind: "unit", side: "player", id: unit.id })}
                   onInspect={() => {
                     const card = CARD_BY_ID.get(unit.cardId);

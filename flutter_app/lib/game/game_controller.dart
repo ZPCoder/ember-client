@@ -15,6 +15,7 @@ import '../models/card_definition.dart';
 import '../models/local_saved_deck.dart';
 
 const int maxBattleActionWindows = 89;
+const int maxBattlefieldSlots = 7;
 
 class _QueuedDeath {
   const _QueuedDeath({
@@ -1595,6 +1596,55 @@ class GameController extends ChangeNotifier {
     return true;
   }
 
+  bool useTitanAbility(BattleUnit unit, int abilityIndex) {
+    final state = battle;
+    if (state == null ||
+        state.finished ||
+        state.phase != 'main' ||
+        state.activePlayer != 'player' ||
+        !state.player.board.contains(unit) ||
+        !unit.canUseTitanAbility ||
+        abilityIndex < 0 ||
+        abilityIndex >= unit.titanAbilities.length ||
+        unit.titanAbilitiesUsed.contains(abilityIndex)) {
+      return false;
+    }
+    final raw = unit.titanAbilities[abilityIndex];
+    if (raw is! Map) return false;
+    final ability = Map<String, dynamic>.from(raw);
+    final label = ability['label']?.toString() ?? '泰坦能力';
+    final effects = ability['effects'] is List
+        ? (ability['effects'] as List)
+              .whereType<Map>()
+              .map((item) => Map<String, dynamic>.from(item))
+              .toList(growable: false)
+        : const <Map<String, dynamic>>[];
+    unit.titanAbilitiesUsed.add(abilityIndex);
+    unit.attacksMade++;
+    unit.hasAttacked = unit.attacksMade >= unit.attackLimit;
+    unit.stealthActive = false;
+    stateLog(unit.card.name, '使用泰坦能力「$label」。');
+    _emitFx(
+      'buff',
+      '泰坦 · $label',
+      '${unit.titanAbilitiesUsed.length}/${unit.titanAbilities.length} 项能力已使用',
+      Icons.auto_awesome,
+      factionColors[unit.card.faction] ?? 0xFFE7BD7A,
+      sourceId: unit.instanceId,
+    );
+    _resolveEffects(
+      effects,
+      source: state.player,
+      enemy: state.ai,
+      sourceName: '${unit.card.name} · $label',
+      sourceCard: unit.card,
+      sourceUnit: unit,
+    );
+    _checkFinished();
+    notifyListeners();
+    return true;
+  }
+
   bool tradeCard(CardDefinition card, {int? handIndex}) {
     final state = battle;
     if (state == null ||
@@ -2202,6 +2252,7 @@ class GameController extends ChangeNotifier {
       temporaryHealthBonus: original.temporaryHealthBonus,
       silenced: original.silenced,
       dormantTurns: original.dormantTurns,
+      titanAbilitiesUsed: original.titanAbilitiesUsed,
     );
   }
 
@@ -3183,8 +3234,9 @@ class GameController extends ChangeNotifier {
     }
     final targetType = card.target ?? '';
     if (target?.isDormant ?? false) return false;
-    if (card.type == 'spell' && target != null && target.isElusive)
+    if (card.type == 'spell' && target != null && target.isElusive) {
       return false;
+    }
     if (target != null &&
         enemy.board.contains(target) &&
         _isUnitImmune(target)) {
@@ -3321,6 +3373,7 @@ class GameController extends ChangeNotifier {
       candidates = catalog
           .where((candidate) {
             if (candidate.id == sourceCardId) return false;
+            if (candidate.titan != null) return false;
             if (!candidate.collectible ||
                 !cardAvailableInRankedFormat(candidate, deckFormat)) {
               return false;
@@ -3340,7 +3393,9 @@ class GameController extends ChangeNotifier {
     return candidates
         .where(
           (candidateId) =>
-              candidateId != sourceCardId && card(candidateId) != null,
+              candidateId != sourceCardId &&
+              card(candidateId) != null &&
+              card(candidateId)?.titan == null,
         )
         .toSet()
         .toList(growable: false);
@@ -5104,6 +5159,54 @@ class GameController extends ChangeNotifier {
         notifyListeners();
         await Future<void>.delayed(const Duration(milliseconds: 800));
       }
+    }
+    for (
+      var safety = 0;
+      safety < maxBattlefieldSlots * 2 && !state.finished;
+      safety++
+    ) {
+      BattleUnit? titan;
+      for (final candidate in state.ai.board) {
+        if (candidate.canUseTitanAbility) {
+          titan = candidate;
+          break;
+        }
+      }
+      if (titan == null) break;
+      var abilityIndex = -1;
+      for (var index = 0; index < titan.titanAbilities.length; index++) {
+        if (!titan.titanAbilitiesUsed.contains(index)) {
+          abilityIndex = index;
+          break;
+        }
+      }
+      if (abilityIndex < 0) break;
+      final raw = titan.titanAbilities[abilityIndex];
+      if (raw is! Map) break;
+      final ability = Map<String, dynamic>.from(raw);
+      final label = ability['label']?.toString() ?? '泰坦能力';
+      final effects = ability['effects'] is List
+          ? (ability['effects'] as List)
+                .whereType<Map>()
+                .map((item) => Map<String, dynamic>.from(item))
+                .toList(growable: false)
+          : const <Map<String, dynamic>>[];
+      titan.titanAbilitiesUsed.add(abilityIndex);
+      titan.attacksMade++;
+      titan.hasAttacked = titan.attacksMade >= titan.attackLimit;
+      titan.stealthActive = false;
+      stateLog(titan.card.name, '敌方使用泰坦能力「$label」。');
+      _resolveEffects(
+        effects,
+        source: state.ai,
+        enemy: state.player,
+        sourceName: '${titan.card.name} · $label',
+        sourceCard: titan.card,
+        sourceUnit: titan,
+      );
+      _checkFinished();
+      notifyListeners();
+      await Future<void>.delayed(const Duration(milliseconds: 1050));
     }
     final attackers = [...state.ai.board];
     for (final unit in attackers) {

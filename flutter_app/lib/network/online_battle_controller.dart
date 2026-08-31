@@ -25,6 +25,7 @@ class OnlineUnit {
     this.immuneThisTurn = false,
     this.conditionalImmuneActive = false,
     this.dormantTurns = 0,
+    this.titanAbilitiesUsed = const <int>[],
     this.stars = 1,
     this.silenced = false,
   });
@@ -45,6 +46,7 @@ class OnlineUnit {
   final bool immuneThisTurn;
   final bool conditionalImmuneActive;
   final int dormantTurns;
+  final List<int> titanAbilitiesUsed;
   final int stars;
   final bool silenced;
 
@@ -55,10 +57,20 @@ class OnlineUnit {
   bool get isImmune =>
       immuneThisTurn || keywords.contains('immune') || conditionalImmuneActive;
   bool get isDormant => dormantTurns > 0;
+  int get titanAbilityCount => card.titan?['abilities'] is List
+      ? (card.titan!['abilities'] as List).length
+      : 0;
+  bool get hasTitanAbilities =>
+      !silenced &&
+      keywords.contains('titan') &&
+      titanAbilitiesUsed.length < titanAbilityCount;
+  bool get canUseTitanAbility =>
+      !isDormant && !isFrozen && attacksMade < attackLimit && hasTitanAbilities;
   bool get isFrozen => frozenTurns > 0;
   int get attackLimit => hasWindfury ? 2 : 1;
   bool get canAttack =>
       !isDormant &&
+      !hasTitanAbilities &&
       attack > 0 &&
       !summoningSick &&
       !isFrozen &&
@@ -290,11 +302,11 @@ class OnlineBattleController extends ChangeNotifier {
         _log('${card.name} 不能直接选择潜行单位。');
         return;
       }
-      if (unitIsValid && card.type == 'spell' && target!.isElusive) {
+      if (unitIsValid && card.type == 'spell' && target.isElusive) {
         _log('${card.name} 不能选择扰魔单位。');
         return;
       }
-      if (unitIsValid && !localBoard.contains(target) && target!.isImmune) {
+      if (unitIsValid && !localBoard.contains(target) && target.isImmune) {
         _log('${card.name} 不能选择免疫单位。');
         return;
       }
@@ -434,6 +446,22 @@ class OnlineBattleController extends ChangeNotifier {
     _sendCommand(<String, dynamic>{
       'type': 'activate-location',
       'locationId': location.entityId,
+    });
+  }
+
+  void useTitanAbility(OnlineUnit unit, int abilityIndex) {
+    if (!canAct ||
+        !localBoard.contains(unit) ||
+        !unit.canUseTitanAbility ||
+        abilityIndex < 0 ||
+        abilityIndex >= unit.titanAbilityCount ||
+        unit.titanAbilitiesUsed.contains(abilityIndex)) {
+      return;
+    }
+    _sendCommand(<String, dynamic>{
+      'type': 'use-titan-ability',
+      'unitId': unit.instanceId,
+      'abilityIndex': abilityIndex,
     });
   }
 
@@ -1020,6 +1048,13 @@ class OnlineBattleController extends ChangeNotifier {
             immuneThisTurn: unit['immuneThisTurn'] == true,
             conditionalImmuneActive: unit['conditionalImmuneActive'] == true,
             dormantTurns: (unit['dormantTurns'] as num?)?.toInt() ?? 0,
+            titanAbilitiesUsed: unit['titanAbilitiesUsed'] is List
+                ? (unit['titanAbilitiesUsed'] as List)
+                      .whereType<num>()
+                      .map((index) => index.toInt())
+                      .where((index) => index >= 0)
+                      .toList(growable: false)
+                : const <int>[],
             stars: (unit['stars'] as num?)?.toInt() ?? 1,
             silenced: silenced,
           );

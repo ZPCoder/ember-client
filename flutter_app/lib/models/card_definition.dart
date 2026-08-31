@@ -27,6 +27,7 @@ class CardDefinition {
     this.spellDamage = 0,
     this.conditionalImmune,
     this.dormant,
+    this.titan,
     this.keywords = const [],
     this.traits = const [],
     this.minionTypes = const [],
@@ -68,6 +69,7 @@ class CardDefinition {
   final int spellDamage;
   final Map<String, dynamic>? conditionalImmune;
   final Map<String, dynamic>? dormant;
+  final Map<String, dynamic>? titan;
   final List<String> keywords;
   final List<String> traits;
   final List<String> minionTypes;
@@ -114,6 +116,7 @@ class CardDefinition {
     Map<String, dynamic>? heroCard,
     Map<String, dynamic>? conditionalImmune,
     Map<String, dynamic>? dormant,
+    Map<String, dynamic>? titan,
   }) {
     return CardDefinition(
       id: id,
@@ -141,6 +144,7 @@ class CardDefinition {
       spellDamage: spellDamage,
       conditionalImmune: conditionalImmune ?? this.conditionalImmune,
       dormant: dormant ?? this.dormant,
+      titan: titan ?? this.titan,
       keywords: keywords ?? this.keywords,
       traits: traits,
       minionTypes: minionTypes ?? this.minionTypes,
@@ -213,6 +217,9 @@ class CardDefinition {
           : null,
       dormant: json['dormant'] is Map
           ? Map<String, dynamic>.from(json['dormant'] as Map)
+          : null,
+      titan: json['titan'] is Map
+          ? Map<String, dynamic>.from(json['titan'] as Map)
           : null,
       keywords: strings(json['keywords']),
       traits: strings(json['traits']),
@@ -287,9 +294,11 @@ class BattleUnit {
     this.temporaryHealthBonus = 0,
     this.silenced = false,
     int? dormantTurns,
+    List<int>? titanAbilitiesUsed,
   }) : dormantTurns =
            dormantTurns ??
-           max(0, (card.dormant?['turns'] as num?)?.toInt() ?? 0);
+           max(0, (card.dormant?['turns'] as num?)?.toInt() ?? 0),
+       titanAbilitiesUsed = List<int>.from(titanAbilitiesUsed ?? const <int>[]);
 
   final String instanceId;
   final CardDefinition card;
@@ -317,6 +326,7 @@ class BattleUnit {
   int temporaryHealthBonus;
   bool silenced;
   int dormantTurns;
+  final List<int> titanAbilitiesUsed;
 
   bool get hasTaunt => !silenced && card.keywords.contains('taunt');
   bool get hasLifesteal => !silenced && card.keywords.contains('lifesteal');
@@ -330,11 +340,24 @@ class BattleUnit {
   bool get isImmune =>
       immuneThisTurn || (!silenced && card.keywords.contains('immune'));
   bool get isDormant => dormantTurns > 0;
+  List<dynamic> get titanAbilities => card.titan?['abilities'] is List
+      ? card.titan!['abilities'] as List<dynamic>
+      : const <dynamic>[];
+  bool get hasTitanAbilities =>
+      !silenced &&
+      card.keywords.contains('titan') &&
+      titanAbilitiesUsed.length < titanAbilities.length;
+  bool get canUseTitanAbility =>
+      !isDormant && !isFrozen && attacksMade < attackLimit && hasTitanAbilities;
   bool get hasReborn => !silenced && card.keywords.contains('reborn');
   bool get isFrozen => frozenTurns > 0;
   int get attackLimit => hasWindfury ? 2 : 1;
   bool get canAttack =>
-      !isDormant && !summoningSick && !isFrozen && attacksMade < attackLimit;
+      !isDormant &&
+      !hasTitanAbilities &&
+      !summoningSick &&
+      !isFrozen &&
+      attacksMade < attackLimit;
 }
 
 class BattleDeathRecord {

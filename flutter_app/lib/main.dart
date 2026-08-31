@@ -2576,6 +2576,42 @@ class _BattleBoardState extends State<BattleBoard> {
     }
   }
 
+  Future<void> _useTitanAbility(BuildContext context, BattleUnit unit) async {
+    if (!unit.canUseTitanAbility) return;
+    final selected = await showDialog<int>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('${unit.card.name} · 泰坦能力'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (var index = 0; index < unit.titanAbilities.length; index++)
+              ListTile(
+                enabled: !unit.titanAbilitiesUsed.contains(index),
+                leading: Icon(
+                  unit.titanAbilitiesUsed.contains(index)
+                      ? Icons.check_circle
+                      : Icons.auto_awesome,
+                ),
+                title: Text(
+                  (unit.titanAbilities[index] as Map?)?['label']?.toString() ??
+                      '能力 ${index + 1}',
+                ),
+                subtitle: Text(
+                  unit.titanAbilitiesUsed.contains(index) ? '已使用' : '替代本回合一次攻击',
+                ),
+                onTap: unit.titanAbilitiesUsed.contains(index)
+                    ? null
+                    : () => Navigator.of(dialogContext).pop(index),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (!context.mounted || selected == null) return;
+    controller.useTitanAbility(unit, selected);
+  }
+
   Future<void> _heroAttack(BuildContext context) async {
     final weapon = state.player.weapon;
     if ((weapon?.attack ?? 0) + state.player.heroAttackBonus <= 0) return;
@@ -2975,6 +3011,11 @@ class _BattleBoardState extends State<BattleBoard> {
                         enemy: false,
                         onAttack: state.phase == 'main'
                             ? (unit) => _attack(context, unit)
+                            : null,
+                        onTitanAbility:
+                            state.phase == 'main' &&
+                                state.activePlayer == 'player'
+                            ? (unit) => _useTitanAbility(context, unit)
                             : null,
                       ),
                       if (state.player.locations.isNotEmpty) ...[
@@ -4245,12 +4286,14 @@ class _BoardRow extends StatelessWidget {
     required this.units,
     required this.enemy,
     required this.onAttack,
+    this.onTitanAbility,
   });
 
   final BattleState state;
   final List<BattleUnit> units;
   final bool enemy;
   final ValueChanged<BattleUnit>? onAttack;
+  final ValueChanged<BattleUnit>? onTitanAbility;
 
   @override
   Widget build(BuildContext context) {
@@ -4274,7 +4317,9 @@ class _BoardRow extends StatelessWidget {
         itemBuilder: (_, index) {
           final unit = units[index];
           return GestureDetector(
-            onTap: onAttack == null || !unit.canAttack
+            onTap: unit.canUseTitanAbility && onTitanAbility != null
+                ? () => onTitanAbility!(unit)
+                : onAttack == null || !unit.canAttack
                 ? null
                 : () => onAttack!(unit),
             child: AnimatedContainer(
@@ -4369,6 +4414,12 @@ class _BoardRow extends StatelessWidget {
                           label: '休眠 ${unit.dormantTurns}',
                           color: const Color(0xFFA692D1),
                         ),
+                      if (unit.hasTitanAbilities)
+                        _UnitBadge(
+                          label:
+                              '泰坦 ${unit.titanAbilitiesUsed.length}/${unit.titanAbilities.length}',
+                          color: const Color(0xFFE7BD7A),
+                        ),
                       if (unit.card.keywords.contains('immune-while-attacking'))
                         const _UnitBadge(
                           label: '攻击时免疫',
@@ -4382,6 +4433,10 @@ class _BoardRow extends StatelessWidget {
                         ? '休眠中 · 不可交互'
                         : unit.isFrozen
                         ? '冻结中'
+                        : unit.hasTitanAbilities
+                        ? unit.canUseTitanAbility
+                              ? '点击选择泰坦能力'
+                              : '泰坦本回合已行动'
                         : unit.summoningSick
                         ? '等待下回合'
                         : unit.hasWindfury && unit.attacksMade == 1
@@ -4979,6 +5034,47 @@ class OnlineBattlePanel extends StatelessWidget {
     }
   }
 
+  Future<void> _useOnlineTitanAbility(
+    BuildContext context,
+    OnlineUnit unit,
+  ) async {
+    if (!controller.canAct || !unit.canUseTitanAbility) return;
+    final abilities = unit.card.titan?['abilities'];
+    if (abilities is! List) return;
+    final selected = await showDialog<int>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('${unit.card.name} · 泰坦能力'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (var index = 0; index < abilities.length; index++)
+              ListTile(
+                enabled: !unit.titanAbilitiesUsed.contains(index),
+                leading: Icon(
+                  unit.titanAbilitiesUsed.contains(index)
+                      ? Icons.check_circle
+                      : Icons.auto_awesome,
+                ),
+                title: Text(
+                  (abilities[index] as Map?)?['label']?.toString() ??
+                      '能力 ${index + 1}',
+                ),
+                subtitle: Text(
+                  unit.titanAbilitiesUsed.contains(index) ? '已使用' : '替代本回合一次攻击',
+                ),
+                onTap: unit.titanAbilitiesUsed.contains(index)
+                    ? null
+                    : () => Navigator.of(dialogContext).pop(index),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (!context.mounted || selected == null) return;
+    controller.useTitanAbility(unit, selected);
+  }
+
   Future<void> _heroAttack(BuildContext context) async {
     if (!controller.canAct || controller.localWeaponCard == null) return;
     final choice = await _pickTarget(
@@ -5353,6 +5449,9 @@ class OnlineBattlePanel extends StatelessWidget {
                 controller: controller,
                 onAttack: controller.canAct
                     ? (unit) => _attack(context, unit)
+                    : null,
+                onTitanAbility: controller.canAct
+                    ? (unit) => _useOnlineTitanAbility(context, unit)
                     : null,
               ),
               if (controller.localLocations.isNotEmpty)
@@ -5731,6 +5830,7 @@ class _OnlineBoardRow extends StatelessWidget {
     this.enemy = false,
     this.controller,
     this.onAttack,
+    this.onTitanAbility,
   });
 
   final String title;
@@ -5738,6 +5838,7 @@ class _OnlineBoardRow extends StatelessWidget {
   final bool enemy;
   final OnlineBattleController? controller;
   final ValueChanged<OnlineUnit>? onAttack;
+  final ValueChanged<OnlineUnit>? onTitanAbility;
 
   @override
   Widget build(BuildContext context) => Column(
@@ -5776,8 +5877,14 @@ class _OnlineBoardRow extends StatelessWidget {
                       onAttack != null &&
                       unit.canAttack &&
                       (controller?.hasLegalAttackTarget(unit) ?? false);
+                  final canUseTitan =
+                      onTitanAbility != null && unit.canUseTitanAbility;
                   return GestureDetector(
-                    onTap: canAttack ? () => onAttack!(unit) : null,
+                    onTap: canUseTitan
+                        ? () => onTitanAbility!(unit)
+                        : canAttack
+                        ? () => onAttack!(unit)
+                        : null,
                     child: Container(
                       width: 136,
                       padding: const EdgeInsets.all(8),
@@ -5826,6 +5933,16 @@ class _OnlineBoardRow extends StatelessWidget {
                                   : '等待下回合',
                               style: const TextStyle(
                                 color: Color(0xFF65746D),
+                                fontSize: 9,
+                              ),
+                            ),
+                          if (unit.hasTitanAbilities)
+                            Text(
+                              unit.canUseTitanAbility
+                                  ? '泰坦 ${unit.titanAbilitiesUsed.length}/${unit.titanAbilityCount} · 选择能力'
+                                  : '泰坦本回合已行动',
+                              style: const TextStyle(
+                                color: Color(0xFFE7BD7A),
                                 fontSize: 9,
                               ),
                             ),

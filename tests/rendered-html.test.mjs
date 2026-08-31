@@ -300,6 +300,8 @@ test("ships the complete product surface and removes starter assets", async () =
   assert.match(worker, /MATCHMAKING_WINDOW_STEP_MS/);
   assert.match(worker, /正在按隐藏水平寻找/);
   assert.match(worker, /case "prepare-card"/);
+  assert.match(worker, /case "use-titan-ability"/);
+  assert.match(gameStore, /"use-titan-ability"/);
   assert.match(worker, /safeEvent\.type === "card-prepared"/);
   assert.match(worker, /safeEvent\.type === "card-shattered"/);
   assert.match(worker, /safeEvent\.type === "card-reassembled"/);
